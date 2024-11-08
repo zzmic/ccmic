@@ -1,5 +1,3 @@
-
-
 #include "statement.h"
 #include "visitor.h"
 

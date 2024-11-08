@@ -1,5 +1,3 @@
-
-
 /*
  * This header file defines the visitor (pattern) interface.
  * The visitor pattern helps to separate the algorithm from the object structure

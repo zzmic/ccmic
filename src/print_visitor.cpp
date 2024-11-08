@@ -1,5 +1,3 @@
-
-
 /*
  * This file defines the implementation of the pretty printer for the AST and
  * concretizes the abstract visitor interface.

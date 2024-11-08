@@ -1,5 +1,3 @@
-
-
 #include "operator.h"
 #include "visitor.h"
 #include <iostream>

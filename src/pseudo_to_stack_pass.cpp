@@ -1,5 +1,3 @@
-
-
 #include "pseudo_to_stack_pass.h"
 
 namespace Assembly {

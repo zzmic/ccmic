@@ -1,5 +1,3 @@
-
-
 #ifndef PRINT_VISITOR_H
 #define PRINT_VISITOR_H
 

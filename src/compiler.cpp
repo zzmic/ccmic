@@ -1,5 +1,3 @@
-
-
 #include "compiler.h"
 #include <cstdlib>
 #include <filesystem>

@@ -1,5 +1,3 @@
-
-
 #include "fixup_pass.h"
 
 namespace Assembly {

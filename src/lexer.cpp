@@ -1,5 +1,3 @@
-
-
 #include "lexer.h"
 #include <sstream>
 

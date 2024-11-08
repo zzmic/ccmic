@@ -1,5 +1,3 @@
-
-
 #ifndef FIXUP_PASS_H
 #define FIXUP_PASS_H
 
