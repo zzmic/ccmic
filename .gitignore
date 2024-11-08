@@ -1,0 +1,6 @@
+**/__pycache__/*
+mycc
+*.s
+.vscode/
+bin/
+playground/
