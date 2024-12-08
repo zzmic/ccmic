@@ -8,6 +8,8 @@ BIN_DIR = bin
 
 # Source files.
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+# Header files.
+HEADERS = $(wildcard $(SRC_DIR)/*.h)
 # Object files.
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 # Executable file.
@@ -29,8 +31,12 @@ $(EXECUTABLE): $(OBJECTS)
 # before the target can be built,
 # but changes to this directory won't trigger a rebuild of the object files.
 # https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html.
-$(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BIN_DIR)
+$(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Format the source files and the header files.
+format:
+	clang-format -i $(SOURCES) $(HEADERS)
 
 # Clean up the object files and the executable.
 clean:

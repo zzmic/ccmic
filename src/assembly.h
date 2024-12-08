@@ -49,7 +49,14 @@ class RegisterOperand : public Operand {
 
   public:
     RegisterOperand(std::string reg) : reg(reg) {}
-    std::string getRegister() const override { return reg; }
+    std::string getRegister() const override {
+        if (reg == "AX") {
+            return "eax";
+        }
+        else {
+            return reg;
+        }
+    }
 };
 
 class PseudoRegisterOperand : public Operand {
@@ -79,7 +86,7 @@ class UnaryOperator : public Operator {};
 
 class NegateOperator : public UnaryOperator {};
 
-class NotOperator : public UnaryOperator {};
+class ComplementOperator : public UnaryOperator {};
 
 class Instruction {
   public:

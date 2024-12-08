@@ -74,7 +74,7 @@ class AssemblyGenerator {
         instructions->emplace_back(std::shared_ptr<Assembly::MovInstruction>(
             new Assembly::MovInstruction(
                 returnValue, std::shared_ptr<Assembly::Operand>(
-                                 new Assembly::RegisterOperand("AX")))));
+                                 new Assembly::RegisterOperand("eax")))));
 
         // Generate a `Ret` instruction to return from the function.
         instructions->emplace_back(std::shared_ptr<Assembly::RetInstruction>(
@@ -85,14 +85,20 @@ class AssemblyGenerator {
         std::shared_ptr<IR::UnaryInstruction> unaryInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions) {
+        // Convert the source and destination operands to assembly operands.
         auto srcOperand = convertValue(unaryInstr->getSrc());
-        auto dstOperand = convertValue(unaryInstr->getDst());
+        // The destination operand, for now, is always the `eax` register.
+        auto dstOperand = std::make_shared<Assembly::RegisterOperand>("eax");
 
-        // Move the source operand to the destination operand.
-        instructions->emplace_back(std::shared_ptr<Assembly::MovInstruction>(
-            new Assembly::MovInstruction(srcOperand, dstOperand)));
+        if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(srcOperand)) {
+            // Move the source operand to the destination operand if it is an
+            // immediate operand.
+            instructions->emplace_back(
+                std::shared_ptr<Assembly::MovInstruction>(
+                    new Assembly::MovInstruction(srcOperand, dstOperand)));
+        }
 
-        // Apply the unary operator.
+        // Apply the unary operator to the destination operand.
         auto unaryOperator =
             convertUnaryOperator(unaryInstr->getUnaryOperator());
         instructions->emplace_back(std::shared_ptr<Assembly::UnaryInstruction>(
@@ -111,6 +117,8 @@ class AssemblyGenerator {
             return std::make_shared<Assembly::PseudoRegisterOperand>(
                 varVal->getIdentifier());
         }
+        // Return a nullptr if the value is not convertible.
+        return nullptr;
     }
 
     std::shared_ptr<Assembly::UnaryOperator>
@@ -120,8 +128,10 @@ class AssemblyGenerator {
         }
         else if (std::dynamic_pointer_cast<IR::ComplementOperator>(
                      irOperator)) {
-            return std::make_shared<Assembly::NotOperator>();
+            return std::make_shared<Assembly::ComplementOperator>();
         }
+        // Return a nullptr if the operator is not convertible.
+        return nullptr;
     }
 };
 } // namespace Assembly

@@ -255,10 +255,6 @@ codegen_executor(std::shared_ptr<IR::Program> irProgram) {
     std::shared_ptr<Assembly::Program> assemblyProgram =
         assemblyGenerator->generate(irProgram);
 
-    // // Print the assembly program before any the following two passes.
-    // std::cout << "Before PseudoToStackPass and FixupPass:\n";
-    // printAssemblyProgram(assemblyProgram);
-
     // Instantiate a pseudo-to-stack pass object and return the offset.
     Assembly::PseudoToStackPass pseudoToStackPass;
     int stackSize = pseudoToStackPass.returnOffset(
@@ -299,12 +295,12 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                 if (auto complementOperator =
                         std::dynamic_pointer_cast<IR::ComplementOperator>(
                             unaryInstruction->getUnaryOperator())) {
-                    std::cout << "    ~";
+                    std::cout << "    ";
                     if (auto variableValue =
                             std::dynamic_pointer_cast<IR::VariableValue>(
                                 unaryInstruction->getDst())) {
                         std::cout << variableValue->getIdentifier();
-                        std::cout << " = ";
+                        std::cout << " = ~";
                         if (auto variableValue =
                                 std::dynamic_pointer_cast<IR::VariableValue>(
                                     unaryInstruction->getSrc())) {
@@ -328,7 +324,7 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                 else if (auto negateOperator =
                              std::dynamic_pointer_cast<IR::NegateOperator>(
                                  unaryInstruction->getUnaryOperator())) {
-                    std::cout << "    -";
+                    std::cout << "    ";
                     if (auto variableValue =
                             std::dynamic_pointer_cast<IR::VariableValue>(
                                 unaryInstruction->getDst())) {
@@ -339,7 +335,7 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                                      unaryInstruction->getDst())) {
                         std::cout << constantValue->getValue();
                     }
-                    std::cout << " = ";
+                    std::cout << " = -";
                     if (auto variableValue =
                             std::dynamic_pointer_cast<IR::VariableValue>(
                                 unaryInstruction->getSrc())) {
@@ -360,6 +356,16 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
 
 // Function to print the assembly code onto the stdout.
 void printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram) {
+    auto function = assemblyProgram->getFunctionDefinition()->at(0);
+
+    // Print the function prologue (before printing the function body).
+    std::cout << "\n"
+              << "    .globl " << function->getFunctionIdentifier() << "\n";
+    std::cout << function->getFunctionIdentifier() << ":\n";
+    std::cout << "    pushq %rbp\n";
+    std::cout << "    movq %rsp, %rbp\n";
+
+    // Print the function body.
     for (auto instruction :
          *assemblyProgram->getFunctionDefinition()->at(0)->getFunctionBody()) {
         if (auto movInstruction =
@@ -370,7 +376,7 @@ void printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram) {
                 if (auto dst =
                         std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                             movInstruction->getDst())) {
-                    std::cout << "movl %" << src->getRegister() << ", %"
+                    std::cout << "    movl %" << src->getRegister() << ", %"
                               << dst->getRegister() << "\n";
                 }
             }
@@ -380,7 +386,7 @@ void printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram) {
                 if (auto dst =
                         std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                             movInstruction->getDst())) {
-                    std::cout << "movl $" << src->getImmediate() << ", %"
+                    std::cout << "    movl $" << src->getImmediate() << ", %"
                               << dst->getRegister() << "\n";
                 }
             }
@@ -388,7 +394,40 @@ void printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram) {
         else if (auto retInstruction =
                      std::dynamic_pointer_cast<Assembly::RetInstruction>(
                          instruction)) {
-            std::cout << "ret\n";
+            // Print the function epilogue before printing the return
+            // instruction.
+            std::cout << "    movq %rbp, %rsp\n";
+            std::cout << "    popq %rbp\n";
+            // Print the return instruction.
+            std::cout << "    ret\n";
+        }
+        else if (auto unaryInstruction =
+                     std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
+                         instruction)) {
+            if (auto negateOperator =
+                    std::dynamic_pointer_cast<Assembly::NegateOperator>(
+                        unaryInstruction->getUnaryOperator())) {
+                std::cout << "    negl";
+            }
+            else if (auto ComplementOperator = std::dynamic_pointer_cast<
+                         Assembly::ComplementOperator>(
+                         unaryInstruction->getUnaryOperator())) {
+                std::cout << "    notl";
+            }
+            if (auto operand = unaryInstruction->getOperand()) {
+                if (auto regOperand =
+                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                            operand)) {
+                    std::cout << " %" << regOperand->getRegister() << "\n";
+                }
+            }
+        }
+        else if (auto allocateStack =
+                     std::dynamic_pointer_cast<Assembly::AllocateStack>(
+                         instruction)) {
+            std::cout << "    subq $"
+                      << allocateStack->getAddressGivenOffsetFromRBP()
+                      << ", %rsp\n";
         }
     }
 }
@@ -403,17 +442,20 @@ void code_emission_executor(std::shared_ptr<Assembly::Program> assemblyProgram,
         throw std::runtime_error(msg.str());
     }
 
-    auto function = assemblyProgram->getFunctionDefinition();
-
-    std::string functionName = function->at(0)->getFunctionIdentifier();
+    auto function = assemblyProgram->getFunctionDefinition()->at(0);
+    std::string functionName = function->getFunctionIdentifier();
 #ifdef __APPLE__
     functionName = "_" + functionName;
 #endif
+
+    // Emit the function prologue (before emitting the function body).
     assemblyFileStream << "    .globl " << functionName << "\n";
     assemblyFileStream << functionName << ":\n";
+    assemblyFileStream << "    pushq %rbp\n";
+    assemblyFileStream << "    movq %rsp, %rbp\n";
 
-    for (auto instruction : *function->at(0)->getFunctionBody()) {
-        assemblyFileStream << "    ";
+    // Emit the function body.
+    for (auto instruction : *function->getFunctionBody()) {
         if (auto movInstruction =
                 std::dynamic_pointer_cast<Assembly::MovInstruction>(
                     instruction)) {
@@ -422,7 +464,7 @@ void code_emission_executor(std::shared_ptr<Assembly::Program> assemblyProgram,
                 if (auto dst =
                         std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                             movInstruction->getDst())) {
-                    assemblyFileStream << "movl %" << src->getRegister()
+                    assemblyFileStream << "    movl %" << src->getRegister()
                                        << ", %" << dst->getRegister() << "\n";
                 }
             }
@@ -432,7 +474,7 @@ void code_emission_executor(std::shared_ptr<Assembly::Program> assemblyProgram,
                 if (auto dst =
                         std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                             movInstruction->getDst())) {
-                    assemblyFileStream << "movl $" << src->getImmediate()
+                    assemblyFileStream << "    movl $" << src->getImmediate()
                                        << ", %" << dst->getRegister() << "\n";
                 }
             }
@@ -440,7 +482,41 @@ void code_emission_executor(std::shared_ptr<Assembly::Program> assemblyProgram,
         else if (auto retInstruction =
                      std::dynamic_pointer_cast<Assembly::RetInstruction>(
                          instruction)) {
-            assemblyFileStream << "ret\n";
+            // Emit the function epilogue before emitting the return
+            // instruction.
+            assemblyFileStream << "    movq %rbp, %rsp\n";
+            assemblyFileStream << "    popq %rbp\n";
+            // Emit the return instruction.
+            assemblyFileStream << "    ret\n";
+        }
+        else if (auto unaryInstruction =
+                     std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
+                         instruction)) {
+            if (auto negateOperator =
+                    std::dynamic_pointer_cast<Assembly::NegateOperator>(
+                        unaryInstruction->getUnaryOperator())) {
+                assemblyFileStream << "    negl";
+            }
+            else if (auto ComplementOperator = std::dynamic_pointer_cast<
+                         Assembly::ComplementOperator>(
+                         unaryInstruction->getUnaryOperator())) {
+                assemblyFileStream << "    notl";
+            }
+            if (auto operand = unaryInstruction->getOperand()) {
+                if (auto regOperand =
+                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                            operand)) {
+                    assemblyFileStream << " %" << regOperand->getRegister()
+                                       << "\n";
+                }
+            }
+        }
+        else if (auto allocateStack =
+                     std::dynamic_pointer_cast<Assembly::AllocateStack>(
+                         instruction)) {
+            assemblyFileStream << "    subq $"
+                               << allocateStack->getAddressGivenOffsetFromRBP()
+                               << ", %rsp\n";
         }
     }
 
