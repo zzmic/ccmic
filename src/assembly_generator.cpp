@@ -70,7 +70,7 @@ class AssemblyGenerator {
             instructions) {
         auto returnValue = convertValue(returnInstr->getReturnValue());
 
-        // Move the return value into the `AX` register.
+        // Move the return value into the `eax` register.
         instructions->emplace_back(std::shared_ptr<Assembly::MovInstruction>(
             new Assembly::MovInstruction(
                 returnValue, std::shared_ptr<Assembly::Operand>(
@@ -107,10 +107,10 @@ class AssemblyGenerator {
 
     std::shared_ptr<Assembly::Operand>
     convertValue(std::shared_ptr<IR::Value> irValue) {
-        if (auto constVal =
-                std::dynamic_pointer_cast<IR::ConstantValue>(irValue)) {
+        if (auto integerVal =
+                std::dynamic_pointer_cast<IR::IntegerValue>(irValue)) {
             return std::make_shared<Assembly::ImmediateOperand>(
-                constVal->getValue());
+                integerVal->getValue());
         }
         else if (auto varVal =
                      std::dynamic_pointer_cast<IR::VariableValue>(irValue)) {

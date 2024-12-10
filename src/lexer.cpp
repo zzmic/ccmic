@@ -21,6 +21,7 @@ const std::regex plus_regex(R"(^\+)");
 const std::regex minus_regex(R"(^-)"); // This is also used as a hyphen regex.
 const std::regex multiply_regex(R"(^\*)");
 const std::regex divide_regex(R"(^\/)");
+const std::regex modulo_regex(R"(^%)");
 const std::regex singleLineComment_regex(R"(^\/\/[^\n]*\n?)");
 const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
 
@@ -73,6 +74,8 @@ Token matchToken(const std::string &input) {
         return {TokenType::Multiply, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, divide_regex))
         return {TokenType::Divide, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, modulo_regex))
+        return {TokenType::Modulo, tokenMatch.str()};
     // Lower down the precedence of token-matching `identifier_regex`
     // to avoid the conflict with the other token matchings (e.g.,
     // `intKeyword_regex`)
@@ -184,6 +187,9 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::Divide:
             typeStr = "Divide";
             break;
+        case TokenType::Modulo:
+            typeStr = "Modulo";
+            break;
         case TokenType::SingleLineComment:
             typeStr = "SingleLineComment";
             break;
@@ -249,6 +255,9 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::Divide:
         typeStr = "Divide";
+        break;
+    case TokenType::Modulo:
+        typeStr = "Modulo";
         break;
     case TokenType::SingleLineComment:
         typeStr = "SingleLineComment";

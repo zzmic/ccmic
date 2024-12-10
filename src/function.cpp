@@ -3,11 +3,11 @@
 
 namespace AST {
 Function::Function(const std::string &name, std::shared_ptr<Statement> body)
-    : name_(name), body_(body) {}
+    : name(name), body(body) {}
 
 void Function::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::string Function::getName() const { return name_; }
+std::string Function::getName() const { return name; }
 
-std::shared_ptr<Statement> Function::getBody() const { return body_; }
+std::shared_ptr<Statement> Function::getBody() const { return body; }
 } // Namespace AST

@@ -71,10 +71,10 @@ class IRGenerator {
                std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
                    instructions) {
         // If the expression is a constant expression, emit a constant value.
-        if (auto constExpr =
-                std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
-            return std::shared_ptr<IR::ConstantValue>(
-                new IR::ConstantValue(constExpr->getValue()));
+        if (auto integerExpr =
+                std::dynamic_pointer_cast<AST::IntegerExpression>(e)) {
+            return std::shared_ptr<IR::IntegerValue>(
+                new IR::IntegerValue(integerExpr->getValue()));
         }
         // If the expression is a unary expression, ...
         else if (auto unaryExpr =

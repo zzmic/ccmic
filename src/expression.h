@@ -9,41 +9,45 @@
 namespace AST {
 class Expression : public AST {};
 
-class ConstantExpression : public Expression {
+class Factor : public Expression {};
+
+class IntegerExpression : public Factor {
   public:
-    ConstantExpression(int value);
+    IntegerExpression(int value);
     void accept(Visitor &visitor) override;
     int getValue() const;
 
   private:
-    int value_;
+    int value;
 };
 
-class UnaryExpression : public Expression {
+class UnaryExpression : public Factor {
   public:
-    UnaryExpression(const std::string &op, std::shared_ptr<Expression> expr);
+    UnaryExpression(const std::string &opInStr,
+                    std::shared_ptr<Expression> expr);
     void accept(Visitor &visitor) override;
     std::shared_ptr<UnaryOperator> getOperator() const;
-    std::shared_ptr<Expression> getExpression() const;
+    std::shared_ptr<Factor> getExpression() const;
 
   private:
-    std::shared_ptr<UnaryOperator> op_;
-    std::shared_ptr<Expression> expr_;
+    std::shared_ptr<UnaryOperator> op;
+    std::shared_ptr<Factor> expr;
 };
 
 class BinaryExpression : public Expression {
   public:
-    BinaryExpression(std::shared_ptr<Expression> left, const std::string &op,
+    BinaryExpression(std::shared_ptr<Expression> left,
+                     const std::string &opInStr,
                      std::shared_ptr<Expression> right);
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getLeft() const;
-    std::string getOperator() const;
+    std::shared_ptr<BinaryOperator> getOperator() const;
     std::shared_ptr<Expression> getRight() const;
 
   private:
-    std::shared_ptr<Expression> left_;
-    std::string op_;
-    std::shared_ptr<Expression> right_;
+    std::shared_ptr<Expression> left;
+    std::shared_ptr<BinaryOperator> op;
+    std::shared_ptr<Expression> right;
 };
 } // Namespace AST
 

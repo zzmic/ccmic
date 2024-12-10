@@ -16,8 +16,8 @@ class Function : public AST {
     std::shared_ptr<Statement> getBody() const;
 
   private:
-    std::string name_;
-    std::shared_ptr<Statement> body_;
+    std::string name;
+    std::shared_ptr<Statement> body;
 };
 } // Namespace AST
 

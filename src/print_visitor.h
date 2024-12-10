@@ -10,11 +10,16 @@ class PrintVisitor : public Visitor {
     void visit(Program &program) override;
     void visit(Function &function) override;
     void visit(ReturnStatement &returnStatement) override;
-    void visit(ConstantExpression &constantExpression) override;
+    void visit(IntegerExpression &IntegerExpression) override;
     void visit(UnaryExpression &unaryExpression) override;
     void visit(BinaryExpression &binaryExpression) override;
     void visit(ComplementOperator &complementOperator) override;
     void visit(NegateOperator &negateOperator) override;
+    void visit(AddOperator &addOperator) override;
+    void visit(SubtractOperator &subtractOperator) override;
+    void visit(MultiplyOperator &multiplyOperator) override;
+    void visit(DivideOperator &divideOperator) override;
+    void visit(RemainderOperator &remainderOperator) override;
 };
 } // namespace AST
 

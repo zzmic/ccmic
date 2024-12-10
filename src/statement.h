@@ -15,7 +15,7 @@ class ReturnStatement : public Statement {
     std::shared_ptr<Expression> getExpression() const;
 
   private:
-    std::shared_ptr<Expression> expr_;
+    std::shared_ptr<Expression> expr;
 };
 } // Namespace AST
 

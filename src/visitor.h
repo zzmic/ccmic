@@ -14,11 +14,16 @@ namespace AST {
 class Program;
 class Function;
 class ReturnStatement;
-class ConstantExpression;
+class IntegerExpression;
 class UnaryExpression;
 class BinaryExpression;
 class ComplementOperator;
 class NegateOperator;
+class AddOperator;
+class SubtractOperator;
+class MultiplyOperator;
+class DivideOperator;
+class RemainderOperator;
 
 class Visitor {
   public:
@@ -28,11 +33,16 @@ class Visitor {
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
     virtual void visit(ReturnStatement &returnStatement) = 0;
-    virtual void visit(ConstantExpression &constantExpression) = 0;
+    virtual void visit(IntegerExpression &IntegerExpression) = 0;
     virtual void visit(UnaryExpression &unaryExpression) = 0;
     virtual void visit(BinaryExpression &binaryExpression) = 0;
     virtual void visit(ComplementOperator &complementOperator) = 0;
     virtual void visit(NegateOperator &negateOperator) = 0;
+    virtual void visit(AddOperator &addOperator) = 0;
+    virtual void visit(SubtractOperator &subtractOperator) = 0;
+    virtual void visit(MultiplyOperator &multiplyOperator) = 0;
+    virtual void visit(DivideOperator &divideOperator) = 0;
+    virtual void visit(RemainderOperator &remainderOperator) = 0;
 };
 } // Namespace AST
 

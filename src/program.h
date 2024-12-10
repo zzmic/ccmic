@@ -13,7 +13,7 @@ class Program : public AST {
     std::shared_ptr<Function> getFunction() const;
 
   private:
-    std::shared_ptr<Function> function_;
+    std::shared_ptr<Function> function;
 };
 } // Namespace AST
 

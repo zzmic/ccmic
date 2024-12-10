@@ -3,11 +3,11 @@
 
 namespace AST {
 ReturnStatement::ReturnStatement(std::shared_ptr<Expression> expr)
-    : expr_(expr) {}
+    : expr(expr) {}
 
 void ReturnStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::shared_ptr<Expression> ReturnStatement::getExpression() const {
-    return expr_;
+    return expr;
 }
 } // Namespace AST

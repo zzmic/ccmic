@@ -19,17 +19,29 @@ class ComplementOperator : public UnaryOperator {};
 
 class NegateOperator : public UnaryOperator {};
 
+class BinaryOperator : public Operator {};
+
+class AddOperator : public BinaryOperator {};
+
+class SubtractOperator : public BinaryOperator {};
+
+class MultiplyOperator : public BinaryOperator {};
+
+class DivideOperator : public BinaryOperator {};
+
+class ModuloOperator : public BinaryOperator {};
+
 class Value {
   public:
     virtual ~Value() = default;
 };
 
-class ConstantValue : public Value {
+class IntegerValue : public Value {
   private:
     int value;
 
   public:
-    ConstantValue(int value) : value(value) {}
+    IntegerValue(int value) : value(value) {}
     int getValue() { return value; }
     void setValue(int newValue) { value = newValue; }
 };

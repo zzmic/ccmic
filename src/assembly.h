@@ -53,6 +53,9 @@ class RegisterOperand : public Operand {
         if (reg == "AX") {
             return "eax";
         }
+        else if (reg == "R10") {
+            return "r10d";
+        }
         else {
             return reg;
         }

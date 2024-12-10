@@ -24,6 +24,7 @@ enum class TokenType {
     Minus, // This is also used as a hyphen.
     Multiply,
     Divide,
+    Modulo,
     SingleLineComment,
     MultiLineComment,
     Invalid

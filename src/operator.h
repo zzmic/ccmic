@@ -20,6 +20,38 @@ class NegateOperator : public UnaryOperator {
     void accept(Visitor &visitor) override;
     std::string opInString() const;
 };
+
+class BinaryOperator : public Operator {};
+
+class AddOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class SubtractOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class MultiplyOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class DivideOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class RemainderOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
 } // Namespace AST
 
 #endif // OPERATOR_H

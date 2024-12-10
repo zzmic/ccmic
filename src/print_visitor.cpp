@@ -29,8 +29,8 @@ void PrintVisitor::visit(ReturnStatement &returnStatement) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(ConstantExpression &constantExpression) {
-    std::cout << "Constant(" << constantExpression.getValue() << ")";
+void PrintVisitor::visit(IntegerExpression &IntegerExpression) {
+    std::cout << "IntegerExpression(" << IntegerExpression.getValue() << ")";
 }
 
 void PrintVisitor::visit(UnaryExpression &unaryExpression) {
@@ -44,9 +44,11 @@ void PrintVisitor::visit(UnaryExpression &unaryExpression) {
 void PrintVisitor::visit(BinaryExpression &binaryExpression) {
     std::cout << "BinaryExpression(\n";
     binaryExpression.getLeft()->accept(*this);
-    std::cout << " " << binaryExpression.getOperator() << " ";
-    binaryExpression.getRight()->accept(*this);
     std::cout << "\n";
+    binaryExpression.getOperator()->accept(*this);
+    std::cout << "\n";
+    binaryExpression.getRight()->accept(*this);
+    std::cout << "\n)";
 }
 
 void PrintVisitor::visit(ComplementOperator &complementOperator) {
@@ -58,4 +60,23 @@ void PrintVisitor::visit(NegateOperator &negateOperator) {
     std::cout << "NegateOperator(" << negateOperator.opInString() << ")";
 }
 
+void PrintVisitor::visit(AddOperator &addOperator) {
+    std::cout << "AddOperator(" << addOperator.opInString() << ")";
+}
+
+void PrintVisitor::visit(SubtractOperator &subtractOperator) {
+    std::cout << "SubtractOperator(" << subtractOperator.opInString() << ")";
+}
+
+void PrintVisitor::visit(MultiplyOperator &multiplyOperator) {
+    std::cout << "MultiplyOperator(" << multiplyOperator.opInString() << ")";
+}
+
+void PrintVisitor::visit(DivideOperator &divideOperator) {
+    std::cout << "DivideOperator(" << divideOperator.opInString() << ")";
+}
+
+void PrintVisitor::visit(RemainderOperator &remainderOperator) {
+    std::cout << "RemainderOperator(" << remainderOperator.opInString() << ")";
+}
 } // Namespace AST

@@ -276,10 +276,10 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
             if (auto returnInstruction =
                     std::dynamic_pointer_cast<IR::ReturnInstruction>(
                         instruction)) {
-                if (auto constantValue =
-                        std::dynamic_pointer_cast<IR::ConstantValue>(
+                if (auto IntegerValue =
+                        std::dynamic_pointer_cast<IR::IntegerValue>(
                             returnInstruction->getReturnValue())) {
-                    std::cout << "    return " << constantValue->getValue()
+                    std::cout << "    return " << IntegerValue->getValue()
                               << "\n";
                 }
                 else if (auto variableValue =
@@ -307,17 +307,17 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                             std::cout << variableValue->getIdentifier();
                             std::cout << "\n";
                         }
-                        else if (auto constantValue = std::dynamic_pointer_cast<
-                                     IR::ConstantValue>(
+                        else if (auto IntegerValue = std::dynamic_pointer_cast<
+                                     IR::IntegerValue>(
                                      unaryInstruction->getSrc())) {
-                            std::cout << constantValue->getValue();
+                            std::cout << IntegerValue->getValue();
                             std::cout << "\n";
                         }
                     }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
+                    else if (auto IntegerValue =
+                                 std::dynamic_pointer_cast<IR::IntegerValue>(
                                      unaryInstruction->getDst())) {
-                        std::cout << constantValue->getValue();
+                        std::cout << IntegerValue->getValue();
                         std::cout << "\n";
                     }
                 }
@@ -330,10 +330,10 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                                 unaryInstruction->getDst())) {
                         std::cout << variableValue->getIdentifier();
                     }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
+                    else if (auto IntegerValue =
+                                 std::dynamic_pointer_cast<IR::IntegerValue>(
                                      unaryInstruction->getDst())) {
-                        std::cout << constantValue->getValue();
+                        std::cout << IntegerValue->getValue();
                     }
                     std::cout << " = -";
                     if (auto variableValue =
@@ -342,10 +342,10 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                         std::cout << variableValue->getIdentifier();
                         std::cout << "\n";
                     }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
+                    else if (auto IntegerValue =
+                                 std::dynamic_pointer_cast<IR::IntegerValue>(
                                      unaryInstruction->getSrc())) {
-                        std::cout << constantValue->getValue();
+                        std::cout << IntegerValue->getValue();
                         std::cout << "\n";
                     }
                 }
