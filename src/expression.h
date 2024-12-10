@@ -11,9 +11,9 @@ class Expression : public AST {};
 
 class Factor : public Expression {};
 
-class IntegerExpression : public Factor {
+class ConstantExpression : public Factor {
   public:
-    IntegerExpression(int value);
+    ConstantExpression(int value);
     void accept(Visitor &visitor) override;
     int getValue() const;
 

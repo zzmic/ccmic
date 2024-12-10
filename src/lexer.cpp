@@ -122,7 +122,7 @@ std::vector<Token> lexer(const std::string &input) {
 
         // Add the token (matching substring) to the list of tokens except for
         // tokens of types `SingleLineComment` and `MultiLineComment`.
-        tokens.push_back(token);
+        tokens.emplace_back(token);
 
         // Remove the token (matching substring) from the start of the input.
         remaining_input = remaining_input.substr(token.value.size());

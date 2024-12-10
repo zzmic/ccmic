@@ -29,8 +29,8 @@ void PrintVisitor::visit(ReturnStatement &returnStatement) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(IntegerExpression &IntegerExpression) {
-    std::cout << "IntegerExpression(" << IntegerExpression.getValue() << ")";
+void PrintVisitor::visit(ConstantExpression &constantExpression) {
+    std::cout << "ConstantExpression(" << constantExpression.getValue() << ")";
 }
 
 void PrintVisitor::visit(UnaryExpression &unaryExpression) {

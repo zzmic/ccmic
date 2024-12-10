@@ -20,7 +20,7 @@ class AssemblyGenerator {
                 std::vector<std::shared_ptr<FunctionDefinition>>>();
         // Create a shared pointer for the specific FunctionDefinition and add
         // it to the vector.
-        functionDefinition->push_back(std::make_shared<FunctionDefinition>(
+        functionDefinition->emplace_back(std::make_shared<FunctionDefinition>(
             irFunction->at(0)->getFunctionIdentifier()));
 
         // Obtain the function body of the function definition.
@@ -107,10 +107,10 @@ class AssemblyGenerator {
 
     std::shared_ptr<Assembly::Operand>
     convertValue(std::shared_ptr<IR::Value> irValue) {
-        if (auto integerVal =
-                std::dynamic_pointer_cast<IR::IntegerValue>(irValue)) {
+        if (auto constantVal =
+                std::dynamic_pointer_cast<IR::ConstantValue>(irValue)) {
             return std::make_shared<Assembly::ImmediateOperand>(
-                integerVal->getValue());
+                constantVal->getValue());
         }
         else if (auto varVal =
                      std::dynamic_pointer_cast<IR::VariableValue>(irValue)) {

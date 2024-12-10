@@ -88,7 +88,7 @@ std::shared_ptr<Statement> Parser::parseStatement() {
 std::shared_ptr<Expression> Parser::parseFactor() {
     if (matchToken(TokenType::Constant)) {
         Token constantToken = consumeToken(TokenType::Constant);
-        return std::make_shared<IntegerExpression>(
+        return std::make_shared<ConstantExpression>(
             std::stoi(constantToken.value));
     }
     else if (matchToken(TokenType::Tilde)) {

@@ -29,21 +29,21 @@ class MultiplyOperator : public BinaryOperator {};
 
 class DivideOperator : public BinaryOperator {};
 
-class ModuloOperator : public BinaryOperator {};
+class RemainderOperator : public BinaryOperator {};
 
 class Value {
   public:
     virtual ~Value() = default;
 };
 
-class IntegerValue : public Value {
+class ConstantValue : public Value {
   private:
     int value;
 
   public:
-    IntegerValue(int value) : value(value) {}
+    ConstantValue(int value) : value(value) {}
     int getValue() { return value; }
-    void setValue(int newValue) { value = newValue; }
+    void setValue(int value) { this->value = value; }
 };
 
 class VariableValue : public Value {
@@ -53,8 +53,8 @@ class VariableValue : public Value {
   public:
     VariableValue(std::string identifier) : identifier(identifier) {}
     std::string getIdentifier() { return identifier; }
-    void setIdentifier(std::string newIdentifier) {
-        identifier = newIdentifier;
+    void setIdentifier(std::string identifier) {
+        this->identifier = identifier;
     }
 };
 
@@ -71,8 +71,8 @@ class ReturnInstruction : public Instruction {
     ReturnInstruction(std::shared_ptr<Value> returnValue)
         : returnValue(returnValue) {}
     std::shared_ptr<Value> getReturnValue() { return returnValue; }
-    void setReturnValue(std::shared_ptr<Value> newReturnValue) {
-        returnValue = newReturnValue;
+    void setReturnValue(std::shared_ptr<Value> returnValue) {
+        this->returnValue = returnValue;
     }
 };
 
@@ -88,11 +88,35 @@ class UnaryInstruction : public Instruction {
     std::shared_ptr<UnaryOperator> getUnaryOperator() { return unaryOperator; }
     std::shared_ptr<Value> getSrc() { return src; }
     std::shared_ptr<Value> getDst() { return dst; }
-    void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator) {
-        unaryOperator = newUnaryOperator;
+    void setUnaryOperator(std::shared_ptr<UnaryOperator> unaryOperator) {
+        this->unaryOperator = unaryOperator;
     }
-    void setSrc(std::shared_ptr<Value> newSrc) { src = newSrc; }
-    void setDst(std::shared_ptr<Value> newDst) { dst = newDst; }
+    void setSrc(std::shared_ptr<Value> src) { this->src = src; }
+    void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
+};
+
+class BinaryInstruction : public Instruction {
+  private:
+    std::shared_ptr<BinaryOperator> binaryOperator;
+    std::shared_ptr<Value> lhs, rhs, dst;
+
+  public:
+    BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
+                      std::shared_ptr<Value> lhs, std::shared_ptr<Value> rhs,
+                      std::shared_ptr<Value> dst)
+        : binaryOperator(binaryOperator), lhs(lhs), rhs(rhs), dst(dst) {}
+    std::shared_ptr<BinaryOperator> getBinaryOperator() {
+        return binaryOperator;
+    }
+    std::shared_ptr<Value> getLhs() { return lhs; }
+    std::shared_ptr<Value> getRhs() { return rhs; }
+    std::shared_ptr<Value> getDst() { return dst; }
+    void setBinaryOperator(std::shared_ptr<BinaryOperator> binaryOperator) {
+        this->binaryOperator = binaryOperator;
+    }
+    void setLhs(std::shared_ptr<Value> lhs) { this->lhs = lhs; }
+    void setRhs(std::shared_ptr<Value> rhs) { this->rhs = rhs; }
+    void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
 };
 
 class FunctionDefinition {
@@ -110,8 +134,8 @@ class FunctionDefinition {
     }
     void
     setFunctionBody(std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-                        newFunctionBody) {
-        functionBody = newFunctionBody;
+                        functionBody) {
+        this->functionBody = functionBody;
     }
 };
 

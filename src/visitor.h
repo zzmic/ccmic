@@ -14,7 +14,7 @@ namespace AST {
 class Program;
 class Function;
 class ReturnStatement;
-class IntegerExpression;
+class ConstantExpression;
 class UnaryExpression;
 class BinaryExpression;
 class ComplementOperator;
@@ -33,7 +33,7 @@ class Visitor {
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
     virtual void visit(ReturnStatement &returnStatement) = 0;
-    virtual void visit(IntegerExpression &IntegerExpression) = 0;
+    virtual void visit(ConstantExpression &constantExpression) = 0;
     virtual void visit(UnaryExpression &unaryExpression) = 0;
     virtual void visit(BinaryExpression &binaryExpression) = 0;
     virtual void visit(ComplementOperator &complementOperator) = 0;

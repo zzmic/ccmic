@@ -10,7 +10,7 @@ class PrintVisitor : public Visitor {
     void visit(Program &program) override;
     void visit(Function &function) override;
     void visit(ReturnStatement &returnStatement) override;
-    void visit(IntegerExpression &IntegerExpression) override;
+    void visit(ConstantExpression &constantExpression) override;
     void visit(UnaryExpression &unaryExpression) override;
     void visit(BinaryExpression &binaryExpression) override;
     void visit(ComplementOperator &complementOperator) override;

@@ -2,11 +2,11 @@
 #include "visitor.h"
 
 namespace AST {
-IntegerExpression::IntegerExpression(int value) : value(value) {}
+ConstantExpression::ConstantExpression(int value) : value(value) {}
 
-void IntegerExpression::accept(Visitor &visitor) { visitor.visit(*this); }
+void ConstantExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
-int IntegerExpression::getValue() const { return value; }
+int ConstantExpression::getValue() const { return value; }
 
 UnaryExpression::UnaryExpression(const std::string &opInStr,
                                  std::shared_ptr<Expression> expr) {

@@ -91,7 +91,7 @@ int main(int argc, char *argv[]) {
     // Initialize flags to control the intermediate stages of the compilation.
     bool tillLex = false;
     bool tillParse = false;
-    bool tillTacky = false;
+    bool tillIR = false;
     bool tillCodegen = false;
     bool tillEmitAssembly = false;
 
@@ -111,7 +111,7 @@ int main(int argc, char *argv[]) {
     // Direct the compiler to run the lexer, parser, and IR generator, but stop
     // before assembly generation.
     else if (flag == "--tacky") {
-        tillTacky = true;
+        tillIR = true;
     }
     // Direct the compiler to perform lexing, parsing, IR generation, and
     // assembly generation, but stop before assembly emission.
@@ -145,7 +145,7 @@ int main(int argc, char *argv[]) {
     // Print the IR program onto the stdout.
     printIRProgram(irProgram);
 
-    if (tillTacky) {
+    if (tillIR) {
         std::cout << "IR generation completed successfully.\n";
         return EXIT_SUCCESS;
     }
@@ -276,10 +276,10 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
             if (auto returnInstruction =
                     std::dynamic_pointer_cast<IR::ReturnInstruction>(
                         instruction)) {
-                if (auto IntegerValue =
-                        std::dynamic_pointer_cast<IR::IntegerValue>(
+                if (auto constantValue =
+                        std::dynamic_pointer_cast<IR::ConstantValue>(
                             returnInstruction->getReturnValue())) {
-                    std::cout << "    return " << IntegerValue->getValue()
+                    std::cout << "    return " << constantValue->getValue()
                               << "\n";
                 }
                 else if (auto variableValue =
@@ -307,17 +307,17 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                             std::cout << variableValue->getIdentifier();
                             std::cout << "\n";
                         }
-                        else if (auto IntegerValue = std::dynamic_pointer_cast<
-                                     IR::IntegerValue>(
+                        else if (auto constantValue = std::dynamic_pointer_cast<
+                                     IR::ConstantValue>(
                                      unaryInstruction->getSrc())) {
-                            std::cout << IntegerValue->getValue();
+                            std::cout << constantValue->getValue();
                             std::cout << "\n";
                         }
                     }
-                    else if (auto IntegerValue =
-                                 std::dynamic_pointer_cast<IR::IntegerValue>(
+                    else if (auto constantValue =
+                                 std::dynamic_pointer_cast<IR::ConstantValue>(
                                      unaryInstruction->getDst())) {
-                        std::cout << IntegerValue->getValue();
+                        std::cout << constantValue->getValue();
                         std::cout << "\n";
                     }
                 }
@@ -330,10 +330,10 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                                 unaryInstruction->getDst())) {
                         std::cout << variableValue->getIdentifier();
                     }
-                    else if (auto IntegerValue =
-                                 std::dynamic_pointer_cast<IR::IntegerValue>(
+                    else if (auto constantValue =
+                                 std::dynamic_pointer_cast<IR::ConstantValue>(
                                      unaryInstruction->getDst())) {
-                        std::cout << IntegerValue->getValue();
+                        std::cout << constantValue->getValue();
                     }
                     std::cout << " = -";
                     if (auto variableValue =
@@ -342,11 +342,83 @@ void printIRProgram(std::shared_ptr<IR::Program> irProgram) {
                         std::cout << variableValue->getIdentifier();
                         std::cout << "\n";
                     }
-                    else if (auto IntegerValue =
-                                 std::dynamic_pointer_cast<IR::IntegerValue>(
+                    else if (auto constantValue =
+                                 std::dynamic_pointer_cast<IR::ConstantValue>(
                                      unaryInstruction->getSrc())) {
-                        std::cout << IntegerValue->getValue();
+                        std::cout << constantValue->getValue();
                         std::cout << "\n";
+                    }
+                }
+            }
+            else if (auto binaryInstruction =
+                         std::dynamic_pointer_cast<IR::BinaryInstruction>(
+                             instruction)) {
+                if (auto variableValue =
+                        std::dynamic_pointer_cast<IR::VariableValue>(
+                            binaryInstruction->getDst())) {
+                    std::cout << "    " << variableValue->getIdentifier();
+                    std::cout << " = ";
+                    if (auto variableValue =
+                            std::dynamic_pointer_cast<IR::VariableValue>(
+                                binaryInstruction->getLhs())) {
+                        std::cout << variableValue->getIdentifier();
+                    }
+                    else if (auto constantValue =
+                                 std::dynamic_pointer_cast<IR::ConstantValue>(
+                                     binaryInstruction->getLhs())) {
+                        std::cout << constantValue->getValue();
+                    }
+                    if (auto binaryOperator =
+                            std::dynamic_pointer_cast<IR::AddOperator>(
+                                binaryInstruction->getBinaryOperator())) {
+                        std::cout << " + ";
+                    }
+                    else if (auto binaryOperator = std::dynamic_pointer_cast<
+                                 IR::SubtractOperator>(
+                                 binaryInstruction->getBinaryOperator())) {
+                        std::cout << " - ";
+                    }
+                    else if (auto binaryOperator = std::dynamic_pointer_cast<
+                                 IR::MultiplyOperator>(
+                                 binaryInstruction->getBinaryOperator())) {
+                        std::cout << " * ";
+                    }
+                    else if (auto binaryOperator =
+                                 std::dynamic_pointer_cast<IR::DivideOperator>(
+                                     binaryInstruction->getBinaryOperator())) {
+                        std::cout << " / ";
+                    }
+                    else if (auto binaryOperator = std::dynamic_pointer_cast<
+                                 IR::RemainderOperator>(
+                                 binaryInstruction->getBinaryOperator())) {
+                        std::cout << " % ";
+                    }
+                    if (auto variableValue =
+                            std::dynamic_pointer_cast<IR::VariableValue>(
+                                binaryInstruction->getRhs())) {
+                        std::cout << variableValue->getIdentifier();
+                    }
+                    else if (auto constantValue =
+                                 std::dynamic_pointer_cast<IR::ConstantValue>(
+                                     binaryInstruction->getRhs())) {
+                        std::cout << constantValue->getValue();
+                    }
+                    std::cout << "\n";
+                }
+                else if (auto constantValue =
+                             std::dynamic_pointer_cast<IR::ConstantValue>(
+                                 binaryInstruction->getDst())) {
+                    std::cout << "    " << constantValue->getValue();
+                    std::cout << " = ";
+                    if (auto variableValue =
+                            std::dynamic_pointer_cast<IR::VariableValue>(
+                                binaryInstruction->getLhs())) {
+                        std::cout << variableValue->getIdentifier();
+                    }
+                    else if (auto constantValue =
+                                 std::dynamic_pointer_cast<IR::ConstantValue>(
+                                     binaryInstruction->getLhs())) {
+                        std::cout << constantValue->getValue();
                     }
                 }
             }
