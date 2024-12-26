@@ -12,11 +12,13 @@ class FixupPass {
                int stackSize);
 
   private:
-    void insertAllocateStack(
+    void insertAllocateStackInstruction(
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions,
         int stackSize);
     bool isInvalidMov(std::shared_ptr<Assembly::MovInstruction> movInstr);
+    bool isInvalidBinary(std::shared_ptr<Assembly::BinaryInstruction> binInstr);
+    bool isInvalidIdiv(std::shared_ptr<Assembly::IdivInstruction> idivInstr);
     // `std::vector<std::shared_ptr<Assembly::Instruction>>::iterator` is an
     // iterator to a vector of shared pointers to `Instruction` objects.
     std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
@@ -25,6 +27,18 @@ class FixupPass {
             instructions,
         std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
         std::shared_ptr<Assembly::MovInstruction> movInst);
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    rewriteInvalidBinary(
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions,
+        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+        std::shared_ptr<Assembly::BinaryInstruction> binInstr);
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    rewriteInvalidIdiv(
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions,
+        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+        std::shared_ptr<Assembly::IdivInstruction> idivInstr);
 };
 } // Namespace Assembly
 

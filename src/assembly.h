@@ -15,7 +15,11 @@ class Register {
 
 class AX : public Register {};
 
+class DX : public Register {};
+
 class R10 : public Register {};
+
+class R11 : public Register {};
 
 class Operand {
   public:
@@ -49,17 +53,7 @@ class RegisterOperand : public Operand {
 
   public:
     RegisterOperand(std::string reg) : reg(reg) {}
-    std::string getRegister() const override {
-        if (reg == "AX") {
-            return "eax";
-        }
-        else if (reg == "R10") {
-            return "r10d";
-        }
-        else {
-            return reg;
-        }
-    }
+    std::string getRegister() const override { return reg; }
 };
 
 class PseudoRegisterOperand : public Operand {
@@ -91,6 +85,14 @@ class NegateOperator : public UnaryOperator {};
 
 class ComplementOperator : public UnaryOperator {};
 
+class BinaryOperator : public Operator {};
+
+class AddOperator : public BinaryOperator {};
+
+class SubtractOperator : public BinaryOperator {};
+
+class MultiplyOperator : public BinaryOperator {};
+
 class Instruction {
   public:
     virtual ~Instruction() = default;
@@ -105,8 +107,8 @@ class MovInstruction : public Instruction {
         : src(src), dst(dst) {}
     std::shared_ptr<Operand> getSrc() { return src; }
     std::shared_ptr<Operand> getDst() { return dst; }
-    void setSrc(std::shared_ptr<Operand> newSrc) { src = newSrc; }
-    void setDst(std::shared_ptr<Operand> newDst) { dst = newDst; }
+    void setSrc(std::shared_ptr<Operand> src) { this->src = src; }
+    void setDst(std::shared_ptr<Operand> dst) { this->dst = dst; }
 };
 
 class UnaryInstruction : public Instruction {
@@ -120,20 +122,61 @@ class UnaryInstruction : public Instruction {
         : unaryOperator(unaryOperator), operand(operand) {}
     std::shared_ptr<UnaryOperator> getUnaryOperator() { return unaryOperator; }
     std::shared_ptr<Operand> getOperand() { return operand; }
-    void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator) {
-        unaryOperator = newUnaryOperator;
+    void setUnaryOperator(std::shared_ptr<UnaryOperator> unaryOperator) {
+        this->unaryOperator = unaryOperator;
     }
-    void setOperand(std::shared_ptr<Operand> newOperand) {
-        operand = newOperand;
+    void setOperand(std::shared_ptr<Operand> operand) {
+        this->operand = operand;
     }
 };
 
-class AllocateStack : public Instruction {
+class BinaryInstruction : public Instruction {
+  private:
+    std::shared_ptr<BinaryOperator> binaryOperator;
+    std::shared_ptr<Operand> operand1, operand2;
+
+  public:
+    BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
+                      std::shared_ptr<Operand> operand1,
+                      std::shared_ptr<Operand> operand2)
+        : binaryOperator(binaryOperator), operand1(operand1),
+          operand2(operand2) {}
+    std::shared_ptr<BinaryOperator> getBinaryOperator() {
+        return binaryOperator;
+    }
+    std::shared_ptr<Operand> getOperand1() { return operand1; }
+    std::shared_ptr<Operand> getOperand2() { return operand2; }
+    void setBinaryOperator(std::shared_ptr<BinaryOperator> binaryOperator) {
+        this->binaryOperator = binaryOperator;
+    }
+    void setOperand1(std::shared_ptr<Operand> operand1) {
+        this->operand1 = operand1;
+    }
+    void setOperand2(std::shared_ptr<Operand> operand2) {
+        this->operand2 = operand2;
+    }
+};
+
+class IdivInstruction : public Instruction {
+  private:
+    std::shared_ptr<Operand> operand;
+
+  public:
+    IdivInstruction(std::shared_ptr<Operand> operand) : operand(operand) {}
+    std::shared_ptr<Operand> getOperand() { return operand; }
+    void setOperand(std::shared_ptr<Operand> operand) {
+        this->operand = operand;
+    }
+};
+
+class CdqInstruction : public Instruction {};
+
+class AllocateStackInstruction : public Instruction {
   private:
     int addressGivenOffsetFromRBP;
 
   public:
-    AllocateStack(int addressGivenOffsetFromRBP)
+    AllocateStackInstruction(int addressGivenOffsetFromRBP)
         : addressGivenOffsetFromRBP(addressGivenOffsetFromRBP) {}
     int getAddressGivenOffsetFromRBP() { return addressGivenOffsetFromRBP; }
 };
@@ -172,6 +215,11 @@ class Program {
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
     getFunctionDefinition() {
         return functionDefinition;
+    }
+    void setFunctionDefinition(
+        std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
+            newFunctionDefinition) {
+        functionDefinition = newFunctionDefinition;
     }
 };
 } // namespace Assembly

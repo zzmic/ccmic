@@ -7,35 +7,29 @@ class AssemblyGenerator {
     std::shared_ptr<Assembly::Program>
     generate(std::shared_ptr<IR::Program> irProgram) {
         // Get the function from the IR program.
-        std::shared_ptr<std::vector<std::shared_ptr<IR::FunctionDefinition>>>
-            irFunction = irProgram->getFunctionDefinition();
+        auto irFunction = irProgram->getFunctionDefinition();
 
         // Create a function definition with the IR function's name to hold the
         // generated instructions.
         // At this point, there is only one function, `main`, in the IR program.
         // Create a shared pointer to a vector of shared pointers of
         // FunctionDefinition.
-        std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-            functionDefinition = std::make_shared<
-                std::vector<std::shared_ptr<FunctionDefinition>>>();
-        // Create a shared pointer for the specific FunctionDefinition and add
-        // it to the vector.
-        functionDefinition->emplace_back(std::make_shared<FunctionDefinition>(
-            irFunction->at(0)->getFunctionIdentifier()));
-
-        // Obtain the function body of the function definition.
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions = functionDefinition->at(0)->getFunctionBody();
+        auto functionDefinition = std::make_shared<
+            std::vector<std::shared_ptr<FunctionDefinition>>>();
+        // Create a shared pointer for the specific FunctionDefinition with the
+        // function name.
+        auto funcDef = std::make_shared<FunctionDefinition>(
+            irFunction->at(0)->getFunctionIdentifier());
 
         // Initialize the function body with an empty vector of instructions.
-        functionDefinition->at(0)->setFunctionBody(
-            std::shared_ptr<
-                std::vector<std::shared_ptr<Assembly::Instruction>>>(
-                new std::vector<std::shared_ptr<Assembly::Instruction>>()));
+        auto instructions = std::make_shared<
+            std::vector<std::shared_ptr<Assembly::Instruction>>>();
+        funcDef->setFunctionBody(instructions);
+        // Push the function definition to the vector of function definitions.
+        functionDefinition->push_back(funcDef);
 
         // Get the body of the function, which is a list of IR instructions.
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> irBody =
-            irFunction->at(0)->getFunctionBody();
+        auto irBody = irFunction->at(0)->getFunctionBody();
 
         // Generate assembly instructions for the body of the function.
         for (auto irInstruction : *irBody) {
@@ -44,8 +38,7 @@ class AssemblyGenerator {
         }
 
         // Return the generated assembly program.
-        return std::shared_ptr<Assembly::Program>(
-            new Assembly::Program(functionDefinition));
+        return std::make_shared<Assembly::Program>(functionDefinition);
     }
 
   private:
@@ -62,6 +55,11 @@ class AssemblyGenerator {
                          irInstruction)) {
             generateUnaryInstruction(unaryInstr, instructions);
         }
+        else if (auto binaryInstr =
+                     std::dynamic_pointer_cast<IR::BinaryInstruction>(
+                         irInstruction)) {
+            generateBinaryInstruction(binaryInstr, instructions);
+        }
     }
 
     void generateReturnInstruction(
@@ -71,14 +69,12 @@ class AssemblyGenerator {
         auto returnValue = convertValue(returnInstr->getReturnValue());
 
         // Move the return value into the `eax` register.
-        instructions->emplace_back(std::shared_ptr<Assembly::MovInstruction>(
-            new Assembly::MovInstruction(
-                returnValue, std::shared_ptr<Assembly::Operand>(
-                                 new Assembly::RegisterOperand("eax")))));
+        instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
+            returnValue, std::make_shared<Assembly::RegisterOperand>("eax")));
 
         // Generate a `Ret` instruction to return from the function.
-        instructions->emplace_back(std::shared_ptr<Assembly::RetInstruction>(
-            new Assembly::RetInstruction()));
+        instructions->emplace_back(
+            std::make_shared<Assembly::RetInstruction>());
     }
 
     void generateUnaryInstruction(
@@ -94,15 +90,81 @@ class AssemblyGenerator {
             // Move the source operand to the destination operand if it is an
             // immediate operand.
             instructions->emplace_back(
-                std::shared_ptr<Assembly::MovInstruction>(
-                    new Assembly::MovInstruction(srcOperand, dstOperand)));
+                std::make_shared<Assembly::MovInstruction>(srcOperand,
+                                                           dstOperand));
         }
 
         // Apply the unary operator to the destination operand.
         auto unaryOperator =
             convertUnaryOperator(unaryInstr->getUnaryOperator());
-        instructions->emplace_back(std::shared_ptr<Assembly::UnaryInstruction>(
-            new Assembly::UnaryInstruction(unaryOperator, dstOperand)));
+        instructions->emplace_back(std::make_shared<Assembly::UnaryInstruction>(
+            unaryOperator, dstOperand));
+    }
+
+    void generateBinaryInstruction(
+        std::shared_ptr<IR::BinaryInstruction> binaryInstr,
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions) {
+        auto lhsOperand = convertValue(binaryInstr->getLhs());
+        auto rhsOperand = convertValue(binaryInstr->getRhs());
+        auto dstOperand = convertValue(binaryInstr->getDst());
+
+        // Move the left-hand side operand to the destination operand.
+        instructions->emplace_back(
+            std::make_shared<Assembly::MovInstruction>(lhsOperand, dstOperand));
+
+        // Apply the binary operator.
+        auto binaryOperator = binaryInstr->getBinaryOperator();
+        if (std::dynamic_pointer_cast<IR::AddOperator>(binaryOperator)) {
+            instructions->emplace_back(
+                std::make_shared<Assembly::BinaryInstruction>(
+                    std::make_shared<Assembly::AddOperator>(), rhsOperand,
+                    dstOperand));
+        }
+        else if (std::dynamic_pointer_cast<IR::SubtractOperator>(
+                     binaryOperator)) {
+            instructions->emplace_back(
+                std::make_shared<Assembly::BinaryInstruction>(
+                    std::make_shared<Assembly::SubtractOperator>(), rhsOperand,
+                    dstOperand));
+        }
+        else if (std::dynamic_pointer_cast<IR::MultiplyOperator>(
+                     binaryOperator)) {
+            instructions->emplace_back(
+                std::make_shared<Assembly::BinaryInstruction>(
+                    std::make_shared<Assembly::MultiplyOperator>(), rhsOperand,
+                    dstOperand));
+        }
+        else if (std::dynamic_pointer_cast<IR::DivideOperator>(
+                     binaryOperator)) {
+            instructions->emplace_back(
+                std::make_shared<Assembly::MovInstruction>(
+                    lhsOperand,
+                    std::make_shared<Assembly::RegisterOperand>("eax")));
+            instructions->emplace_back(
+                std::make_shared<Assembly::CdqInstruction>());
+            instructions->emplace_back(
+                std::make_shared<Assembly::IdivInstruction>(rhsOperand));
+            instructions->emplace_back(
+                std::make_shared<Assembly::MovInstruction>(
+                    std::make_shared<Assembly::RegisterOperand>("eax"),
+                    dstOperand));
+        }
+        else if (std::dynamic_pointer_cast<IR::RemainderOperator>(
+                     binaryOperator)) {
+            instructions->emplace_back(
+                std::make_shared<Assembly::MovInstruction>(
+                    lhsOperand,
+                    std::make_shared<Assembly::RegisterOperand>("eax")));
+            instructions->emplace_back(
+                std::make_shared<Assembly::CdqInstruction>());
+            instructions->emplace_back(
+                std::make_shared<Assembly::IdivInstruction>(rhsOperand));
+            instructions->emplace_back(
+                std::make_shared<Assembly::MovInstruction>(
+                    std::make_shared<Assembly::RegisterOperand>("edx"),
+                    dstOperand));
+        }
     }
 
     std::shared_ptr<Assembly::Operand>
@@ -117,7 +179,7 @@ class AssemblyGenerator {
             return std::make_shared<Assembly::PseudoRegisterOperand>(
                 varVal->getIdentifier());
         }
-        // Return a nullptr if the value is not convertible.
+        // Return a `nullptr` if the value is not convertible.
         return nullptr;
     }
 
@@ -130,7 +192,7 @@ class AssemblyGenerator {
                      irOperator)) {
             return std::make_shared<Assembly::ComplementOperator>();
         }
-        // Return a nullptr if the operator is not convertible.
+        // Return a `nullptr` if the operator is not convertible.
         return nullptr;
     }
 };

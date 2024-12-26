@@ -7,17 +7,17 @@
 namespace Assembly {
 class PseudoToStackPass {
   public:
-    int returnOffset(
+    int replacePseudoWithStackAndReturnOffset(
         std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-            function);
+            &function);
 
   private:
     void replacePseudoWithStack(
-        std::shared_ptr<Assembly::Instruction> instruction,
+        std::shared_ptr<Assembly::Instruction> &instruction,
         std::unordered_map<std::string, int> &pseudoToStackMap,
         int &currentOffset);
 
-    void replaceOperand(std::shared_ptr<Assembly::Operand> operand,
+    void replaceOperand(std::shared_ptr<Assembly::Operand> &operand,
                         std::unordered_map<std::string, int> &pseudoToStackMap,
                         int &currentOffset);
 };
