@@ -37,7 +37,7 @@ int PseudoToStackPass::replacePseudoWithStackAndReturnOffset(
         }
     }
 
-    return currentOffset;
+    return -currentOffset;
 }
 
 void PseudoToStackPass::replacePseudoWithStack(
