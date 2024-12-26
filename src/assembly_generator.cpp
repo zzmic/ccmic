@@ -83,16 +83,11 @@ class AssemblyGenerator {
             instructions) {
         // Convert the source and destination operands to assembly operands.
         auto srcOperand = convertValue(unaryInstr->getSrc());
-        // The destination operand, for now, is always the `eax` register.
-        auto dstOperand = std::make_shared<Assembly::RegisterOperand>("eax");
+        auto dstOperand = convertValue(unaryInstr->getDst());
 
-        if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(srcOperand)) {
-            // Move the source operand to the destination operand if it is an
-            // immediate operand.
-            instructions->emplace_back(
-                std::make_shared<Assembly::MovInstruction>(srcOperand,
-                                                           dstOperand));
-        }
+        // Move the source operand to the destination operand.
+        instructions->emplace_back(
+            std::make_shared<Assembly::MovInstruction>(srcOperand, dstOperand));
 
         // Apply the unary operator to the destination operand.
         auto unaryOperator =
