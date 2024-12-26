@@ -1,4 +1,4 @@
-#include "pseudo_to_stack_pass.h"
+#include "pseudoToStackPass.h"
 #include <cassert>
 
 namespace Assembly {
