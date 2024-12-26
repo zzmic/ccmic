@@ -22,8 +22,19 @@ const std::regex minus_regex(R"(^-)"); // This is also used as a hyphen regex.
 const std::regex multiply_regex(R"(^\*)");
 const std::regex divide_regex(R"(^\/)");
 const std::regex modulo_regex(R"(^%)");
+const std::regex logicalNot_regex(R"(^!)");
+const std::regex logicalAnd_regex(R"(^&&)");
+const std::regex logicalOr_regex(R"(^\|\|)");
+const std::regex equal_regex(R"(^==)");
+const std::regex notEqual_regex(R"(^!=)");
+const std::regex lessThanOrEqual_regex(R"(^<=)");
+const std::regex greaterThanOrEqual_regex(R"(^>=)");
+const std::regex lessThan_regex(R"(^<)");
+const std::regex greaterThan_regex(R"(^>)");
 const std::regex singleLineComment_regex(R"(^\/\/[^\n]*\n?)");
 const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
+const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
+const std::regex preprocessorDirective_regex(R"(^#\w+)");
 
 // Match a token and return its type.
 Token matchToken(const std::string &input) {
@@ -37,7 +48,11 @@ Token matchToken(const std::string &input) {
     // Raise up the precedence of token-matching `singleLineComment_regex` and
     // `multiLineComment_regex` to resolve the conflict with the other token
     // matchings (e.g., `multiply_regex`).
-    if (std::regex_search(input, tokenMatch, singleLineComment_regex))
+    if (std::regex_search(input, tokenMatch, preprocessorDirective_regex))
+        return {TokenType::PreprocessorDirective, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, stringLiteral_regex))
+        return {TokenType::StringLiteral, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, singleLineComment_regex))
         return {TokenType::SingleLineComment, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, multiLineComment_regex))
         return {TokenType::MultiLineComment, tokenMatch.str()};
@@ -76,6 +91,24 @@ Token matchToken(const std::string &input) {
         return {TokenType::Divide, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, modulo_regex))
         return {TokenType::Modulo, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, equal_regex))
+        return {TokenType::Equal, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, notEqual_regex))
+        return {TokenType::NotEqual, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, lessThanOrEqual_regex))
+        return {TokenType::LessThanOrEqual, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, greaterThanOrEqual_regex))
+        return {TokenType::GreaterThanOrEqual, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, lessThan_regex))
+        return {TokenType::LessThan, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, greaterThan_regex))
+        return {TokenType::GreaterThan, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, logicalNot_regex))
+        return {TokenType::LogicalNot, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, logicalAnd_regex))
+        return {TokenType::LogicalAnd, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, logicalOr_regex))
+        return {TokenType::LogicalOr, tokenMatch.str()};
     // Lower down the precedence of token-matching `identifier_regex`
     // to avoid the conflict with the other token matchings (e.g.,
     // `intKeyword_regex`)
@@ -89,20 +122,20 @@ Token matchToken(const std::string &input) {
 // Tokenize the input.
 std::vector<Token> lexer(const std::string &input) {
     std::vector<Token> tokens;
-    std::string remaining_input = input;
+    std::string remainingInput = input;
 
     // Process the input string until it is empty.
-    while (!remaining_input.empty()) {
+    while (!remainingInput.empty()) {
         // If the input starts with some whitespace, trim the whitespace from
         // the start of the input.
-        remaining_input =
-            std::regex_replace(remaining_input, std::regex("^\\s+"), "");
-        if (remaining_input.empty())
+        remainingInput =
+            std::regex_replace(remainingInput, std::regex("^\\s+"), "");
+        if (remainingInput.empty())
             break;
 
         // Find the longest match at the start of the input for any regex
         // specified in Table 1-1 (page 9).
-        Token token = matchToken(remaining_input);
+        Token token = matchToken(remainingInput);
 
         // If no match is found, raise an error.
         // Print out the remaining input (intentionally) and exit the program.
@@ -112,11 +145,31 @@ std::vector<Token> lexer(const std::string &input) {
             throw std::runtime_error(msg.str());
         }
 
+        // Skip preprocessor directives and their corresponding tokens (e.g.,
+        // string literals).
+        if (token.type == TokenType::PreprocessorDirective) {
+            remainingInput = remainingInput.substr(token.value.size());
+            // Skip any additional tokens, such as string literals, that might
+            // follow a directive.
+            while (!remainingInput.empty()) {
+                remainingInput =
+                    std::regex_replace(remainingInput, std::regex("^\\s+"), "");
+                Token nextToken = matchToken(remainingInput);
+                // Stop skipping if the next token is not part of the directive
+                if (nextToken.type != TokenType::StringLiteral &&
+                    nextToken.type != TokenType::Identifier) {
+                    break;
+                }
+                remainingInput = remainingInput.substr(nextToken.value.size());
+            }
+            continue;
+        }
+
         // Skip the token (matching substring) if the token is of type
         // `SingleLineComment` or `MultiLineComment`.
         if (token.type == TokenType::SingleLineComment ||
             token.type == TokenType::MultiLineComment) {
-            remaining_input = remaining_input.substr(token.value.size());
+            remainingInput = remainingInput.substr(token.value.size());
             continue;
         }
 
@@ -125,7 +178,7 @@ std::vector<Token> lexer(const std::string &input) {
         tokens.emplace_back(token);
 
         // Remove the token (matching substring) from the start of the input.
-        remaining_input = remaining_input.substr(token.value.size());
+        remainingInput = remainingInput.substr(token.value.size());
     }
 
     // Return the vector of tokens.
@@ -190,11 +243,44 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::Modulo:
             typeStr = "Modulo";
             break;
+        case TokenType::LogicalNot:
+            typeStr = "LogicalNot";
+            break;
+        case TokenType::LogicalAnd:
+            typeStr = "LogicalAnd";
+            break;
+        case TokenType::LogicalOr:
+            typeStr = "LogicalOr";
+            break;
+        case TokenType::Equal:
+            typeStr = "Equal";
+            break;
+        case TokenType::NotEqual:
+            typeStr = "NotEqual";
+            break;
+        case TokenType::LessThanOrEqual:
+            typeStr = "LessThanOrEqual";
+            break;
+        case TokenType::GreaterThanOrEqual:
+            typeStr = "GreaterThanOrEqual";
+            break;
+        case TokenType::LessThan:
+            typeStr = "LessThan";
+            break;
+        case TokenType::GreaterThan:
+            typeStr = "GreaterThan";
+            break;
         case TokenType::SingleLineComment:
             typeStr = "SingleLineComment";
             break;
         case TokenType::MultiLineComment:
             typeStr = "MultiLineComment";
+            break;
+        case TokenType::PreprocessorDirective:
+            typeStr = "PreprocessorDirective";
+            break;
+        case TokenType::StringLiteral:
+            typeStr = "StringLiteral";
             break;
         case TokenType::Invalid:
             typeStr = "Invalid";
@@ -259,11 +345,44 @@ std::string tokenTypeToString(TokenType type) {
     case TokenType::Modulo:
         typeStr = "Modulo";
         break;
+    case TokenType::LogicalNot:
+        typeStr = "LogicalNot";
+        break;
+    case TokenType::LogicalAnd:
+        typeStr = "LogicalAnd";
+        break;
+    case TokenType::LogicalOr:
+        typeStr = "LogicalOr";
+        break;
+    case TokenType::Equal:
+        typeStr = "Equal";
+        break;
+    case TokenType::NotEqual:
+        typeStr = "NotEqual";
+        break;
+    case TokenType::LessThanOrEqual:
+        typeStr = "LessThanOrEqual";
+        break;
+    case TokenType::GreaterThanOrEqual:
+        typeStr = "GreaterThanOrEqual";
+        break;
+    case TokenType::LessThan:
+        typeStr = "LessThan";
+        break;
+    case TokenType::GreaterThan:
+        typeStr = "GreaterThan";
+        break;
     case TokenType::SingleLineComment:
         typeStr = "SingleLineComment";
         break;
     case TokenType::MultiLineComment:
         typeStr = "MultiLineComment";
+        break;
+    case TokenType::PreprocessorDirective:
+        typeStr = "PreprocessorDirective";
+        break;
+    case TokenType::StringLiteral:
+        typeStr = "StringLiteral";
         break;
     case TokenType::Invalid:
         typeStr = "Invalid";

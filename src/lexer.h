@@ -25,8 +25,19 @@ enum class TokenType {
     Multiply,
     Divide,
     Modulo,
+    LogicalNot,
+    LogicalAnd,
+    LogicalOr,
+    Equal,
+    NotEqual,
+    LessThanOrEqual,
+    GreaterThanOrEqual,
+    LessThan,
+    GreaterThan,
     SingleLineComment,
     MultiLineComment,
+    StringLiteral,
+    PreprocessorDirective,
     Invalid
 };
 
