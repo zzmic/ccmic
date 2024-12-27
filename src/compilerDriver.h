@@ -1,5 +1,5 @@
-#ifndef COMPILER_H
-#define COMPILER_H
+#ifndef COMPILER_DRIVER_H
+#define COMPILER_DRIVER_H
 
 #include <string>
 
@@ -11,4 +11,4 @@ void compileToAssembly(const std::string &preprocessedFile,
 void assembleAndLink(const std::string &assemblyFile,
                      const std::string &outputFile);
 
-#endif // COMPILER_H
+#endif // COMPILER_DRIVER_H

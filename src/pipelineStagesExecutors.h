@@ -3,7 +3,7 @@
 
 #include "assembly.h"
 #include "assemblyGenerator.cpp"
-#include "compiler.h"
+#include "compilerDriver.h"
 #include "fixupPass.h"
 #include "ir.h"
 #include "irGenerator.cpp"
