@@ -190,25 +190,65 @@ void PrettyPrinters::printIRBinaryInstruction(
     std::cout << "\n";
 }
 
-// TODO(zzmic).
 void PrettyPrinters::printCopyInstruction(
-    std::shared_ptr<IR::CopyInstruction> copyInstruction) {}
+    std::shared_ptr<IR::CopyInstruction> copyInstruction) {
+    std::cout << "    ";
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            copyInstruction->getDst())) {
+        std::cout << variableValue->getIdentifier();
+    }
 
-// TODO(zzmic).
+    std::cout << " = ";
+
+    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+            copyInstruction->getSrc())) {
+        std::cout << constantValue->getValue();
+    }
+
+    std::cout << "\n";
+}
+
 void PrettyPrinters::printIRJumpInstruction(
-    std::shared_ptr<IR::JumpInstruction> jumpInstruction) {}
+    std::shared_ptr<IR::JumpInstruction> jumpInstruction) {
+    std::cout << "    Jump(" << jumpInstruction->getTarget() << ")\n";
+}
 
-// TODO(zzmic).
 void PrettyPrinters::printIRJumpIfZeroInstruction(
-    std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstruction) {}
+    std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstruction) {
+    std::cout << "    JumpIfZero(";
 
-// TODO(zzmic).
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            jumpIfZeroInstruction->getCondition())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+                 jumpIfZeroInstruction->getCondition())) {
+        std::cout << constantValue->getValue();
+    }
+
+    std::cout << ", " << jumpIfZeroInstruction->getTarget() << ")\n";
+}
+
 void PrettyPrinters::printIRJumpIfNotZeroInstruction(
-    std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction) {}
+    std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction) {
+    std::cout << "    JumpIfNotZero(";
 
-// TODO(zzmic).
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            jumpIfNotZeroInstruction->getCondition())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+                 jumpIfNotZeroInstruction->getCondition())) {
+        std::cout << constantValue->getValue();
+    }
+
+    std::cout << ", " << jumpIfNotZeroInstruction->getTarget() << ")\n";
+}
+
 void PrettyPrinters::printIRLabelInstruction(
-    std::shared_ptr<IR::LabelInstruction> labelInstruction) {}
+    std::shared_ptr<IR::LabelInstruction> labelInstruction) {
+    std::cout << "    Label(" << labelInstruction->getIdentifier() << ")\n";
+}
 
 // Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(

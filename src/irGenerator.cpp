@@ -203,9 +203,11 @@ class IRGenerator {
         std::string falseLabelRight = generateFalseLabel();
         generateJumpIfZeroInstruction(rhs, falseLabelRight, instructions);
 
-        // Generate a copy instruction with 1 being copied to the result.
+        // Generate a copy instruction with 1 being copied to a (new) result
+        // label.
+        std::string resultLabel = generateResultLabel();
         std::shared_ptr<IR::VariableValue> dst =
-            std::make_shared<IR::VariableValue>("result");
+            std::make_shared<IR::VariableValue>(resultLabel);
         generateCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
                                 instructions);
 
@@ -249,9 +251,11 @@ class IRGenerator {
         std::string trueLabelRight = generateTrueLabel();
         generateJumpIfNotZeroInstruction(rhs, trueLabelRight, instructions);
 
-        // Generate a copy instruction with 0 being copied to the result.
+        // Generate a copy instruction with 0 being copied to a (new) result
+        // label.
+        std::string resultLabel = generateResultLabel();
         std::shared_ptr<IR::VariableValue> dst =
-            std::make_shared<IR::VariableValue>("result");
+            std::make_shared<IR::VariableValue>(resultLabel);
         generateCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
                                 instructions);
 
@@ -347,9 +351,22 @@ class IRGenerator {
         static int counter = 0;
 
         // Return the string representation of the (unique) label using the
-        // string "and_trueN" (similar to "true_label" in the listing), "where N
+        // string "or_trueN" (similar to "false_label" in the listing), "where
+        // N is the current value of a global counter."
+        return "or_true" + std::to_string(counter++);
+    }
+
+    // TODO(zzmic): Verify whether the following function is
+    // needed/required/correct.
+    std::string generateResultLabel() {
+        // Create a label with a unique number.
+        // The number would be incremented each time this function is called.
+        static int counter = 0;
+
+        // Return the string representation of the (unique) label using the
+        // string "resultN" (similar to "false_label" in the listing), "where N
         // is the current value of a global counter."
-        return "and_true" + std::to_string(counter++);
+        return "result" + std::to_string(counter++);
     }
 
     std::shared_ptr<IR::UnaryOperator>
