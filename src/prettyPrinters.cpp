@@ -3,160 +3,212 @@
 // Function to print the IR program onto the stdout.
 void PrettyPrinters::printIRProgram(std::shared_ptr<IR::Program> irProgram) {
     for (auto function : *irProgram->getFunctionDefinition()) {
-        std::cout << function->getFunctionIdentifier() << ":\n";
-        for (auto instruction : *function->getFunctionBody()) {
-            if (auto returnInstruction =
-                    std::dynamic_pointer_cast<IR::ReturnInstruction>(
-                        instruction)) {
-                if (auto constantValue =
-                        std::dynamic_pointer_cast<IR::ConstantValue>(
-                            returnInstruction->getReturnValue())) {
-                    std::cout << "    return " << constantValue->getValue()
-                              << "\n";
-                }
-                else if (auto variableValue =
-                             std::dynamic_pointer_cast<IR::VariableValue>(
-                                 returnInstruction->getReturnValue())) {
-                    std::cout << "    return " << variableValue->getIdentifier()
-                              << "\n";
-                }
-            }
-            else if (auto unaryInstruction =
-                         std::dynamic_pointer_cast<IR::UnaryInstruction>(
-                             instruction)) {
-                if (auto complementOperator =
-                        std::dynamic_pointer_cast<IR::ComplementOperator>(
-                            unaryInstruction->getUnaryOperator())) {
-                    std::cout << "    ";
-                    if (auto variableValue =
-                            std::dynamic_pointer_cast<IR::VariableValue>(
-                                unaryInstruction->getDst())) {
-                        std::cout << variableValue->getIdentifier();
-                        std::cout << " = ~";
-                        if (auto variableValue =
-                                std::dynamic_pointer_cast<IR::VariableValue>(
-                                    unaryInstruction->getSrc())) {
-                            std::cout << variableValue->getIdentifier();
-                            std::cout << "\n";
-                        }
-                        else if (auto constantValue = std::dynamic_pointer_cast<
-                                     IR::ConstantValue>(
-                                     unaryInstruction->getSrc())) {
-                            std::cout << constantValue->getValue();
-                            std::cout << "\n";
-                        }
-                    }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
-                                     unaryInstruction->getDst())) {
-                        std::cout << constantValue->getValue();
-                        std::cout << "\n";
-                    }
-                }
-                else if (auto negateOperator =
-                             std::dynamic_pointer_cast<IR::NegateOperator>(
-                                 unaryInstruction->getUnaryOperator())) {
-                    std::cout << "    ";
-                    if (auto variableValue =
-                            std::dynamic_pointer_cast<IR::VariableValue>(
-                                unaryInstruction->getDst())) {
-                        std::cout << variableValue->getIdentifier();
-                    }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
-                                     unaryInstruction->getDst())) {
-                        std::cout << constantValue->getValue();
-                    }
-                    std::cout << " = -";
-                    if (auto variableValue =
-                            std::dynamic_pointer_cast<IR::VariableValue>(
-                                unaryInstruction->getSrc())) {
-                        std::cout << variableValue->getIdentifier();
-                        std::cout << "\n";
-                    }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
-                                     unaryInstruction->getSrc())) {
-                        std::cout << constantValue->getValue();
-                        std::cout << "\n";
-                    }
-                }
-            }
-            else if (auto binaryInstruction =
-                         std::dynamic_pointer_cast<IR::BinaryInstruction>(
-                             instruction)) {
-                if (auto variableValue =
-                        std::dynamic_pointer_cast<IR::VariableValue>(
-                            binaryInstruction->getDst())) {
-                    std::cout << "    " << variableValue->getIdentifier();
-                    std::cout << " = ";
-                    if (auto variableValue =
-                            std::dynamic_pointer_cast<IR::VariableValue>(
-                                binaryInstruction->getLhs())) {
-                        std::cout << variableValue->getIdentifier();
-                    }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
-                                     binaryInstruction->getLhs())) {
-                        std::cout << constantValue->getValue();
-                    }
-                    if (auto binaryOperator =
-                            std::dynamic_pointer_cast<IR::AddOperator>(
-                                binaryInstruction->getBinaryOperator())) {
-                        std::cout << " + ";
-                    }
-                    else if (auto binaryOperator = std::dynamic_pointer_cast<
-                                 IR::SubtractOperator>(
-                                 binaryInstruction->getBinaryOperator())) {
-                        std::cout << " - ";
-                    }
-                    else if (auto binaryOperator = std::dynamic_pointer_cast<
-                                 IR::MultiplyOperator>(
-                                 binaryInstruction->getBinaryOperator())) {
-                        std::cout << " * ";
-                    }
-                    else if (auto binaryOperator =
-                                 std::dynamic_pointer_cast<IR::DivideOperator>(
-                                     binaryInstruction->getBinaryOperator())) {
-                        std::cout << " / ";
-                    }
-                    else if (auto binaryOperator = std::dynamic_pointer_cast<
-                                 IR::RemainderOperator>(
-                                 binaryInstruction->getBinaryOperator())) {
-                        std::cout << " % ";
-                    }
-                    if (auto variableValue =
-                            std::dynamic_pointer_cast<IR::VariableValue>(
-                                binaryInstruction->getRhs())) {
-                        std::cout << variableValue->getIdentifier();
-                    }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
-                                     binaryInstruction->getRhs())) {
-                        std::cout << constantValue->getValue();
-                    }
-                    std::cout << "\n";
-                }
-                else if (auto constantValue =
-                             std::dynamic_pointer_cast<IR::ConstantValue>(
-                                 binaryInstruction->getDst())) {
-                    std::cout << "    " << constantValue->getValue();
-                    std::cout << " = ";
-                    if (auto variableValue =
-                            std::dynamic_pointer_cast<IR::VariableValue>(
-                                binaryInstruction->getLhs())) {
-                        std::cout << variableValue->getIdentifier();
-                    }
-                    else if (auto constantValue =
-                                 std::dynamic_pointer_cast<IR::ConstantValue>(
-                                     binaryInstruction->getLhs())) {
-                        std::cout << constantValue->getValue();
-                    }
-                }
-            }
-        }
+        printIRFunctionDefinition(function);
     }
 }
+
+void PrettyPrinters::printIRFunctionDefinition(
+    std::shared_ptr<IR::FunctionDefinition> functionDefinition) {
+    std::cout << functionDefinition->getFunctionIdentifier() << ":\n";
+    for (auto instruction : *functionDefinition->getFunctionBody()) {
+        printIRInstruction(instruction);
+    }
+}
+
+void PrettyPrinters::printIRInstruction(
+    std::shared_ptr<IR::Instruction> instruction) {
+    if (auto returnInstruction =
+            std::dynamic_pointer_cast<IR::ReturnInstruction>(instruction)) {
+        printIRReturnInstruction(returnInstruction);
+    }
+    else if (auto unaryInstruction =
+                 std::dynamic_pointer_cast<IR::UnaryInstruction>(instruction)) {
+        printIRUnaryInstruction(unaryInstruction);
+    }
+    else if (auto binaryInstruction =
+                 std::dynamic_pointer_cast<IR::BinaryInstruction>(
+                     instruction)) {
+        printIRBinaryInstruction(binaryInstruction);
+    }
+    else if (auto copyInstruction =
+                 std::dynamic_pointer_cast<IR::CopyInstruction>(instruction)) {
+        printCopyInstruction(copyInstruction);
+    }
+    else if (auto jumpInstruction =
+                 std::dynamic_pointer_cast<IR::JumpInstruction>(instruction)) {
+        printIRJumpInstruction(jumpInstruction);
+    }
+    else if (auto jumpIfZeroInstruction =
+                 std::dynamic_pointer_cast<IR::JumpIfZeroInstruction>(
+                     instruction)) {
+        printIRJumpIfZeroInstruction(jumpIfZeroInstruction);
+    }
+    else if (auto jumpIfNotZeroInstruction =
+                 std::dynamic_pointer_cast<IR::JumpIfNotZeroInstruction>(
+                     instruction)) {
+        printIRJumpIfNotZeroInstruction(jumpIfNotZeroInstruction);
+    }
+    else if (auto labelInstruction =
+                 std::dynamic_pointer_cast<IR::LabelInstruction>(instruction)) {
+        printIRLabelInstruction(labelInstruction);
+    }
+}
+
+void PrettyPrinters::printIRReturnInstruction(
+    std::shared_ptr<IR::ReturnInstruction> returnInstruction) {
+    std::cout << "    return ";
+
+    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+            returnInstruction->getReturnValue())) {
+        std::cout << constantValue->getValue();
+    }
+    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+                 returnInstruction->getReturnValue())) {
+        std::cout << variableValue->getIdentifier();
+    }
+
+    std::cout << "\n";
+}
+
+void PrettyPrinters::printIRUnaryInstruction(
+    std::shared_ptr<IR::UnaryInstruction> unaryInstruction) {
+    std::cout << "    ";
+
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            unaryInstruction->getDst())) {
+        std::cout << variableValue->getIdentifier();
+    }
+
+    if (auto complementOperator =
+            std::dynamic_pointer_cast<IR::ComplementOperator>(
+                unaryInstruction->getUnaryOperator())) {
+        std::cout << " = ~";
+    }
+    else if (auto negateOperator =
+                 std::dynamic_pointer_cast<IR::NegateOperator>(
+                     unaryInstruction->getUnaryOperator())) {
+        std::cout << " = -";
+    }
+    else if (auto notOperator = std::dynamic_pointer_cast<IR::NotOperator>(
+                 unaryInstruction->getUnaryOperator())) {
+        std::cout << " = !";
+    }
+
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            unaryInstruction->getSrc())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+                 unaryInstruction->getSrc())) {
+        std::cout << constantValue->getValue();
+    }
+
+    std::cout << "\n";
+}
+
+void PrettyPrinters::printIRBinaryInstruction(
+    std::shared_ptr<IR::BinaryInstruction> binaryInstruction) {
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            binaryInstruction->getDst())) {
+        std::cout << "    " << variableValue->getIdentifier();
+    }
+
+    std::cout << " = ";
+
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            binaryInstruction->getLhs())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+                 binaryInstruction->getLhs())) {
+        std::cout << constantValue->getValue();
+    }
+
+    if (auto binaryOperator = std::dynamic_pointer_cast<IR::AddOperator>(
+            binaryInstruction->getBinaryOperator())) {
+        std::cout << " + ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::SubtractOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " - ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::MultiplyOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " * ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::DivideOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " / ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::RemainderOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " % ";
+    }
+    else if (auto binaryOperator = std::dynamic_pointer_cast<IR::EqualOperator>(
+                 binaryInstruction->getBinaryOperator())) {
+        std::cout << " == ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::NotEqualOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " != ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::LessThanOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " < ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::LessThanOrEqualOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " <= ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::GreaterThanOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " > ";
+    }
+    else if (auto binaryOperator =
+                 std::dynamic_pointer_cast<IR::GreaterThanOrEqualOperator>(
+                     binaryInstruction->getBinaryOperator())) {
+        std::cout << " >= ";
+    }
+
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            binaryInstruction->getRhs())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+                 binaryInstruction->getRhs())) {
+        std::cout << constantValue->getValue();
+    }
+
+    std::cout << "\n";
+}
+
+// TODO(zzmic).
+void PrettyPrinters::printCopyInstruction(
+    std::shared_ptr<IR::CopyInstruction> copyInstruction) {}
+
+// TODO(zzmic).
+void PrettyPrinters::printIRJumpInstruction(
+    std::shared_ptr<IR::JumpInstruction> jumpInstruction) {}
+
+// TODO(zzmic).
+void PrettyPrinters::printIRJumpIfZeroInstruction(
+    std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstruction) {}
+
+// TODO(zzmic).
+void PrettyPrinters::printIRJumpIfNotZeroInstruction(
+    std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction) {}
+
+// TODO(zzmic).
+void PrettyPrinters::printIRLabelInstruction(
+    std::shared_ptr<IR::LabelInstruction> labelInstruction) {}
 
 // Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(

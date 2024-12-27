@@ -4,6 +4,8 @@
 #include "program.h"
 #include "statement.h"
 
+#include <optional>
+
 class IRGenerator {
   public:
     std::shared_ptr<IR::Program>
@@ -63,7 +65,7 @@ class IRGenerator {
         std::shared_ptr<IR::Value> result =
             generateInstruction(exp, instructions);
 
-        // Generate a return instruction with the result.
+        // Generate a return instruction with the result value.
         instructions->emplace_back(
             std::make_shared<IR::ReturnInstruction>(result));
     }
@@ -94,14 +96,16 @@ class IRGenerator {
             if (auto astBinaryOperator =
                     std::dynamic_pointer_cast<AST::AndOperator>(
                         binaryExpr->getOperator())) {
-                // TODO(zzmic): Implement the logical-and operator case.
+                return generateInstructionWithLogicalAnd(binaryExpr,
+                                                         instructions);
             }
             // If the binary operator in the AST binary expression is a
             // logical-or operator, ...
             else if (auto astBinaryOperator =
                          std::dynamic_pointer_cast<AST::OrOperator>(
                              binaryExpr->getOperator())) {
-                // TODO(zzmic): Implement the logical-or operator case.
+                return generateInstructionWithLogicalOr(binaryExpr,
+                                                        instructions);
             }
             // Otherwise (i.e., if the binary operator in the AST binary
             // expression can be converted to a binary operator in the IR), ...
@@ -177,6 +181,108 @@ class IRGenerator {
         return dst;
     }
 
+    std::shared_ptr<IR::VariableValue> generateInstructionWithLogicalAnd(
+        std::shared_ptr<AST::BinaryExpression> binaryExpr,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions) {
+        // Recursively generate the left expression in the binary expression.
+        std::shared_ptr<IR::Value> lhs =
+            generateInstruction(binaryExpr->getLeft(), instructions);
+
+        // Generate a JumpIfZero instruction with the left-hand side value and a
+        // (new) false label.
+        std::string falseLabelLeft = generateFalseLabel();
+        generateJumpIfZeroInstruction(lhs, falseLabelLeft, instructions);
+
+        // Recursively generate the right expression in the binary expression.
+        std::shared_ptr<IR::Value> rhs =
+            generateInstruction(binaryExpr->getRight(), instructions);
+
+        // Generate a JumpIfZero instruction with the right-hand side value and
+        // a (new) false label.
+        std::string falseLabelRight = generateFalseLabel();
+        generateJumpIfZeroInstruction(rhs, falseLabelRight, instructions);
+
+        // Generate a copy instruction with 1 being copied to the result.
+        std::shared_ptr<IR::VariableValue> dst =
+            std::make_shared<IR::VariableValue>("result");
+        generateCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
+                                instructions);
+
+        // Generate a jump instruction with string "end".
+        generateJumpInstruction("end", instructions);
+
+        // Generate a label instruction with a new false label.
+        std::string falseLabelAfterRight = generateFalseLabel();
+        generateLabelInstruction(falseLabelAfterRight, instructions);
+
+        // Generate a copy instruction with 0 being copied to the result.
+        generateCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
+                                instructions);
+
+        // Generate a label instruction with string "end".
+        generateLabelInstruction("end", instructions);
+
+        // Return the destination value.
+        return dst;
+    }
+
+    std::shared_ptr<IR::VariableValue> generateInstructionWithLogicalOr(
+        std::shared_ptr<AST::BinaryExpression> binaryExpr,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions) {
+        // Recursively generate the left expression in the binary expression.
+        std::shared_ptr<IR::Value> lhs =
+            generateInstruction(binaryExpr->getLeft(), instructions);
+
+        // Generate a JumpIfNotZero instruction with the left-hand side value
+        // and a (new) true label.
+        std::string trueLabelLeft = generateTrueLabel();
+        generateJumpIfNotZeroInstruction(lhs, trueLabelLeft, instructions);
+
+        // Recursively generate the right expression in the binary expression.
+        std::shared_ptr<IR::Value> rhs =
+            generateInstruction(binaryExpr->getRight(), instructions);
+
+        // Generate a JumpIfNotZero instruction with the right-hand side value
+        // and a (new) true label.
+        std::string trueLabelRight = generateTrueLabel();
+        generateJumpIfNotZeroInstruction(rhs, trueLabelRight, instructions);
+
+        // Generate a copy instruction with 0 being copied to the result.
+        std::shared_ptr<IR::VariableValue> dst =
+            std::make_shared<IR::VariableValue>("result");
+        generateCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
+                                instructions);
+
+        // Generate a jump instruction with string "end".
+        generateJumpInstruction("end", instructions);
+
+        // Generate a label instruction with a new true label.
+        std::string trueLabelAfterRight = generateTrueLabel();
+        generateLabelInstruction(trueLabelAfterRight, instructions);
+
+        // Generate a copy instruction with 1 being copied to the result.
+        generateCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
+                                instructions);
+
+        // Generate a label instruction with string "end".
+        generateLabelInstruction("end", instructions);
+
+        // Return the destination value.
+        return dst;
+    }
+
+    void generateCopyInstruction(
+        std::shared_ptr<IR::Value> src, std::shared_ptr<IR::Value> dst,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions) {
+        // Generate a copy instruction with the source value and the
+        // destination value.
+        instructions->emplace_back(
+            std::make_shared<IR::CopyInstruction>(src, dst));
+    }
+
     void generateJumpInstruction(
         std::string target,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
@@ -224,16 +330,26 @@ class IRGenerator {
         return "tmp." + std::to_string(counter++);
     }
 
-    std::string generateLabel() {
+    std::string generateFalseLabel() {
         // Create a label with a unique number.
         // The number would be incremented each time this function is called.
         static int counter = 0;
 
-        // Return the string representation of the label.
-        // Note: An alternative is to use the string "and_falseN" as
-        // "false_label" in the listing, "where N is the current value of a
-        // global counter."
-        return "L" + std::to_string(counter++);
+        // Return the string representation of the (unique) label using the
+        // string "and_falseN" (as "false_label" in the listing), "where N is
+        // the current value of a global counter."
+        return "and_false" + std::to_string(counter++);
+    }
+
+    std::string generateTrueLabel() {
+        // Create a label with a unique number.
+        // The number would be incremented each time this function is called.
+        static int counter = 0;
+
+        // Return the string representation of the (unique) label using the
+        // string "and_trueN" (similar to "true_label" in the listing), "where N
+        // is the current value of a global counter."
+        return "and_true" + std::to_string(counter++);
     }
 
     std::shared_ptr<IR::UnaryOperator>
@@ -250,6 +366,9 @@ class IRGenerator {
         throw std::runtime_error("Unsupported unary operator");
     }
 
+    // Note: The logical-and and logical-or operators in the AST are NOT binary
+    // operators in the IR (and should NOT be converted to binary operators in
+    // the IR).
     std::shared_ptr<IR::BinaryOperator>
     convertBinop(std::shared_ptr<AST::BinaryOperator> op) {
         if (std::dynamic_pointer_cast<AST::AddOperator>(op)) {
