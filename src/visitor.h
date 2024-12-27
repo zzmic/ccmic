@@ -19,11 +19,20 @@ class UnaryExpression;
 class BinaryExpression;
 class ComplementOperator;
 class NegateOperator;
+class NotOperator;
 class AddOperator;
 class SubtractOperator;
 class MultiplyOperator;
 class DivideOperator;
 class RemainderOperator;
+class AndOperator;
+class OrOperator;
+class EqualOperator;
+class NotEqualOperator;
+class LessThanOperator;
+class LessThanOrEqualOperator;
+class GreaterThanOperator;
+class GreaterThanOrEqualOperator;
 
 class Visitor {
   public:
@@ -38,11 +47,21 @@ class Visitor {
     virtual void visit(BinaryExpression &binaryExpression) = 0;
     virtual void visit(ComplementOperator &complementOperator) = 0;
     virtual void visit(NegateOperator &negateOperator) = 0;
+    virtual void visit(NotOperator &notOperator) = 0;
     virtual void visit(AddOperator &addOperator) = 0;
     virtual void visit(SubtractOperator &subtractOperator) = 0;
     virtual void visit(MultiplyOperator &multiplyOperator) = 0;
     virtual void visit(DivideOperator &divideOperator) = 0;
     virtual void visit(RemainderOperator &remainderOperator) = 0;
+    virtual void visit(AndOperator &andOperator) = 0;
+    virtual void visit(OrOperator &orOperator) = 0;
+    virtual void visit(EqualOperator &equalOperator) = 0;
+    virtual void visit(NotEqualOperator &notEqualOperator) = 0;
+    virtual void visit(LessThanOperator &lessThanOperator) = 0;
+    virtual void visit(LessThanOrEqualOperator &lessThanOrEqualOperator) = 0;
+    virtual void visit(GreaterThanOperator &greaterThanOperator) = 0;
+    virtual void
+    visit(GreaterThanOrEqualOperator &greaterThanOrEqualOperator) = 0;
 };
 } // Namespace AST
 

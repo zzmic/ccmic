@@ -2,13 +2,7 @@
 #include <sstream>
 
 namespace AST {
-Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {
-    precedenceMap[TokenType::Plus] = 45;
-    precedenceMap[TokenType::Minus] = 45;
-    precedenceMap[TokenType::Multiply] = 50;
-    precedenceMap[TokenType::Divide] = 50;
-    precedenceMap[TokenType::Modulo] = 50;
-}
+Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
 
 std::shared_ptr<Program> Parser::parse() {
     std::shared_ptr<Function> function = parseFunction();
@@ -101,6 +95,11 @@ std::shared_ptr<Expression> Parser::parseFactor() {
         std::shared_ptr<Expression> innerExpr = parseFactor();
         return std::make_shared<UnaryExpression>(minusToken.value, innerExpr);
     }
+    else if (matchToken(TokenType::LogicalNot)) {
+        Token notToken = consumeToken(TokenType::LogicalNot);
+        std::shared_ptr<Expression> innerExpr = parseFactor();
+        return std::make_shared<UnaryExpression>(notToken.value, innerExpr);
+    }
     else if (matchToken(TokenType::OpenParenthesis)) {
         consumeToken(TokenType::OpenParenthesis);
         std::shared_ptr<Expression> innerExpr = parseExpression(0);
@@ -123,22 +122,30 @@ std::shared_ptr<Expression> Parser::parseFactor() {
 
 std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
     std::shared_ptr<Expression> left = parseFactor();
-    while ((matchToken(TokenType::Plus) || matchToken(TokenType::Minus) ||
-            matchToken(TokenType::Multiply) || matchToken(TokenType::Divide) ||
-            matchToken(TokenType::Modulo)) &&
-           getPrecedence(tokens[current]) >= minPrecedence) {
-        Token opToken = consumeToken(tokens[current].type);
-        if (!matchToken(TokenType::Constant) && !matchToken(TokenType::Tilde) &&
-            !matchToken(TokenType::Minus) &&
-            !matchToken(TokenType::OpenParenthesis)) {
+    while (
+        (matchToken(TokenType::Plus) || matchToken(TokenType::Minus) ||
+         matchToken(TokenType::Multiply) || matchToken(TokenType::Divide) ||
+         matchToken(TokenType::Modulo) || matchToken(TokenType::LogicalAnd) ||
+         matchToken(TokenType::LogicalOr) || matchToken(TokenType::Equal) ||
+         matchToken(TokenType::NotEqual) || matchToken(TokenType::LessThan) ||
+         matchToken(TokenType::LessThanOrEqual) ||
+         matchToken(TokenType::GreaterThan) ||
+         matchToken(TokenType::GreaterThanOrEqual)) &&
+        getPrecedence(tokens[current]) >= minPrecedence) {
+        Token binOpToken = consumeToken(tokens[current].type);
+        if (!(matchToken(TokenType::Constant) || matchToken(TokenType::Tilde) ||
+              matchToken(TokenType::Minus) ||
+              matchToken(TokenType::LogicalNot) ||
+              matchToken(TokenType::OpenParenthesis))) {
             std::stringstream msg;
-            msg << "Malformed expression: operator " << opToken.value
+            msg << "Malformed expression: binary operator " << binOpToken.value
                 << " is not followed by a valid operand.";
             throw std::runtime_error(msg.str());
         }
         std::shared_ptr<Expression> right =
-            parseExpression(getPrecedence(opToken) + 1);
-        left = std::make_shared<BinaryExpression>(left, opToken.value, right);
+            parseExpression(getPrecedence(binOpToken) + 1);
+        left =
+            std::make_shared<BinaryExpression>(left, binOpToken.value, right);
     }
     return left;
 }

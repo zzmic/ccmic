@@ -16,7 +16,6 @@ class PseudoToStackPass {
         std::shared_ptr<Assembly::Instruction> &instruction,
         std::unordered_map<std::string, int> &pseudoToStackMap,
         int &currentOffset);
-
     void replaceOperand(std::shared_ptr<Assembly::Operand> &operand,
                         std::unordered_map<std::string, int> &pseudoToStackMap,
                         int &currentOffset);

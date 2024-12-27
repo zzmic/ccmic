@@ -1,6 +1,8 @@
 #include "expression.h"
 #include "visitor.h"
 
+#include <stdexcept>
+
 namespace AST {
 ConstantExpression::ConstantExpression(int value) : value(value) {}
 
@@ -16,7 +18,14 @@ UnaryExpression::UnaryExpression(const std::string &opInStr,
     else if (opInStr == "~") {
         op = std::make_shared<ComplementOperator>();
     }
-    // Static-cast the expression to a factor.
+    else if (opInStr == "!") {
+        op = std::make_shared<NotOperator>();
+    }
+    else {
+        throw std::runtime_error("Invalid unary operator in unary expression");
+    }
+    // Static-cast the expression to a factor, obeying the grammar `<unop>
+    // <factor>`.
     this->expr = std::static_pointer_cast<Factor>(expr);
 }
 
@@ -31,6 +40,13 @@ std::shared_ptr<Factor> UnaryExpression::getExpression() const { return expr; }
 BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
                                    const std::string &opInStr,
                                    std::shared_ptr<Expression> right) {
+    if (!left) {
+        throw std::runtime_error("Null left-hand operand in binary expression");
+    }
+    if (!right) {
+        throw std::runtime_error(
+            "Null right-hand operand in binary expression");
+    }
     if (opInStr == "+") {
         op = std::make_shared<AddOperator>();
     }
@@ -45,6 +61,34 @@ BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
     }
     else if (opInStr == "%") {
         op = std::make_shared<RemainderOperator>();
+    }
+    else if (opInStr == "&&") {
+        op = std::make_shared<AndOperator>();
+    }
+    else if (opInStr == "||") {
+        op = std::make_shared<OrOperator>();
+    }
+    else if (opInStr == "==") {
+        op = std::make_shared<EqualOperator>();
+    }
+    else if (opInStr == "!=") {
+        op = std::make_shared<NotEqualOperator>();
+    }
+    else if (opInStr == "<") {
+        op = std::make_shared<LessThanOperator>();
+    }
+    else if (opInStr == "<=") {
+        op = std::make_shared<LessThanOrEqualOperator>();
+    }
+    else if (opInStr == ">") {
+        op = std::make_shared<GreaterThanOperator>();
+    }
+    else if (opInStr == ">=") {
+        op = std::make_shared<GreaterThanOrEqualOperator>();
+    }
+    else {
+        throw std::runtime_error(
+            "Invalid binary operator in binary expression");
     }
     this->left = left;
     this->right = right;

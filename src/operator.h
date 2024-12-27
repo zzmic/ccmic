@@ -21,6 +21,12 @@ class NegateOperator : public UnaryOperator {
     std::string opInString() const;
 };
 
+class NotOperator : public UnaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
 class BinaryOperator : public Operator {};
 
 class AddOperator : public BinaryOperator {
@@ -48,6 +54,54 @@ class DivideOperator : public BinaryOperator {
 };
 
 class RemainderOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class AndOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class OrOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class EqualOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class NotEqualOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class LessThanOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class LessThanOrEqualOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class GreaterThanOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
+
+class GreaterThanOrEqualOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
     std::string opInString() const;

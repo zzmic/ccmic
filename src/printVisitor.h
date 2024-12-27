@@ -15,11 +15,20 @@ class PrintVisitor : public Visitor {
     void visit(BinaryExpression &binaryExpression) override;
     void visit(ComplementOperator &complementOperator) override;
     void visit(NegateOperator &negateOperator) override;
+    void visit(NotOperator &notOperator) override;
     void visit(AddOperator &addOperator) override;
     void visit(SubtractOperator &subtractOperator) override;
     void visit(MultiplyOperator &multiplyOperator) override;
     void visit(DivideOperator &divideOperator) override;
     void visit(RemainderOperator &remainderOperator) override;
+    void visit(AndOperator &andOperator) override;
+    void visit(OrOperator &orOperator) override;
+    void visit(EqualOperator &equalOperator) override;
+    void visit(NotEqualOperator &notEqualOperator) override;
+    void visit(LessThanOperator &lessThanOperator) override;
+    void visit(LessThanOrEqualOperator &lessThanOrEqualOperator) override;
+    void visit(GreaterThanOperator &greaterThanOperator) override;
+    void visit(GreaterThanOrEqualOperator &greaterThanOrEqualOperator) override;
 };
 } // namespace AST
 
