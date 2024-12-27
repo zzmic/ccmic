@@ -2,6 +2,7 @@
 #define IR_H
 
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <string>
 #include <variant>
@@ -19,6 +20,10 @@ class ComplementOperator : public UnaryOperator {};
 
 class NegateOperator : public UnaryOperator {};
 
+class NotOperator : public UnaryOperator {};
+
+// Note: The logical-and and logical-or operators in the AST are NOT binary
+// operators in the IR.
 class BinaryOperator : public Operator {};
 
 class AddOperator : public BinaryOperator {};
@@ -30,6 +35,18 @@ class MultiplyOperator : public BinaryOperator {};
 class DivideOperator : public BinaryOperator {};
 
 class RemainderOperator : public BinaryOperator {};
+
+class EqualOperator : public BinaryOperator {};
+
+class NotEqualOperator : public BinaryOperator {};
+
+class LessThanOperator : public BinaryOperator {};
+
+class LessThanOrEqualOperator : public BinaryOperator {};
+
+class GreaterThanOperator : public BinaryOperator {};
+
+class GreaterThanOrEqualOperator : public BinaryOperator {};
 
 class Value {
   public:
@@ -117,6 +134,74 @@ class BinaryInstruction : public Instruction {
     void setLhs(std::shared_ptr<Value> lhs) { this->lhs = lhs; }
     void setRhs(std::shared_ptr<Value> rhs) { this->rhs = rhs; }
     void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
+};
+
+class CopyInstruction : public Instruction {
+  private:
+    std::shared_ptr<Value> src, dst;
+
+  public:
+    CopyInstruction(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
+        : src(src), dst(dst) {}
+    std::shared_ptr<Value> getSrc() { return src; }
+    std::shared_ptr<Value> getDst() { return dst; }
+    void setSrc(std::shared_ptr<Value> src) { this->src = src; }
+    void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
+};
+
+class JumpInstruction : public Instruction {
+  private:
+    std::string target;
+
+  public:
+    JumpInstruction(std::string target) : target(target) {}
+    std::string getTarget() { return target; }
+    void setTarget(std::string target) { this->target = target; }
+};
+
+class JumpIfZeroInstruction : public Instruction {
+  private:
+    std::shared_ptr<Value> condition;
+    std::string target;
+
+  public:
+    JumpIfZeroInstruction(std::shared_ptr<Value> condition, std::string target)
+        : condition(condition), target(target) {}
+    std::shared_ptr<Value> getCondition() { return condition; }
+    std::string getTarget() { return target; }
+    void setCondition(std::shared_ptr<Value> condition) {
+        this->condition = condition;
+    }
+    void setTarget(std::string target) { this->target = target; }
+};
+
+class JumpIfNotZeroInstruction : public Instruction {
+  private:
+    std::shared_ptr<Value> condition;
+    std::string target;
+
+  public:
+    JumpIfNotZeroInstruction(std::shared_ptr<Value> condition,
+                             std::string target)
+        : condition(condition), target(target) {}
+    std::shared_ptr<Value> getCondition() { return condition; }
+    std::string getTarget() { return target; }
+    void setCondition(std::shared_ptr<Value> condition) {
+        this->condition = condition;
+    }
+    void setTarget(std::string target) { this->target = target; }
+};
+
+class LabelInstruction : public Instruction {
+  private:
+    std::string identifier;
+
+  public:
+    LabelInstruction(std::string identifier) : identifier(identifier) {}
+    std::string getIdentifier() { return identifier; }
+    void setIdentifier(std::string identifier) {
+        this->identifier = identifier;
+    }
 };
 
 class FunctionDefinition {
