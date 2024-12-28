@@ -39,6 +39,12 @@ class FixupPass {
             instructions,
         std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
         std::shared_ptr<Assembly::IdivInstruction> idivInstr);
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    rewriteInvalidCmp(
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions,
+        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+        std::shared_ptr<Assembly::CmpInstruction> cmpInstr);
 };
 } // Namespace Assembly
 
