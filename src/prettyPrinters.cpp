@@ -116,11 +116,11 @@ void PrettyPrinters::printIRBinaryInstruction(
     std::cout << " = ";
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            binaryInstruction->getLhs())) {
+            binaryInstruction->getSrc1())) {
         std::cout << variableValue->getIdentifier();
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 binaryInstruction->getLhs())) {
+                 binaryInstruction->getSrc1())) {
         std::cout << constantValue->getValue();
     }
 
@@ -179,11 +179,11 @@ void PrettyPrinters::printIRBinaryInstruction(
     }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            binaryInstruction->getRhs())) {
+            binaryInstruction->getSrc2())) {
         std::cout << variableValue->getIdentifier();
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 binaryInstruction->getRhs())) {
+                 binaryInstruction->getSrc2())) {
         std::cout << constantValue->getValue();
     }
 
@@ -247,7 +247,7 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
 
 void PrettyPrinters::printIRLabelInstruction(
     std::shared_ptr<IR::LabelInstruction> labelInstruction) {
-    std::cout << "    Label(" << labelInstruction->getIdentifier() << ")\n";
+    std::cout << "    Label(" << labelInstruction->getLabel() << ")\n";
 }
 
 // Function to print the assembly code onto the stdout.

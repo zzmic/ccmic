@@ -74,6 +74,23 @@ class StackOperand : public Operand {
     int getOffset() const override { return offset; }
 };
 
+class CondCode {
+  public:
+    virtual ~CondCode() = default;
+};
+
+class E : public CondCode {};
+
+class NE : public CondCode {};
+
+class G : public CondCode {};
+
+class GE : public CondCode {};
+
+class L : public CondCode {};
+
+class LE : public CondCode {};
+
 class Operator {
   public:
     virtual ~Operator() = default;
@@ -84,6 +101,8 @@ class UnaryOperator : public Operator {};
 class NegateOperator : public UnaryOperator {};
 
 class ComplementOperator : public UnaryOperator {};
+
+class NotOperator : public UnaryOperator {};
 
 class BinaryOperator : public Operator {};
 
@@ -157,6 +176,24 @@ class BinaryInstruction : public Instruction {
     }
 };
 
+class CmpInstruction : public Instruction {
+  private:
+    std::shared_ptr<Operand> operand1, operand2;
+
+  public:
+    CmpInstruction(std::shared_ptr<Operand> operand1,
+                   std::shared_ptr<Operand> operand2)
+        : operand1(operand1), operand2(operand2) {}
+    std::shared_ptr<Operand> getOperand1() { return operand1; }
+    std::shared_ptr<Operand> getOperand2() { return operand2; }
+    void setOperand1(std::shared_ptr<Operand> operand1) {
+        this->operand1 = operand1;
+    }
+    void setOperand2(std::shared_ptr<Operand> operand2) {
+        this->operand2 = operand2;
+    }
+};
+
 class IdivInstruction : public Instruction {
   private:
     std::shared_ptr<Operand> operand;
@@ -170,6 +207,61 @@ class IdivInstruction : public Instruction {
 };
 
 class CdqInstruction : public Instruction {};
+
+class JmpInstruction : public Instruction {
+  private:
+    std::string label;
+
+  public:
+    JmpInstruction(std::string label) : label(label) {}
+    std::string getLabel() { return label; }
+    void setLabel(std::string label) { this->label = label; }
+};
+
+class JmpCCInstruction : public Instruction {
+  private:
+    std::shared_ptr<CondCode> condCode;
+    std::string label;
+
+  public:
+    JmpCCInstruction(std::shared_ptr<CondCode> condCode, std::string label)
+        : condCode(condCode), label(label) {}
+    std::shared_ptr<CondCode> getCondCode() { return condCode; }
+    std::string getLabel() { return label; }
+    void setCondCode(std::shared_ptr<CondCode> condCode) {
+        this->condCode = condCode;
+    }
+    void setLabel(std::string label) { this->label = label; }
+};
+
+class SetCCInstruction : public Instruction {
+  private:
+    std::shared_ptr<CondCode> condCode;
+    std::shared_ptr<Operand> operand;
+
+  public:
+    SetCCInstruction(std::shared_ptr<CondCode> condCode,
+                     std::shared_ptr<Operand> operand)
+        : condCode(condCode), operand(operand) {}
+    std::shared_ptr<CondCode> getCondCode() { return condCode; }
+    std::shared_ptr<Operand> getOperand() { return operand; }
+    void setCondCode(std::shared_ptr<CondCode> condCode) {
+        this->condCode = condCode;
+    }
+    void setOperand(std::shared_ptr<Operand> operand) {
+        this->operand = operand;
+    }
+};
+
+class LabelInstruction : public Instruction {
+  private:
+    std::string label;
+
+  public:
+    LabelInstruction(std::string label) : label(label) {}
+    std::string getLabel() { return label; }
+    void setLabel(std::string label) { this->label = label; }
+};
 
 class AllocateStackInstruction : public Instruction {
   private:

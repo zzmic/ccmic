@@ -16,9 +16,9 @@ class Operator {
 
 class UnaryOperator : public Operator {};
 
-class ComplementOperator : public UnaryOperator {};
-
 class NegateOperator : public UnaryOperator {};
+
+class ComplementOperator : public UnaryOperator {};
 
 class NotOperator : public UnaryOperator {};
 
@@ -115,24 +115,24 @@ class UnaryInstruction : public Instruction {
 class BinaryInstruction : public Instruction {
   private:
     std::shared_ptr<BinaryOperator> binaryOperator;
-    std::shared_ptr<Value> lhs, rhs, dst;
+    std::shared_ptr<Value> src1, src2, dst;
 
   public:
     BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
-                      std::shared_ptr<Value> lhs, std::shared_ptr<Value> rhs,
+                      std::shared_ptr<Value> src1, std::shared_ptr<Value> src2,
                       std::shared_ptr<Value> dst)
-        : binaryOperator(binaryOperator), lhs(lhs), rhs(rhs), dst(dst) {}
+        : binaryOperator(binaryOperator), src1(src1), src2(src2), dst(dst) {}
     std::shared_ptr<BinaryOperator> getBinaryOperator() {
         return binaryOperator;
     }
-    std::shared_ptr<Value> getLhs() { return lhs; }
-    std::shared_ptr<Value> getRhs() { return rhs; }
+    std::shared_ptr<Value> getSrc1() { return src1; }
+    std::shared_ptr<Value> getSrc2() { return src2; }
     std::shared_ptr<Value> getDst() { return dst; }
     void setBinaryOperator(std::shared_ptr<BinaryOperator> binaryOperator) {
         this->binaryOperator = binaryOperator;
     }
-    void setLhs(std::shared_ptr<Value> lhs) { this->lhs = lhs; }
-    void setRhs(std::shared_ptr<Value> rhs) { this->rhs = rhs; }
+    void setSrc1(std::shared_ptr<Value> src1) { this->src1 = src1; }
+    void setSrc2(std::shared_ptr<Value> src2) { this->src2 = src2; }
     void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
 };
 
@@ -194,14 +194,12 @@ class JumpIfNotZeroInstruction : public Instruction {
 
 class LabelInstruction : public Instruction {
   private:
-    std::string identifier;
+    std::string label;
 
   public:
-    LabelInstruction(std::string identifier) : identifier(identifier) {}
-    std::string getIdentifier() { return identifier; }
-    void setIdentifier(std::string identifier) {
-        this->identifier = identifier;
-    }
+    LabelInstruction(std::string label) : label(label) {}
+    std::string getLabel() { return label; }
+    void setLabel(std::string label) { this->label = label; }
 };
 
 class FunctionDefinition {
