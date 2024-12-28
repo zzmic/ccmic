@@ -13,6 +13,7 @@ class PrettyPrinters {
     printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram);
 
   private:
+    // Auxiliary functions for printing the IR program.
     static void printIRFunctionDefinition(
         std::shared_ptr<IR::FunctionDefinition> functionDefinition);
     static void
@@ -23,8 +24,8 @@ class PrettyPrinters {
         std::shared_ptr<IR::UnaryInstruction> unaryInstruction);
     static void printIRBinaryInstruction(
         std::shared_ptr<IR::BinaryInstruction> binaryInstruction);
-    static void
-    printCopyInstruction(std::shared_ptr<IR::CopyInstruction> copyInstruction);
+    static void printIRCopyInstruction(
+        std::shared_ptr<IR::CopyInstruction> copyInstruction);
     static void printIRJumpInstruction(
         std::shared_ptr<IR::JumpInstruction> jumpInstruction);
     static void printIRJumpIfZeroInstruction(
@@ -33,6 +34,35 @@ class PrettyPrinters {
         std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction);
     static void printIRLabelInstruction(
         std::shared_ptr<IR::LabelInstruction> labelInstruction);
+
+    // Auxiliary functions for printing the assembly program.
+    static void printAssyFunctionDefinition(
+        std::shared_ptr<Assembly::FunctionDefinition> functionDefinition);
+    static void
+    printAssyInstruction(std::shared_ptr<Assembly::Instruction> instruction);
+    static void printAssyMovInstruction(
+        std::shared_ptr<Assembly::MovInstruction> movInstruction);
+    static void printAssyRetInstruction();
+    static void printAssyAllocateStackInstruction(
+        std::shared_ptr<Assembly::AllocateStackInstruction>
+            allocateStackInstruction);
+    static void printAssyUnaryInstruction(
+        std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction);
+    static void printAssyBinaryInstruction(
+        std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction);
+    static void printAssyCmpInstruction(
+        std::shared_ptr<Assembly::CmpInstruction> cmpInstruction);
+    static void printAssyIdivInstruction(
+        std::shared_ptr<Assembly::IdivInstruction> idivInstruction);
+    static void printAssyCdqInstruction();
+    static void printAssyJmpInstruction(
+        std::shared_ptr<Assembly::JmpInstruction> jmpInstruction);
+    static void printAssyJmpCCInstruction(
+        std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction);
+    static void printAssySetCCInstruction(
+        std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction);
+    static void printAssyLabelInstruction(
+        std::shared_ptr<Assembly::LabelInstruction> labelInstruction);
 };
 
 #endif // PRETTY_PRINTERS_H

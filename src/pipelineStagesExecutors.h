@@ -29,6 +29,48 @@ class PipelineStagesExecutors {
     static void
     codeEmissionExecutor(std::shared_ptr<Assembly::Program> assemblyProgram,
                          const std::string &assemblyFile);
+
+  private:
+    // Auxiliary functions for emitting the assembly code.
+    static void emitAssyFunctionDefinition(
+        std::shared_ptr<Assembly::FunctionDefinition> functionDefinition,
+        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyInstruction(std::shared_ptr<Assembly::Instruction> instruction,
+                        std::ofstream &assemblyFileStream);
+    static void emitAssyMovInstruction(
+        std::shared_ptr<Assembly::MovInstruction> movInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyRetInstruction(std::ofstream &assemblyFileStream);
+    static void emitAssyAllocateStackInstruction(
+        std::shared_ptr<Assembly::AllocateStackInstruction>
+            allocateStackInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyUnaryInstruction(
+        std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyBinaryInstruction(
+        std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyCmpInstruction(
+        std::shared_ptr<Assembly::CmpInstruction> cmpInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyIdivInstruction(
+        std::shared_ptr<Assembly::IdivInstruction> idivInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyCdqInstruction(std::ofstream &assemblyFileStream);
+    static void emitAssyJmpInstruction(
+        std::shared_ptr<Assembly::JmpInstruction> jmpInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyJmpCCInstruction(
+        std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssySetCCInstruction(
+        std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyLabelInstruction(
+        std::shared_ptr<Assembly::LabelInstruction> labelInstruction,
+        std::ofstream &assemblyFileStream);
 };
 
 #endif // PIPELINE_STAGES_EXECUTORS_H

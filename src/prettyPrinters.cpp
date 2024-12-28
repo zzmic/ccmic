@@ -1,6 +1,8 @@
 #include "prettyPrinters.h"
 
-// Function to print the IR program onto the stdout.
+/*
+ * Start: Functions to print the IR program onto the stdout.
+ */
 void PrettyPrinters::printIRProgram(std::shared_ptr<IR::Program> irProgram) {
     for (auto function : *irProgram->getFunctionDefinition()) {
         printIRFunctionDefinition(function);
@@ -32,7 +34,7 @@ void PrettyPrinters::printIRInstruction(
     }
     else if (auto copyInstruction =
                  std::dynamic_pointer_cast<IR::CopyInstruction>(instruction)) {
-        printCopyInstruction(copyInstruction);
+        printIRCopyInstruction(copyInstruction);
     }
     else if (auto jumpInstruction =
                  std::dynamic_pointer_cast<IR::JumpInstruction>(instruction)) {
@@ -190,7 +192,7 @@ void PrettyPrinters::printIRBinaryInstruction(
     std::cout << "\n";
 }
 
-void PrettyPrinters::printCopyInstruction(
+void PrettyPrinters::printIRCopyInstruction(
     std::shared_ptr<IR::CopyInstruction> copyInstruction) {
     std::cout << "    ";
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -249,187 +251,351 @@ void PrettyPrinters::printIRLabelInstruction(
     std::shared_ptr<IR::LabelInstruction> labelInstruction) {
     std::cout << "    Label(" << labelInstruction->getLabel() << ")\n";
 }
+/*
+ * End: Functions to print the IR program onto the stdout.
+ */
 
+/*
+ * Start: Functions to print the assembly program onto the stdout.
+ */
 // Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(
     std::shared_ptr<Assembly::Program> assemblyProgram) {
-    // For now, assume that there is only one function in the program.
-    auto function = assemblyProgram->getFunctionDefinition()->at(0);
-    auto functionBody =
-        assemblyProgram->getFunctionDefinition()->at(0)->getFunctionBody();
+    for (auto function : *assemblyProgram->getFunctionDefinition()) {
+        printAssyFunctionDefinition(function);
+    }
+}
+
+void PrettyPrinters::printAssyFunctionDefinition(
+    std::shared_ptr<Assembly::FunctionDefinition> functionDefinition) {
+    std::string functionName = functionDefinition->getFunctionIdentifier();
 
     // Print the function prologue (before printing the function body).
     std::cout << "\n"
-              << "    .globl " << function->getFunctionIdentifier() << "\n";
-    std::cout << function->getFunctionIdentifier() << ":\n";
+              << "    .globl " << functionName << "\n";
+    std::cout << functionDefinition->getFunctionIdentifier() << ":\n";
     std::cout << "    pushq %rbp\n";
     std::cout << "    movq %rsp, %rbp\n";
 
-    // Print the function body.
-    for (auto instruction : *functionBody) {
-        if (auto movInstruction =
-                std::dynamic_pointer_cast<Assembly::MovInstruction>(
-                    instruction)) {
-            auto src = movInstruction->getSrc();
-            auto dst = movInstruction->getDst();
-            if (auto srcReg =
-                    std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-                if (auto dstReg =
-                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                            dst)) {
-                    std::cout << "    movl %" << srcReg->getRegister() << ", %"
-                              << dstReg->getRegister() << "\n";
-                }
-                else if (auto dstStack =
-                             std::dynamic_pointer_cast<Assembly::StackOperand>(
-                                 dst)) {
-                    std::cout << "    movl %" << srcReg->getRegister() << ", "
-                              << dstStack->getOffset() << "(%rbp)\n";
-                }
-            }
-            else if (auto srcImm =
-                         std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
-                             src)) {
-                if (auto dstReg =
-                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                            dst)) {
-                    std::cout << "    movl $" << srcImm->getImmediate() << ", %"
-                              << dstReg->getRegister() << "\n";
-                }
-                else if (auto dstStack =
-                             std::dynamic_pointer_cast<Assembly::StackOperand>(
-                                 dst)) {
-                    std::cout << "    movl $" << srcImm->getImmediate() << ", "
-                              << dstStack->getOffset() << "(%rbp)\n";
-                }
-            }
-            else if (auto srcStack =
-                         std::dynamic_pointer_cast<Assembly::StackOperand>(
-                             src)) {
-                if (auto dstReg =
-                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                            dst)) {
-                    std::cout << "    movl " << srcStack->getOffset()
-                              << "(%rbp), %" << dstReg->getRegister() << "\n";
-                }
-                else if (auto dstStack =
-                             std::dynamic_pointer_cast<Assembly::StackOperand>(
-                                 dst)) {
-                    std::cout << "    movl " << srcStack->getOffset()
-                              << "(%rbp), " << dstStack->getOffset()
-                              << "(%rbp)\n";
-                }
-            }
-        }
-        else if (auto retInstruction =
-                     std::dynamic_pointer_cast<Assembly::RetInstruction>(
-                         instruction)) {
-            // Print the function epilogue before printing the return
-            // instruction.
-            std::cout << "    movq %rbp, %rsp\n";
-            std::cout << "    popq %rbp\n";
-            std::cout << "    ret\n";
-        }
-        else if (auto allocateStackInstruction = std::dynamic_pointer_cast<
-                     Assembly::AllocateStackInstruction>(instruction)) {
-            std::cout
-                << "    subq $"
-                << allocateStackInstruction->getAddressGivenOffsetFromRBP()
-                << ", %rsp\n";
-        }
-        else if (auto unaryInstruction =
-                     std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
-                         instruction)) {
-            if (auto negateOperator =
-                    std::dynamic_pointer_cast<Assembly::NegateOperator>(
-                        unaryInstruction->getUnaryOperator())) {
-                std::cout << "    negl";
-            }
-            else if (auto complementOperator = std::dynamic_pointer_cast<
-                         Assembly::ComplementOperator>(
-                         unaryInstruction->getUnaryOperator())) {
-                std::cout << "    notl";
-            }
-            if (auto operand = unaryInstruction->getOperand()) {
-                if (auto regOperand =
-                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                            operand)) {
-                    std::cout << " %" << regOperand->getRegister() << "\n";
-                }
-                else if (auto stackOperand =
-                             std::dynamic_pointer_cast<Assembly::StackOperand>(
-                                 operand)) {
-                    std::cout << " " << stackOperand->getOffset() << "(%rbp)\n";
-                }
-            }
-        }
-        else if (auto binaryInstruction =
-                     std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
-                         instruction)) {
-            if (auto addOperator =
-                    std::dynamic_pointer_cast<Assembly::AddOperator>(
-                        binaryInstruction->getBinaryOperator())) {
-                std::cout << "    addl";
-            }
-            else if (auto subtractOperator =
-                         std::dynamic_pointer_cast<Assembly::SubtractOperator>(
-                             binaryInstruction->getBinaryOperator())) {
-                std::cout << "    subl";
-            }
-            else if (auto multiplyOperator =
-                         std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
-                             binaryInstruction->getBinaryOperator())) {
-                std::cout << "    imull";
-            }
-            auto src = binaryInstruction->getOperand1();
-            auto dst = binaryInstruction->getOperand2();
-            if (auto srcImm =
-                    std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
-                        src)) {
-                std::cout << " $" << srcImm->getImmediate() << ",";
-            }
-            else if (auto srcReg =
-                         std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                             src)) {
-                std::cout << " %" << srcReg->getRegister() << ",";
-            }
-            else if (auto srcStack =
-                         std::dynamic_pointer_cast<Assembly::StackOperand>(
-                             src)) {
-                std::cout << " " << srcStack->getOffset() << "(%rbp),";
-            }
-            if (auto dstReg =
-                    std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-                std::cout << " %" << dstReg->getRegister() << "\n";
-            }
-            else if (auto dstStack =
-                         std::dynamic_pointer_cast<Assembly::StackOperand>(
-                             dst)) {
-                std::cout << " " << dstStack->getOffset() << "(%rbp)\n";
-            }
-        }
-        else if (auto idivInstruction =
-                     std::dynamic_pointer_cast<Assembly::IdivInstruction>(
-                         instruction)) {
-            if (auto operand = idivInstruction->getOperand()) {
-                if (auto regOperand =
-                        std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                            operand)) {
-                    std::cout << "    idivl %" << regOperand->getRegister()
-                              << "\n";
-                }
-                else if (auto stackOperand =
-                             std::dynamic_pointer_cast<Assembly::StackOperand>(
-                                 operand)) {
-                    std::cout << "    idivl " << stackOperand->getOffset()
-                              << "(%rbp)\n";
-                }
-            }
-        }
-        else if (auto cdqInstruction =
-                     std::dynamic_pointer_cast<Assembly::CdqInstruction>(
-                         instruction)) {
-            std::cout << "    cdq\n";
-        }
+    for (auto instruction : *functionDefinition->getFunctionBody()) {
+        printAssyInstruction(instruction);
     }
 }
+
+void PrettyPrinters::printAssyInstruction(
+    std::shared_ptr<Assembly::Instruction> instruction) {
+    if (auto movInstruction =
+            std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
+        printAssyMovInstruction(movInstruction);
+    }
+    else if (auto retInstruction =
+                 std::dynamic_pointer_cast<Assembly::RetInstruction>(
+                     instruction)) {
+        printAssyRetInstruction();
+    }
+    else if (auto allocateStackInstruction =
+                 std::dynamic_pointer_cast<Assembly::AllocateStackInstruction>(
+                     instruction)) {
+        printAssyAllocateStackInstruction(allocateStackInstruction);
+    }
+    else if (auto unaryInstruction =
+                 std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
+                     instruction)) {
+        printAssyUnaryInstruction(unaryInstruction);
+    }
+    else if (auto binaryInstruction =
+                 std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
+                     instruction)) {
+        printAssyBinaryInstruction(binaryInstruction);
+    }
+    else if (auto cmpInstruction =
+                 std::dynamic_pointer_cast<Assembly::CmpInstruction>(
+                     instruction)) {
+        printAssyCmpInstruction(cmpInstruction);
+    }
+    else if (auto idivInstruction =
+                 std::dynamic_pointer_cast<Assembly::IdivInstruction>(
+                     instruction)) {
+        printAssyIdivInstruction(idivInstruction);
+    }
+    else if (auto cdqInstruction =
+                 std::dynamic_pointer_cast<Assembly::CdqInstruction>(
+                     instruction)) {
+        printAssyCdqInstruction();
+    }
+    else if (auto jmpInstruction =
+                 std::dynamic_pointer_cast<Assembly::JmpInstruction>(
+                     instruction)) {
+        printAssyJmpInstruction(jmpInstruction);
+    }
+    else if (auto jmpCCInstruction =
+                 std::dynamic_pointer_cast<Assembly::JmpCCInstruction>(
+                     instruction)) {
+        printAssyJmpCCInstruction(jmpCCInstruction);
+    }
+    else if (auto setCCInstruction =
+                 std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
+                     instruction)) {
+        printAssySetCCInstruction(setCCInstruction);
+    }
+    else if (auto labelInstruction =
+                 std::dynamic_pointer_cast<Assembly::LabelInstruction>(
+                     instruction)) {
+        printAssyLabelInstruction(labelInstruction);
+    }
+}
+
+void PrettyPrinters::printAssyMovInstruction(
+    std::shared_ptr<Assembly::MovInstruction> movInstruction) {
+    auto src = movInstruction->getSrc();
+    if (auto srcReg =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
+        std::cout << "    movl %" << srcReg->getRegister();
+    }
+    else if (auto srcImm =
+                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+        std::cout << "    movl $" << srcImm->getImmediate();
+    }
+    else if (auto srcStack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
+        std::cout << "    movl " << srcStack->getOffset() << "(%rsp)";
+    }
+
+    auto dst = movInstruction->getDst();
+    if (auto dstReg =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
+        std::cout << ", %" << dstReg->getRegister() << "\n";
+    }
+    else if (auto dstStack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
+        std::cout << ", " << dstStack->getOffset() << "(%rsp)\n";
+    }
+}
+
+void PrettyPrinters::printAssyRetInstruction() {
+    // Print the function epilogue before printing the return
+    // instruction.
+    std::cout << "    movq %rbp, %rsp\n";
+    std::cout << "    popq %rbp\n";
+    std::cout << "    ret\n";
+}
+
+void PrettyPrinters::printAssyAllocateStackInstruction(
+    std::shared_ptr<Assembly::AllocateStackInstruction>
+        allocateStackInstruction) {
+    std::cout << "    subq $"
+              << allocateStackInstruction->getAddressGivenOffsetFromRBP()
+              << ", %rsp\n";
+}
+
+void PrettyPrinters::printAssyUnaryInstruction(
+    std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction) {
+    auto unaryOperator = unaryInstruction->getUnaryOperator();
+    if (auto negateOperator =
+            std::dynamic_pointer_cast<Assembly::NegateOperator>(
+                unaryOperator)) {
+        std::cout << "    negl";
+    }
+    else if (auto complementOperator =
+                 std::dynamic_pointer_cast<Assembly::ComplementOperator>(
+                     unaryOperator)) {
+        std::cout << "    notl";
+    }
+    else if (auto notOperator =
+                 std::dynamic_pointer_cast<Assembly::NotOperator>(
+                     unaryOperator)) {
+        std::cout << "    notl";
+    }
+
+    auto operand = unaryInstruction->getOperand();
+    if (auto regOperand =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+        std::cout << " %" << regOperand->getRegister() << "\n";
+    }
+    else if (auto stackOperand =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+        std::cout << " " << stackOperand->getOffset() << "(%rsp)\n";
+    }
+}
+
+void PrettyPrinters::printAssyBinaryInstruction(
+    std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction) {
+    auto binaryOperator = binaryInstruction->getBinaryOperator();
+    if (auto addOperator =
+            std::dynamic_pointer_cast<Assembly::AddOperator>(binaryOperator)) {
+        std::cout << "    addl";
+    }
+    else if (auto subtractOperator =
+                 std::dynamic_pointer_cast<Assembly::SubtractOperator>(
+                     binaryOperator)) {
+        std::cout << "    subl";
+    }
+    else if (auto multiplyOperator =
+                 std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
+                     binaryOperator)) {
+        std::cout << "    imull";
+    }
+
+    auto operand1 = binaryInstruction->getOperand1();
+    if (auto operand1Imm =
+            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
+        std::cout << " $" << operand1Imm->getImmediate() << ",";
+    }
+    else if (auto operand1Reg =
+                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                     operand1)) {
+        std::cout << " %" << operand1Reg->getRegister() << ",";
+    }
+    else if (auto operand1Stack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
+        std::cout << " " << operand1Stack->getOffset() << "(%rsp),";
+    }
+
+    auto operand2 = binaryInstruction->getOperand2();
+    if (auto operand2Reg =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
+        std::cout << " %" << operand2Reg->getRegister() << "\n";
+    }
+    else if (auto operand2Stack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
+        std::cout << " " << operand2Stack->getOffset() << "(%rsp)\n";
+    }
+}
+
+void PrettyPrinters::printAssyCmpInstruction(
+    std::shared_ptr<Assembly::CmpInstruction> cmpInstruction) {
+    std::cout << "    cmpl";
+
+    auto operand1 = cmpInstruction->getOperand1();
+    if (auto operand1Imm =
+            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
+        std::cout << " $" << operand1Imm->getImmediate();
+    }
+    else if (auto operand1Reg =
+                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                     operand1)) {
+        std::cout << " %" << operand1Reg->getRegister();
+    }
+    else if (auto operand1Stack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
+        std::cout << " " << operand1Stack->getOffset() << "(%rsp)";
+    }
+
+    std::cout << ",";
+
+    auto operand2 = cmpInstruction->getOperand2();
+    if (auto operand2Reg =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
+        std::cout << " %" << operand2Reg->getRegister() << "\n";
+    }
+    else if (auto operand2Stack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
+        std::cout << " " << operand2Stack->getOffset() << "(%rsp)\n";
+    }
+}
+
+void PrettyPrinters::printAssyIdivInstruction(
+    std::shared_ptr<Assembly::IdivInstruction> idivInstruction) {
+    std::cout << "    idivl";
+
+    auto operand = idivInstruction->getOperand();
+    if (auto regOperand =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+        std::cout << " %" << regOperand->getRegister() << "\n";
+    }
+    else if (auto stackOperand =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+        std::cout << " " << stackOperand->getOffset() << "(%rsp)\n";
+    }
+}
+
+void PrettyPrinters::printAssyCdqInstruction() { std::cout << "    cdq\n"; }
+
+void PrettyPrinters::printAssyJmpInstruction(
+    std::shared_ptr<Assembly::JmpInstruction> jmpInstruction) {
+    auto label = jmpInstruction->getLabel();
+    std::cout << "    jmp .L" << label << "\n";
+}
+
+void PrettyPrinters::printAssyJmpCCInstruction(
+    std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction) {
+    auto condCode = jmpCCInstruction->getCondCode();
+    if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
+        std::cout << "    je";
+    }
+    else if (auto ne = std::dynamic_pointer_cast<Assembly::NE>(condCode)) {
+        std::cout << "    jne";
+    }
+    else if (auto g = std::dynamic_pointer_cast<Assembly::G>(condCode)) {
+        std::cout << "    jg";
+    }
+    else if (auto ge = std::dynamic_pointer_cast<Assembly::GE>(condCode)) {
+        std::cout << "    jge";
+    }
+    else if (auto l = std::dynamic_pointer_cast<Assembly::L>(condCode)) {
+        std::cout << "    jl";
+    }
+    else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
+        std::cout << "    jle";
+    }
+
+    auto label = jmpCCInstruction->getLabel();
+    std::cout << " .L" << label << "\n";
+}
+
+void PrettyPrinters::printAssySetCCInstruction(
+    std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction) {
+    auto condCode = setCCInstruction->getCondCode();
+    if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
+        std::cout << "    sete";
+    }
+    else if (auto ne = std::dynamic_pointer_cast<Assembly::NE>(condCode)) {
+        std::cout << "    setne";
+    }
+    else if (auto g = std::dynamic_pointer_cast<Assembly::G>(condCode)) {
+        std::cout << "    setg";
+    }
+    else if (auto ge = std::dynamic_pointer_cast<Assembly::GE>(condCode)) {
+        std::cout << "    setge";
+    }
+    else if (auto l = std::dynamic_pointer_cast<Assembly::L>(condCode)) {
+        std::cout << "    setl";
+    }
+    else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
+        std::cout << "    setle";
+    }
+
+    auto operand = setCCInstruction->getOperand();
+    if (auto regOperand =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+        if (regOperand->getRegister() == "%eax") {
+            std::cout << " %al\n";
+        }
+        else if (regOperand->getRegister() == "%edx") {
+            std::cout << " %dl\n";
+        }
+        else if (regOperand->getRegister() == "%r10d") {
+            std::cout << " %r10b\n";
+        }
+        else if (regOperand->getRegister() == "%r11d") {
+            std::cout << " %r11b\n";
+        }
+        else {
+            throw std::runtime_error(
+                "Unsupported register conversion for SetCC instruction");
+        }
+    }
+    else if (auto stackOperand =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+        std::cout << " " << stackOperand->getOffset() << "(%rsp)\n";
+    }
+}
+
+void PrettyPrinters::printAssyLabelInstruction(
+    std::shared_ptr<Assembly::LabelInstruction> labelInstruction) {
+    auto label = labelInstruction->getLabel();
+    std::cout << ".L" << label << ":\n";
+}
+/*
+ * End: Functions to print the assembly program onto the stdout.
+ */
