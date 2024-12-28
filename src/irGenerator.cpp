@@ -191,17 +191,16 @@ class IRGenerator {
 
         // Generate a JumpIfZero instruction with the left-hand side value and a
         // (new) false label.
-        std::string falseLabelLeft = generateIRFalseLabel();
-        generateIRJumpIfZeroInstruction(lhs, falseLabelLeft, instructions);
+        std::string falseLabel = generateIRFalseLabel();
+        generateIRJumpIfZeroInstruction(lhs, falseLabel, instructions);
 
         // Recursively generate the right expression in the binary expression.
         std::shared_ptr<IR::Value> rhs =
             generateIRInstruction(binaryExpr->getRight(), instructions);
 
         // Generate a JumpIfZero instruction with the right-hand side value and
-        // a (new) false label.
-        std::string falseLabelRight = generateIRFalseLabel();
-        generateIRJumpIfZeroInstruction(rhs, falseLabelRight, instructions);
+        // the same (new) false label.
+        generateIRJumpIfZeroInstruction(rhs, falseLabel, instructions);
 
         // Generate a copy instruction with 1 being copied to a (new) result
         // label.
@@ -211,19 +210,19 @@ class IRGenerator {
         generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
                                   instructions);
 
-        // Generate a jump instruction with string "end".
-        generateIRJumpInstruction("end", instructions);
+        // Generate a jump instruction with a new end label.
+        std::string endLabel = generateIREndLabel();
+        generateIRJumpInstruction(endLabel, instructions);
 
-        // Generate a label instruction with a new false label.
-        std::string falseLabelAfterRight = generateIRFalseLabel();
-        generateIRLabelInstruction(falseLabelAfterRight, instructions);
+        // Generate a label instruction with the same (new) false label.
+        generateIRLabelInstruction(falseLabel, instructions);
 
         // Generate a copy instruction with 0 being copied to the result.
         generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
                                   instructions);
 
-        // Generate a label instruction with string "end".
-        generateIRLabelInstruction("end", instructions);
+        // Generate a label instruction with the same (new) end label.
+        generateIRLabelInstruction(endLabel, instructions);
 
         // Return the destination value.
         return dst;
@@ -239,17 +238,17 @@ class IRGenerator {
 
         // Generate a JumpIfNotZero instruction with the left-hand side value
         // and a (new) true label.
-        std::string trueLabelLeft = generateIRTrueLabel();
-        generateIRJumpIfNotZeroInstruction(lhs, trueLabelLeft, instructions);
+        std::string trueLabel = generateIRTrueLabel();
+        generateIRJumpIfNotZeroInstruction(lhs, trueLabel, instructions);
 
         // Recursively generate the right expression in the binary expression.
         std::shared_ptr<IR::Value> rhs =
             generateIRInstruction(binaryExpr->getRight(), instructions);
 
         // Generate a JumpIfNotZero instruction with the right-hand side value
-        // and a (new) true label.
+        // and the same (new) true label.
         std::string trueLabelRight = generateIRTrueLabel();
-        generateIRJumpIfNotZeroInstruction(rhs, trueLabelRight, instructions);
+        generateIRJumpIfNotZeroInstruction(rhs, trueLabel, instructions);
 
         // Generate a copy instruction with 0 being copied to a (new) result
         // label.
@@ -259,19 +258,19 @@ class IRGenerator {
         generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
                                   instructions);
 
-        // Generate a jump instruction with string "end".
-        generateIRJumpInstruction("end", instructions);
+        // Generate a jump instruction with a new end label.
+        std::string endLabel = generateIREndLabel();
+        generateIRJumpInstruction(endLabel, instructions);
 
-        // Generate a label instruction with a new true label.
-        std::string trueLabelAfterRight = generateIRTrueLabel();
-        generateIRLabelInstruction(trueLabelAfterRight, instructions);
+        // Generate a label instruction with the same (new) true label.
+        generateIRLabelInstruction(trueLabel, instructions);
 
         // Generate a copy instruction with 1 being copied to the result.
         generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
                                   instructions);
 
-        // Generate a label instruction with string "end".
-        generateIRLabelInstruction("end", instructions);
+        // Generate a label instruction with the same (new) end label.
+        generateIRLabelInstruction(endLabel, instructions);
 
         // Return the destination value.
         return dst;
@@ -356,8 +355,6 @@ class IRGenerator {
         return "or_true" + std::to_string(counter++);
     }
 
-    // TODO(zzmic): Verify whether the following function is
-    // needed/required/correct.
     std::string generateIRResultLabel() {
         // Create a label with a unique number.
         // The number would be incremented each time this function is called.
@@ -367,6 +364,17 @@ class IRGenerator {
         // string "resultN" (similar to "false_label" in the listing), "where N
         // is the current value of a global counter."
         return "result" + std::to_string(counter++);
+    }
+
+    std::string generateIREndLabel() {
+        // Create a label with a unique number.
+        // The number would be incremented each time this function is called.
+        static int counter = 0;
+
+        // Return the string representation of the (unique) label using the
+        // string "endN" (similar to "false_label" in the listing), "where N is
+        // the current value of a global counter."
+        return "end" + std::to_string(counter++);
     }
 
     std::shared_ptr<IR::UnaryOperator>

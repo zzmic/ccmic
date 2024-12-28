@@ -19,6 +19,7 @@ class FixupPass {
     bool isInvalidMov(std::shared_ptr<Assembly::MovInstruction> movInstr);
     bool isInvalidBinary(std::shared_ptr<Assembly::BinaryInstruction> binInstr);
     bool isInvalidIdiv(std::shared_ptr<Assembly::IdivInstruction> idivInstr);
+    bool isInvalidCmp(std::shared_ptr<Assembly::CmpInstruction> cmpInstr);
     // `std::vector<std::shared_ptr<Assembly::Instruction>>::iterator` is an
     // iterator to a vector of shared pointers to `Instruction` objects.
     std::vector<std::shared_ptr<Assembly::Instruction>>::iterator

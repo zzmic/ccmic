@@ -9,7 +9,7 @@ void FixupPass::fixup(
     // Insert an allocate stack instruction at the beginning of the function.
     insertAllocateStackInstruction(instructions, stackSize);
 
-    // Traverse the instructions and rewrite invalid mov instructions.
+    // Traverse the instructions and rewrite invalid instructions.
     for (auto it = instructions->begin(); it != instructions->end(); it++) {
         if (auto movInstr =
                 std::dynamic_pointer_cast<Assembly::MovInstruction>(*it)) {
@@ -36,6 +36,12 @@ void FixupPass::fixup(
                 it = rewriteInvalidIdiv(instructions, it, idivInstr);
             }
         }
+        else if (auto cmpInstr =
+                     std::dynamic_pointer_cast<Assembly::CmpInstruction>(*it)) {
+            if (isInvalidCmp(cmpInstr)) {
+                it = rewriteInvalidCmp(instructions, it, cmpInstr);
+            }
+        }
     }
 }
 
@@ -58,16 +64,16 @@ bool FixupPass::isInvalidMov(
 bool FixupPass::isInvalidBinary(
     std::shared_ptr<Assembly::BinaryInstruction> binInstr) {
     if (std::dynamic_pointer_cast<Assembly::AddOperator>(
-            binInstr->getBinaryOperator()) != nullptr ||
+            binInstr->getBinaryOperator()) ||
         std::dynamic_pointer_cast<Assembly::SubtractOperator>(
-            binInstr->getBinaryOperator()) != nullptr) {
+            binInstr->getBinaryOperator())) {
         return std::dynamic_pointer_cast<Assembly::StackOperand>(
                    binInstr->getOperand1()) != nullptr &&
                std::dynamic_pointer_cast<Assembly::StackOperand>(
                    binInstr->getOperand2()) != nullptr;
     }
     else if (std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
-                 binInstr->getBinaryOperator()) != nullptr) {
+                 binInstr->getBinaryOperator())) {
         return std::dynamic_pointer_cast<Assembly::StackOperand>(
                    binInstr->getOperand2()) != nullptr;
     }
@@ -78,6 +84,21 @@ bool FixupPass::isInvalidIdiv(
     std::shared_ptr<Assembly::IdivInstruction> idivInstr) {
     return std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                idivInstr->getOperand()) != nullptr;
+}
+
+bool FixupPass::isInvalidCmp(
+    std::shared_ptr<Assembly::CmpInstruction> cmpInstr) {
+    if (std::dynamic_pointer_cast<Assembly::StackOperand>(
+            cmpInstr->getOperand1()) &&
+        std::dynamic_pointer_cast<Assembly::StackOperand>(
+            cmpInstr->getOperand2())) {
+        return true;
+    }
+    else if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+                 cmpInstr->getOperand2())) {
+        return true;
+    }
+    return false;
 }
 
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
@@ -150,6 +171,24 @@ FixupPass::rewriteInvalidBinary(
 }
 
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidIdiv(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions,
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::IdivInstruction> idivInstr) {
+    auto r10d = std::make_shared<Assembly::RegisterOperand>("r10d");
+
+    auto newMov = std::make_shared<Assembly::MovInstruction>(
+        idivInstr->getOperand(), r10d);
+    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(r10d);
+
+    *it = newMov;
+    it = instructions->insert(it + 1, newIdiv);
+
+    return it;
+}
+
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidCmp(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
         instructions,
@@ -177,24 +216,6 @@ FixupPass::rewriteInvalidCmp(
         *it = newMov;
         it = instructions->insert(it + 1, newCmp);
     }
-
-    return it;
-}
-
-std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
-FixupPass::rewriteInvalidIdiv(
-    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-        instructions,
-    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-    std::shared_ptr<Assembly::IdivInstruction> idivInstr) {
-    auto r10d = std::make_shared<Assembly::RegisterOperand>("r10d");
-
-    auto newMov = std::make_shared<Assembly::MovInstruction>(
-        idivInstr->getOperand(), r10d);
-    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(r10d);
-
-    *it = newMov;
-    it = instructions->insert(it + 1, newIdiv);
 
     return it;
 }
