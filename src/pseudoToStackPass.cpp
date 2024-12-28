@@ -13,6 +13,7 @@ int PseudoToStackPass::replacePseudoWithStackAndReturnOffset(
         replacePseudoWithStack(instruction, pseudoToStackMap, currentOffset);
     }
 
+    // Check that all pseudo registers have been replaced.
     for (const auto &instruction : *function->at(0)->getFunctionBody()) {
         if (auto movInstruction =
                 std::dynamic_pointer_cast<MovInstruction>(instruction)) {
@@ -34,6 +35,26 @@ int PseudoToStackPass::replacePseudoWithStackAndReturnOffset(
                 binaryInstruction->getOperand1()));
             assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
                 binaryInstruction->getOperand2()));
+        }
+        else if (auto cmpInstruction =
+                     std::dynamic_pointer_cast<Assembly::CmpInstruction>(
+                         instruction)) {
+            assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                cmpInstruction->getOperand1()));
+            assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                cmpInstruction->getOperand2()));
+        }
+        else if (auto idivInstruction =
+                     std::dynamic_pointer_cast<Assembly::IdivInstruction>(
+                         instruction)) {
+            assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                idivInstruction->getOperand()));
+        }
+        else if (auto setCCInstruction =
+                     std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
+                         instruction)) {
+            assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                setCCInstruction->getOperand()));
         }
     }
 
@@ -70,6 +91,16 @@ void PseudoToStackPass::replacePseudoWithStack(
         binaryInstruction->setOperand1(operand1);
         binaryInstruction->setOperand2(operand2);
     }
+    else if (auto cmpInstruction =
+                 std::dynamic_pointer_cast<Assembly::CmpInstruction>(
+                     instruction)) {
+        auto operand1 = cmpInstruction->getOperand1();
+        auto operand2 = cmpInstruction->getOperand2();
+        replaceOperand(operand1, pseudoToStackMap, currentOffset);
+        replaceOperand(operand2, pseudoToStackMap, currentOffset);
+        cmpInstruction->setOperand1(operand1);
+        cmpInstruction->setOperand2(operand2);
+    }
     else if (auto idivInstruction =
                  std::dynamic_pointer_cast<Assembly::IdivInstruction>(
                      instruction)) {
@@ -77,12 +108,20 @@ void PseudoToStackPass::replacePseudoWithStack(
         replaceOperand(operand, pseudoToStackMap, currentOffset);
         idivInstruction->setOperand(operand);
     }
+    else if (auto setCCInstruction =
+                 std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
+                     instruction)) {
+        auto operand = setCCInstruction->getOperand();
+        replaceOperand(operand, pseudoToStackMap, currentOffset);
+        setCCInstruction->setOperand(operand);
+    }
 }
 
 void PseudoToStackPass::replaceOperand(
     std::shared_ptr<Assembly::Operand> &operand,
     std::unordered_map<std::string, int> &pseudoToStackMap,
     int &currentOffset) {
+    // If the operand is a pseudo register, replace it with a stack operand.
     if (auto pseudoOperand =
             std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
                 operand)) {
