@@ -31,18 +31,54 @@ class IRGenerator {
             std::make_shared<std::vector<std::shared_ptr<IR::Instruction>>>(
                 std::vector<std::shared_ptr<IR::Instruction>>()));
 
-        // Get the body of the function (single statement for now).
-        std::shared_ptr<AST::Statement> astBody = astFunction->getBody();
-        // Generate IR instructions for the body of the function (the
-        // single statement aforementioned).
-        generateIRStatement(astBody,
-                            functionDefinition->at(0)->getFunctionBody());
+        // Get the body of the function.
+        auto astBody = astFunction->getBody();
+
+        // Generate IR instructions for the body of the function.
+        for (auto &blockItem : *astBody) {
+            // If the block item is a `DBlockItem` (i.e., a declaration), ...
+            if (auto dBlockItem =
+                    std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
+                // Generate IR instructions for the declaration.
+                generateIRDeclaration(
+                    dBlockItem->getDeclaration(),
+                    functionDefinition->at(0)->getFunctionBody());
+            }
+            // If the block item is a `SBockItem` (i.e., a statement), ...
+            else if (auto sBlockItem =
+                         std::dynamic_pointer_cast<AST::SBlockItem>(
+                             blockItem)) {
+                // Generate IR instructions for the statement.
+                generateIRStatement(
+                    sBlockItem->getStatement(),
+                    functionDefinition->at(0)->getFunctionBody());
+            }
+        }
 
         // Return the generated IR program.
         return std::make_shared<IR::Program>(functionDefinition);
     }
 
   private:
+    // TODO(zzmic): For now, the function is erroneous (until handled
+    // appropriately).
+    void generateIRDeclaration(
+        std::shared_ptr<AST::Declaration> astDeclaration,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions) {
+        // Get the identifier from the declaration.
+        std::string identifier = astDeclaration->getIdentifier();
+
+        // If the declaration has an initializer, ...
+        if (auto exp = astDeclaration->getOptInitializer()) {
+            if (exp.has_value()) {
+                // Generate IR instructions for the expression.
+                std::shared_ptr<IR::Value> result =
+                    generateIRInstruction(exp.value(), instructions);
+            }
+        }
+    }
+
     void generateIRStatement(
         std::shared_ptr<AST::Statement> astStatement,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>

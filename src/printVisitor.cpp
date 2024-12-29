@@ -124,6 +124,7 @@ void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
 }
 
 void PrintVisitor::visit(NullStatement &nullStatement) {
+    (void)nullStatement;
     std::cout << "NullStatement()";
 }
 

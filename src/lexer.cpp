@@ -65,8 +65,6 @@ Token matchToken(const std::string &input) {
         return {TokenType::voidKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, returnKeyword_regex))
         return {TokenType::returnKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, assign_regex))
-        return {TokenType::Assign, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, openParenthesis_regex))
         return {TokenType::OpenParenthesis, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, closeParenthesis_regex))
@@ -80,7 +78,7 @@ Token matchToken(const std::string &input) {
     else if (std::regex_search(input, tokenMatch, tilde_regex))
         return {TokenType::Tilde, tokenMatch.str()};
     // Enforce the precedence of token-matching `twoHyphen_regex` over
-    // `minus_regex` to avoid the conflict with the token matching
+    // `minus_regex` to avoid the conflict with the token matching of
     // `minus_regex`.
     else if (std::regex_search(input, tokenMatch, twoHyphen_regex))
         return {TokenType::TwoHyphen, tokenMatch.str()};
@@ -112,6 +110,10 @@ Token matchToken(const std::string &input) {
         return {TokenType::LogicalAnd, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, logicalOr_regex))
         return {TokenType::LogicalOr, tokenMatch.str()};
+    // Lower down the precedence of token-matching `assign_regex` to avoid the
+    // conflict with the token matching of `equal_regex`.
+    else if (std::regex_search(input, tokenMatch, assign_regex))
+        return {TokenType::Assign, tokenMatch.str()};
     // Lower down the precedence of token-matching `identifier_regex`
     // to avoid the conflict with the other token matchings (e.g.,
     // `intKeyword_regex`)

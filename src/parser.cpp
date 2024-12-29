@@ -53,16 +53,18 @@ std::shared_ptr<Function> Parser::parseFunction() {
     expectToken(TokenType::CloseParenthesis);
 
     expectToken(TokenType::OpenBrace);
-    std::vector<std::shared_ptr<Statement>> functionBody = {};
+    auto functionBody =
+        std::make_shared<std::vector<std::shared_ptr<BlockItem>>>();
     while (!matchToken(TokenType::CloseBrace)) {
         auto nextBlockItem = parseBlockItem();
-        functionBody.emplace_back(nextBlockItem);
+        functionBody->emplace_back(nextBlockItem);
     }
     expectToken(TokenType::CloseBrace);
 
     if (current < tokens.size()) {
         std::stringstream msg;
-        msg << "Unexpected token: " << tokens[current].value;
+        msg << "Malformed function: unexpected token: "
+            << tokens[current].value;
         msg << " of type " << tokenTypeToString(tokens[current].type);
         msg << " since the token search should be saturated";
         throw std::runtime_error(msg.str());
@@ -104,8 +106,17 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         expectToken(TokenType::Semicolon);
         return std::make_shared<ReturnStatement>(expr);
     }
+    else if (matchToken(TokenType::Semicolon)) {
+        consumeToken(TokenType::Semicolon);
+        return std::make_shared<NullStatement>();
+    }
+    else {
+        std::shared_ptr<Expression> expr = parseExpression(0);
+        expectToken(TokenType::Semicolon);
+        return std::make_shared<ExpressionStatement>(expr);
+    }
     std::stringstream msg;
-    msg << "Unexpected statement: " << tokens[current].value;
+    msg << "Malformed statement: unexpected token: " << tokens[current].value;
     msg << " of type " << tokenTypeToString(tokens[current].type);
     throw std::runtime_error(msg.str());
 }
@@ -115,6 +126,10 @@ std::shared_ptr<Expression> Parser::parseFactor() {
         Token constantToken = consumeToken(TokenType::Constant);
         return std::make_shared<ConstantExpression>(
             std::stoi(constantToken.value));
+    }
+    else if (matchToken(TokenType::Identifier)) {
+        Token identifierToken = consumeToken(TokenType::Identifier);
+        return std::make_shared<VariableExpression>(identifierToken.value);
     }
     else if (matchToken(TokenType::Tilde)) {
         Token tildeToken = consumeToken(TokenType::Tilde);
@@ -140,13 +155,16 @@ std::shared_ptr<Expression> Parser::parseFactor() {
         }
         else {
             throw std::runtime_error(
-                "Malformed expression: missing closing parenthesis");
+                "Malformed factor: missing closing parenthesis.");
         }
     }
     else {
         std::stringstream msg;
-        msg << "Malformed expression: unexpected token: "
-            << tokens[current].value;
+        msg << "Malformed factor: unexpected token: " << tokens[current].value;
+        msg << "\n" << tokens[current - 1].value;
+        msg << "\n" << tokens[current - 2].value;
+        msg << "\n" << tokens[current - 3].value;
+        msg << "\n" << tokens[current - 4].value;
         throw std::runtime_error(msg.str());
     }
 }
@@ -180,7 +198,8 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
                   matchToken(TokenType::Tilde) ||
                   matchToken(TokenType::Minus) ||
                   matchToken(TokenType::LogicalNot) ||
-                  matchToken(TokenType::OpenParenthesis))) {
+                  matchToken(TokenType::OpenParenthesis) ||
+                  matchToken(TokenType::Identifier))) {
                 std::stringstream msg;
                 msg << "Malformed expression: binary operator "
                     << binOpToken.value
