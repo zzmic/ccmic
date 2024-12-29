@@ -362,7 +362,7 @@ class IRGenerator {
             std::make_shared<IR::LabelInstruction>(identifier));
     }
 
-    std::string generateIRTemporary() {
+    static std::string generateIRTemporary() {
         // Create a temporary variable name with a unique number.
         // The number would be incremented each time this function is called.
         static int counter = 0;
@@ -371,7 +371,7 @@ class IRGenerator {
         return "tmp." + std::to_string(counter++);
     }
 
-    std::string generateIRFalseLabel() {
+    static std::string generateIRFalseLabel() {
         // Create a label with a unique number.
         // The number would be incremented each time this function is called.
         static int counter = 0;
@@ -382,7 +382,7 @@ class IRGenerator {
         return "and_false" + std::to_string(counter++);
     }
 
-    std::string generateIRTrueLabel() {
+    static std::string generateIRTrueLabel() {
         // Create a label with a unique number.
         // The number would be incremented each time this function is called.
         static int counter = 0;
@@ -393,7 +393,7 @@ class IRGenerator {
         return "or_true" + std::to_string(counter++);
     }
 
-    std::string generateIRResultLabel() {
+    static std::string generateIRResultLabel() {
         // Create a label with a unique number.
         // The number would be incremented each time this function is called.
         static int counter = 0;
@@ -404,7 +404,7 @@ class IRGenerator {
         return "result" + std::to_string(counter++);
     }
 
-    std::string generateIREndLabel() {
+    static std::string generateIREndLabel() {
         // Create a label with a unique number.
         // The number would be incremented each time this function is called.
         static int counter = 0;

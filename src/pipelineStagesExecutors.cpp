@@ -20,8 +20,15 @@ PipelineStagesExecutors::lexerExecutor(const std::string &sourceFile) {
                       std::istreambuf_iterator<char>());
     sourceFileInputStream.close();
 
-    std::vector<Token> tokens = lexer(input);
-    printTokens(tokens);
+    std::vector<Token> tokens;
+    try {
+        tokens = lexer(input);
+        printTokens(tokens);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "Lexical error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
 
     return tokens;
 }
@@ -30,60 +37,80 @@ PipelineStagesExecutors::lexerExecutor(const std::string &sourceFile) {
 // AST.
 std::shared_ptr<AST::Program>
 PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
-    // Instantiate a parser object with the tokens.
-    AST::Parser parser(tokens);
-
+    std::shared_ptr<AST::Program> program;
     try {
-        // Parse the tokens to generate the AST.
-        std::shared_ptr<AST::Program> program = parser.parse();
-
-        // Instantiate a print visitor object.
+        AST::Parser parser(tokens);
+        program = parser.parse();
         AST::PrintVisitor printVisitor;
-
-        // Visit the program to print the AST.
         std::cout << "\n";
         program->accept(printVisitor);
-
-        // Reurn the AST program.
-        return program;
     } catch (const std::runtime_error &e) {
-        // Throw a runtime error if there is an error during parsing.
         std::stringstream msg;
         msg << "Parsing error: " << e.what();
         throw std::runtime_error(msg.str());
     }
 
-    return EXIT_SUCCESS;
+    return program;
+}
+
+// Function to perform semantic-analysis passes on the AST program.
+void PipelineStagesExecutors::semanticAnalysisExecutor(
+    std::shared_ptr<AST::Program> astProgram) {
+    try {
+        AST::VariableResolutionPass variableResolutionPass;
+        variableResolutionPass.resolveVariables(astProgram);
+        AST::PrintVisitor printVisitor;
+        std::cout << "\n";
+        astProgram->accept(printVisitor);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "Semantic analysis error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
 }
 
 // Function to generate the IR from the AST program.
 std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
     std::shared_ptr<AST::Program> astProgram) {
     std::cout << "\n";
-    // Instantiate an IR generator object and generate the IR.
-    IRGenerator irGenerator;
-    return irGenerator.generate(astProgram);
+
+    std::shared_ptr<IR::Program> irProgram;
+    try {
+        IRGenerator irGenerator;
+        irProgram = irGenerator.generate(astProgram);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "IR generation error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
+    return irProgram;
 }
 
 // Function to generate (but not yet emit) the assembly program from the AST
 // program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     std::shared_ptr<IR::Program> irProgram) {
-    // Instantiate an assembly generator object and generate the assembly.
-    Assembly::AssemblyGenerator assemblyGenerator;
-    std::shared_ptr<Assembly::Program> assemblyProgram =
-        assemblyGenerator.generate(irProgram);
+    std::shared_ptr<Assembly::Program> assemblyProgram;
+    try {
+        // Instantiate an assembly generator object and generate the assembly.
+        Assembly::AssemblyGenerator assemblyGenerator;
+        assemblyProgram = assemblyGenerator.generate(irProgram);
 
-    // Instantiate a pseudo-to-stack pass object and return the offset.
-    Assembly::PseudoToStackPass pseudoToStackPass;
-    auto functionDefinition = assemblyProgram->getFunctionDefinition();
-    int stackSize = pseudoToStackPass.replacePseudoWithStackAndReturnOffset(
-        functionDefinition);
+        // Instantiate a pseudo-to-stack pass object and return the offset.
+        Assembly::PseudoToStackPass pseudoToStackPass;
+        auto functionDefinition = assemblyProgram->getFunctionDefinition();
+        int stackSize = pseudoToStackPass.replacePseudoWithStackAndReturnOffset(
+            functionDefinition);
 
-    // Instantiate a fixup pass object and fixup the assembly program.
-    Assembly::FixupPass fixupPass;
-    fixupPass.fixup(functionDefinition, stackSize);
-    assemblyProgram->setFunctionDefinition(functionDefinition);
+        // Instantiate a fixup pass object and fixup the assembly program.
+        Assembly::FixupPass fixupPass;
+        fixupPass.fixup(functionDefinition, stackSize);
+        assemblyProgram->setFunctionDefinition(functionDefinition);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "Code generation error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
 
     // Finally, return the assembly program.
     return assemblyProgram;

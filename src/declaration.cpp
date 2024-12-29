@@ -6,10 +6,8 @@ Declaration::Declaration(const std::string &identifier)
     : identifier(identifier) {}
 
 Declaration::Declaration(const std::string &identifier,
-                         std::shared_ptr<Expression> initializer)
-    : identifier(identifier) {
-    this->optInitializer = std::make_optional(initializer);
-}
+                         std::optional<std::shared_ptr<Expression>> initializer)
+    : identifier(identifier), optInitializer(initializer) {}
 
 void Declaration::accept(Visitor &visitor) { visitor.visit(*this); }
 

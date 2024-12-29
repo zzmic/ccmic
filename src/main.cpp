@@ -7,9 +7,9 @@ int main(int argc, char *argv[]) {
     std::string flag;
     std::string sourceFile;
     if (argc < 2 || argc > 3) {
-        std::cerr
-            << "Usage: " << argv[0]
-            << " [--lex] [--parse] [--tacky] [--codegen] [-S] <sourceFile>\n";
+        std::cerr << "Usage: " << argv[0]
+                  << " [--lex] [--parse] [--validate] [--tacky] [--codegen] "
+                     "[-S] <sourceFile>\n";
         return EXIT_FAILURE;
     }
     if (argc == 2) {
@@ -19,11 +19,12 @@ int main(int argc, char *argv[]) {
     else {
         flag = argv[1];
         sourceFile = argv[2];
-        if (flag != "--lex" && flag != "--parse" && flag != "--tacky" &&
-            flag != "--codegen" && flag != "-S") {
-            std::cerr << "Usage: " << argv[0]
-                      << " [--lex] [--parse] [--tacky] [--codegen] [-S] "
-                         "<sourceFile>\n";
+        if (!(flag == "--lex" || flag == "--parse" || flag == "--validate" ||
+              flag == "--tacky" || flag == "--codegen" || flag == "-S")) {
+            std::cerr
+                << "Usage: " << argv[0]
+                << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
+                   "<sourceFile>\n";
             return EXIT_FAILURE;
         }
     }
@@ -67,12 +68,13 @@ int main(int argc, char *argv[]) {
     // Initialize flags to control the intermediate stages of the compilation.
     bool tillLex = false;
     bool tillParse = false;
+    bool tillValidate = false;
     bool tillIR = false;
     bool tillCodegen = false;
     bool tillEmitAssembly = false;
 
     /*
-     * None of the first four options should produce any output files, and all
+     * None of the first five options should produce any output files, and all
      * should terminate with an exit code of 0 if no runtime errors occur.
      */
     // Direct the compiler to run the lexer, but stop before the parser.
@@ -83,6 +85,11 @@ int main(int argc, char *argv[]) {
     // assembly generation.
     else if (flag == "--parse") {
         tillParse = true;
+    }
+    // Direct the compiler to run the lexer, parser, and validator, but stop
+    // before IR generation.
+    else if (flag == "--validate") {
+        tillValidate = true;
     }
     // Direct the compiler to run the lexer, parser, and IR generator, but stop
     // before assembly generation.
@@ -114,6 +121,14 @@ int main(int argc, char *argv[]) {
 
     if (tillParse) {
         std::cout << "Parsing completed.\n";
+        return EXIT_SUCCESS;
+    }
+
+    // Perform semantic analysis on the AST program.
+    PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
+
+    if (tillValidate) {
+        std::cout << "Semantic analysis completed.\n";
         return EXIT_SUCCESS;
     }
 

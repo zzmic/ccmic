@@ -50,7 +50,7 @@ void PrintVisitor::visit(Function &function) {
 }
 
 void PrintVisitor::visit(SBlockItem &sBlockItem) {
-    std::cout << "SBlockItem(\n";
+    std::cout << "\nSBlockItem(\n";
 
     if (sBlockItem.getStatement()) {
         sBlockItem.getStatement()->accept(*this);
@@ -63,7 +63,7 @@ void PrintVisitor::visit(SBlockItem &sBlockItem) {
 }
 
 void PrintVisitor::visit(DBlockItem &dBlockItem) {
-    std::cout << "DBlockItem(\n";
+    std::cout << "\nDBlockItem(\n";
 
     if (dBlockItem.getDeclaration()) {
         dBlockItem.getDeclaration()->accept(*this);
@@ -78,7 +78,7 @@ void PrintVisitor::visit(DBlockItem &dBlockItem) {
 void PrintVisitor::visit(Declaration &declaration) {
     std::cout << "Declaration(\n";
 
-    std::cout << "identifier=\"";
+    std::cout << "identifier=";
 
     if (declaration.getIdentifier().size() > 0) {
         std::cout << declaration.getIdentifier();
@@ -139,7 +139,6 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
     else {
         throw std::runtime_error("Constant (int) value out of range");
     }
-    std::cout << constantExpression.getValue();
     std::cout << ")";
 }
 

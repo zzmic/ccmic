@@ -39,6 +39,10 @@ UnaryExpression::UnaryExpression(const std::string &opInStr,
     this->expr = std::static_pointer_cast<Factor>(expr);
 }
 
+UnaryExpression::UnaryExpression(std::shared_ptr<UnaryOperator> op,
+                                 std::shared_ptr<Factor> expr)
+    : op(op), expr(expr) {}
+
 void UnaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::shared_ptr<UnaryOperator> UnaryExpression::getOperator() const {
@@ -103,6 +107,11 @@ BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
     this->left = left;
     this->right = right;
 }
+
+BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
+                                   std::shared_ptr<BinaryOperator> op,
+                                   std::shared_ptr<Expression> right)
+    : left(left), op(op), right(right) {}
 
 void BinaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 

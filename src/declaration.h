@@ -11,7 +11,7 @@ class Declaration : public AST {
   public:
     Declaration(const std::string &identifier);
     Declaration(const std::string &identifier,
-                std::shared_ptr<Expression> initializer);
+                std::optional<std::shared_ptr<Expression>> initializer);
     void accept(Visitor &visitor) override;
     const std::string &getIdentifier() const;
     std::optional<std::shared_ptr<Expression>> getOptInitializer() const;

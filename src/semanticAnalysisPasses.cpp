@@ -1,0 +1,162 @@
+#include "semanticAnalysisPasses.h"
+
+#include <sstream>
+
+namespace AST {
+void VariableResolutionPass::resolveVariables(
+    std::shared_ptr<Program> program) {
+    auto function = program->getFunction();
+    // For each block item in the function body, resolve the variables in the
+    // block item, either a declaration or a statement.
+    for (auto &blockItem : *function->getBody()) {
+        if (auto dBlockItem =
+                std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
+            auto resolvedDeclaration =
+                resolveVariableDeclaration(dBlockItem->getDeclaration());
+            dBlockItem->setDeclaration(resolvedDeclaration);
+        }
+        else if (auto sBlockItem =
+                     std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
+            auto resolvedStatement =
+                resolveStatement(sBlockItem->getStatement());
+            sBlockItem->setStatement(resolvedStatement);
+        }
+        else {
+            throw std::runtime_error("Unsupported block item type");
+        }
+    }
+}
+
+// TODO(zzmic): Be cautious of the potential pitfall: "If you’re using a global
+// counter to generate unique identifiers, use the same counter across both the
+// semantic analysis and TACKY generation stages."
+std::string VariableResolutionPass::generateUniqueVariableName(
+    const std::string &identifier) {
+    // Create a variable name with a unique number.
+    // The number would be incremented each time this function is called.
+    static int counter = 0;
+
+    // Return the string representation of the (unique) variable name.
+    return identifier + "." + std::to_string(counter++);
+}
+
+std::shared_ptr<Declaration> VariableResolutionPass::resolveVariableDeclaration(
+    std::shared_ptr<Declaration> declaration) {
+    // Get the identifier from the declaration, check if it is already in the
+    // variable map, and generate a unique variable name for it if it is not.
+    auto declarationIdentifier = declaration->getIdentifier();
+    if (this->variableMap.find(declarationIdentifier) !=
+        this->variableMap.end()) {
+        std::stringstream msg;
+        msg << "Duplicate variable declaration: " << declarationIdentifier;
+        throw std::runtime_error(msg.str());
+    }
+    this->variableMap[declarationIdentifier] =
+        generateUniqueVariableName(declarationIdentifier);
+
+    // If the declaration has an initializer, resolve the expression in the
+    // initializer.
+    auto optInitializer = declaration->getOptInitializer();
+    if (optInitializer.has_value()) {
+        auto tmpInitializer = resolveExpression(optInitializer.value());
+        optInitializer = std::make_optional(tmpInitializer);
+    }
+
+    // Return a new declaration with the resolved identifier and initializer.
+    return std::make_shared<Declaration>(
+        this->variableMap[declarationIdentifier], optInitializer);
+}
+
+std::shared_ptr<Statement>
+VariableResolutionPass::resolveStatement(std::shared_ptr<Statement> statement) {
+    if (auto returnStatement =
+            std::dynamic_pointer_cast<ReturnStatement>(statement)) {
+        // If the statement is a return statement, resolve the expression in the
+        // return statement.
+        auto expression = resolveExpression(returnStatement->getExpression());
+
+        // Return a new return statement with the resolved expression.
+        return std::make_shared<ReturnStatement>(expression);
+    }
+    else if (auto expressionStatement =
+                 std::dynamic_pointer_cast<ExpressionStatement>(statement)) {
+        // If the statement is an expression statement, resolve the expression
+        // in the expression statement.
+        auto expression =
+            resolveExpression(expressionStatement->getExpression());
+
+        // Return a new expression statement with the resolved expression.
+        return std::make_shared<ExpressionStatement>(expression);
+    }
+    else if (auto nullStatement =
+                 std::dynamic_pointer_cast<NullStatement>(statement)) {
+        // If the statement is a null statement, return the null statement.
+        return nullStatement;
+    }
+    else {
+        throw std::runtime_error("Unsupported statement type");
+    }
+}
+
+std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
+    std::shared_ptr<Expression> expression) {
+    if (auto assignmentExpression =
+            std::dynamic_pointer_cast<AssignmentExpression>(expression)) {
+        if (!(std::dynamic_pointer_cast<VariableExpression>(
+                assignmentExpression->getLeft()))) {
+            throw std::runtime_error("Invalid lvalue in assignment expression");
+        }
+        auto left = resolveExpression(assignmentExpression->getLeft());
+        auto right = resolveExpression(assignmentExpression->getRight());
+        return std::make_shared<AssignmentExpression>(left, right);
+    }
+    else if (auto variableExpression =
+                 std::dynamic_pointer_cast<VariableExpression>(expression)) {
+        // If the expression is a variable expression, check if the variable is
+        // already in the variable map. If it is not, throw an error. Otherwise,
+        // return a new variable expression with the resolved identifier from
+        // the variable map.
+        auto identifier = variableExpression->getIdentifier();
+        if (this->variableMap.find(identifier) == this->variableMap.end()) {
+            std::stringstream msg;
+            msg << "Undeclared variable: " << identifier;
+            throw std::runtime_error(msg.str());
+        }
+        return std::make_shared<VariableExpression>(
+            this->variableMap[identifier]);
+    }
+    else if (auto constantExpression =
+                 std::dynamic_pointer_cast<ConstantExpression>(expression)) {
+        // If the expression is a constant expression, return the constant
+        // expression.
+        return constantExpression;
+    }
+    else if (auto unaryExpression =
+                 std::dynamic_pointer_cast<UnaryExpression>(expression)) {
+        // If the expression is a unary expression, resolve the expression in
+        // the unary expression.
+        auto resolvedExpression =
+            resolveExpression(unaryExpression->getExpression());
+
+        // Return a new unary expression with the resolved expression.
+        return std::make_shared<UnaryExpression>(
+            unaryExpression->getOperator(),
+            std::static_pointer_cast<Factor>(resolvedExpression));
+    }
+    else if (auto binaryExpression =
+                 std::dynamic_pointer_cast<BinaryExpression>(expression)) {
+        // If the expression is a binary expression, resolve the left and right
+        // expressions in the binary expression.
+        auto resolvedLeft = resolveExpression(binaryExpression->getLeft());
+        auto resolvedRight = resolveExpression(binaryExpression->getRight());
+
+        // Return a new binary expression with the resolved left and right
+        // expressions.
+        return std::make_shared<BinaryExpression>(
+            resolvedLeft, binaryExpression->getOperator(), resolvedRight);
+    }
+    else {
+        throw std::runtime_error("Unsupported expression type");
+    }
+}
+} // namespace AST

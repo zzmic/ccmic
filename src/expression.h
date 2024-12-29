@@ -35,6 +35,8 @@ class UnaryExpression : public Factor {
   public:
     UnaryExpression(const std::string &opInStr,
                     std::shared_ptr<Expression> expr);
+    UnaryExpression(std::shared_ptr<UnaryOperator> op,
+                    std::shared_ptr<Factor> expr);
     void accept(Visitor &visitor) override;
     std::shared_ptr<UnaryOperator> getOperator() const;
     std::shared_ptr<Factor> getExpression() const;
@@ -48,6 +50,9 @@ class BinaryExpression : public Expression {
   public:
     BinaryExpression(std::shared_ptr<Expression> left,
                      const std::string &opInStr,
+                     std::shared_ptr<Expression> right);
+    BinaryExpression(std::shared_ptr<Expression> left,
+                     std::shared_ptr<BinaryOperator> op,
                      std::shared_ptr<Expression> right);
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getLeft() const;

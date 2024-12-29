@@ -11,6 +11,7 @@
 #include "parser.h"
 #include "printVisitor.h"
 #include "pseudoToStackPass.h"
+#include "semanticAnalysisPasses.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -22,6 +23,8 @@ class PipelineStagesExecutors {
     static std::vector<Token> lexerExecutor(const std::string &sourceFile);
     static std::shared_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
+    static void
+    semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
     static std::shared_ptr<IR::Program>
     irGeneratorExecutor(std::shared_ptr<AST::Program> astProgram);
     static std::shared_ptr<Assembly::Program>
