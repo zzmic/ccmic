@@ -31,7 +31,8 @@ class PipelineStagesExecutors {
                          const std::string &assemblyFile);
 
   private:
-    // Auxiliary functions for emitting the assembly code (to the assembly file).
+    // Auxiliary functions for emitting the assembly code (to the assembly
+    // file).
     static void emitAssyFunctionDefinition(
         std::shared_ptr<Assembly::FunctionDefinition> functionDefinition,
         std::ofstream &assemblyFileStream);

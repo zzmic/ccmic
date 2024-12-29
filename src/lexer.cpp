@@ -10,6 +10,7 @@ const std::regex constant_regex(R"(^[0-9]+\b)");
 const std::regex intKeyword_regex(R"(^int\b)");
 const std::regex voidKeyword_regex(R"(^void\b)");
 const std::regex returnKeyword_regex(R"(^return\b)");
+const std::regex assign_regex(R"(^=)");
 const std::regex openParenthesis_regex(R"(^\()");
 const std::regex closeParenthesis_regex(R"(^\))");
 const std::regex openBrace_regex(R"(^\{)");
@@ -64,6 +65,8 @@ Token matchToken(const std::string &input) {
         return {TokenType::voidKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, returnKeyword_regex))
         return {TokenType::returnKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, assign_regex))
+        return {TokenType::Assign, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, openParenthesis_regex))
         return {TokenType::OpenParenthesis, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, closeParenthesis_regex))
@@ -207,6 +210,9 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::returnKeyword:
             typeStr = "returnKeyword";
             break;
+        case TokenType::Assign:
+            typeStr = "Assign";
+            break;
         case TokenType::OpenParenthesis:
             typeStr = "OpenParenthesis";
             break;
@@ -308,6 +314,9 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::returnKeyword:
         typeStr = "returnKeyword";
+        break;
+    case TokenType::Assign:
+        typeStr = "Assign";
         break;
     case TokenType::OpenParenthesis:
         typeStr = "OpenParenthesis";

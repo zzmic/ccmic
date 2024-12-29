@@ -13,6 +13,7 @@ enum class TokenType {
     intKeyword,
     voidKeyword,
     returnKeyword,
+    Assign,
     OpenParenthesis,
     CloseParenthesis,
     OpenBrace,
