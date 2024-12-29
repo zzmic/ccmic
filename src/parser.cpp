@@ -51,8 +51,13 @@ std::shared_ptr<Function> Parser::parseFunction() {
     expectToken(TokenType::OpenParenthesis);
     expectToken(TokenType::voidKeyword);
     expectToken(TokenType::CloseParenthesis);
+
     expectToken(TokenType::OpenBrace);
-    std::shared_ptr<Statement> functionBody = parseStatement();
+    std::vector<std::shared_ptr<Statement>> functionBody = {};
+    while (!matchToken(TokenType::CloseBrace)) {
+        auto nextBlockItem = parseBlockItem();
+        functionBody.emplace_back(nextBlockItem);
+    }
     expectToken(TokenType::CloseBrace);
 
     if (current < tokens.size()) {
@@ -64,6 +69,32 @@ std::shared_ptr<Function> Parser::parseFunction() {
     }
 
     return std::make_shared<Function>(functionNameToken.value, functionBody);
+}
+
+std::shared_ptr<BlockItem> Parser::parseBlockItem() {
+    if (matchToken(TokenType::intKeyword)) {
+        auto declaration = parseDeclaration();
+        return std::make_shared<DBlockItem>(declaration);
+    }
+    else {
+        auto statement = parseStatement();
+        return std::make_shared<SBlockItem>(statement);
+    }
+}
+
+std::shared_ptr<Declaration> Parser::parseDeclaration() {
+    expectToken(TokenType::intKeyword);
+    Token variableNameToken = consumeToken(TokenType::Identifier);
+    if (matchToken(TokenType::Assign)) {
+        consumeToken(TokenType::Assign);
+        std::shared_ptr<Expression> expr = parseExpression(0);
+        expectToken(TokenType::Semicolon);
+        return std::make_shared<Declaration>(variableNameToken.value, expr);
+    }
+    else {
+        expectToken(TokenType::Semicolon);
+        return std::make_shared<Declaration>(variableNameToken.value);
+    }
 }
 
 std::shared_ptr<Statement> Parser::parseStatement() {
@@ -121,7 +152,10 @@ std::shared_ptr<Expression> Parser::parseFactor() {
 }
 
 std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
+    // Parse the left operand of the expression.
     std::shared_ptr<Expression> left = parseFactor();
+    // While the next otkn is a binary operator and has a precedence greater
+    // than or equal to the minimum precedence, ...
     while (
         (matchToken(TokenType::Plus) || matchToken(TokenType::Minus) ||
          matchToken(TokenType::Multiply) || matchToken(TokenType::Divide) ||
@@ -130,22 +164,34 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
          matchToken(TokenType::NotEqual) || matchToken(TokenType::LessThan) ||
          matchToken(TokenType::LessThanOrEqual) ||
          matchToken(TokenType::GreaterThan) ||
-         matchToken(TokenType::GreaterThanOrEqual)) &&
+         matchToken(TokenType::GreaterThanOrEqual) ||
+         matchToken(TokenType::Assign)) &&
         getPrecedence(tokens[current]) >= minPrecedence) {
-        Token binOpToken = consumeToken(tokens[current].type);
-        if (!(matchToken(TokenType::Constant) || matchToken(TokenType::Tilde) ||
-              matchToken(TokenType::Minus) ||
-              matchToken(TokenType::LogicalNot) ||
-              matchToken(TokenType::OpenParenthesis))) {
-            std::stringstream msg;
-            msg << "Malformed expression: binary operator " << binOpToken.value
-                << " is not followed by a valid operand.";
-            throw std::runtime_error(msg.str());
+        // If the next token is an assignment operator, ...
+        if (matchToken(TokenType::Assign)) {
+            Token assignToken = consumeToken(TokenType::Assign);
+            auto right = parseExpression(getPrecedence(assignToken));
+            left = std::make_shared<AssignmentExpression>(left, right);
         }
-        std::shared_ptr<Expression> right =
-            parseExpression(getPrecedence(binOpToken) + 1);
-        left =
-            std::make_shared<BinaryExpression>(left, binOpToken.value, right);
+        // Otherwise, the next token is (should be) a binary operator.
+        else {
+            Token binOpToken = consumeToken(tokens[current].type);
+            if (!(matchToken(TokenType::Constant) ||
+                  matchToken(TokenType::Tilde) ||
+                  matchToken(TokenType::Minus) ||
+                  matchToken(TokenType::LogicalNot) ||
+                  matchToken(TokenType::OpenParenthesis))) {
+                std::stringstream msg;
+                msg << "Malformed expression: binary operator "
+                    << binOpToken.value
+                    << " is not followed by a valid operand.";
+                throw std::runtime_error(msg.str());
+            }
+            std::shared_ptr<Expression> right =
+                parseExpression(getPrecedence(binOpToken) + 1);
+            left = std::make_shared<BinaryExpression>(left, binOpToken.value,
+                                                      right);
+        }
     }
     return left;
 }

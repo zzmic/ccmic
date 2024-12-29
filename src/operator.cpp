@@ -70,4 +70,8 @@ void GreaterThanOrEqualOperator::accept(Visitor &visitor) {
 }
 
 std::string GreaterThanOrEqualOperator::opInString() const { return ">="; }
+
+void AssignmentOperator::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::string AssignmentOperator::opInString() const { return "="; }
 } // Namespace AST

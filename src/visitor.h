@@ -13,10 +13,17 @@ namespace AST {
 // Forward declarations of AST nodes/classes.
 class Program;
 class Function;
+class SBlockItem;
+class DBlockItem;
+class Declaration;
 class ReturnStatement;
+class ExpressionStatement;
+class NullStatement;
 class ConstantExpression;
+class VariableExpression;
 class UnaryExpression;
 class BinaryExpression;
+class AssignmentExpression;
 class ComplementOperator;
 class NegateOperator;
 class NotOperator;
@@ -33,6 +40,7 @@ class LessThanOperator;
 class LessThanOrEqualOperator;
 class GreaterThanOperator;
 class GreaterThanOrEqualOperator;
+class AssignmentOperator;
 
 class Visitor {
   public:
@@ -41,10 +49,17 @@ class Visitor {
     // This in turn implies that the whole visitor class is an abstract class.
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
+    virtual void visit(SBlockItem &sBlockItem) = 0;
+    virtual void visit(DBlockItem &dBlockItem) = 0;
+    virtual void visit(Declaration &declaration) = 0;
     virtual void visit(ReturnStatement &returnStatement) = 0;
+    virtual void visit(ExpressionStatement &expressionStatement) = 0;
+    virtual void visit(NullStatement &nullStatement) = 0;
     virtual void visit(ConstantExpression &constantExpression) = 0;
+    virtual void visit(VariableExpression &variableExpression) = 0;
     virtual void visit(UnaryExpression &unaryExpression) = 0;
     virtual void visit(BinaryExpression &binaryExpression) = 0;
+    virtual void visit(AssignmentExpression &assignmentExpression) = 0;
     virtual void visit(ComplementOperator &complementOperator) = 0;
     virtual void visit(NegateOperator &negateOperator) = 0;
     virtual void visit(NotOperator &notOperator) = 0;
@@ -62,6 +77,7 @@ class Visitor {
     virtual void visit(GreaterThanOperator &greaterThanOperator) = 0;
     virtual void
     visit(GreaterThanOrEqualOperator &greaterThanOrEqualOperator) = 0;
+    virtual void visit(AssignmentOperator &assignmentOperator) = 0;
 };
 } // Namespace AST
 

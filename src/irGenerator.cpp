@@ -1,3 +1,5 @@
+#include "blockItem.h"
+#include "declaration.h"
 #include "expression.h"
 #include "function.h"
 #include "ir.h"

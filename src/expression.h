@@ -21,6 +21,16 @@ class ConstantExpression : public Factor {
     int value;
 };
 
+class VariableExpression : public Factor {
+  public:
+    VariableExpression(const std::string &identifier);
+    void accept(Visitor &visitor) override;
+    std::string getIdentifier() const;
+
+  private:
+    std::string identifier;
+};
+
 class UnaryExpression : public Factor {
   public:
     UnaryExpression(const std::string &opInStr,
@@ -49,6 +59,20 @@ class BinaryExpression : public Expression {
     std::shared_ptr<BinaryOperator> op;
     std::shared_ptr<Expression> right;
 };
+
+class AssignmentExpression : public Expression {
+  public:
+    AssignmentExpression(std::shared_ptr<Expression> left,
+                         std::shared_ptr<Expression> right);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<Expression> getLeft() const;
+    std::shared_ptr<Expression> getRight() const;
+
+  private:
+    std::shared_ptr<Expression> left;
+    std::shared_ptr<Expression> right;
+};
+
 } // Namespace AST
 
 #endif // EXPRESSION_H

@@ -38,10 +38,60 @@ void PrintVisitor::visit(Function &function) {
     std::cout << "body=";
 
     if (function.getBody()) {
-        function.getBody()->accept(*this);
+        for (auto &blockItem : *function.getBody()) {
+            blockItem->accept(*this);
+        }
     }
     else {
         throw std::runtime_error("Null body in function");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(SBlockItem &sBlockItem) {
+    std::cout << "SBlockItem(\n";
+
+    if (sBlockItem.getStatement()) {
+        sBlockItem.getStatement()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null statement in statement block item");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(DBlockItem &dBlockItem) {
+    std::cout << "DBlockItem(\n";
+
+    if (dBlockItem.getDeclaration()) {
+        dBlockItem.getDeclaration()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null declaration in declaration block item");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(Declaration &declaration) {
+    std::cout << "Declaration(\n";
+
+    std::cout << "identifier=\"";
+
+    if (declaration.getIdentifier().size() > 0) {
+        std::cout << declaration.getIdentifier();
+    }
+    else {
+        throw std::runtime_error("Null identifier in declaration");
+    }
+
+    std::cout << "\n"
+              << "initializer=";
+
+    if (declaration.getOptInitializer().has_value()) {
+        declaration.getOptInitializer().value()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -60,6 +110,23 @@ void PrintVisitor::visit(ReturnStatement &returnStatement) {
     std::cout << "\n)";
 }
 
+void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
+    std::cout << "ExpressionStatement(\n";
+
+    if (expressionStatement.getExpression()) {
+        expressionStatement.getExpression()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null expression in expression statement");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(NullStatement &nullStatement) {
+    std::cout << "NullStatement()";
+}
+
 void PrintVisitor::visit(ConstantExpression &constantExpression) {
     std::cout << "ConstantExpression(";
     int minInt = std::numeric_limits<int>::min();
@@ -72,6 +139,21 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
         throw std::runtime_error("Constant (int) value out of range");
     }
     std::cout << constantExpression.getValue();
+    std::cout << ")";
+}
+
+void PrintVisitor::visit(VariableExpression &variableExpression) {
+    // std::cout << "VariableExpression(\"";
+    std::cout << "VariableExpression(";
+
+    if (variableExpression.getIdentifier().size() > 0) {
+        std::cout << variableExpression.getIdentifier();
+    }
+    else {
+        throw std::runtime_error("Null identifier in variable expression");
+    }
+
+    // std::cout << "\")";
     std::cout << ")";
 }
 
@@ -123,6 +205,28 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
     }
     else {
         throw std::runtime_error("Null right operand in binary expression");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
+    std::cout << "AssignmentExpression(\n";
+
+    if (assignmentExpression.getLeft()) {
+        assignmentExpression.getLeft()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null left operand in assignment expression");
+    }
+
+    std::cout << "\n";
+
+    if (assignmentExpression.getRight()) {
+        assignmentExpression.getRight()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null right operand in assignment expression");
     }
 
     std::cout << "\n)";
@@ -195,5 +299,10 @@ void PrintVisitor::visit(
     GreaterThanOrEqualOperator &greaterThanOrEqualOperator) {
     std::cout << "GreaterThanOrEqualOperator("
               << greaterThanOrEqualOperator.opInString() << ")";
+}
+
+void PrintVisitor::visit(AssignmentOperator &assignmentOperator) {
+    std::cout << "AssignmentOperator(" << assignmentOperator.opInString()
+              << ")";
 }
 } // Namespace AST

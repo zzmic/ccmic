@@ -106,6 +106,12 @@ class GreaterThanOrEqualOperator : public BinaryOperator {
     void accept(Visitor &visitor) override;
     std::string opInString() const;
 };
+
+class AssignmentOperator : public BinaryOperator {
+  public:
+    void accept(Visitor &visitor) override;
+    std::string opInString() const;
+};
 } // Namespace AST
 
 #endif // OPERATOR_H

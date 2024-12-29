@@ -10,8 +10,18 @@ void ConstantExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 int ConstantExpression::getValue() const { return value; }
 
+VariableExpression::VariableExpression(const std::string &identifier)
+    : identifier(identifier) {}
+
+void VariableExpression::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::string VariableExpression::getIdentifier() const { return identifier; }
+
 UnaryExpression::UnaryExpression(const std::string &opInStr,
                                  std::shared_ptr<Expression> expr) {
+    if (!expr) {
+        throw std::runtime_error("Null expression in unary expression");
+    }
     if (opInStr == "-") {
         op = std::make_shared<NegateOperator>();
     }
@@ -103,4 +113,26 @@ std::shared_ptr<BinaryOperator> BinaryExpression::getOperator() const {
 }
 
 std::shared_ptr<Expression> BinaryExpression::getRight() const { return right; }
+
+AssignmentExpression::AssignmentExpression(std::shared_ptr<Expression> left,
+                                           std::shared_ptr<Expression> right) {
+    if (!left) {
+        throw std::runtime_error("Null left-hand operand in assignment");
+    }
+    if (!right) {
+        throw std::runtime_error("Null right-hand operand in assignment");
+    }
+    this->left = left;
+    this->right = right;
+}
+
+void AssignmentExpression::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::shared_ptr<Expression> AssignmentExpression::getLeft() const {
+    return left;
+}
+
+std::shared_ptr<Expression> AssignmentExpression::getRight() const {
+    return right;
+}
 } // Namespace AST
