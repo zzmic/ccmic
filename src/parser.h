@@ -20,19 +20,13 @@ class Parser {
     const std::vector<Token> &tokens;
     std::size_t current;
     std::unordered_map<TokenType, int> precedenceMap = {
-        {TokenType::Assign, 1},
-        {TokenType::LogicalOr, 5},
-        {TokenType::LogicalAnd, 10},
-        {TokenType::Equal, 30},
-        {TokenType::NotEqual, 30},
-        {TokenType::LessThan, 35},
-        {TokenType::LessThanOrEqual, 35},
-        {TokenType::GreaterThan, 35},
-        {TokenType::GreaterThanOrEqual, 35},
-        {TokenType::Plus, 45},
-        {TokenType::Minus, 45},
-        {TokenType::Multiply, 50},
-        {TokenType::Divide, 50},
+        {TokenType::Assign, 1},       {TokenType::QuestionMark, 3},
+        {TokenType::LogicalOr, 5},    {TokenType::LogicalAnd, 10},
+        {TokenType::Equal, 30},       {TokenType::NotEqual, 30},
+        {TokenType::LessThan, 35},    {TokenType::LessThanOrEqual, 35},
+        {TokenType::GreaterThan, 35}, {TokenType::GreaterThanOrEqual, 35},
+        {TokenType::Plus, 45},        {TokenType::Minus, 45},
+        {TokenType::Multiply, 50},    {TokenType::Divide, 50},
         {TokenType::Modulo, 50},
     };
 
@@ -45,6 +39,7 @@ class Parser {
     std::shared_ptr<Statement> parseStatement();
     std::shared_ptr<Expression> parseFactor();
     std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);
+    std::shared_ptr<Expression> parseConditionalMiddle();
     int getPrecedence(const Token &token);
 };
 } // Namespace AST

@@ -40,8 +40,16 @@ UnaryExpression::UnaryExpression(const std::string &opInStr,
 }
 
 UnaryExpression::UnaryExpression(std::shared_ptr<UnaryOperator> op,
-                                 std::shared_ptr<Factor> expr)
-    : op(op), expr(expr) {}
+                                 std::shared_ptr<Factor> expr) {
+    if (!op) {
+        throw std::runtime_error("Null operator in unary expression");
+    }
+    if (!expr) {
+        throw std::runtime_error("Null expression in unary expression");
+    }
+    this->op = op;
+    this->expr = expr;
+}
 
 void UnaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -110,8 +118,21 @@ BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
 
 BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
                                    std::shared_ptr<BinaryOperator> op,
-                                   std::shared_ptr<Expression> right)
-    : left(left), op(op), right(right) {}
+                                   std::shared_ptr<Expression> right) {
+    if (!left) {
+        throw std::runtime_error("Null left-hand operand in binary expression");
+    }
+    if (!op) {
+        throw std::runtime_error("Null operator in binary expression");
+    }
+    if (!right) {
+        throw std::runtime_error(
+            "Null right-hand operand in binary expression");
+    }
+    this->left = left;
+    this->op = op;
+    this->right = right;
+}
 
 void BinaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -143,5 +164,39 @@ std::shared_ptr<Expression> AssignmentExpression::getLeft() const {
 
 std::shared_ptr<Expression> AssignmentExpression::getRight() const {
     return right;
+}
+
+ConditionalExpression::ConditionalExpression(
+    std::shared_ptr<Expression> condition,
+    std::shared_ptr<Expression> trueExpression,
+    std::shared_ptr<Expression> falseExpression) {
+    if (!condition) {
+        throw std::runtime_error("Null condition in conditional expression");
+    }
+    if (!trueExpression) {
+        throw std::runtime_error(
+            "Null true expression in conditional expression");
+    }
+    if (!falseExpression) {
+        throw std::runtime_error(
+            "Null false expression in conditional expression");
+    }
+    this->condition = condition;
+    this->trueExpression = trueExpression;
+    this->falseExpression = falseExpression;
+}
+
+void ConditionalExpression::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::shared_ptr<Expression> ConditionalExpression::getCondition() const {
+    return condition;
+}
+
+std::shared_ptr<Expression> ConditionalExpression::getTrueExpression() const {
+    return trueExpression;
+}
+
+std::shared_ptr<Expression> ConditionalExpression::getFalseExpression() const {
+    return falseExpression;
 }
 } // Namespace AST

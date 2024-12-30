@@ -78,6 +78,22 @@ class AssignmentExpression : public Expression {
     std::shared_ptr<Expression> right;
 };
 
+class ConditionalExpression : public Expression {
+  public:
+    ConditionalExpression(std::shared_ptr<Expression> condition,
+                          std::shared_ptr<Expression> trueExpression,
+                          std::shared_ptr<Expression> falseExpression);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<Expression> getCondition() const;
+    std::shared_ptr<Expression> getTrueExpression() const;
+    std::shared_ptr<Expression> getFalseExpression() const;
+
+  private:
+    std::shared_ptr<Expression> condition;
+    std::shared_ptr<Expression> trueExpression;
+    std::shared_ptr<Expression> falseExpression;
+};
+
 } // Namespace AST
 
 #endif // EXPRESSION_H

@@ -110,6 +110,20 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         consumeToken(TokenType::Semicolon);
         return std::make_shared<NullStatement>();
     }
+    else if (matchToken(TokenType::ifKeyword)) {
+        consumeToken(TokenType::ifKeyword);
+        expectToken(TokenType::OpenParenthesis);
+        std::shared_ptr<Expression> condition = parseExpression(0);
+        expectToken(TokenType::CloseParenthesis);
+        std::shared_ptr<Statement> thenStatement = parseStatement();
+        if (matchToken(TokenType::elseKeyword)) {
+            consumeToken(TokenType::elseKeyword);
+            std::shared_ptr<Statement> elseStatement = parseStatement();
+            return std::make_shared<IfStatement>(condition, thenStatement,
+                                                 elseStatement);
+        }
+        return std::make_shared<IfStatement>(condition, thenStatement);
+    }
     else {
         std::shared_ptr<Expression> expr = parseExpression(0);
         expectToken(TokenType::Semicolon);
@@ -183,13 +197,20 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
          matchToken(TokenType::LessThanOrEqual) ||
          matchToken(TokenType::GreaterThan) ||
          matchToken(TokenType::GreaterThanOrEqual) ||
-         matchToken(TokenType::Assign)) &&
+         matchToken(TokenType::Assign) ||
+         matchToken(TokenType::QuestionMark)) &&
         getPrecedence(tokens[current]) >= minPrecedence) {
         // If the next token is an assignment operator, ...
         if (matchToken(TokenType::Assign)) {
             Token assignToken = consumeToken(TokenType::Assign);
             auto right = parseExpression(getPrecedence(assignToken));
             left = std::make_shared<AssignmentExpression>(left, right);
+        }
+        else if (matchToken(TokenType::QuestionMark)) {
+            Token questionMarkToken = consumeToken(TokenType::QuestionMark);
+            auto middle = parseConditionalMiddle();
+            auto right = parseExpression(getPrecedence(questionMarkToken));
+            left = std::make_shared<ConditionalExpression>(left, middle, right);
         }
         // Otherwise, the next token is (should be) a binary operator.
         else {
@@ -213,6 +234,15 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
         }
     }
     return left;
+}
+
+std::shared_ptr<Expression> Parser::parseConditionalMiddle() {
+    // Note: The question mark token has already been consumed in the caller
+    // (some `parseExpression` function call). Parse the middle expression.
+    std::shared_ptr<Expression> middle = parseExpression(0);
+    // Consume the colon token.
+    consumeToken(TokenType::Colon);
+    return middle;
 }
 
 int Parser::getPrecedence(const Token &token) {

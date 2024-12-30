@@ -87,8 +87,7 @@ void PrintVisitor::visit(Declaration &declaration) {
         throw std::runtime_error("Null identifier in declaration");
     }
 
-    std::cout << "\n"
-              << "initializer=";
+    std::cout << "\ninitializer=";
 
     if (declaration.getOptInitializer().has_value()) {
         declaration.getOptInitializer().value()->accept(*this);
@@ -118,6 +117,36 @@ void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
     }
     else {
         throw std::runtime_error("Null expression in expression statement");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(IfStatement &ifStatement) {
+    std::cout << "IfStatement(\n";
+
+    std::cout << "condition=";
+
+    if (ifStatement.getCondition()) {
+        ifStatement.getCondition()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null condition in if-statement");
+    }
+
+    std::cout << "\nthen=";
+
+    if (ifStatement.getThenStatement()) {
+        ifStatement.getThenStatement()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null then statement in if-statement");
+    }
+
+    std::cout << "\nelse=";
+
+    if (ifStatement.getElseOptStatement().has_value()) {
+        ifStatement.getElseOptStatement().value()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -227,6 +256,41 @@ void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
     }
     else {
         throw std::runtime_error("Null right operand in assignment expression");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
+    std::cout << "ConditionalExpression(\n";
+
+    std::cout << "condition=";
+
+    if (conditionalExpression.getCondition()) {
+        conditionalExpression.getCondition()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null condition in conditional expression");
+    }
+
+    std::cout << "\ntrue=";
+
+    if (conditionalExpression.getTrueExpression()) {
+        conditionalExpression.getTrueExpression()->accept(*this);
+    }
+    else {
+        throw std::runtime_error(
+            "Null true expression in conditional expression");
+    }
+
+    std::cout << "\nfalse=";
+
+    if (conditionalExpression.getFalseExpression()) {
+        conditionalExpression.getFalseExpression()->accept(*this);
+    }
+    else {
+        throw std::runtime_error(
+            "Null false expression in conditional expression");
     }
 
     std::cout << "\n)";

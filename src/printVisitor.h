@@ -14,12 +14,14 @@ class PrintVisitor : public Visitor {
     void visit(Declaration &declaration) override;
     void visit(ReturnStatement &returnStatement) override;
     void visit(ExpressionStatement &expressionStatement) override;
+    void visit(IfStatement &ifStatement) override;
     void visit(NullStatement &nullStatement) override;
     void visit(ConstantExpression &constantExpression) override;
     void visit(VariableExpression &variableExpression) override;
     void visit(UnaryExpression &unaryExpression) override;
     void visit(BinaryExpression &binaryExpression) override;
     void visit(AssignmentExpression &assignmentExpression) override;
+    void visit(ConditionalExpression &conditionalExpression) override;
     void visit(ComplementOperator &complementOperator) override;
     void visit(NegateOperator &negateOperator) override;
     void visit(NotOperator &notOperator) override;
