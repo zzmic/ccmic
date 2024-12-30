@@ -275,8 +275,8 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
 
     std::cout << "\ntrue=";
 
-    if (conditionalExpression.getTrueExpression()) {
-        conditionalExpression.getTrueExpression()->accept(*this);
+    if (conditionalExpression.getThenExpression()) {
+        conditionalExpression.getThenExpression()->accept(*this);
     }
     else {
         throw std::runtime_error(
@@ -285,8 +285,8 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
 
     std::cout << "\nfalse=";
 
-    if (conditionalExpression.getFalseExpression()) {
-        conditionalExpression.getFalseExpression()->accept(*this);
+    if (conditionalExpression.getElseExpression()) {
+        conditionalExpression.getElseExpression()->accept(*this);
     }
     else {
         throw std::runtime_error(

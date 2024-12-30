@@ -3,7 +3,6 @@
 
 #include "declaration.h"
 #include "program.h"
-
 #include <unordered_map>
 
 namespace AST {

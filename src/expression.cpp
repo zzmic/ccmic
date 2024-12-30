@@ -168,22 +168,22 @@ std::shared_ptr<Expression> AssignmentExpression::getRight() const {
 
 ConditionalExpression::ConditionalExpression(
     std::shared_ptr<Expression> condition,
-    std::shared_ptr<Expression> trueExpression,
-    std::shared_ptr<Expression> falseExpression) {
+    std::shared_ptr<Expression> thenExpression,
+    std::shared_ptr<Expression> elseExpression) {
     if (!condition) {
         throw std::runtime_error("Null condition in conditional expression");
     }
-    if (!trueExpression) {
+    if (!thenExpression) {
         throw std::runtime_error(
             "Null true expression in conditional expression");
     }
-    if (!falseExpression) {
+    if (!elseExpression) {
         throw std::runtime_error(
             "Null false expression in conditional expression");
     }
     this->condition = condition;
-    this->trueExpression = trueExpression;
-    this->falseExpression = falseExpression;
+    this->thenExpression = thenExpression;
+    this->elseExpression = elseExpression;
 }
 
 void ConditionalExpression::accept(Visitor &visitor) { visitor.visit(*this); }
@@ -192,11 +192,11 @@ std::shared_ptr<Expression> ConditionalExpression::getCondition() const {
     return condition;
 }
 
-std::shared_ptr<Expression> ConditionalExpression::getTrueExpression() const {
-    return trueExpression;
+std::shared_ptr<Expression> ConditionalExpression::getThenExpression() const {
+    return thenExpression;
 }
 
-std::shared_ptr<Expression> ConditionalExpression::getFalseExpression() const {
-    return falseExpression;
+std::shared_ptr<Expression> ConditionalExpression::getElseExpression() const {
+    return elseExpression;
 }
 } // Namespace AST

@@ -1,5 +1,4 @@
 #include "semanticAnalysisPasses.h"
-
 #include <sstream>
 
 namespace AST {
@@ -66,20 +65,41 @@ VariableResolutionPass::resolveStatement(std::shared_ptr<Statement> statement) {
             std::dynamic_pointer_cast<ReturnStatement>(statement)) {
         // If the statement is a return statement, resolve the expression in the
         // return statement.
-        auto expression = resolveExpression(returnStatement->getExpression());
+        auto resolvedExpression =
+            resolveExpression(returnStatement->getExpression());
 
         // Return a new return statement with the resolved expression.
-        return std::make_shared<ReturnStatement>(expression);
+        return std::make_shared<ReturnStatement>(resolvedExpression);
     }
     else if (auto expressionStatement =
                  std::dynamic_pointer_cast<ExpressionStatement>(statement)) {
         // If the statement is an expression statement, resolve the expression
         // in the expression statement.
-        auto expression =
+        auto resolvedExpression =
             resolveExpression(expressionStatement->getExpression());
 
         // Return a new expression statement with the resolved expression.
-        return std::make_shared<ExpressionStatement>(expression);
+        return std::make_shared<ExpressionStatement>(resolvedExpression);
+    }
+    else if (auto ifStatement =
+                 std::dynamic_pointer_cast<IfStatement>(statement)) {
+        // If the statement is an if-statement, resolve the condition
+        // expression, then-statement, and (optional) else-statement in the
+        // if-statement.
+        auto resolvedCondition = resolveExpression(ifStatement->getCondition());
+        auto resolvedThenStatement =
+            resolveStatement(ifStatement->getThenStatement());
+        if (ifStatement->getElseOptStatement().has_value()) {
+            auto resolvedElseStatement =
+                resolveStatement(ifStatement->getElseOptStatement().value());
+            return std::make_shared<IfStatement>(resolvedCondition,
+                                                 resolvedThenStatement,
+                                                 resolvedElseStatement);
+        }
+        else {
+            return std::make_shared<IfStatement>(resolvedCondition,
+                                                 resolvedThenStatement);
+        }
     }
     else if (auto nullStatement =
                  std::dynamic_pointer_cast<NullStatement>(statement)) {
@@ -99,9 +119,11 @@ std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
                 assignmentExpression->getLeft()))) {
             throw std::runtime_error("Invalid lvalue in assignment expression");
         }
-        auto left = resolveExpression(assignmentExpression->getLeft());
-        auto right = resolveExpression(assignmentExpression->getRight());
-        return std::make_shared<AssignmentExpression>(left, right);
+        auto resolvedLeft = resolveExpression(assignmentExpression->getLeft());
+        auto resolvedRight =
+            resolveExpression(assignmentExpression->getRight());
+        return std::make_shared<AssignmentExpression>(resolvedLeft,
+                                                      resolvedRight);
     }
     else if (auto variableExpression =
                  std::dynamic_pointer_cast<VariableExpression>(expression)) {
@@ -147,6 +169,23 @@ std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
         // expressions.
         return std::make_shared<BinaryExpression>(
             resolvedLeft, binaryExpression->getOperator(), resolvedRight);
+    }
+    else if (auto conditionalExpression =
+                 std::dynamic_pointer_cast<ConditionalExpression>(expression)) {
+        // If the expression is a conditional expression, resolve the condition
+        // expression, then-expression, and else-expression in the conditional
+        // expression.
+        auto resolvedCondition =
+            resolveExpression(conditionalExpression->getCondition());
+        auto resolvedThenExpression =
+            resolveExpression(conditionalExpression->getThenExpression());
+        auto resolvedElseExpression =
+            resolveExpression(conditionalExpression->getElseExpression());
+
+        // Return a new conditional expression with the resolved condition
+        // expression, then-expression, and else-expression.
+        return std::make_shared<ConditionalExpression>(
+            resolvedCondition, resolvedThenExpression, resolvedElseExpression);
     }
     else {
         throw std::runtime_error("Unsupported expression type");
