@@ -9,13 +9,12 @@ IRGenerator::IRGenerator(int variableResolutionCounter) {
 std::shared_ptr<IR::Program>
 IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
     // Get the function from the AST program.
-    std::shared_ptr<AST::Function> astFunction = astProgram->getFunction();
+    auto astFunction = astProgram->getFunction();
 
     // Create a shared pointer to a vector of shared pointers of
     // FunctionDefinition.
-    std::shared_ptr<std::vector<std::shared_ptr<IR::FunctionDefinition>>>
-        functionDefinition = std::make_shared<
-            std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
+    auto functionDefinition = std::make_shared<
+        std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
 
     // Create a shared pointer for the specific FunctionDefinition and add
     // it to the vector.
@@ -73,12 +72,10 @@ void IRGenerator::generateIRDeclaration(
     auto initializer = astDeclaration->getOptInitializer();
     if (initializer.has_value()) {
         // Generate IR instructions for the initializer.
-        std::shared_ptr<IR::Value> result =
-            generateIRInstruction(initializer.value(), instructions);
+        auto result = generateIRInstruction(initializer.value(), instructions);
 
         // Create a variable value for the identifier.
-        std::shared_ptr<IR::VariableValue> dst =
-            std::make_shared<IR::VariableValue>(identifier);
+        auto dst = std::make_shared<IR::VariableValue>(identifier);
 
         // Generate a copy instruction with the result value and the
         // destination value.
@@ -106,6 +103,11 @@ void IRGenerator::generateIRStatement(
         // expression statement.
         generateIRExpressionStatement(expressionStmt, instructions);
     }
+    else if (auto ifStmt =
+                 std::dynamic_pointer_cast<AST::IfStatement>(astStatement)) {
+        // If the statement is an if-statement, generate an if-statement.
+        generateIRIfStatement(ifStmt, instructions);
+    }
     else if (auto nullStmt =
                  std::dynamic_pointer_cast<AST::NullStatement>(astStatement)) {
         // If the statement is a null statement, do nothing.
@@ -120,12 +122,11 @@ void IRGenerator::generateIRReturnStatement(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Get the expression from the return statement.
-    std::shared_ptr<AST::Expression> exp = returnStmt->getExpression();
+    auto exp = returnStmt->getExpression();
 
     // Process the expression and generate the corresponding IR
     // instructions.
-    std::shared_ptr<IR::Value> result =
-        generateIRInstruction(exp, instructions);
+    auto result = generateIRInstruction(exp, instructions);
 
     // Generate a return instruction with the result value.
     instructions->emplace_back(std::make_shared<IR::ReturnInstruction>(result));
@@ -136,13 +137,61 @@ void IRGenerator::generateIRExpressionStatement(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Get the expression from the expression statement.
-    std::shared_ptr<AST::Expression> exp = expressionStmt->getExpression();
+    auto exp = expressionStmt->getExpression();
 
     // Process the expression and generate the corresponding IR
     // instructions.
-    std::shared_ptr<IR::Value> result =
-        generateIRInstruction(exp, instructions);
+    auto result = generateIRInstruction(exp, instructions);
     // We do not need to do anything with the result value.
+}
+
+void IRGenerator::generateIRIfStatement(
+    std::shared_ptr<AST::IfStatement> ifStmt,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Get the condition from the if-statement.
+    auto condition = ifStmt->getCondition();
+    // Process the condition and generate the corresponding IR instructions.
+    auto conditionValue = generateIRInstruction(condition, instructions);
+    // Generate a new end label.
+    auto endLabel = generateIREndLabel();
+    // Generate a new else label.
+    auto elseLabel = generateIRElseLabel();
+
+    if (ifStmt->getElseOptStatement().has_value()) {
+        // Generate a jump-if-zero instruction with the condition value and the
+        // else label.
+        instructions->emplace_back(std::make_shared<IR::JumpIfZeroInstruction>(
+            conditionValue, elseLabel));
+        // Get the then-statement from the if-statement.
+        auto thenStatement = ifStmt->getThenStatement();
+        // Process the then-statement and generate the corresponding IR
+        // instructions.
+        generateIRStatement(thenStatement, instructions);
+        // Generate a jump instruction with the end label.
+        generateIRJumpInstruction(endLabel, instructions);
+        // Generate a label instruction with the same (new) else label.
+        generateIRLabelInstruction(elseLabel, instructions);
+        // Get the (optional) else-statement from the if-statement.
+        auto elseOptStatement = ifStmt->getElseOptStatement().value();
+        // Process the else-statement and generate the corresponding IR
+        // instructions.
+        generateIRStatement(elseOptStatement, instructions);
+    }
+    else {
+        // Generate a jump-if-zero instruction with the condition value and the
+        // end label.
+        instructions->emplace_back(std::make_shared<IR::JumpIfZeroInstruction>(
+            conditionValue, endLabel));
+        // Get the then-statement from the if-statement.
+        auto thenStatement = ifStmt->getThenStatement();
+        // Process the then-statement and generate the corresponding IR
+        // instructions.
+        generateIRStatement(thenStatement, instructions);
+    }
+
+    // Generate a label instruction with the same (new) end label.
+    generateIRLabelInstruction(endLabel, instructions);
 }
 
 std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
@@ -208,6 +257,26 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             throw std::runtime_error("Unsupported lvalue type in assignment");
         }
     }
+    else if (auto conditionalExpr =
+                 std::dynamic_pointer_cast<AST::ConditionalExpression>(e)) {
+        auto conditionValue = generateIRInstruction(
+            conditionalExpr->getCondition(), instructions);
+        auto e2Label = generateIRE2Label();
+        generateIRJumpIfZeroInstruction(conditionValue, e2Label, instructions);
+        auto e1Value = generateIRInstruction(
+            conditionalExpr->getThenExpression(), instructions);
+        auto resultLabel = generateIRResultLabel();
+        auto resultValue = std::make_shared<IR::VariableValue>(resultLabel);
+        generateIRCopyInstruction(e1Value, resultValue, instructions);
+        auto endLabel = generateIREndLabel();
+        generateIRJumpInstruction(endLabel, instructions);
+        generateIRLabelInstruction(e2Label, instructions);
+        auto e2Value = generateIRInstruction(
+            conditionalExpr->getElseExpression(), instructions);
+        generateIRCopyInstruction(e2Value, resultValue, instructions);
+        generateIRLabelInstruction(endLabel, instructions);
+        return resultValue;
+    }
     else {
         throw std::runtime_error("Unsupported assignment type");
     }
@@ -218,21 +287,18 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Recursively generate the expression in the unary expression.
-    std::shared_ptr<IR::Value> src =
-        generateIRInstruction(unaryExpr->getExpression(), instructions);
+    auto src = generateIRInstruction(unaryExpr->getExpression(), instructions);
 
     // Create a temporary variable (in string) to store the result of
     // the unary operation.
-    std::string tmpName = generateIRTemporary();
+    auto tmpName = generateIRTemporary();
 
     // Create a variable value for the temporary variable.
-    std::shared_ptr<IR::VariableValue> dst =
-        std::make_shared<IR::VariableValue>(tmpName);
+    auto dst = std::make_shared<IR::VariableValue>(tmpName);
 
     // Convert the unary operator in the unary expression to a IR
     // unary operator.
-    std::shared_ptr<IR::UnaryOperator> IROp =
-        convertUnop(unaryExpr->getOperator());
+    auto IROp = convertUnop(unaryExpr->getOperator());
 
     // Generate a unary instruction with the IR unary operator, the
     // source value, and the destination value.
@@ -249,22 +315,18 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
         instructions) {
     // Convert the binary operator in the binary expression to a IR
     // binary operator.
-    std::shared_ptr<IR::BinaryOperator> IROp =
-        convertBinop(binaryExpr->getOperator());
+    auto IROp = convertBinop(binaryExpr->getOperator());
 
     // Create a temporary variable (in string) to store the result of
     // the binary operation.
-    std::string tmpName = generateIRTemporary();
+    auto tmpName = generateIRTemporary();
     // Create a variable value for the temporary variable.
-    std::shared_ptr<IR::VariableValue> dst =
-        std::make_shared<IR::VariableValue>(tmpName);
+    auto dst = std::make_shared<IR::VariableValue>(tmpName);
 
     // Recursively generate the left and right expressions in the binary
     // expression.
-    std::shared_ptr<IR::Value> lhs =
-        generateIRInstruction(binaryExpr->getLeft(), instructions);
-    std::shared_ptr<IR::Value> rhs =
-        generateIRInstruction(binaryExpr->getRight(), instructions);
+    auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
+    auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
     // Generate a binary instruction with the IR binary operator, the
     // left-hand side value, the right-hand side value, and the
     // destination value.
@@ -281,17 +343,15 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Recursively generate the left expression in the binary expression.
-    std::shared_ptr<IR::Value> lhs =
-        generateIRInstruction(binaryExpr->getLeft(), instructions);
+    auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
 
     // Generate a JumpIfZero instruction with the left-hand side value and a
     // (new) false label.
-    std::string falseLabel = generateIRFalseLabel();
+    auto falseLabel = generateIRFalseLabel();
     generateIRJumpIfZeroInstruction(lhs, falseLabel, instructions);
 
     // Recursively generate the right expression in the binary expression.
-    std::shared_ptr<IR::Value> rhs =
-        generateIRInstruction(binaryExpr->getRight(), instructions);
+    auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
 
     // Generate a JumpIfZero instruction with the right-hand side value and
     // the same (new) false label.
@@ -299,14 +359,13 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
 
     // Generate a copy instruction with 1 being copied to a (new) result
     // label.
-    std::string resultLabel = generateIRResultLabel();
-    std::shared_ptr<IR::VariableValue> dst =
-        std::make_shared<IR::VariableValue>(resultLabel);
+    auto resultLabel = generateIRResultLabel();
+    auto dst = std::make_shared<IR::VariableValue>(resultLabel);
     generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
                               instructions);
 
     // Generate a jump instruction with a new end label.
-    std::string endLabel = generateIREndLabel();
+    auto endLabel = generateIREndLabel();
     generateIRJumpInstruction(endLabel, instructions);
 
     // Generate a label instruction with the same (new) false label.
@@ -329,33 +388,30 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Recursively generate the left expression in the binary expression.
-    std::shared_ptr<IR::Value> lhs =
-        generateIRInstruction(binaryExpr->getLeft(), instructions);
+    auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
 
     // Generate a JumpIfNotZero instruction with the left-hand side value
     // and a (new) true label.
-    std::string trueLabel = generateIRTrueLabel();
+    auto trueLabel = generateIRTrueLabel();
     generateIRJumpIfNotZeroInstruction(lhs, trueLabel, instructions);
 
     // Recursively generate the right expression in the binary expression.
-    std::shared_ptr<IR::Value> rhs =
-        generateIRInstruction(binaryExpr->getRight(), instructions);
+    auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
 
     // Generate a JumpIfNotZero instruction with the right-hand side value
     // and the same (new) true label.
-    std::string trueLabelRight = generateIRTrueLabel();
+    auto trueLabelRight = generateIRTrueLabel();
     generateIRJumpIfNotZeroInstruction(rhs, trueLabel, instructions);
 
     // Generate a copy instruction with 0 being copied to a (new) result
     // label.
-    std::string resultLabel = generateIRResultLabel();
-    std::shared_ptr<IR::VariableValue> dst =
-        std::make_shared<IR::VariableValue>(resultLabel);
+    auto resultLabel = generateIRResultLabel();
+    auto dst = std::make_shared<IR::VariableValue>(resultLabel);
     generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
                               instructions);
 
     // Generate a jump instruction with a new end label.
-    std::string endLabel = generateIREndLabel();
+    auto endLabel = generateIREndLabel();
     generateIRJumpInstruction(endLabel, instructions);
 
     // Generate a label instruction with the same (new) true label.
@@ -465,6 +521,28 @@ std::string IRGenerator::generateIREndLabel() {
     // string "endN" (similar to "false_label" in the listing), "where N is
     // the current value of a global counter."
     return "end" + std::to_string(counter++);
+}
+
+std::string IRGenerator::generateIRElseLabel() {
+    // Create a label with a unique number.
+    // The number would be incremented each time this function is called.
+    static int counter = 0;
+
+    // Return the string representation of the (unique) label using the
+    // string "elseN" (similar to "false_label" in the listing), "where N is
+    // the current value of a global counter."
+    return "else" + std::to_string(counter++);
+}
+
+std::string IRGenerator::generateIRE2Label() {
+    // Create a label with a unique number.
+    // The number would be incremented each time this function is called.
+    static int counter = 0;
+
+    // Return the string representation of the (unique) label using the
+    // string "e2N" (similar to "false_label" in the listing), "where N is
+    // the current value of a global counter."
+    return "e2" + std::to_string(counter++);
 }
 
 std::shared_ptr<IR::UnaryOperator>

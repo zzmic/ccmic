@@ -35,6 +35,10 @@ class IRGenerator {
         std::shared_ptr<AST::ExpressionStatement> expressionStmt,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
+    void generateIRIfStatement(
+        std::shared_ptr<AST::IfStatement> ifStmt,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
     std::shared_ptr<IR::Value> generateIRInstruction(
         std::shared_ptr<AST::Expression> e,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
@@ -80,6 +84,8 @@ class IRGenerator {
     std::string generateIRTrueLabel();
     std::string generateIRResultLabel();
     std::string generateIREndLabel();
+    std::string generateIRElseLabel();
+    std::string generateIRE2Label();
     std::shared_ptr<IR::UnaryOperator>
     convertUnop(std::shared_ptr<AST::UnaryOperator> op);
     std::shared_ptr<IR::BinaryOperator>

@@ -140,7 +140,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
         ifStatement.getThenStatement()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null then statement in if-statement");
+        throw std::runtime_error("Null then-statement in if-statement");
     }
 
     std::cout << "\nelse=";
