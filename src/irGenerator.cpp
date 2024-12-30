@@ -30,7 +30,8 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
     auto astBody = astFunction->getBody();
 
     // Generate IR instructions for the body of the function.
-    for (auto &blockItem : *astBody) {
+    auto blockItems = astBody->getBlockItems();
+    for (auto &blockItem : *blockItems) {
         // If the block item is a `DBlockItem` (i.e., a declaration), ...
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {

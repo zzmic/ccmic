@@ -37,13 +37,25 @@ void PrintVisitor::visit(Function &function) {
     std::cout << "\",\n";
     std::cout << "body=";
 
-    if (function.getBody()) {
-        for (auto &blockItem : *function.getBody()) {
+    auto functionBody = function.getBody();
+    if (functionBody) {
+        auto blockItems = functionBody->getBlockItems();
+        for (auto &blockItem : *blockItems) {
             blockItem->accept(*this);
         }
     }
     else {
         throw std::runtime_error("Null body in function");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(Block &block) {
+    std::cout << "Block(";
+
+    for (auto &blockItem : *block.getBlockItems()) {
+        blockItem->accept(*this);
     }
 
     std::cout << "\n)";
@@ -147,6 +159,19 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
 
     if (ifStatement.getElseOptStatement().has_value()) {
         ifStatement.getElseOptStatement().value()->accept(*this);
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(CompoundStatement &compoundStatement) {
+    std::cout << "CompoundStatement(\n";
+
+    if (compoundStatement.getBlock()) {
+        compoundStatement.getBlock()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null block in compound statement");
     }
 
     std::cout << "\n)";

@@ -1,6 +1,7 @@
 #ifndef IR_GENERATOR_H
 #define IR_GENERATOR_H
 
+#include "block.h"
 #include "blockItem.h"
 #include "declaration.h"
 #include "expression.h"

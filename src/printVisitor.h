@@ -9,12 +9,14 @@ class PrintVisitor : public Visitor {
   public:
     void visit(Program &program) override;
     void visit(Function &function) override;
+    void visit(Block &block) override;
     void visit(SBlockItem &sBlockItem) override;
     void visit(DBlockItem &dBlockItem) override;
     void visit(Declaration &declaration) override;
     void visit(ReturnStatement &returnStatement) override;
     void visit(ExpressionStatement &expressionStatement) override;
     void visit(IfStatement &ifStatement) override;
+    void visit(CompoundStatement &compoundStatement) override;
     void visit(NullStatement &nullStatement) override;
     void visit(ConstantExpression &constantExpression) override;
     void visit(VariableExpression &variableExpression) override;

@@ -52,14 +52,7 @@ std::shared_ptr<Function> Parser::parseFunction() {
     expectToken(TokenType::voidKeyword);
     expectToken(TokenType::CloseParenthesis);
 
-    expectToken(TokenType::OpenBrace);
-    auto functionBody =
-        std::make_shared<std::vector<std::shared_ptr<BlockItem>>>();
-    while (!matchToken(TokenType::CloseBrace)) {
-        auto nextBlockItem = parseBlockItem();
-        functionBody->emplace_back(nextBlockItem);
-    }
-    expectToken(TokenType::CloseBrace);
+    auto functionBody = parseBlock();
 
     if (current < tokens.size()) {
         std::stringstream msg;
@@ -84,6 +77,18 @@ std::shared_ptr<BlockItem> Parser::parseBlockItem() {
     }
 }
 
+std::shared_ptr<Block> Parser::parseBlock() {
+    expectToken(TokenType::OpenBrace);
+    auto blockItems =
+        std::make_shared<std::vector<std::shared_ptr<BlockItem>>>();
+    while (!matchToken(TokenType::CloseBrace)) {
+        auto nextBlockItem = parseBlockItem();
+        blockItems->emplace_back(nextBlockItem);
+    }
+    expectToken(TokenType::CloseBrace);
+    return std::make_shared<Block>(blockItems);
+}
+
 std::shared_ptr<Declaration> Parser::parseDeclaration() {
     expectToken(TokenType::intKeyword);
     Token variableNameToken = consumeToken(TokenType::Identifier);
@@ -100,16 +105,19 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
 }
 
 std::shared_ptr<Statement> Parser::parseStatement() {
+    // Parse a return statement.
     if (matchToken(TokenType::returnKeyword)) {
         consumeToken(TokenType::returnKeyword);
         std::shared_ptr<Expression> expr = parseExpression(0);
         expectToken(TokenType::Semicolon);
         return std::make_shared<ReturnStatement>(expr);
     }
+    // Parse a null statement.
     else if (matchToken(TokenType::Semicolon)) {
         consumeToken(TokenType::Semicolon);
         return std::make_shared<NullStatement>();
     }
+    // Parse an if statement.
     else if (matchToken(TokenType::ifKeyword)) {
         consumeToken(TokenType::ifKeyword);
         expectToken(TokenType::OpenParenthesis);
@@ -124,6 +132,11 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         }
         return std::make_shared<IfStatement>(condition, thenStatement);
     }
+    // Parse a compound statement.
+    else if (matchToken(TokenType::OpenBrace)) {
+        return std::make_shared<CompoundStatement>(parseBlock());
+    }
+    // Parse an expression statement.
     else {
         std::shared_ptr<Expression> expr = parseExpression(0);
         expectToken(TokenType::Semicolon);

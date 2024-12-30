@@ -2,6 +2,7 @@
 #define STATEMENT_H
 
 #include "ast.h"
+#include "block.h"
 #include "expression.h"
 #include <memory>
 #include <optional>
@@ -45,6 +46,16 @@ class IfStatement : public Statement {
     std::shared_ptr<Expression> condition;
     std::shared_ptr<Statement> thenStatement;
     std::optional<std::shared_ptr<Statement>> elseOptStatement;
+};
+
+class CompoundStatement : public Statement {
+  public:
+    CompoundStatement(std::shared_ptr<Block> block);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<Block> getBlock() const;
+
+  private:
+    std::shared_ptr<Block> block;
 };
 
 class NullStatement : public Statement {

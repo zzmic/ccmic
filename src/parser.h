@@ -35,6 +35,7 @@ class Parser {
     void expectToken(TokenType type);
     std::shared_ptr<Function> parseFunction();
     std::shared_ptr<BlockItem> parseBlockItem();
+    std::shared_ptr<Block> parseBlock();
     std::shared_ptr<Declaration> parseDeclaration();
     std::shared_ptr<Statement> parseStatement();
     std::shared_ptr<Expression> parseFactor();

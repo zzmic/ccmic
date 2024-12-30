@@ -13,19 +13,25 @@ namespace AST {
 // Forward declarations of AST nodes/classes.
 class Program;
 class Function;
+class Block;
+class BlockItem;
 class SBlockItem;
 class DBlockItem;
 class Declaration;
+class Statement;
 class ReturnStatement;
 class ExpressionStatement;
 class IfStatement;
+class CompoundStatement;
 class NullStatement;
+class Expression;
 class ConstantExpression;
 class VariableExpression;
 class UnaryExpression;
 class BinaryExpression;
 class AssignmentExpression;
 class ConditionalExpression;
+class Operator;
 class ComplementOperator;
 class NegateOperator;
 class NotOperator;
@@ -51,12 +57,14 @@ class Visitor {
     // This in turn implies that the whole visitor class is an abstract class.
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
+    virtual void visit(Block &block) = 0;
     virtual void visit(SBlockItem &sBlockItem) = 0;
     virtual void visit(DBlockItem &dBlockItem) = 0;
     virtual void visit(Declaration &declaration) = 0;
     virtual void visit(ReturnStatement &returnStatement) = 0;
     virtual void visit(ExpressionStatement &expressionStatement) = 0;
     virtual void visit(IfStatement &ifStatement) = 0;
+    virtual void visit(CompoundStatement &compoundStatement) = 0;
     virtual void visit(NullStatement &nullStatement) = 0;
     virtual void visit(ConstantExpression &constantExpression) = 0;
     virtual void visit(VariableExpression &variableExpression) = 0;

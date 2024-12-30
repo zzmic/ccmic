@@ -46,5 +46,12 @@ IfStatement::getElseOptStatement() const {
     return elseOptStatement;
 }
 
+CompoundStatement::CompoundStatement(std::shared_ptr<Block> block)
+    : block(block) {}
+
+void CompoundStatement::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::shared_ptr<Block> CompoundStatement::getBlock() const { return block; }
+
 void NullStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 } // Namespace AST

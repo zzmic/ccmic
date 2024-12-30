@@ -4,7 +4,6 @@
 #include "ast.h"
 #include "declaration.h"
 #include "statement.h"
-#include <memory>
 
 namespace AST {
 class BlockItem : public AST {};

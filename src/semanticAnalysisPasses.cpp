@@ -4,9 +4,10 @@
 namespace AST {
 int VariableResolutionPass::resolveVariables(std::shared_ptr<Program> program) {
     auto function = program->getFunction();
+    auto blockItems = function->getBody()->getBlockItems();
     // For each block item in the function body, resolve the variables in the
     // block item, either a declaration or a statement.
-    for (auto &blockItem : *function->getBody()) {
+    for (auto &blockItem : *blockItems) {
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
             auto resolvedDeclaration =

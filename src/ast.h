@@ -1,10 +1,9 @@
 #ifndef AST_H
 #define AST_H
 
-namespace AST {
-// Forward declaration of the Visitor class.
-class Visitor;
+#include "visitor.h"
 
+namespace AST {
 class AST {
   public:
     // `= default` instructs the compiler to generate the default
