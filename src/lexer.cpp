@@ -10,6 +10,10 @@ const std::regex constant_regex(R"(^[0-9]+\b)");
 const std::regex intKeyword_regex(R"(^int\b)");
 const std::regex voidKeyword_regex(R"(^void\b)");
 const std::regex returnKeyword_regex(R"(^return\b)");
+const std::regex ifKeyword_regex(R"(^if\b)");
+const std::regex elseKeyword_regex(R"(^else\b)");
+const std::regex questionMark_regex(R"(^\?)");
+const std::regex colon_regex(R"(^\:)");
 const std::regex assign_regex(R"(^=)");
 const std::regex openParenthesis_regex(R"(^\()");
 const std::regex closeParenthesis_regex(R"(^\))");
@@ -65,6 +69,14 @@ Token matchToken(const std::string &input) {
         return {TokenType::voidKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, returnKeyword_regex))
         return {TokenType::returnKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, ifKeyword_regex))
+        return {TokenType::ifKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, elseKeyword_regex))
+        return {TokenType::elseKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, questionMark_regex))
+        return {TokenType::QuestionMark, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, colon_regex))
+        return {TokenType::Colon, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, openParenthesis_regex))
         return {TokenType::OpenParenthesis, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, closeParenthesis_regex))
@@ -212,6 +224,18 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::returnKeyword:
             typeStr = "returnKeyword";
             break;
+        case TokenType::ifKeyword:
+            typeStr = "ifKeyword";
+            break;
+        case TokenType::elseKeyword:
+            typeStr = "elseKeyword";
+            break;
+        case TokenType::QuestionMark:
+            typeStr = "QuestionMark";
+            break;
+        case TokenType::Colon:
+            typeStr = "Colon";
+            break;
         case TokenType::Assign:
             typeStr = "Assign";
             break;
@@ -316,6 +340,18 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::returnKeyword:
         typeStr = "returnKeyword";
+        break;
+    case TokenType::ifKeyword:
+        typeStr = "ifKeyword";
+        break;
+    case TokenType::elseKeyword:
+        typeStr = "elseKeyword";
+        break;
+    case TokenType::QuestionMark:
+        typeStr = "QuestionMark";
+        break;
+    case TokenType::Colon:
+        typeStr = "Colon";
         break;
     case TokenType::Assign:
         typeStr = "Assign";
