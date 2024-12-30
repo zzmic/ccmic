@@ -54,14 +54,16 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 }
 
 // Function to perform semantic-analysis passes on the AST program.
-void PipelineStagesExecutors::semanticAnalysisExecutor(
+int PipelineStagesExecutors::semanticAnalysisExecutor(
     std::shared_ptr<AST::Program> astProgram) {
     try {
         AST::VariableResolutionPass variableResolutionPass;
-        variableResolutionPass.resolveVariables(astProgram);
+        int variableResolutionCounter =
+            variableResolutionPass.resolveVariables(astProgram);
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
         astProgram->accept(printVisitor);
+        return variableResolutionCounter;
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Semantic analysis error: " << e.what();
@@ -71,12 +73,12 @@ void PipelineStagesExecutors::semanticAnalysisExecutor(
 
 // Function to generate the IR from the AST program.
 std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
-    std::shared_ptr<AST::Program> astProgram) {
+    std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter) {
     std::cout << "\n";
 
     std::shared_ptr<IR::Program> irProgram;
     try {
-        IRGenerator irGenerator;
+        IR::IRGenerator irGenerator(variableResolutionCounter);
         irProgram = irGenerator.generate(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;

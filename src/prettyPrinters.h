@@ -3,7 +3,6 @@
 
 #include "assembly.h"
 #include "ir.h"
-
 #include <iostream>
 
 class PrettyPrinters {

@@ -3,8 +3,7 @@
 #include <sstream>
 
 namespace AST {
-void VariableResolutionPass::resolveVariables(
-    std::shared_ptr<Program> program) {
+int VariableResolutionPass::resolveVariables(std::shared_ptr<Program> program) {
     auto function = program->getFunction();
     // For each block item in the function body, resolve the variables in the
     // block item, either a declaration or a statement.
@@ -25,19 +24,13 @@ void VariableResolutionPass::resolveVariables(
             throw std::runtime_error("Unsupported block item type");
         }
     }
+    return this->variableResolutionCounter;
 }
 
-// TODO(zzmic): Be cautious of the potential pitfall: "If you’re using a global
-// counter to generate unique identifiers, use the same counter across both the
-// semantic analysis and TACKY generation stages."
 std::string VariableResolutionPass::generateUniqueVariableName(
     const std::string &identifier) {
-    // Create a variable name with a unique number.
-    // The number would be incremented each time this function is called.
-    static int counter = 0;
-
     // Return the string representation of the (unique) variable name.
-    return identifier + "." + std::to_string(counter++);
+    return identifier + "." + std::to_string(this->variableResolutionCounter++);
 }
 
 std::shared_ptr<Declaration> VariableResolutionPass::resolveVariableDeclaration(

@@ -6,7 +6,7 @@
 #include "compilerDriver.h"
 #include "fixupPass.h"
 #include "ir.h"
-#include "irGenerator.cpp"
+#include "irGenerator.h"
 #include "lexer.h"
 #include "parser.h"
 #include "printVisitor.h"
@@ -23,10 +23,11 @@ class PipelineStagesExecutors {
     static std::vector<Token> lexerExecutor(const std::string &sourceFile);
     static std::shared_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
-    static void
+    static int
     semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
     static std::shared_ptr<IR::Program>
-    irGeneratorExecutor(std::shared_ptr<AST::Program> astProgram);
+    irGeneratorExecutor(std::shared_ptr<AST::Program> astProgram,
+                        int variableResolutionCounter);
     static std::shared_ptr<Assembly::Program>
     codegenExecutor(std::shared_ptr<IR::Program> irProgram);
     static void

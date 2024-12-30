@@ -9,12 +9,12 @@
 namespace AST {
 class VariableResolutionPass {
   public:
-    void resolveVariables(std::shared_ptr<Program> program);
+    int resolveVariables(std::shared_ptr<Program> program);
 
   private:
+    int variableResolutionCounter = 0;
     std::unordered_map<std::string, std::string> variableMap;
-    static std::string
-    generateUniqueVariableName(const std::string &identifier);
+    std::string generateUniqueVariableName(const std::string &identifier);
     std::shared_ptr<Declaration>
     resolveVariableDeclaration(std::shared_ptr<Declaration> declaration);
     std::shared_ptr<Statement>
