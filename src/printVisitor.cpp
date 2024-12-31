@@ -199,17 +199,16 @@ void PrintVisitor::visit(CompoundStatement &compoundStatement) {
 }
 
 void PrintVisitor::visit(BreakStatement &breakStatement) {
-    (void)breakStatement;
-    std::cout << "BreakStatement()";
+    std::cout << "BreakStatement()" << "_" << breakStatement.getLabel();
 }
 
 void PrintVisitor::visit(ContinueStatement &continueStatement) {
     (void)continueStatement;
-    std::cout << "ContinueStatement()";
+    std::cout << "ContinueStatement()" << "_" << continueStatement.getLabel();
 }
 
 void PrintVisitor::visit(WhileStatement &whileStatement) {
-    std::cout << "WhileStatement(\n";
+    std::cout << "WhileStatement" << "_" << whileStatement.getLabel() << "(\n";
 
     std::cout << "condition=";
 
@@ -233,7 +232,8 @@ void PrintVisitor::visit(WhileStatement &whileStatement) {
 }
 
 void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
-    std::cout << "DoWhileStatement(\n";
+    std::cout << "DoWhileStatement" << "_" << doWhileStatement.getLabel()
+              << "(\n";
 
     std::cout << "condition=";
 
@@ -257,7 +257,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
 }
 
 void PrintVisitor::visit(ForStatement &forStatement) {
-    std::cout << "ForStatement(\n";
+    std::cout << "ForStatement" << "_" << forStatement.getLabel() << "(\n";
 
     std::cout << "init=";
 

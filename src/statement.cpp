@@ -53,27 +53,27 @@ void CompoundStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::shared_ptr<Block> CompoundStatement::getBlock() const { return block; }
 
-BreakStatement::BreakStatement() {
-    label = "break" + std::to_string(counter++);
-}
+BreakStatement::BreakStatement() : label("") {}
 
 void BreakStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::string BreakStatement::getLabel() const { return label; }
 
-ContinueStatement::ContinueStatement() {
-    label = "continue" + std::to_string(counter++);
-}
+void BreakStatement::setLabel(const std::string &label) { this->label = label; }
+
+ContinueStatement::ContinueStatement() : label("") {}
 
 void ContinueStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::string ContinueStatement::getLabel() const { return label; }
 
+void ContinueStatement::setLabel(const std::string &label) {
+    this->label = label;
+}
+
 WhileStatement::WhileStatement(std::shared_ptr<Expression> condition,
                                std::shared_ptr<Statement> body)
-    : condition(condition), body(body) {
-    label = "while" + std::to_string(counter++);
-}
+    : condition(condition), body(body), label("") {}
 
 void WhileStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -85,11 +85,11 @@ std::shared_ptr<Statement> WhileStatement::getBody() const { return body; }
 
 std::string WhileStatement::getLabel() const { return label; }
 
+void WhileStatement::setLabel(const std::string &label) { this->label = label; }
+
 DoWhileStatement::DoWhileStatement(std::shared_ptr<Expression> condition,
                                    std::shared_ptr<Statement> body)
-    : condition(condition), body(body) {
-    label = "doWhile" + std::to_string(counter++);
-}
+    : condition(condition), body(body), label("") {}
 
 void DoWhileStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -101,13 +101,16 @@ std::shared_ptr<Statement> DoWhileStatement::getBody() const { return body; }
 
 std::string DoWhileStatement::getLabel() const { return label; }
 
+void DoWhileStatement::setLabel(const std::string &label) {
+    this->label = label;
+}
+
 ForStatement::ForStatement(std::shared_ptr<ForInit> forInit,
                            std::optional<std::shared_ptr<Expression>> condition,
                            std::optional<std::shared_ptr<Expression>> post,
                            std::shared_ptr<Statement> body)
-    : forInit(forInit), optCondition(condition), optPost(post), body(body) {
-    label = "for" + std::to_string(counter++);
-}
+    : forInit(forInit), optCondition(condition), optPost(post), body(body),
+      label("") {}
 
 void ForStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -125,6 +128,8 @@ std::optional<std::shared_ptr<Expression>> ForStatement::getOptPost() const {
 std::shared_ptr<Statement> ForStatement::getBody() const { return body; }
 
 std::string ForStatement::getLabel() const { return label; }
+
+void ForStatement::setLabel(const std::string &label) { this->label = label; }
 
 void NullStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 } // Namespace AST

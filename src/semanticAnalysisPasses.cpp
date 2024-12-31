@@ -20,8 +20,8 @@ int VariableResolutionPass::resolveVariables(std::shared_ptr<Program> program) {
 std::unordered_map<std::string, MapEntry>
 VariableResolutionPass::copyVariableMap(
     std::unordered_map<std::string, MapEntry> &variableMap) {
-    // Copy the variable map with the fromCurrentBlock flag set to false for
-    // every entry.
+    // Make a copy of the variable map and set the `fromCurrentBlock` flag to
+    // false for every entry.
     auto copiedVariableMap = std::unordered_map<std::string, MapEntry>();
     for (auto &entry : variableMap) {
         copiedVariableMap[entry.first] =
@@ -94,6 +94,65 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
         auto resolvedBlock =
             resolveBlock(compoundStatement->getBlock(), copiedVariableMap);
         return std::make_shared<CompoundStatement>(resolvedBlock);
+    }
+    else if (auto breakStatement =
+                 std::dynamic_pointer_cast<BreakStatement>(statement)) {
+        // If the statement is a break statement, return the break statement.
+        return breakStatement;
+    }
+    else if (auto continueStatement =
+                 std::dynamic_pointer_cast<ContinueStatement>(statement)) {
+        // If the statement is a continue statement, return the continue
+        // statement.
+        return continueStatement;
+    }
+    else if (auto whileStatement =
+                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
+        // If the statement is a while statement, resolve the condition
+        // expression and the body statement in the while statement.
+        auto resolvedCondition =
+            resolveExpression(whileStatement->getCondition(), variableMap);
+        auto resolvedBody =
+            resolveStatement(whileStatement->getBody(), variableMap);
+        return std::make_shared<WhileStatement>(resolvedCondition,
+                                                resolvedBody);
+    }
+    else if (auto doWhileStatement =
+                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
+        // If the statement is a do-while statement, resolve the condition
+        // expression and the body statement in the do-while statement.
+        auto resolvedCondition =
+            resolveExpression(doWhileStatement->getCondition(), variableMap);
+        auto resolvedBody =
+            resolveStatement(doWhileStatement->getBody(), variableMap);
+        return std::make_shared<DoWhileStatement>(resolvedCondition,
+                                                  resolvedBody);
+    }
+    else if (auto forStatement =
+                 std::dynamic_pointer_cast<ForStatement>(statement)) {
+        // Copy the variable map (with modifications) and resolve the for-init,
+        // (optional) condition, (optional) post, and body in the for-statement.
+        auto copiedVariableMap = copyVariableMap(variableMap);
+        auto resolvedForInit =
+            resolveForInit(forStatement->getForInit(), copiedVariableMap);
+        auto resolvedOptCondition =
+            std::optional<std::shared_ptr<Expression>>();
+        auto resolvedOptPost = std::optional<std::shared_ptr<Expression>>();
+        if (forStatement->getOptCondition().has_value()) {
+            auto resolvedCondition = resolveExpression(
+                forStatement->getOptCondition().value(), copiedVariableMap);
+            resolvedOptCondition = std::make_optional(resolvedCondition);
+        }
+        if (forStatement->getOptPost().has_value()) {
+            auto resolvedPost = resolveExpression(
+                forStatement->getOptPost().value(), copiedVariableMap);
+            resolvedOptPost = std::make_optional(resolvedPost);
+        }
+        auto resolvedBody =
+            resolveStatement(forStatement->getBody(), copiedVariableMap);
+        return std::make_shared<ForStatement>(resolvedForInit,
+                                              resolvedOptCondition,
+                                              resolvedOptPost, resolvedBody);
     }
     else if (auto ifStatement =
                  std::dynamic_pointer_cast<IfStatement>(statement)) {
@@ -239,4 +298,166 @@ std::shared_ptr<Block> VariableResolutionPass::resolveBlock(
     return std::make_shared<Block>(blockItems);
 }
 
+std::shared_ptr<ForInit> VariableResolutionPass::resolveForInit(
+    std::shared_ptr<ForInit> forInit,
+    std::unordered_map<std::string, MapEntry> &variableMap) {
+    // Resolve the for-init based on the type of the for init.
+    if (auto initExpr = std::dynamic_pointer_cast<InitExpr>(forInit)) {
+        auto optExpr = initExpr->getExpression();
+        if (optExpr.has_value()) {
+            auto resolvedExpr = resolveExpression(optExpr.value(), variableMap);
+            return std::make_shared<InitExpr>(resolvedExpr);
+        }
+        else {
+            return std::make_shared<InitExpr>();
+        }
+    }
+    else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
+        auto resolvedDecl =
+            resolveVariableDeclaration(initDecl->getDeclaration(), variableMap);
+        return std::make_shared<InitDecl>(resolvedDecl);
+    }
+    else {
+        throw std::runtime_error("Unsupported for init type");
+    }
+}
+
+void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
+    auto function = program->getFunction();
+    auto resolvedBody = labelBlock(function->getBody(), "");
+    function->setBody(resolvedBody);
+}
+
+std::string LoopLabelingPass::generateLabel() {
+    // Return a new label with the current counter value.
+    return "L" + std::to_string(this->loopLabelingCounter++);
+}
+
+std::shared_ptr<Statement>
+LoopLabelingPass::annotateStatement(std::shared_ptr<Statement> statement,
+                                    std::string label) {
+    if (auto breakStatement =
+            std::dynamic_pointer_cast<BreakStatement>(statement)) {
+        breakStatement->setLabel(label);
+        return breakStatement;
+    }
+    else if (auto continueStatement =
+                 std::dynamic_pointer_cast<ContinueStatement>(statement)) {
+        continueStatement->setLabel(label);
+        return continueStatement;
+    }
+    else if (auto whileStatement =
+                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
+        whileStatement->setLabel(label);
+        return whileStatement;
+    }
+    else if (auto doWhileStatement =
+                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
+        doWhileStatement->setLabel(label);
+        return doWhileStatement;
+    }
+    else if (auto forStatement =
+                 std::dynamic_pointer_cast<ForStatement>(statement)) {
+        forStatement->setLabel(label);
+        return forStatement;
+    }
+    else {
+        return statement;
+    }
+}
+
+std::shared_ptr<Statement>
+LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
+                                 std::string label) {
+    if (auto breakStatement =
+            std::dynamic_pointer_cast<BreakStatement>(statement)) {
+        if (label == "") {
+            throw std::runtime_error("Break statement outside of loop");
+        }
+        return annotateStatement(breakStatement, label);
+    }
+    else if (auto continueStatement =
+                 std::dynamic_pointer_cast<ContinueStatement>(statement)) {
+        if (label == "") {
+            throw std::runtime_error("Continue statement outside of loop");
+        }
+        return annotateStatement(continueStatement, label);
+    }
+    else if (auto whileStatement =
+                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
+        auto newLabel = generateLabel();
+        auto labeledBody = labelStatement(whileStatement->getBody(), newLabel);
+        auto labeledWhileStatement = std::make_shared<WhileStatement>(
+            whileStatement->getCondition(), labeledBody);
+        return annotateStatement(labeledWhileStatement, newLabel);
+    }
+    else if (auto doWhileStatement =
+                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
+        auto newLabel = generateLabel();
+        auto labeledBody =
+            labelStatement(doWhileStatement->getBody(), newLabel);
+        auto labeledDoWhileStatement = std::make_shared<DoWhileStatement>(
+            doWhileStatement->getCondition(), labeledBody);
+        return annotateStatement(labeledDoWhileStatement, newLabel);
+    }
+    else if (auto forStatement =
+                 std::dynamic_pointer_cast<ForStatement>(statement)) {
+        auto newLabel = generateLabel();
+        auto labeledBody = labelStatement(forStatement->getBody(), newLabel);
+        auto labeledForStatement = std::make_shared<ForStatement>(
+            forStatement->getForInit(), forStatement->getOptCondition(),
+            forStatement->getOptPost(), labeledBody);
+        return annotateStatement(labeledForStatement, newLabel);
+    }
+    else if (auto ifStatement =
+                 std::dynamic_pointer_cast<IfStatement>(statement)) {
+        auto labeledThenStatement =
+            labelStatement(ifStatement->getThenStatement(), label);
+        if (ifStatement->getElseOptStatement().has_value()) {
+            auto labeledElseStatement = labelStatement(
+                ifStatement->getElseOptStatement().value(), label);
+            return std::make_shared<IfStatement>(ifStatement->getCondition(),
+                                                 labeledThenStatement,
+                                                 labeledElseStatement);
+        }
+        else {
+            return std::make_shared<IfStatement>(ifStatement->getCondition(),
+                                                 labeledThenStatement);
+        }
+    }
+    else if (auto compoundStatement =
+                 std::dynamic_pointer_cast<CompoundStatement>(statement)) {
+        auto block = compoundStatement->getBlock();
+        auto labeledBlock = labelBlock(block, label);
+        return std::make_shared<CompoundStatement>(labeledBlock);
+    }
+    else {
+        return statement;
+    }
+}
+
+std::shared_ptr<Block>
+LoopLabelingPass::labelBlock(std::shared_ptr<Block> block, std::string label) {
+    auto blockItems = block->getBlockItems();
+    auto newBlockItems =
+        std::make_shared<std::vector<std::shared_ptr<BlockItem>>>();
+    for (auto &blockItem : *blockItems) {
+        if (auto dBlockItem =
+                std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
+            newBlockItems->emplace_back(dBlockItem);
+        }
+        else if (auto sBlockItem =
+                     std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
+            auto resolvedStatement =
+                labelStatement(sBlockItem->getStatement(), label);
+            auto labeledSBlockItem =
+                std::make_shared<SBlockItem>(resolvedStatement);
+            newBlockItems->emplace_back(labeledSBlockItem);
+        }
+        else {
+            throw std::runtime_error("Unsupported block item type");
+        }
+    }
+    return std::make_shared<Block>(newBlockItems);
+}
 } // namespace AST

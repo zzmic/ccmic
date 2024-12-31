@@ -60,6 +60,8 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         AST::VariableResolutionPass variableResolutionPass;
         int variableResolutionCounter =
             variableResolutionPass.resolveVariables(astProgram);
+        AST::LoopLabelingPass loopLabelingPass;
+        loopLabelingPass.labelLoops(astProgram);
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
         astProgram->accept(printVisitor);

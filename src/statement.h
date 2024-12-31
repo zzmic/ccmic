@@ -64,9 +64,9 @@ class BreakStatement : public Statement {
     BreakStatement();
     void accept(Visitor &visitor) override;
     std::string getLabel() const;
+    void setLabel(const std::string &label);
 
   private:
-    int counter = 0;
     std::string label;
 };
 
@@ -75,9 +75,9 @@ class ContinueStatement : public Statement {
     ContinueStatement();
     void accept(Visitor &visitor) override;
     std::string getLabel() const;
+    void setLabel(const std::string &label);
 
   private:
-    int counter = 0;
     std::string label;
 };
 
@@ -89,11 +89,11 @@ class WhileStatement : public Statement {
     std::shared_ptr<Expression> getCondition() const;
     std::shared_ptr<Statement> getBody() const;
     std::string getLabel() const;
+    void setLabel(const std::string &label);
 
   private:
     std::shared_ptr<Expression> condition;
     std::shared_ptr<Statement> body;
-    int counter = 0;
     std::string label;
 };
 
@@ -105,11 +105,11 @@ class DoWhileStatement : public Statement {
     std::shared_ptr<Expression> getCondition() const;
     std::shared_ptr<Statement> getBody() const;
     std::string getLabel() const;
+    void setLabel(const std::string &label);
 
   private:
     std::shared_ptr<Expression> condition;
     std::shared_ptr<Statement> body;
-    int counter = 0;
     std::string label;
 };
 
@@ -125,13 +125,13 @@ class ForStatement : public Statement {
     std::optional<std::shared_ptr<Expression>> getOptPost() const;
     std::shared_ptr<Statement> getBody() const;
     std::string getLabel() const;
+    void setLabel(const std::string &label);
 
   private:
     std::shared_ptr<ForInit> forInit;
     std::optional<std::shared_ptr<Expression>> optCondition;
     std::optional<std::shared_ptr<Expression>> optPost;
     std::shared_ptr<Statement> body;
-    int counter = 0;
     std::string label;
 };
 

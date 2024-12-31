@@ -26,7 +26,7 @@ class AssemblyGenerator {
             std::vector<std::shared_ptr<Assembly::Instruction>>>();
         funcDef->setFunctionBody(instructions);
         // Push the function definition to the vector of function definitions.
-        functionDefinition->push_back(funcDef);
+        functionDefinition->emplace_back(funcDef);
 
         // Get the body of the function, which is a list of IR instructions.
         auto irBody = irFunction->at(0)->getFunctionBody();

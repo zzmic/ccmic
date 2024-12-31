@@ -40,6 +40,24 @@ class VariableResolutionPass {
     std::shared_ptr<Block>
     resolveBlock(std::shared_ptr<Block> block,
                  std::unordered_map<std::string, MapEntry> &variableMap);
+    std::shared_ptr<ForInit>
+    resolveForInit(std::shared_ptr<ForInit> forInit,
+                   std::unordered_map<std::string, MapEntry> &variableMap);
+};
+
+class LoopLabelingPass {
+  public:
+    void labelLoops(std::shared_ptr<Program> program);
+
+  private:
+    int loopLabelingCounter = 0;
+    std::string generateLabel();
+    std::shared_ptr<Statement>
+    annotateStatement(std::shared_ptr<Statement> statement, std::string label);
+    std::shared_ptr<Statement>
+    labelStatement(std::shared_ptr<Statement> statement, std::string label);
+    std::shared_ptr<Block> labelBlock(std::shared_ptr<Block> block,
+                                      std::string label);
 };
 } // namespace AST
 
