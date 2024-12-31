@@ -2,7 +2,7 @@
 #define PIPELINE_STAGES_EXECUTORS_H
 
 #include "assembly.h"
-#include "assemblyGenerator.cpp"
+#include "assemblyGenerator.h"
 #include "compilerDriver.h"
 #include "fixupPass.h"
 #include "ir.h"
