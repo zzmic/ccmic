@@ -37,6 +37,7 @@ class Parser {
     std::shared_ptr<BlockItem> parseBlockItem();
     std::shared_ptr<Block> parseBlock();
     std::shared_ptr<Declaration> parseDeclaration();
+    std::shared_ptr<ForInit> parseForInit();
     std::shared_ptr<Statement> parseStatement();
     std::shared_ptr<Expression> parseFactor();
     std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);

@@ -104,6 +104,24 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
     }
 }
 
+std::shared_ptr<ForInit> Parser::parseForInit() {
+    if (matchToken(TokenType::intKeyword)) {
+        auto declaration = parseDeclaration();
+        return std::make_shared<InitDecl>(declaration);
+    }
+    else {
+        if (matchToken(TokenType::Semicolon)) {
+            consumeToken(TokenType::Semicolon);
+            return std::make_shared<InitExpr>();
+        }
+        else {
+            std::shared_ptr<Expression> expr = parseExpression(0);
+            expectToken(TokenType::Semicolon);
+            return std::make_shared<InitExpr>(expr);
+        }
+    }
+}
+
 std::shared_ptr<Statement> Parser::parseStatement() {
     // Parse a return statement.
     if (matchToken(TokenType::returnKeyword)) {
@@ -135,6 +153,65 @@ std::shared_ptr<Statement> Parser::parseStatement() {
     // Parse a compound statement.
     else if (matchToken(TokenType::OpenBrace)) {
         return std::make_shared<CompoundStatement>(parseBlock());
+    }
+    // Parse a break statement.
+    else if (matchToken(TokenType::breakKeyword)) {
+        consumeToken(TokenType::breakKeyword);
+        expectToken(TokenType::Semicolon);
+        return std::make_shared<BreakStatement>();
+    }
+    // Parse a continue statement.
+    else if (matchToken(TokenType::continueKeyword)) {
+        consumeToken(TokenType::continueKeyword);
+        expectToken(TokenType::Semicolon);
+        return std::make_shared<ContinueStatement>();
+    }
+    // Parse a while statement.
+    else if (matchToken(TokenType::whileKeyword)) {
+        consumeToken(TokenType::whileKeyword);
+        expectToken(TokenType::OpenParenthesis);
+        std::shared_ptr<Expression> condition = parseExpression(0);
+        expectToken(TokenType::CloseParenthesis);
+        std::shared_ptr<Statement> body = parseStatement();
+        return std::make_shared<WhileStatement>(condition, body);
+    }
+    // Parse a do-while statement.
+    else if (matchToken(TokenType::doKeyword)) {
+        consumeToken(TokenType::doKeyword);
+        std::shared_ptr<Statement> body = parseStatement();
+        expectToken(TokenType::whileKeyword);
+        expectToken(TokenType::OpenParenthesis);
+        std::shared_ptr<Expression> condition = parseExpression(0);
+        expectToken(TokenType::CloseParenthesis);
+        expectToken(TokenType::Semicolon);
+        return std::make_shared<DoWhileStatement>(condition, body);
+    }
+    // Parse a for statement.
+    else if (matchToken(TokenType::forKeyword)) {
+        consumeToken(TokenType::forKeyword);
+        expectToken(TokenType::OpenParenthesis);
+        std::shared_ptr<ForInit> init = parseForInit();
+        std::optional<std::shared_ptr<Expression>> optCondition;
+        std::optional<std::shared_ptr<Expression>> optPost;
+        if (matchToken(TokenType::Semicolon)) {
+            consumeToken(TokenType::Semicolon);
+        }
+        else {
+            std::shared_ptr<Expression> condition = parseExpression(0);
+            optCondition = std::make_optional(condition);
+            expectToken(TokenType::Semicolon);
+        }
+        if (matchToken(TokenType::CloseParenthesis)) {
+            consumeToken(TokenType::CloseParenthesis);
+        }
+        else {
+            std::shared_ptr<Expression> post = parseExpression(0);
+            optPost = std::make_optional(post);
+            expectToken(TokenType::CloseParenthesis);
+        }
+        std::shared_ptr<Statement> body = parseStatement();
+        return std::make_shared<ForStatement>(init, optCondition, optPost,
+                                              body);
     }
     // Parse an expression statement.
     else {

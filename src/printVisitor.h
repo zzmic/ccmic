@@ -13,10 +13,17 @@ class PrintVisitor : public Visitor {
     void visit(SBlockItem &sBlockItem) override;
     void visit(DBlockItem &dBlockItem) override;
     void visit(Declaration &declaration) override;
+    void visit(InitDecl &initDecl) override;
+    void visit(InitExpr &initExpr) override;
     void visit(ReturnStatement &returnStatement) override;
     void visit(ExpressionStatement &expressionStatement) override;
     void visit(IfStatement &ifStatement) override;
     void visit(CompoundStatement &compoundStatement) override;
+    void visit(BreakStatement &breakStatement) override;
+    void visit(ContinueStatement &continueStatement) override;
+    void visit(WhileStatement &whileStatement) override;
+    void visit(DoWhileStatement &doWhileStatement) override;
+    void visit(ForStatement &forStatement) override;
     void visit(NullStatement &nullStatement) override;
     void visit(ConstantExpression &constantExpression) override;
     void visit(VariableExpression &variableExpression) override;

@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "block.h"
 #include "expression.h"
+#include "forInit.h"
 #include <memory>
 #include <optional>
 
@@ -56,6 +57,82 @@ class CompoundStatement : public Statement {
 
   private:
     std::shared_ptr<Block> block;
+};
+
+class BreakStatement : public Statement {
+  public:
+    BreakStatement();
+    void accept(Visitor &visitor) override;
+    std::string getLabel() const;
+
+  private:
+    int counter = 0;
+    std::string label;
+};
+
+class ContinueStatement : public Statement {
+  public:
+    ContinueStatement();
+    void accept(Visitor &visitor) override;
+    std::string getLabel() const;
+
+  private:
+    int counter = 0;
+    std::string label;
+};
+
+class WhileStatement : public Statement {
+  public:
+    WhileStatement(std::shared_ptr<Expression> condition,
+                   std::shared_ptr<Statement> body);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<Expression> getCondition() const;
+    std::shared_ptr<Statement> getBody() const;
+    std::string getLabel() const;
+
+  private:
+    std::shared_ptr<Expression> condition;
+    std::shared_ptr<Statement> body;
+    int counter = 0;
+    std::string label;
+};
+
+class DoWhileStatement : public Statement {
+  public:
+    DoWhileStatement(std::shared_ptr<Expression> condition,
+                     std::shared_ptr<Statement> body);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<Expression> getCondition() const;
+    std::shared_ptr<Statement> getBody() const;
+    std::string getLabel() const;
+
+  private:
+    std::shared_ptr<Expression> condition;
+    std::shared_ptr<Statement> body;
+    int counter = 0;
+    std::string label;
+};
+
+class ForStatement : public Statement {
+  public:
+    ForStatement(std::shared_ptr<ForInit> forInit,
+                 std::optional<std::shared_ptr<Expression>> condition,
+                 std::optional<std::shared_ptr<Expression>> post,
+                 std::shared_ptr<Statement> body);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<ForInit> getForInit() const;
+    std::optional<std::shared_ptr<Expression>> getOptCondition() const;
+    std::optional<std::shared_ptr<Expression>> getOptPost() const;
+    std::shared_ptr<Statement> getBody() const;
+    std::string getLabel() const;
+
+  private:
+    std::shared_ptr<ForInit> forInit;
+    std::optional<std::shared_ptr<Expression>> optCondition;
+    std::optional<std::shared_ptr<Expression>> optPost;
+    std::shared_ptr<Statement> body;
+    int counter = 0;
+    std::string label;
 };
 
 class NullStatement : public Statement {

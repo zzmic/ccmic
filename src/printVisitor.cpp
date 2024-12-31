@@ -99,10 +99,32 @@ void PrintVisitor::visit(Declaration &declaration) {
         throw std::runtime_error("Null identifier in declaration");
     }
 
-    std::cout << "\ninitializer=";
-
     if (declaration.getOptInitializer().has_value()) {
+        std::cout << "\ninitializer=";
         declaration.getOptInitializer().value()->accept(*this);
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(InitDecl &initDecl) {
+    std::cout << "InitDecl(\n";
+
+    if (initDecl.getDeclaration()) {
+        initDecl.getDeclaration()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null declaration in init declaration");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(InitExpr &initExpr) {
+    std::cout << "InitExpr(\n";
+
+    if (initExpr.getExpression().has_value()) {
+        initExpr.getExpression().value()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -155,9 +177,8 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
         throw std::runtime_error("Null then-statement in if-statement");
     }
 
-    std::cout << "\nelse=";
-
     if (ifStatement.getElseOptStatement().has_value()) {
+        std::cout << "\nelse=";
         ifStatement.getElseOptStatement().value()->accept(*this);
     }
 
@@ -172,6 +193,102 @@ void PrintVisitor::visit(CompoundStatement &compoundStatement) {
     }
     else {
         throw std::runtime_error("Null block in compound statement");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(BreakStatement &breakStatement) {
+    (void)breakStatement;
+    std::cout << "BreakStatement()";
+}
+
+void PrintVisitor::visit(ContinueStatement &continueStatement) {
+    (void)continueStatement;
+    std::cout << "ContinueStatement()";
+}
+
+void PrintVisitor::visit(WhileStatement &whileStatement) {
+    std::cout << "WhileStatement(\n";
+
+    std::cout << "condition=";
+
+    if (whileStatement.getCondition()) {
+        whileStatement.getCondition()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null condition in while-statement");
+    }
+
+    std::cout << "\nbody=";
+
+    if (whileStatement.getBody()) {
+        whileStatement.getBody()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null body in while-statement");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
+    std::cout << "DoWhileStatement(\n";
+
+    std::cout << "condition=";
+
+    if (doWhileStatement.getCondition()) {
+        doWhileStatement.getCondition()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null condition in do-while-statement");
+    }
+
+    std::cout << "\nbody=";
+
+    if (doWhileStatement.getBody()) {
+        doWhileStatement.getBody()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null body in do-while-statement");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(ForStatement &forStatement) {
+    std::cout << "ForStatement(\n";
+
+    std::cout << "init=";
+
+    if (forStatement.getForInit()) {
+        forStatement.getForInit()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null init in for-statement");
+    }
+
+    if (forStatement.getOptCondition().has_value()) {
+        std::cout << "\ncondition=";
+        if (forStatement.getOptCondition().value()) {
+            forStatement.getOptCondition().value()->accept(*this);
+        }
+    }
+
+    if (forStatement.getOptPost().has_value()) {
+        std::cout << "\npost=";
+        if (forStatement.getOptPost().value()) {
+            forStatement.getOptPost().value()->accept(*this);
+        }
+    }
+
+    std::cout << "\nbody=";
+
+    if (forStatement.getBody()) {
+        forStatement.getBody()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null body in for-statement");
     }
 
     std::cout << "\n)";
