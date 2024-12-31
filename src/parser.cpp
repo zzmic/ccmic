@@ -135,7 +135,7 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         consumeToken(TokenType::Semicolon);
         return std::make_shared<NullStatement>();
     }
-    // Parse an if statement.
+    // Parse an if-statement.
     else if (matchToken(TokenType::ifKeyword)) {
         consumeToken(TokenType::ifKeyword);
         expectToken(TokenType::OpenParenthesis);
@@ -166,7 +166,7 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         expectToken(TokenType::Semicolon);
         return std::make_shared<ContinueStatement>();
     }
-    // Parse a while statement.
+    // Parse a while-statement.
     else if (matchToken(TokenType::whileKeyword)) {
         consumeToken(TokenType::whileKeyword);
         expectToken(TokenType::OpenParenthesis);
@@ -175,7 +175,7 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         std::shared_ptr<Statement> body = parseStatement();
         return std::make_shared<WhileStatement>(condition, body);
     }
-    // Parse a do-while statement.
+    // Parse a do-while-statement.
     else if (matchToken(TokenType::doKeyword)) {
         consumeToken(TokenType::doKeyword);
         std::shared_ptr<Statement> body = parseStatement();
@@ -186,7 +186,7 @@ std::shared_ptr<Statement> Parser::parseStatement() {
         expectToken(TokenType::Semicolon);
         return std::make_shared<DoWhileStatement>(condition, body);
     }
-    // Parse a for statement.
+    // Parse a for-statement.
     else if (matchToken(TokenType::forKeyword)) {
         consumeToken(TokenType::forKeyword);
         expectToken(TokenType::OpenParenthesis);

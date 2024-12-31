@@ -101,15 +101,11 @@ void IRGenerator::generateIRStatement(
         instructions) {
     if (auto returnStmt =
             std::dynamic_pointer_cast<AST::ReturnStatement>(astStatement)) {
-        // If the statement is a return statement, generate a return
-        // statement.
         generateIRReturnStatement(returnStmt, instructions);
     }
     else if (auto expressionStmt =
                  std::dynamic_pointer_cast<AST::ExpressionStatement>(
                      astStatement)) {
-        // If the statement is an expression statement, generate an
-        // expression statement.
         generateIRExpressionStatement(expressionStmt, instructions);
     }
     else if (auto compoundStmt =
@@ -120,8 +116,29 @@ void IRGenerator::generateIRStatement(
     }
     else if (auto ifStmt =
                  std::dynamic_pointer_cast<AST::IfStatement>(astStatement)) {
-        // If the statement is an if-statement, generate an if-statement.
         generateIRIfStatement(ifStmt, instructions);
+    }
+    else if (auto breakStmt =
+                 std::dynamic_pointer_cast<AST::BreakStatement>(astStatement)) {
+        generateIRBreakStatement(breakStmt, instructions);
+    }
+    else if (auto continueStmt =
+                 std::dynamic_pointer_cast<AST::ContinueStatement>(
+                     astStatement)) {
+        generateIRContinueStatement(continueStmt, instructions);
+    }
+    else if (auto whileStmt =
+                 std::dynamic_pointer_cast<AST::WhileStatement>(astStatement)) {
+        generateIRWhileStatement(whileStmt, instructions);
+    }
+    else if (auto doWhileStmt =
+                 std::dynamic_pointer_cast<AST::DoWhileStatement>(
+                     astStatement)) {
+        generateIRDoWhileStatement(doWhileStmt, instructions);
+    }
+    else if (auto forStmt =
+                 std::dynamic_pointer_cast<AST::ForStatement>(astStatement)) {
+        generateIRForStatement(forStmt, instructions);
     }
     else if (auto nullStmt =
                  std::dynamic_pointer_cast<AST::NullStatement>(astStatement)) {
@@ -207,6 +224,130 @@ void IRGenerator::generateIRIfStatement(
 
     // Generate a label instruction with the same (new) end label.
     generateIRLabelInstruction(endLabel, instructions);
+}
+
+void IRGenerator::generateIRBreakStatement(
+    std::shared_ptr<AST::BreakStatement> breakStmt,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Generate a jump instruction with the extended break label.
+    auto breakLabel = generateIRBreakLoopLabel(breakStmt->getLabel());
+    generateIRJumpInstruction(breakLabel, instructions);
+}
+
+void IRGenerator::generateIRContinueStatement(
+    std::shared_ptr<AST::ContinueStatement> continueStmt,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Generate a jump instruction with the extended continue label.
+    auto continueLabel = generateIRContinueLoopLabel(continueStmt->getLabel());
+    generateIRJumpInstruction(continueLabel, instructions);
+}
+
+void IRGenerator::generateIRDoWhileStatement(
+    std::shared_ptr<AST::DoWhileStatement> doWhileStmt,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Generate a new start label.
+    auto startLabel = generateIRStartLabel();
+    // Generate a label instruction with the start label.
+    generateIRLabelInstruction(startLabel, instructions);
+    // Generate instructions for the body of the do-while-statement.
+    auto body = doWhileStmt->getBody();
+    generateIRStatement(body, instructions);
+    // Generate a new continue label (based on the label of the do-while).
+    auto continueLabel = generateIRContinueLoopLabel(doWhileStmt->getLabel());
+    // Generate a label instruction with the continue label.
+    generateIRLabelInstruction(continueLabel, instructions);
+    // Generate instructions for the condition of the do-while-statement.
+    auto condition = doWhileStmt->getCondition();
+    auto conditionValue = generateIRInstruction(condition, instructions);
+    // Generate a jump-if-not-zero instruction with the condition value and the
+    // start label.
+    generateIRJumpIfNotZeroInstruction(conditionValue, startLabel,
+                                       instructions);
+    // Generate a new break label (based on the label of the do-while).
+    auto breakLabel = generateIRBreakLoopLabel(doWhileStmt->getLabel());
+    // Generate a label instruction with the break label.
+    generateIRLabelInstruction(breakLabel, instructions);
+}
+
+void IRGenerator::generateIRWhileStatement(
+    std::shared_ptr<AST::WhileStatement> whileStmt,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Generate a new continue label (based on the label of the while).
+    auto continueLabel = generateIRContinueLoopLabel(whileStmt->getLabel());
+    // Generate a label instruction with the continue label.
+    generateIRLabelInstruction(continueLabel, instructions);
+    // Generate instructions for the condition of the while-statement.
+    auto condition = whileStmt->getCondition();
+    auto conditionValue = generateIRInstruction(condition, instructions);
+    // Generate a new break label (based on the label of the while).
+    auto breakLabel = generateIRBreakLoopLabel(whileStmt->getLabel());
+    // Generate a jump-if-zero instruction with the condition value and the
+    // break label.
+    generateIRJumpIfZeroInstruction(conditionValue, breakLabel, instructions);
+    // Generate instructions for the body of the while-statement.
+    auto body = whileStmt->getBody();
+    generateIRStatement(body, instructions);
+    // Generate a jump instruction with the continue label.
+    generateIRJumpInstruction(continueLabel, instructions);
+    // Generate a label instruction with the break label.
+    generateIRLabelInstruction(breakLabel, instructions);
+}
+
+void IRGenerator::generateIRForStatement(
+    std::shared_ptr<AST::ForStatement> forStmt,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Generate instructions for the for-init of the for-statement.
+    auto forInit = forStmt->getForInit();
+    if (auto initExpr = std::dynamic_pointer_cast<AST::InitExpr>(forInit)) {
+        auto optExpr = initExpr->getExpression();
+        if (optExpr.has_value()) {
+            auto resolvedExpr =
+                generateIRInstruction(optExpr.value(), instructions);
+        }
+    }
+    else if (auto initDecl =
+                 std::dynamic_pointer_cast<AST::InitDecl>(forInit)) {
+        generateIRDeclaration(initDecl->getDeclaration(), instructions);
+    }
+    // Generate a new start label.
+    auto startLabel = generateIRStartLabel();
+    // Generate a label instruction with the start label.
+    generateIRLabelInstruction(startLabel, instructions);
+    // Generate a new break label (based on the label of the for).
+    auto breakLabel = generateIRBreakLoopLabel(forStmt->getLabel());
+    // Optionally generate instructions for the (optional) condition of the
+    // for-statement.
+    auto optCondition = forStmt->getOptCondition();
+    if (optCondition.has_value()) {
+        // Generate a jump-if-zero instruction with the condition value and the
+        // break label.
+        auto conditionValue =
+            generateIRInstruction(optCondition.value(), instructions);
+        generateIRJumpIfZeroInstruction(conditionValue, breakLabel,
+                                        instructions);
+    }
+    // Generate instructions for the body of the for-statement.
+    auto body = forStmt->getBody();
+    generateIRStatement(body, instructions);
+    // Generate a new continue label (based on the label of the for).
+    auto continueLabel = generateIRContinueLoopLabel(forStmt->getLabel());
+    // Generate a label instruction with the continue label.
+    generateIRLabelInstruction(continueLabel, instructions);
+    // Optionally generate instructions for the (optional) post of the
+    // for-statement.
+    auto optPost = forStmt->getOptPost();
+    if (optPost.has_value()) {
+        auto postValue = generateIRInstruction(optPost.value(), instructions);
+    }
+    // Generate a jump instruction with the start label.
+    generateIRJumpInstruction(startLabel, instructions);
+    // Generate a label instruction with the break label.
+    generateIRLabelInstruction(breakLabel, instructions);
 }
 
 std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
@@ -498,7 +639,6 @@ std::string IRGenerator::generateIRFalseLabel() {
     // Create a label with a unique number.
     // The number would be incremented each time this function is called.
     static int counter = 0;
-
     // Return the string representation of the (unique) label using the
     // string "and_falseN" (as "false_label" in the listing), "where N is
     // the current value of a global counter."
@@ -506,58 +646,43 @@ std::string IRGenerator::generateIRFalseLabel() {
 }
 
 std::string IRGenerator::generateIRTrueLabel() {
-    // Create a label with a unique number.
-    // The number would be incremented each time this function is called.
     static int counter = 0;
-
-    // Return the string representation of the (unique) label using the
-    // string "or_trueN" (similar to "false_label" in the listing), "where
-    // N is the current value of a global counter."
     return "or_true" + std::to_string(counter++);
 }
 
 std::string IRGenerator::generateIRResultLabel() {
-    // Create a label with a unique number.
-    // The number would be incremented each time this function is called.
     static int counter = 0;
-
-    // Return the string representation of the (unique) label using the
-    // string "resultN" (similar to "false_label" in the listing), "where N
-    // is the current value of a global counter."
     return "result" + std::to_string(counter++);
 }
 
 std::string IRGenerator::generateIREndLabel() {
-    // Create a label with a unique number.
-    // The number would be incremented each time this function is called.
     static int counter = 0;
-
-    // Return the string representation of the (unique) label using the
-    // string "endN" (similar to "false_label" in the listing), "where N is
-    // the current value of a global counter."
     return "end" + std::to_string(counter++);
 }
 
 std::string IRGenerator::generateIRElseLabel() {
-    // Create a label with a unique number.
-    // The number would be incremented each time this function is called.
     static int counter = 0;
-
-    // Return the string representation of the (unique) label using the
-    // string "elseN" (similar to "false_label" in the listing), "where N is
-    // the current value of a global counter."
     return "else" + std::to_string(counter++);
 }
 
 std::string IRGenerator::generateIRE2Label() {
-    // Create a label with a unique number.
-    // The number would be incremented each time this function is called.
     static int counter = 0;
-
-    // Return the string representation of the (unique) label using the
-    // string "e2N" (similar to "false_label" in the listing), "where N is
-    // the current value of a global counter."
     return "e2" + std::to_string(counter++);
+}
+
+std::string
+IRGenerator::generateIRContinueLoopLabel(std::string loopLabelingLabel) {
+    return "continue_" + loopLabelingLabel;
+}
+
+std::string
+IRGenerator::generateIRBreakLoopLabel(std::string loopLabelingLabel) {
+    return "break_" + loopLabelingLabel;
+}
+
+std::string IRGenerator::generateIRStartLabel() {
+    static int counter = 0;
+    return "start" + std::to_string(counter++);
 }
 
 std::shared_ptr<IR::UnaryOperator>

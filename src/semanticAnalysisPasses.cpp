@@ -108,8 +108,8 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
     }
     else if (auto whileStatement =
                  std::dynamic_pointer_cast<WhileStatement>(statement)) {
-        // If the statement is a while statement, resolve the condition
-        // expression and the body statement in the while statement.
+        // If the statement is a while-statement, resolve the condition
+        // expression and the body statement in the while-statement.
         auto resolvedCondition =
             resolveExpression(whileStatement->getCondition(), variableMap);
         auto resolvedBody =
@@ -119,8 +119,8 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
     }
     else if (auto doWhileStatement =
                  std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
-        // If the statement is a do-while statement, resolve the condition
-        // expression and the body statement in the do-while statement.
+        // If the statement is a do-while-statement, resolve the condition
+        // expression and the body statement in the do-while-statement.
         auto resolvedCondition =
             resolveExpression(doWhileStatement->getCondition(), variableMap);
         auto resolvedBody =
@@ -328,9 +328,9 @@ void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
     function->setBody(resolvedBody);
 }
 
-std::string LoopLabelingPass::generateLabel() {
+std::string LoopLabelingPass::generateLoopLabel() {
     // Return a new label with the current counter value.
-    return "L" + std::to_string(this->loopLabelingCounter++);
+    return "loop" + std::to_string(this->loopLabelingCounter++);
 }
 
 std::shared_ptr<Statement>
@@ -385,7 +385,7 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
     }
     else if (auto whileStatement =
                  std::dynamic_pointer_cast<WhileStatement>(statement)) {
-        auto newLabel = generateLabel();
+        auto newLabel = generateLoopLabel();
         auto labeledBody = labelStatement(whileStatement->getBody(), newLabel);
         auto labeledWhileStatement = std::make_shared<WhileStatement>(
             whileStatement->getCondition(), labeledBody);
@@ -393,7 +393,7 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
     }
     else if (auto doWhileStatement =
                  std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
-        auto newLabel = generateLabel();
+        auto newLabel = generateLoopLabel();
         auto labeledBody =
             labelStatement(doWhileStatement->getBody(), newLabel);
         auto labeledDoWhileStatement = std::make_shared<DoWhileStatement>(
@@ -402,7 +402,7 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
     }
     else if (auto forStatement =
                  std::dynamic_pointer_cast<ForStatement>(statement)) {
-        auto newLabel = generateLabel();
+        auto newLabel = generateLoopLabel();
         auto labeledBody = labelStatement(forStatement->getBody(), newLabel);
         auto labeledForStatement = std::make_shared<ForStatement>(
             forStatement->getForInit(), forStatement->getOptCondition(),

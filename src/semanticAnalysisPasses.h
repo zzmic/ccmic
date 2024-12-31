@@ -51,7 +51,7 @@ class LoopLabelingPass {
 
   private:
     int loopLabelingCounter = 0;
-    std::string generateLabel();
+    std::string generateLoopLabel();
     std::shared_ptr<Statement>
     annotateStatement(std::shared_ptr<Statement> statement, std::string label);
     std::shared_ptr<Statement>

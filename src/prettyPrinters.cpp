@@ -206,6 +206,10 @@ void PrettyPrinters::printIRCopyInstruction(
             copyInstruction->getSrc())) {
         std::cout << constantValue->getValue();
     }
+    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+                 copyInstruction->getSrc())) {
+        std::cout << variableValue->getIdentifier();
+    }
 
     std::cout << "\n";
 }

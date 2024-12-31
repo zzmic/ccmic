@@ -43,6 +43,26 @@ class IRGenerator {
         std::shared_ptr<AST::IfStatement> ifStmt,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
+    void generateIRBreakStatement(
+        std::shared_ptr<AST::BreakStatement> breakStmt,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+    void generateIRContinueStatement(
+        std::shared_ptr<AST::ContinueStatement> continueStmt,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+    void generateIRWhileStatement(
+        std::shared_ptr<AST::WhileStatement> whileStmt,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+    void generateIRDoWhileStatement(
+        std::shared_ptr<AST::DoWhileStatement> doWhileStmt,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+    void generateIRForStatement(
+        std::shared_ptr<AST::ForStatement> forStmt,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
     std::shared_ptr<IR::Value> generateIRInstruction(
         std::shared_ptr<AST::Expression> e,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
@@ -90,6 +110,9 @@ class IRGenerator {
     std::string generateIREndLabel();
     std::string generateIRElseLabel();
     std::string generateIRE2Label();
+    std::string generateIRContinueLoopLabel(std::string loopLabelingLabel);
+    std::string generateIRBreakLoopLabel(std::string loopLabelingLabel);
+    std::string generateIRStartLabel();
     std::shared_ptr<IR::UnaryOperator>
     convertUnop(std::shared_ptr<AST::UnaryOperator> op);
     std::shared_ptr<IR::BinaryOperator>
