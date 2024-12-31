@@ -15,6 +15,7 @@ class Function : public AST {
     void accept(Visitor &vistor) override;
     std::string getName() const;
     std::shared_ptr<Block> getBody() const;
+    void setBody(std::shared_ptr<Block> body);
 
   private:
     std::string name;
