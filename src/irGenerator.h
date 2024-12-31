@@ -2,7 +2,6 @@
 #define IR_GENERATOR_H
 
 #include "block.h"
-#include "blockItem.h"
 #include "declaration.h"
 #include "expression.h"
 #include "function.h"
@@ -20,6 +19,10 @@ class IRGenerator {
 
   private:
     int irTemporariesCounter = 0;
+    void generateIRBlock(
+        std::shared_ptr<AST::Block> astBlock,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
     void generateIRDeclaration(
         std::shared_ptr<AST::Declaration> astDeclaration,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>

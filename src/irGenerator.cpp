@@ -30,23 +30,7 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
     auto astBody = astFunction->getBody();
 
     // Generate IR instructions for the body of the function.
-    auto blockItems = astBody->getBlockItems();
-    for (auto &blockItem : *blockItems) {
-        // If the block item is a `DBlockItem` (i.e., a declaration), ...
-        if (auto dBlockItem =
-                std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
-            // Generate IR instructions for the declaration.
-            generateIRDeclaration(dBlockItem->getDeclaration(),
-                                  functionDefinition->at(0)->getFunctionBody());
-        }
-        // If the block item is a `SBockItem` (i.e., a statement), ...
-        else if (auto sBlockItem =
-                     std::dynamic_pointer_cast<AST::SBlockItem>(blockItem)) {
-            // Generate IR instructions for the statement.
-            generateIRStatement(sBlockItem->getStatement(),
-                                functionDefinition->at(0)->getFunctionBody());
-        }
-    }
+    generateIRBlock(astBody, functionDefinition->at(0)->getFunctionBody());
 
     // If the function does not end with a return instruction, add a return
     // instruction with constant value 0.
@@ -62,6 +46,30 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
 
     // Return the generated IR program.
     return std::make_shared<IR::Program>(functionDefinition);
+}
+
+void IRGenerator::generateIRBlock(
+    std::shared_ptr<AST::Block> astBlock,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Get the block items from the block.
+    auto blockItems = astBlock->getBlockItems();
+
+    // Generate IR instructions for each block item.
+    for (auto &blockItem : *blockItems) {
+        // If the block item is a `DBlockItem` (i.e., a declaration), ...
+        if (auto dBlockItem =
+                std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
+            // Generate IR instructions for the declaration.
+            generateIRDeclaration(dBlockItem->getDeclaration(), instructions);
+        }
+        // If the block item is a `SBockItem` (i.e., a statement), ...
+        else if (auto sBlockItem =
+                     std::dynamic_pointer_cast<AST::SBlockItem>(blockItem)) {
+            // Generate IR instructions for the statement.
+            generateIRStatement(sBlockItem->getStatement(), instructions);
+        }
+    }
 }
 
 void IRGenerator::generateIRDeclaration(
@@ -103,6 +111,12 @@ void IRGenerator::generateIRStatement(
         // If the statement is an expression statement, generate an
         // expression statement.
         generateIRExpressionStatement(expressionStmt, instructions);
+    }
+    else if (auto compoundStmt =
+                 std::dynamic_pointer_cast<AST::CompoundStatement>(
+                     astStatement)) {
+        // If the statement is a compound statement, generate a block.
+        generateIRBlock(compoundStmt->getBlock(), instructions);
     }
     else if (auto ifStmt =
                  std::dynamic_pointer_cast<AST::IfStatement>(astStatement)) {
