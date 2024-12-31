@@ -12,6 +12,11 @@ const std::regex voidKeyword_regex(R"(^void\b)");
 const std::regex returnKeyword_regex(R"(^return\b)");
 const std::regex ifKeyword_regex(R"(^if\b)");
 const std::regex elseKeyword_regex(R"(^else\b)");
+const std::regex doKeyword_regex(R"(^do\b)");
+const std::regex whileKeyword_regex(R"(^while\b)");
+const std::regex forKeyword_regex(R"(^for\b)");
+const std::regex breakKeyword_regex(R"(^break\b)");
+const std::regex continueKeyword_regex(R"(^continue\b)");
 const std::regex questionMark_regex(R"(^\?)");
 const std::regex colon_regex(R"(^\:)");
 const std::regex assign_regex(R"(^=)");
@@ -73,6 +78,16 @@ Token matchToken(const std::string &input) {
         return {TokenType::ifKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, elseKeyword_regex))
         return {TokenType::elseKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, doKeyword_regex))
+        return {TokenType::doKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, whileKeyword_regex))
+        return {TokenType::whileKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, forKeyword_regex))
+        return {TokenType::forKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, breakKeyword_regex))
+        return {TokenType::breakKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, continueKeyword_regex))
+        return {TokenType::continueKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, questionMark_regex))
         return {TokenType::QuestionMark, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, colon_regex))
@@ -230,6 +245,21 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::elseKeyword:
             typeStr = "elseKeyword";
             break;
+        case TokenType::doKeyword:
+            typeStr = "doKeyword";
+            break;
+        case TokenType::whileKeyword:
+            typeStr = "whileKeyword";
+            break;
+        case TokenType::forKeyword:
+            typeStr = "forKeyword";
+            break;
+        case TokenType::breakKeyword:
+            typeStr = "breakKeyword";
+            break;
+        case TokenType::continueKeyword:
+            typeStr = "continueKeyword";
+            break;
         case TokenType::QuestionMark:
             typeStr = "QuestionMark";
             break;
@@ -346,6 +376,21 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::elseKeyword:
         typeStr = "elseKeyword";
+        break;
+    case TokenType::doKeyword:
+        typeStr = "doKeyword";
+        break;
+    case TokenType::whileKeyword:
+        typeStr = "whileKeyword";
+        break;
+    case TokenType::forKeyword:
+        typeStr = "forKeyword";
+        break;
+    case TokenType::breakKeyword:
+        typeStr = "breakKeyword";
+        break;
+    case TokenType::continueKeyword:
+        typeStr = "continueKeyword";
         break;
     case TokenType::QuestionMark:
         typeStr = "QuestionMark";
