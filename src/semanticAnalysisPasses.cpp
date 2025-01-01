@@ -62,7 +62,8 @@ std::shared_ptr<Declaration> VariableResolutionPass::resolveVariableDeclaration(
 
     // Return a new declaration with the resolved identifier and initializer.
     return std::make_shared<Declaration>(
-        variableMap[declarationIdentifier].getNewName(), optInitializer);
+        variableMap[declarationIdentifier].getNewName(),
+        std::move(optInitializer));
 }
 
 std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
@@ -75,7 +76,7 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
         auto resolvedExpression =
             resolveExpression(returnStatement->getExpression(), variableMap);
         // Return a new return statement with the resolved expression.
-        return std::make_shared<ReturnStatement>(resolvedExpression);
+        return std::make_shared<ReturnStatement>(std::move(resolvedExpression));
     }
     else if (auto expressionStatement =
                  std::dynamic_pointer_cast<ExpressionStatement>(statement)) {
@@ -84,7 +85,8 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
         auto resolvedExpression = resolveExpression(
             expressionStatement->getExpression(), variableMap);
         // Return a new expression statement with the resolved expression.
-        return std::make_shared<ExpressionStatement>(resolvedExpression);
+        return std::make_shared<ExpressionStatement>(
+            std::move(resolvedExpression));
     }
     else if (auto compoundStatement =
                  std::dynamic_pointer_cast<CompoundStatement>(statement)) {
@@ -93,7 +95,7 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
         auto copiedVariableMap = copyVariableMap(variableMap);
         auto resolvedBlock =
             resolveBlock(compoundStatement->getBlock(), copiedVariableMap);
-        return std::make_shared<CompoundStatement>(resolvedBlock);
+        return std::make_shared<CompoundStatement>(std::move(resolvedBlock));
     }
     else if (auto breakStatement =
                  std::dynamic_pointer_cast<BreakStatement>(statement)) {
@@ -114,8 +116,8 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
             resolveExpression(whileStatement->getCondition(), variableMap);
         auto resolvedBody =
             resolveStatement(whileStatement->getBody(), variableMap);
-        return std::make_shared<WhileStatement>(resolvedCondition,
-                                                resolvedBody);
+        return std::make_shared<WhileStatement>(std::move(resolvedCondition),
+                                                std::move(resolvedBody));
     }
     else if (auto doWhileStatement =
                  std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
@@ -125,8 +127,8 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
             resolveExpression(doWhileStatement->getCondition(), variableMap);
         auto resolvedBody =
             resolveStatement(doWhileStatement->getBody(), variableMap);
-        return std::make_shared<DoWhileStatement>(resolvedCondition,
-                                                  resolvedBody);
+        return std::make_shared<DoWhileStatement>(std::move(resolvedCondition),
+                                                  std::move(resolvedBody));
     }
     else if (auto forStatement =
                  std::dynamic_pointer_cast<ForStatement>(statement)) {
@@ -137,12 +139,12 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
             resolveForInit(forStatement->getForInit(), copiedVariableMap);
         auto resolvedOptCondition =
             std::optional<std::shared_ptr<Expression>>();
-        auto resolvedOptPost = std::optional<std::shared_ptr<Expression>>();
         if (forStatement->getOptCondition().has_value()) {
             auto resolvedCondition = resolveExpression(
                 forStatement->getOptCondition().value(), copiedVariableMap);
             resolvedOptCondition = std::make_optional(resolvedCondition);
         }
+        auto resolvedOptPost = std::optional<std::shared_ptr<Expression>>();
         if (forStatement->getOptPost().has_value()) {
             auto resolvedPost = resolveExpression(
                 forStatement->getOptPost().value(), copiedVariableMap);
@@ -150,9 +152,9 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
         }
         auto resolvedBody =
             resolveStatement(forStatement->getBody(), copiedVariableMap);
-        return std::make_shared<ForStatement>(resolvedForInit,
-                                              resolvedOptCondition,
-                                              resolvedOptPost, resolvedBody);
+        return std::make_shared<ForStatement>(
+            std::move(resolvedForInit), std::move(resolvedOptCondition),
+            std::move(resolvedOptPost), std::move(resolvedBody));
     }
     else if (auto ifStatement =
                  std::dynamic_pointer_cast<IfStatement>(statement)) {
@@ -166,13 +168,13 @@ std::shared_ptr<Statement> VariableResolutionPass::resolveStatement(
         if (ifStatement->getElseOptStatement().has_value()) {
             auto resolvedElseStatement = resolveStatement(
                 ifStatement->getElseOptStatement().value(), variableMap);
-            return std::make_shared<IfStatement>(resolvedCondition,
-                                                 resolvedThenStatement,
-                                                 resolvedElseStatement);
+            return std::make_shared<IfStatement>(
+                std::move(resolvedCondition), std::move(resolvedThenStatement),
+                std::move(resolvedElseStatement));
         }
         else {
-            return std::make_shared<IfStatement>(resolvedCondition,
-                                                 resolvedThenStatement);
+            return std::make_shared<IfStatement>(
+                std::move(resolvedCondition), std::move(resolvedThenStatement));
         }
     }
     else if (auto nullStatement =
@@ -198,8 +200,8 @@ std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
             resolveExpression(assignmentExpression->getLeft(), variableMap);
         auto resolvedRight =
             resolveExpression(assignmentExpression->getRight(), variableMap);
-        return std::make_shared<AssignmentExpression>(resolvedLeft,
-                                                      resolvedRight);
+        return std::make_shared<AssignmentExpression>(std::move(resolvedLeft),
+                                                      std::move(resolvedRight));
     }
     else if (auto variableExpression =
                  std::dynamic_pointer_cast<VariableExpression>(expression)) {
@@ -232,7 +234,7 @@ std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
         // Return a new unary expression with the resolved expression.
         return std::make_shared<UnaryExpression>(
             unaryExpression->getOperator(),
-            std::static_pointer_cast<Factor>(resolvedExpression));
+            std::static_pointer_cast<Factor>(std::move(resolvedExpression)));
     }
     else if (auto binaryExpression =
                  std::dynamic_pointer_cast<BinaryExpression>(expression)) {
@@ -246,7 +248,8 @@ std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
         // Return a new binary expression with the resolved left and right
         // expressions.
         return std::make_shared<BinaryExpression>(
-            resolvedLeft, binaryExpression->getOperator(), resolvedRight);
+            std::move(resolvedLeft), binaryExpression->getOperator(),
+            std::move(resolvedRight));
     }
     else if (auto conditionalExpression =
                  std::dynamic_pointer_cast<ConditionalExpression>(expression)) {
@@ -263,7 +266,8 @@ std::shared_ptr<Expression> VariableResolutionPass::resolveExpression(
         // Return a new conditional expression with the resolved condition
         // expression, then-expression, and else-expression.
         return std::make_shared<ConditionalExpression>(
-            resolvedCondition, resolvedThenExpression, resolvedElseExpression);
+            std::move(resolvedCondition), std::move(resolvedThenExpression),
+            std::move(resolvedElseExpression));
     }
     else {
         throw std::runtime_error("Unsupported expression type");
@@ -295,7 +299,7 @@ std::shared_ptr<Block> VariableResolutionPass::resolveBlock(
     }
 
     // Return a new block with the resolved block items.
-    return std::make_shared<Block>(blockItems);
+    return std::make_shared<Block>(std::move(blockItems));
 }
 
 std::shared_ptr<ForInit> VariableResolutionPass::resolveForInit(
@@ -306,7 +310,7 @@ std::shared_ptr<ForInit> VariableResolutionPass::resolveForInit(
         auto optExpr = initExpr->getExpression();
         if (optExpr.has_value()) {
             auto resolvedExpr = resolveExpression(optExpr.value(), variableMap);
-            return std::make_shared<InitExpr>(resolvedExpr);
+            return std::make_shared<InitExpr>(std::move(resolvedExpr));
         }
         else {
             return std::make_shared<InitExpr>();
@@ -315,7 +319,7 @@ std::shared_ptr<ForInit> VariableResolutionPass::resolveForInit(
     else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
         auto resolvedDecl =
             resolveVariableDeclaration(initDecl->getDeclaration(), variableMap);
-        return std::make_shared<InitDecl>(resolvedDecl);
+        return std::make_shared<InitDecl>(std::move(resolvedDecl));
     }
     else {
         throw std::runtime_error("Unsupported for init type");
@@ -374,22 +378,22 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
         if (label == "") {
             throw std::runtime_error("Break statement outside of loop");
         }
-        return annotateStatement(breakStatement, label);
+        return annotateStatement(std::move(breakStatement), label);
     }
     else if (auto continueStatement =
                  std::dynamic_pointer_cast<ContinueStatement>(statement)) {
         if (label == "") {
             throw std::runtime_error("Continue statement outside of loop");
         }
-        return annotateStatement(continueStatement, label);
+        return annotateStatement(std::move(continueStatement), label);
     }
     else if (auto whileStatement =
                  std::dynamic_pointer_cast<WhileStatement>(statement)) {
         auto newLabel = generateLoopLabel();
         auto labeledBody = labelStatement(whileStatement->getBody(), newLabel);
         auto labeledWhileStatement = std::make_shared<WhileStatement>(
-            whileStatement->getCondition(), labeledBody);
-        return annotateStatement(labeledWhileStatement, newLabel);
+            whileStatement->getCondition(), std::move(labeledBody));
+        return annotateStatement(std::move(labeledWhileStatement), newLabel);
     }
     else if (auto doWhileStatement =
                  std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
@@ -397,8 +401,8 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
         auto labeledBody =
             labelStatement(doWhileStatement->getBody(), newLabel);
         auto labeledDoWhileStatement = std::make_shared<DoWhileStatement>(
-            doWhileStatement->getCondition(), labeledBody);
-        return annotateStatement(labeledDoWhileStatement, newLabel);
+            doWhileStatement->getCondition(), std::move(labeledBody));
+        return annotateStatement(std::move(labeledDoWhileStatement), newLabel);
     }
     else if (auto forStatement =
                  std::dynamic_pointer_cast<ForStatement>(statement)) {
@@ -406,8 +410,8 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
         auto labeledBody = labelStatement(forStatement->getBody(), newLabel);
         auto labeledForStatement = std::make_shared<ForStatement>(
             forStatement->getForInit(), forStatement->getOptCondition(),
-            forStatement->getOptPost(), labeledBody);
-        return annotateStatement(labeledForStatement, newLabel);
+            forStatement->getOptPost(), std::move(labeledBody));
+        return annotateStatement(std::move(labeledForStatement), newLabel);
     }
     else if (auto ifStatement =
                  std::dynamic_pointer_cast<IfStatement>(statement)) {
@@ -416,20 +420,20 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
         if (ifStatement->getElseOptStatement().has_value()) {
             auto labeledElseStatement = labelStatement(
                 ifStatement->getElseOptStatement().value(), label);
-            return std::make_shared<IfStatement>(ifStatement->getCondition(),
-                                                 labeledThenStatement,
-                                                 labeledElseStatement);
+            return std::make_shared<IfStatement>(
+                ifStatement->getCondition(), std::move(labeledThenStatement),
+                std::move(labeledElseStatement));
         }
         else {
-            return std::make_shared<IfStatement>(ifStatement->getCondition(),
-                                                 labeledThenStatement);
+            return std::make_shared<IfStatement>(
+                ifStatement->getCondition(), std::move(labeledThenStatement));
         }
     }
     else if (auto compoundStatement =
                  std::dynamic_pointer_cast<CompoundStatement>(statement)) {
         auto block = compoundStatement->getBlock();
         auto labeledBlock = labelBlock(block, label);
-        return std::make_shared<CompoundStatement>(labeledBlock);
+        return std::make_shared<CompoundStatement>(std::move(labeledBlock));
     }
     else {
         return statement;
@@ -451,13 +455,13 @@ LoopLabelingPass::labelBlock(std::shared_ptr<Block> block, std::string label) {
             auto resolvedStatement =
                 labelStatement(sBlockItem->getStatement(), label);
             auto labeledSBlockItem =
-                std::make_shared<SBlockItem>(resolvedStatement);
-            newBlockItems->emplace_back(labeledSBlockItem);
+                std::make_shared<SBlockItem>(std::move(resolvedStatement));
+            newBlockItems->emplace_back(std::move(labeledSBlockItem));
         }
         else {
             throw std::runtime_error("Unsupported block item type");
         }
     }
-    return std::make_shared<Block>(newBlockItems);
+    return std::make_shared<Block>(std::move(newBlockItems));
 }
 } // namespace AST

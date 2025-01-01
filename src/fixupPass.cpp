@@ -114,14 +114,14 @@ FixupPass::rewriteInvalidMov(
     // based on the original source and destination operands.
     auto newMov1 =
         std::make_shared<Assembly::MovInstruction>(movInst->getSrc(), r10d);
-    auto newMov2 =
-        std::make_shared<Assembly::MovInstruction>(r10d, movInst->getDst());
+    auto newMov2 = std::make_shared<Assembly::MovInstruction>(
+        std::move(r10d), movInst->getDst());
 
     // Replace the original `mov` instruction with the first new `mov`
     // instruction.
-    *it = newMov1;
+    *it = std::move(newMov1);
     // Insert the second new `mov` instruction after the first one.
-    it = instructions->insert(it + 1, newMov2);
+    it = instructions->insert(it + 1, std::move(newMov2));
 
     // Return the new iterator pointing to the second `mov` instruction.
     return it;
@@ -145,9 +145,10 @@ FixupPass::rewriteInvalidBinary(
             auto newMov = std::make_shared<Assembly::MovInstruction>(
                 binInstr->getOperand1(), r10d);
             auto newBin = std::make_shared<Assembly::BinaryInstruction>(
-                binInstr->getBinaryOperator(), r10d, binInstr->getOperand2());
-            *it = newMov;
-            it = instructions->insert(it + 1, newBin);
+                binInstr->getBinaryOperator(), std::move(r10d),
+                binInstr->getOperand2());
+            *it = std::move(newMov);
+            it = instructions->insert(it + 1, std::move(newBin));
         }
     }
     else if (std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
@@ -160,10 +161,10 @@ FixupPass::rewriteInvalidBinary(
             auto newImul = std::make_shared<Assembly::BinaryInstruction>(
                 binInstr->getBinaryOperator(), binInstr->getOperand1(), r11d);
             auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-                r11d, binInstr->getOperand2());
-            *it = newMov1;
-            it = instructions->insert(it + 1, newImul);
-            it = instructions->insert(it + 1, newMov2);
+                std::move(r11d), binInstr->getOperand2());
+            *it = std::move(newMov1);
+            it = instructions->insert(it + 1, std::move(newImul));
+            it = instructions->insert(it + 1, std::move(newMov2));
         }
     }
 
@@ -180,10 +181,10 @@ FixupPass::rewriteInvalidIdiv(
 
     auto newMov = std::make_shared<Assembly::MovInstruction>(
         idivInstr->getOperand(), r10d);
-    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(r10d);
+    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(std::move(r10d));
 
-    *it = newMov;
-    it = instructions->insert(it + 1, newIdiv);
+    *it = std::move(newMov);
+    it = instructions->insert(it + 1, std::move(newIdiv));
 
     return it;
 }
@@ -202,9 +203,9 @@ FixupPass::rewriteInvalidCmp(
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             cmpInstr->getOperand1(), r10d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
-            r10d, cmpInstr->getOperand2());
-        *it = newMov;
-        it = instructions->insert(it + 1, newCmp);
+            std::move(r10d), cmpInstr->getOperand2());
+        *it = std::move(newMov);
+        it = instructions->insert(it + 1, std::move(newCmp));
     }
     else if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                  cmpInstr->getOperand2())) {
@@ -212,12 +213,11 @@ FixupPass::rewriteInvalidCmp(
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             cmpInstr->getOperand2(), r11d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
-            cmpInstr->getOperand1(), r11d);
-        *it = newMov;
-        it = instructions->insert(it + 1, newCmp);
+            cmpInstr->getOperand1(), std::move(r11d));
+        *it = std::move(newMov);
+        it = instructions->insert(it + 1, std::move(newCmp));
     }
 
     return it;
 }
-
 } // Namespace Assembly

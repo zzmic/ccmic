@@ -5,8 +5,8 @@ namespace AST {
 Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
 
 std::shared_ptr<Program> Parser::parse() {
-    std::shared_ptr<Function> function = parseFunction();
-    return std::make_shared<Program>(function);
+    auto function = parseFunction();
+    return std::make_shared<Program>(std::move(function));
 }
 
 bool Parser::matchToken(TokenType type) {
@@ -47,7 +47,7 @@ void Parser::expectToken(TokenType type) {
 
 std::shared_ptr<Function> Parser::parseFunction() {
     expectToken(TokenType::intKeyword);
-    Token functionNameToken = consumeToken(TokenType::Identifier);
+    auto functionNameToken = consumeToken(TokenType::Identifier);
     expectToken(TokenType::OpenParenthesis);
     expectToken(TokenType::voidKeyword);
     expectToken(TokenType::CloseParenthesis);
@@ -63,17 +63,18 @@ std::shared_ptr<Function> Parser::parseFunction() {
         throw std::runtime_error(msg.str());
     }
 
-    return std::make_shared<Function>(functionNameToken.value, functionBody);
+    return std::make_shared<Function>(functionNameToken.value,
+                                      std::move(functionBody));
 }
 
 std::shared_ptr<BlockItem> Parser::parseBlockItem() {
     if (matchToken(TokenType::intKeyword)) {
         auto declaration = parseDeclaration();
-        return std::make_shared<DBlockItem>(declaration);
+        return std::make_shared<DBlockItem>(std::move(declaration));
     }
     else {
         auto statement = parseStatement();
-        return std::make_shared<SBlockItem>(statement);
+        return std::make_shared<SBlockItem>(std::move(statement));
     }
 }
 
@@ -83,20 +84,21 @@ std::shared_ptr<Block> Parser::parseBlock() {
         std::make_shared<std::vector<std::shared_ptr<BlockItem>>>();
     while (!matchToken(TokenType::CloseBrace)) {
         auto nextBlockItem = parseBlockItem();
-        blockItems->emplace_back(nextBlockItem);
+        blockItems->emplace_back(std::move(nextBlockItem));
     }
     expectToken(TokenType::CloseBrace);
-    return std::make_shared<Block>(blockItems);
+    return std::make_shared<Block>(std::move(blockItems));
 }
 
 std::shared_ptr<Declaration> Parser::parseDeclaration() {
     expectToken(TokenType::intKeyword);
-    Token variableNameToken = consumeToken(TokenType::Identifier);
+    auto variableNameToken = consumeToken(TokenType::Identifier);
     if (matchToken(TokenType::Assign)) {
         consumeToken(TokenType::Assign);
-        std::shared_ptr<Expression> expr = parseExpression(0);
+        auto expr = parseExpression(0);
         expectToken(TokenType::Semicolon);
-        return std::make_shared<Declaration>(variableNameToken.value, expr);
+        return std::make_shared<Declaration>(variableNameToken.value,
+                                             std::move(expr));
     }
     else {
         expectToken(TokenType::Semicolon);
@@ -107,7 +109,7 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
 std::shared_ptr<ForInit> Parser::parseForInit() {
     if (matchToken(TokenType::intKeyword)) {
         auto declaration = parseDeclaration();
-        return std::make_shared<InitDecl>(declaration);
+        return std::make_shared<InitDecl>(std::move(declaration));
     }
     else {
         if (matchToken(TokenType::Semicolon)) {
@@ -117,7 +119,7 @@ std::shared_ptr<ForInit> Parser::parseForInit() {
         else {
             std::shared_ptr<Expression> expr = parseExpression(0);
             expectToken(TokenType::Semicolon);
-            return std::make_shared<InitExpr>(expr);
+            return std::make_shared<InitExpr>(std::move(expr));
         }
     }
 }
@@ -126,9 +128,9 @@ std::shared_ptr<Statement> Parser::parseStatement() {
     // Parse a return statement.
     if (matchToken(TokenType::returnKeyword)) {
         consumeToken(TokenType::returnKeyword);
-        std::shared_ptr<Expression> expr = parseExpression(0);
+        auto expr = parseExpression(0);
         expectToken(TokenType::Semicolon);
-        return std::make_shared<ReturnStatement>(expr);
+        return std::make_shared<ReturnStatement>(std::move(expr));
     }
     // Parse a null statement.
     else if (matchToken(TokenType::Semicolon)) {
@@ -139,20 +141,23 @@ std::shared_ptr<Statement> Parser::parseStatement() {
     else if (matchToken(TokenType::ifKeyword)) {
         consumeToken(TokenType::ifKeyword);
         expectToken(TokenType::OpenParenthesis);
-        std::shared_ptr<Expression> condition = parseExpression(0);
+        auto condition = parseExpression(0);
         expectToken(TokenType::CloseParenthesis);
-        std::shared_ptr<Statement> thenStatement = parseStatement();
+        auto thenStatement = parseStatement();
         if (matchToken(TokenType::elseKeyword)) {
             consumeToken(TokenType::elseKeyword);
-            std::shared_ptr<Statement> elseStatement = parseStatement();
-            return std::make_shared<IfStatement>(condition, thenStatement,
-                                                 elseStatement);
+            auto elseStatement = parseStatement();
+            return std::make_shared<IfStatement>(std::move(condition),
+                                                 std::move(thenStatement),
+                                                 std::move(elseStatement));
         }
-        return std::make_shared<IfStatement>(condition, thenStatement);
+        return std::make_shared<IfStatement>(std::move(condition),
+                                             std::move(thenStatement));
     }
     // Parse a compound statement.
     else if (matchToken(TokenType::OpenBrace)) {
-        return std::make_shared<CompoundStatement>(parseBlock());
+        auto block = parseBlock();
+        return std::make_shared<CompoundStatement>(std::move(block));
     }
     // Parse a break statement.
     else if (matchToken(TokenType::breakKeyword)) {
@@ -170,54 +175,57 @@ std::shared_ptr<Statement> Parser::parseStatement() {
     else if (matchToken(TokenType::whileKeyword)) {
         consumeToken(TokenType::whileKeyword);
         expectToken(TokenType::OpenParenthesis);
-        std::shared_ptr<Expression> condition = parseExpression(0);
+        auto condition = parseExpression(0);
         expectToken(TokenType::CloseParenthesis);
-        std::shared_ptr<Statement> body = parseStatement();
-        return std::make_shared<WhileStatement>(condition, body);
+        auto body = parseStatement();
+        return std::make_shared<WhileStatement>(std::move(condition),
+                                                std::move(body));
     }
     // Parse a do-while-statement.
     else if (matchToken(TokenType::doKeyword)) {
         consumeToken(TokenType::doKeyword);
-        std::shared_ptr<Statement> body = parseStatement();
+        auto body = parseStatement();
         expectToken(TokenType::whileKeyword);
         expectToken(TokenType::OpenParenthesis);
-        std::shared_ptr<Expression> condition = parseExpression(0);
+        auto condition = parseExpression(0);
         expectToken(TokenType::CloseParenthesis);
         expectToken(TokenType::Semicolon);
-        return std::make_shared<DoWhileStatement>(condition, body);
+        return std::make_shared<DoWhileStatement>(std::move(condition),
+                                                  std::move(body));
     }
     // Parse a for-statement.
     else if (matchToken(TokenType::forKeyword)) {
         consumeToken(TokenType::forKeyword);
         expectToken(TokenType::OpenParenthesis);
-        std::shared_ptr<ForInit> init = parseForInit();
+        auto init = parseForInit();
         std::optional<std::shared_ptr<Expression>> optCondition;
         std::optional<std::shared_ptr<Expression>> optPost;
         if (matchToken(TokenType::Semicolon)) {
             consumeToken(TokenType::Semicolon);
         }
         else {
-            std::shared_ptr<Expression> condition = parseExpression(0);
-            optCondition = std::make_optional(condition);
+            auto condition = parseExpression(0);
+            optCondition = std::make_optional(std::move(condition));
             expectToken(TokenType::Semicolon);
         }
         if (matchToken(TokenType::CloseParenthesis)) {
             consumeToken(TokenType::CloseParenthesis);
         }
         else {
-            std::shared_ptr<Expression> post = parseExpression(0);
-            optPost = std::make_optional(post);
+            auto post = parseExpression(0);
+            optPost = std::make_optional(std::move(post));
             expectToken(TokenType::CloseParenthesis);
         }
-        std::shared_ptr<Statement> body = parseStatement();
-        return std::make_shared<ForStatement>(init, optCondition, optPost,
-                                              body);
+        auto body = parseStatement();
+        return std::make_shared<ForStatement>(
+            std::move(init), std::move(optCondition), std::move(optPost),
+            std::move(body));
     }
     // Parse an expression statement.
     else {
-        std::shared_ptr<Expression> expr = parseExpression(0);
+        auto expr = parseExpression(0);
         expectToken(TokenType::Semicolon);
-        return std::make_shared<ExpressionStatement>(expr);
+        return std::make_shared<ExpressionStatement>(std::move(expr));
     }
     std::stringstream msg;
     msg << "Malformed statement: unexpected token: " << tokens[current].value;
@@ -227,32 +235,35 @@ std::shared_ptr<Statement> Parser::parseStatement() {
 
 std::shared_ptr<Expression> Parser::parseFactor() {
     if (matchToken(TokenType::Constant)) {
-        Token constantToken = consumeToken(TokenType::Constant);
+        auto constantToken = consumeToken(TokenType::Constant);
         return std::make_shared<ConstantExpression>(
             std::stoi(constantToken.value));
     }
     else if (matchToken(TokenType::Identifier)) {
-        Token identifierToken = consumeToken(TokenType::Identifier);
+        auto identifierToken = consumeToken(TokenType::Identifier);
         return std::make_shared<VariableExpression>(identifierToken.value);
     }
     else if (matchToken(TokenType::Tilde)) {
-        Token tildeToken = consumeToken(TokenType::Tilde);
-        std::shared_ptr<Expression> innerExpr = parseFactor();
-        return std::make_shared<UnaryExpression>(tildeToken.value, innerExpr);
+        auto tildeToken = consumeToken(TokenType::Tilde);
+        auto innerExpr = parseFactor();
+        return std::make_shared<UnaryExpression>(tildeToken.value,
+                                                 std::move(innerExpr));
     }
     else if (matchToken(TokenType::Minus)) {
-        Token minusToken = consumeToken(TokenType::Minus);
-        std::shared_ptr<Expression> innerExpr = parseFactor();
-        return std::make_shared<UnaryExpression>(minusToken.value, innerExpr);
+        auto minusToken = consumeToken(TokenType::Minus);
+        auto innerExpr = parseFactor();
+        return std::make_shared<UnaryExpression>(minusToken.value,
+                                                 std::move(innerExpr));
     }
     else if (matchToken(TokenType::LogicalNot)) {
-        Token notToken = consumeToken(TokenType::LogicalNot);
-        std::shared_ptr<Expression> innerExpr = parseFactor();
-        return std::make_shared<UnaryExpression>(notToken.value, innerExpr);
+        auto notToken = consumeToken(TokenType::LogicalNot);
+        auto innerExpr = parseFactor();
+        return std::make_shared<UnaryExpression>(notToken.value,
+                                                 std::move(innerExpr));
     }
     else if (matchToken(TokenType::OpenParenthesis)) {
         consumeToken(TokenType::OpenParenthesis);
-        std::shared_ptr<Expression> innerExpr = parseExpression(0);
+        auto innerExpr = parseExpression(0);
         if (matchToken(TokenType::CloseParenthesis)) {
             consumeToken(TokenType::CloseParenthesis);
             return innerExpr;
@@ -292,19 +303,21 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
         getPrecedence(tokens[current]) >= minPrecedence) {
         // If the next token is an assignment operator, ...
         if (matchToken(TokenType::Assign)) {
-            Token assignToken = consumeToken(TokenType::Assign);
+            auto assignToken = consumeToken(TokenType::Assign);
             auto right = parseExpression(getPrecedence(assignToken));
-            left = std::make_shared<AssignmentExpression>(left, right);
+            left = std::make_shared<AssignmentExpression>(std::move(left),
+                                                          std::move(right));
         }
         else if (matchToken(TokenType::QuestionMark)) {
-            Token questionMarkToken = consumeToken(TokenType::QuestionMark);
+            auto questionMarkToken = consumeToken(TokenType::QuestionMark);
             auto middle = parseConditionalMiddle();
             auto right = parseExpression(getPrecedence(questionMarkToken));
-            left = std::make_shared<ConditionalExpression>(left, middle, right);
+            left = std::make_shared<ConditionalExpression>(
+                std::move(left), std::move(middle), std::move(right));
         }
         // Otherwise, the next token is (should be) a binary operator.
         else {
-            Token binOpToken = consumeToken(tokens[current].type);
+            auto binOpToken = consumeToken(tokens[current].type);
             if (!(matchToken(TokenType::Constant) ||
                   matchToken(TokenType::Tilde) ||
                   matchToken(TokenType::Minus) ||
@@ -319,8 +332,8 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
             }
             std::shared_ptr<Expression> right =
                 parseExpression(getPrecedence(binOpToken) + 1);
-            left = std::make_shared<BinaryExpression>(left, binOpToken.value,
-                                                      right);
+            left = std::make_shared<BinaryExpression>(
+                std::move(left), binOpToken.value, std::move(right));
         }
     }
     return left;
@@ -329,7 +342,7 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
 std::shared_ptr<Expression> Parser::parseConditionalMiddle() {
     // Note: The question mark token has already been consumed in the caller
     // (some `parseExpression` function call). Parse the middle expression.
-    std::shared_ptr<Expression> middle = parseExpression(0);
+    auto middle = parseExpression(0);
     // Consume the colon token.
     consumeToken(TokenType::Colon);
     return middle;

@@ -21,9 +21,9 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
     // Initialize the function body with an empty vector of instructions.
     auto instructions =
         std::make_shared<std::vector<std::shared_ptr<Assembly::Instruction>>>();
-    funcDef->setFunctionBody(instructions);
+    funcDef->setFunctionBody(std::move(instructions));
     // Push the function definition to the vector of function definitions.
-    functionDefinition->emplace_back(funcDef);
+    functionDefinition->emplace_back(std::move(funcDef));
 
     // Get the body of the function, which is a list of IR instructions.
     auto irBody = irFunction->at(0)->getFunctionBody();
@@ -35,7 +35,7 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
     }
 
     // Return the generated assembly program.
-    return std::make_shared<Assembly::Program>(functionDefinition);
+    return std::make_shared<Assembly::Program>(std::move(functionDefinition));
 }
 
 void AssemblyGenerator::generateAssyStatement(
@@ -110,7 +110,8 @@ void AssemblyGenerator::generateAssyUnaryInstruction(
         // Generate a `Cmp` instruction to compare the source operand with
         // `0`.
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            std::make_shared<Assembly::ImmediateOperand>(0), srcOperand));
+            std::make_shared<Assembly::ImmediateOperand>(0),
+            std::move(srcOperand)));
         // Generate a `Mov` instruction to move `0` to the destination
         // operand.
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
@@ -118,12 +119,12 @@ void AssemblyGenerator::generateAssyUnaryInstruction(
         // Generate a `SetCC` instruction to set the destination operand to
         // `E`.
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::E>(), dstOperand));
+            std::make_shared<Assembly::E>(), std::move(dstOperand)));
     }
     else {
         // Move the source operand to the destination operand.
-        instructions->emplace_back(
-            std::make_shared<Assembly::MovInstruction>(srcOperand, dstOperand));
+        instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
+            std::move(srcOperand), dstOperand));
         // Generate the assembly instructions based on the unary operator.
         if (auto negateOperator = std::dynamic_pointer_cast<IR::NegateOperator>(
                 unaryIROperator)) {
@@ -131,7 +132,8 @@ void AssemblyGenerator::generateAssyUnaryInstruction(
             // operand.
             instructions->emplace_back(
                 std::make_shared<Assembly::UnaryInstruction>(
-                    std::make_shared<Assembly::NegateOperator>(), dstOperand));
+                    std::make_shared<Assembly::NegateOperator>(),
+                    std::move(dstOperand)));
         }
         else if (auto complementOperator =
                      std::dynamic_pointer_cast<IR::ComplementOperator>(
@@ -141,7 +143,7 @@ void AssemblyGenerator::generateAssyUnaryInstruction(
             instructions->emplace_back(
                 std::make_shared<Assembly::UnaryInstruction>(
                     std::make_shared<Assembly::ComplementOperator>(),
-                    dstOperand));
+                    std::move(dstOperand)));
         }
     }
 }
@@ -157,107 +159,110 @@ void AssemblyGenerator::generateAssyBinaryInstruction(
 
     // Get the binary operator from the IR binary instruction.
     auto binaryIROperator = binaryInstr->getBinaryOperator();
-
     // Generate the assembly instructions based on the IR binary operator.
     if (std::dynamic_pointer_cast<IR::AddOperator>(binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            src1Operand, dstOperand));
+            std::move(src1Operand), dstOperand));
         instructions->emplace_back(
             std::make_shared<Assembly::BinaryInstruction>(
-                std::make_shared<Assembly::AddOperator>(), src2Operand,
-                dstOperand));
+                std::make_shared<Assembly::AddOperator>(),
+                std::move(src2Operand), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::SubtractOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            src1Operand, dstOperand));
+            std::move(src1Operand), dstOperand));
         instructions->emplace_back(
             std::make_shared<Assembly::BinaryInstruction>(
-                std::make_shared<Assembly::SubtractOperator>(), src2Operand,
-                dstOperand));
+                std::make_shared<Assembly::SubtractOperator>(),
+                std::move(src2Operand), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::MultiplyOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            src1Operand, dstOperand));
+            std::move(src1Operand), dstOperand));
         instructions->emplace_back(
             std::make_shared<Assembly::BinaryInstruction>(
-                std::make_shared<Assembly::MultiplyOperator>(), src2Operand,
-                dstOperand));
+                std::make_shared<Assembly::MultiplyOperator>(),
+                std::move(src2Operand), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::DivideOperator>(binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            src1Operand, std::make_shared<Assembly::RegisterOperand>("eax")));
+            std::move(src1Operand),
+            std::make_shared<Assembly::RegisterOperand>("eax")));
         instructions->emplace_back(
             std::make_shared<Assembly::CdqInstruction>());
-        instructions->emplace_back(
-            std::make_shared<Assembly::IdivInstruction>(src2Operand));
+        instructions->emplace_back(std::make_shared<Assembly::IdivInstruction>(
+            std::move(src2Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::RegisterOperand>("eax"), dstOperand));
+            std::make_shared<Assembly::RegisterOperand>("eax"),
+            std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::RemainderOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            src1Operand, std::make_shared<Assembly::RegisterOperand>("eax")));
+            std::move(src1Operand),
+            std::make_shared<Assembly::RegisterOperand>("eax")));
         instructions->emplace_back(
             std::make_shared<Assembly::CdqInstruction>());
-        instructions->emplace_back(
-            std::make_shared<Assembly::IdivInstruction>(src2Operand));
+        instructions->emplace_back(std::make_shared<Assembly::IdivInstruction>(
+            std::move(src2Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::RegisterOperand>("edx"), dstOperand));
+            std::make_shared<Assembly::RegisterOperand>("edx"),
+            std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::EqualOperator>(binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            src2Operand, src1Operand));
+            std::move(src2Operand), std::move(src1Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::ImmediateOperand>(0), dstOperand));
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::E>(), dstOperand));
+            std::make_shared<Assembly::E>(), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::NotEqualOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            src2Operand, src1Operand));
+            std::move(src2Operand), std::move(src1Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::ImmediateOperand>(0), dstOperand));
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::NE>(), dstOperand));
+            std::make_shared<Assembly::NE>(), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::LessThanOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            src2Operand, src1Operand));
+            std::move(src2Operand), std::move(src1Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::ImmediateOperand>(0), dstOperand));
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::L>(), dstOperand));
+            std::make_shared<Assembly::L>(), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::LessThanOrEqualOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            src2Operand, src1Operand));
+            std::move(src2Operand), std::move(src1Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::ImmediateOperand>(0), dstOperand));
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::LE>(), dstOperand));
+            std::make_shared<Assembly::LE>(), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::GreaterThanOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            src2Operand, src1Operand));
+            std::move(src2Operand), std::move(src1Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::ImmediateOperand>(0), dstOperand));
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::G>(), dstOperand));
+            std::make_shared<Assembly::G>(), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::GreaterThanOrEqualOperator>(
                  binaryIROperator)) {
         instructions->emplace_back(std::make_shared<Assembly::CmpInstruction>(
-            src2Operand, src1Operand));
+            std::move(src2Operand), std::move(src1Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::ImmediateOperand>(0), dstOperand));
         instructions->emplace_back(std::make_shared<Assembly::SetCCInstruction>(
-            std::make_shared<Assembly::GE>(), dstOperand));
+            std::make_shared<Assembly::GE>(), std::move(dstOperand)));
     }
 }
 
@@ -310,8 +315,8 @@ void AssemblyGenerator::generateAssyCopyInstruction(
 
     // Generate a `Mov` instruction to copy the source operand to the
     // destination operand.
-    instructions->emplace_back(
-        std::make_shared<Assembly::MovInstruction>(srcOperand, dstOperand));
+    instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
+        std::move(srcOperand), std::move(dstOperand)));
 }
 
 void AssemblyGenerator::generateAssyLabelInstruction(
