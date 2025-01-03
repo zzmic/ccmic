@@ -54,8 +54,13 @@ int main(int argc, char *argv[]) {
     std::string preprocessedFile = programName + ".i";
     // Construct the assembly file name by appending the ".s" extension.
     std::string assemblyFile = programName + ".s";
-    // Construct the output file name by using the program name.
-    std::string outputFile = programName;
+    // Construct the object file name by appending the ".o" extension.
+    std::string objectFile = programName + ".o";
+    // Construct a vector to store the object files.
+    // Note: For now, there is only one object file.
+    std::vector<std::string> objectFiles;
+    // Construct the executable file name.
+    std::string executableFile = programName;
 
     // // Preprocess the source file and write the result to the preprocessed.
     // file preprocess(sourceFile, preprocessedFile);
@@ -169,12 +174,18 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
-    // Assemble the assembly file and link it to produce an executable
-    // (`outputFile`).
-    assembleAndLink(assemblyFile, outputFile);
+    // Assemble the assembly file to an object file and add it to the object
+    // file vector.
+    assembleToObject(assemblyFile, objectFile);
+    objectFiles.emplace_back(objectFile);
+
+    // Link the object files to an executable file.
+    linkToExecutable(objectFiles, executableFile);
+
     // Delete the assebmly file after assembling and linking it.
     std::filesystem::remove(assemblyFile);
 
-    std::cout << "Compilation completed. Output file: " << outputFile << "\n";
+    std::cout << "Compilation completed. Output file: " << executableFile
+              << "\n";
     return EXIT_SUCCESS;
 }

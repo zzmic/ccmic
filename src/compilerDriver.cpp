@@ -34,10 +34,20 @@ void compileToAssembly(const std::string &preprocessedFile,
     runCommand(command);
 }
 
-// Assemble the assembly file and link it to produce an executable
-// (`outputFile`).
-void assembleAndLink(const std::string &assemblyFile,
-                     const std::string &outputFile) {
-    std::string command = "gcc " + assemblyFile + " -o " + outputFile;
+// Assemble the assembly file to an object file.
+void assembleToObject(const std::string &assemblyFile,
+                      const std::string &objectFile) {
+    std::string command = "gcc -c " + assemblyFile + " -o " + objectFile;
+    runCommand(command);
+}
+
+// Link the object files to an executable file
+void linkToExecutable(const std::vector<std::string> &objectFiles,
+                      const std::string &executableFile) {
+    std::string command = "gcc";
+    for (const auto &objectFile : objectFiles) {
+        command += " " + objectFile;
+    }
+    command += " -o " + executableFile;
     runCommand(command);
 }
