@@ -20,6 +20,7 @@ enum class TokenType {
     forKeyword,
     breakKeyword,
     continueKeyword,
+    Comma,
     QuestionMark,
     Colon,
     Assign,
