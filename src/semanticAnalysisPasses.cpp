@@ -3,7 +3,8 @@
 
 namespace AST {
 int VariableResolutionPass::resolveVariables(std::shared_ptr<Program> program) {
-    auto function = program->getFunction();
+    // TODO(zzmic): This is a temporary solution.
+    auto mainFunctionDeclaration = program->getFunctionDeclarations()->at(0);
     // Initialize an empty variable map (that will be passed to the helpers).
     // Instead of maintaining a "global" variable map, we pass the variable map
     // to the helper functions to, together with `copyVariableMap`, ensure that
@@ -11,8 +12,10 @@ int VariableResolutionPass::resolveVariables(std::shared_ptr<Program> program) {
     auto variableMap = std::unordered_map<std::string, MapEntry>();
 
     // Resolve the variables in the function block.
-    auto resolvedBlock = resolveBlock(function->getBody(), variableMap);
-    function->setBody(resolvedBlock);
+    // TODO(zzmic): This is a temporary solution.
+    auto resolvedBlock = resolveBlock(
+        mainFunctionDeclaration->getOptBody().value(), variableMap);
+    mainFunctionDeclaration->setOptBody(std::make_optional(resolvedBlock));
 
     return this->variableResolutionCounter;
 }
@@ -36,8 +39,9 @@ std::string VariableResolutionPass::generateUniqueVariableName(
     return identifier + "." + std::to_string(this->variableResolutionCounter++);
 }
 
-std::shared_ptr<Declaration> VariableResolutionPass::resolveVariableDeclaration(
-    std::shared_ptr<Declaration> declaration,
+std::shared_ptr<VariableDeclaration>
+VariableResolutionPass::resolveVariableVariableDeclaration(
+    std::shared_ptr<VariableDeclaration> declaration,
     std::unordered_map<std::string, MapEntry> &variableMap) {
     // Get the identifier from the declaration, check if it is already in the
     // variable map, and generate a unique variable name for it if it is not.
@@ -61,7 +65,7 @@ std::shared_ptr<Declaration> VariableResolutionPass::resolveVariableDeclaration(
     }
 
     // Return a new declaration with the resolved identifier and initializer.
-    return std::make_shared<Declaration>(
+    return std::make_shared<VariableDeclaration>(
         variableMap[declarationIdentifier].getNewName(),
         std::move(optInitializer));
 }
@@ -283,8 +287,11 @@ std::shared_ptr<Block> VariableResolutionPass::resolveBlock(
     for (auto &blockItem : *blockItems) {
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
-            auto resolvedDeclaration = resolveVariableDeclaration(
-                dBlockItem->getDeclaration(), variableMap);
+            // TODO(zzmic): This is a temporary solution.
+            auto resolvedDeclaration = resolveVariableVariableDeclaration(
+                std::static_pointer_cast<VariableDeclaration>(
+                    dBlockItem->getDeclaration()),
+                variableMap);
             dBlockItem->setDeclaration(resolvedDeclaration);
         }
         else if (auto sBlockItem =
@@ -317,8 +324,8 @@ std::shared_ptr<ForInit> VariableResolutionPass::resolveForInit(
         }
     }
     else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
-        auto resolvedDecl =
-            resolveVariableDeclaration(initDecl->getDeclaration(), variableMap);
+        auto resolvedDecl = resolveVariableVariableDeclaration(
+            initDecl->getVariableDeclaration(), variableMap);
         return std::make_shared<InitDecl>(std::move(resolvedDecl));
     }
     else {
@@ -327,9 +334,11 @@ std::shared_ptr<ForInit> VariableResolutionPass::resolveForInit(
 }
 
 void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
-    auto function = program->getFunction();
-    auto resolvedBody = labelBlock(function->getBody(), "");
-    function->setBody(resolvedBody);
+    // TODO(zzmic): This is a temporary solution.
+    auto mainFunctionDeclaration = program->getFunctionDeclarations()->at(0);
+    auto resolvedBody =
+        labelBlock(mainFunctionDeclaration->getOptBody().value(), "");
+    mainFunctionDeclaration->setOptBody(std::make_optional(resolvedBody));
 }
 
 std::string LoopLabelingPass::generateLoopLabel() {

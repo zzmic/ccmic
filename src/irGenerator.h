@@ -23,8 +23,8 @@ class IRGenerator {
         std::shared_ptr<AST::Block> astBlock,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
-    void generateIRDeclaration(
-        std::shared_ptr<AST::Declaration> astDeclaration,
+    void generateIRVariableDeclaration(
+        std::shared_ptr<AST::VariableDeclaration> astDeclaration,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     void generateIRStatement(

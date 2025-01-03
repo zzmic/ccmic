@@ -199,4 +199,18 @@ std::shared_ptr<Expression> ConditionalExpression::getThenExpression() const {
 std::shared_ptr<Expression> ConditionalExpression::getElseExpression() const {
     return elseExpression;
 }
+
+FunctionCallExpression::FunctionCallExpression(
+    const std::string &identifier,
+    std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments)
+    : identifier(identifier), arguments(arguments) {}
+
+void FunctionCallExpression::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::string FunctionCallExpression::getIdentifier() const { return identifier; }
+
+std::shared_ptr<std::vector<std::shared_ptr<Expression>>>
+FunctionCallExpression::getArguments() const {
+    return arguments;
+}
 } // Namespace AST

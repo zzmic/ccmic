@@ -13,11 +13,13 @@ namespace AST {
 void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
-    if (program.getFunction()) {
-        program.getFunction()->accept(*this);
+    if (program.getFunctionDeclarations()) {
+        for (auto &functionDeclaration : *program.getFunctionDeclarations()) {
+            functionDeclaration->accept(*this);
+        }
     }
     else {
-        throw std::runtime_error("Null function in program");
+        throw std::runtime_error("Null function declarations in program");
     }
 
     std::cout << "\n)\n";
@@ -87,8 +89,8 @@ void PrintVisitor::visit(DBlockItem &dBlockItem) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(Declaration &declaration) {
-    std::cout << "Declaration(\n";
+void PrintVisitor::visit(VariableDeclaration &declaration) {
+    std::cout << "VariableDeclaration(\n";
 
     std::cout << "identifier=";
 
@@ -107,11 +109,38 @@ void PrintVisitor::visit(Declaration &declaration) {
     std::cout << "\n)";
 }
 
+void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
+    std::cout << "FunctionDeclaration(\n";
+
+    std::cout << "identifier=";
+
+    if (functionDeclaration.getIdentifier().size() > 0) {
+        std::cout << functionDeclaration.getIdentifier();
+    }
+    else {
+        throw std::runtime_error("Null identifier in function declaration");
+    }
+
+    std::cout << "\nparameters=(";
+
+    for (auto &parameter : *functionDeclaration.getParameters()) {
+        std::cout << parameter << ", ";
+    }
+    std::cout << "\b\b)";
+
+    if (functionDeclaration.getOptBody().has_value()) {
+        std::cout << "\nbody=";
+        functionDeclaration.getOptBody().value()->accept(*this);
+    }
+
+    std::cout << "\n)";
+}
+
 void PrintVisitor::visit(InitDecl &initDecl) {
     std::cout << "InitDecl(\n";
 
-    if (initDecl.getDeclaration()) {
-        initDecl.getDeclaration()->accept(*this);
+    if (initDecl.getVariableDeclaration()) {
+        initDecl.getVariableDeclaration()->accept(*this);
     }
     else {
         throw std::runtime_error("Null declaration in init declaration");
@@ -433,6 +462,27 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
     else {
         throw std::runtime_error(
             "Null false expression in conditional expression");
+    }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
+    std::cout << "FunctionCallExpression(\n";
+
+    std::cout << "function=";
+
+    if (functionCallExpression.getIdentifier().size() > 0) {
+        std::cout << functionCallExpression.getIdentifier();
+    }
+    else {
+        throw std::runtime_error("Null function in function call expression");
+    }
+
+    std::cout << "\nargs=";
+
+    for (auto &arg : *functionCallExpression.getArguments()) {
+        arg->accept(*this);
     }
 
     std::cout << "\n)";

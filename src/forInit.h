@@ -10,12 +10,12 @@ class ForInit : public AST {};
 
 class InitDecl : public ForInit {
   public:
-    InitDecl(std::shared_ptr<Declaration> decl);
+    InitDecl(std::shared_ptr<VariableDeclaration> decl);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Declaration> getDeclaration() const;
+    std::shared_ptr<VariableDeclaration> getVariableDeclaration() const;
 
   private:
-    std::shared_ptr<Declaration> decl;
+    std::shared_ptr<VariableDeclaration> decl;
 };
 
 class InitExpr : public ForInit {

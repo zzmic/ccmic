@@ -12,7 +12,8 @@ class PrintVisitor : public Visitor {
     void visit(Block &block) override;
     void visit(SBlockItem &sBlockItem) override;
     void visit(DBlockItem &dBlockItem) override;
-    void visit(Declaration &declaration) override;
+    void visit(VariableDeclaration &variableDeclaration) override;
+    void visit(FunctionDeclaration &functionDeclaration) override;
     void visit(InitDecl &initDecl) override;
     void visit(InitExpr &initExpr) override;
     void visit(ReturnStatement &returnStatement) override;
@@ -31,6 +32,7 @@ class PrintVisitor : public Visitor {
     void visit(BinaryExpression &binaryExpression) override;
     void visit(AssignmentExpression &assignmentExpression) override;
     void visit(ConditionalExpression &conditionalExpression) override;
+    void visit(FunctionCallExpression &functionCallExpression) override;
     void visit(ComplementOperator &complementOperator) override;
     void visit(NegateOperator &negateOperator) override;
     void visit(NotOperator &notOperator) override;

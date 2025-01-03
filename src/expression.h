@@ -5,6 +5,7 @@
 #include "operator.h"
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace AST {
 class Expression : public AST {};
@@ -94,6 +95,20 @@ class ConditionalExpression : public Expression {
     std::shared_ptr<Expression> elseExpression;
 };
 
+class FunctionCallExpression : public Expression {
+  public:
+    FunctionCallExpression(
+        const std::string &identifier,
+        std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments);
+    void accept(Visitor &visitor) override;
+    std::string getIdentifier() const;
+    std::shared_ptr<std::vector<std::shared_ptr<Expression>>>
+    getArguments() const;
+
+  private:
+    std::string identifier;
+    std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments;
+};
 } // Namespace AST
 
 #endif // EXPRESSION_H

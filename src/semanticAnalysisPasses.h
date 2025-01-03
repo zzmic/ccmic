@@ -28,8 +28,8 @@ class VariableResolutionPass {
     std::string generateUniqueVariableName(const std::string &identifier);
     std::unordered_map<std::string, MapEntry>
     copyVariableMap(std::unordered_map<std::string, MapEntry> &variableMap);
-    std::shared_ptr<Declaration> resolveVariableDeclaration(
-        std::shared_ptr<Declaration> declaration,
+    std::shared_ptr<VariableDeclaration> resolveVariableVariableDeclaration(
+        std::shared_ptr<VariableDeclaration> declaration,
         std::unordered_map<std::string, MapEntry> &variableMap);
     std::shared_ptr<Statement>
     resolveStatement(std::shared_ptr<Statement> statement,

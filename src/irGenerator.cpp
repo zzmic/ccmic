@@ -8,8 +8,10 @@ IRGenerator::IRGenerator(int variableResolutionCounter) {
 
 std::shared_ptr<IR::Program>
 IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
-    // Get the function from the AST program.
-    auto astFunction = astProgram->getFunction();
+    // Get the function declaration of the main function from the AST program.
+    // TODO(zzmic): This is a temporary solution.
+    auto astMainFunctionDeclaration =
+        astProgram->getFunctionDeclarations()->at(0);
 
     // Create a shared pointer to a vector of shared pointers of
     // FunctionDefinition.
@@ -18,8 +20,9 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
 
     // Create a shared pointer for the specific FunctionDefinition and add
     // it to the vector.
-    functionDefinition->emplace_back(
-        std::make_shared<IR::FunctionDefinition>(astFunction->getName()));
+    // TODO(zzmic): This is a temporary solution.
+    functionDefinition->emplace_back(std::make_shared<IR::FunctionDefinition>(
+        astMainFunctionDeclaration->getIdentifier()));
 
     // Initialize the function body with an empty vector of instructions.
     functionDefinition->at(0)->setFunctionBody(
@@ -27,7 +30,8 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
             std::vector<std::shared_ptr<IR::Instruction>>()));
 
     // Get the body of the function.
-    auto astBody = astFunction->getBody();
+    // TODO(zzmic): This is a temporary solution.
+    auto astBody = astMainFunctionDeclaration->getOptBody().value();
 
     // Generate IR instructions for the body of the function.
     generateIRBlock(astBody, functionDefinition->at(0)->getFunctionBody());
@@ -61,7 +65,11 @@ void IRGenerator::generateIRBlock(
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
             // Generate IR instructions for the declaration.
-            generateIRDeclaration(dBlockItem->getDeclaration(), instructions);
+            // TODO(zzmic): This is a temporary solution.
+            generateIRVariableDeclaration(
+                std::static_pointer_cast<AST::VariableDeclaration>(
+                    dBlockItem->getDeclaration()),
+                instructions);
         }
         // If the block item is a `SBockItem` (i.e., a statement), ...
         else if (auto sBlockItem =
@@ -72,8 +80,8 @@ void IRGenerator::generateIRBlock(
     }
 }
 
-void IRGenerator::generateIRDeclaration(
-    std::shared_ptr<AST::Declaration> astDeclaration,
+void IRGenerator::generateIRVariableDeclaration(
+    std::shared_ptr<AST::VariableDeclaration> astDeclaration,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // If the declaration has an initializer, ...
@@ -313,7 +321,8 @@ void IRGenerator::generateIRForStatement(
     }
     else if (auto initDecl =
                  std::dynamic_pointer_cast<AST::InitDecl>(forInit)) {
-        generateIRDeclaration(initDecl->getDeclaration(), instructions);
+        generateIRVariableDeclaration(initDecl->getVariableDeclaration(),
+                                      instructions);
     }
     // Generate a new start label.
     auto startLabel = generateIRStartLabel();

@@ -34,9 +34,10 @@ class Parser {
     Token consumeToken(TokenType type);
     void expectToken(TokenType type);
     std::shared_ptr<Function> parseFunction();
+    std::shared_ptr<VariableDeclaration> parseVariableDeclaration();
+    std::shared_ptr<FunctionDeclaration> parseFunctionDeclaration();
     std::shared_ptr<BlockItem> parseBlockItem();
     std::shared_ptr<Block> parseBlock();
-    std::shared_ptr<Declaration> parseDeclaration();
     std::shared_ptr<ForInit> parseForInit();
     std::shared_ptr<Statement> parseStatement();
     std::shared_ptr<Expression> parseFactor();
