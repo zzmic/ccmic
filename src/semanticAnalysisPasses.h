@@ -8,41 +8,50 @@
 namespace AST {
 class MapEntry {
   public:
-    MapEntry(std::string newName, bool fromCurrentBlock)
-        : newName(newName), fromCurrentBlock(fromCurrentBlock) {}
-    MapEntry() : newName(""), fromCurrentBlock(false) {}
+    MapEntry() : newName(""), fromCurrentBlock(false), hasLinkage(false) {}
+    MapEntry(std::string newName, bool fromCurrentBlock, bool hasLinkage)
+        : newName(newName), fromCurrentBlock(fromCurrentBlock),
+          hasLinkage(hasLinkage) {}
     std::string getNewName() { return newName; }
-    bool isFromCurrentBlock() { return fromCurrentBlock; }
+    bool fromCurrentBlockOrNot() { return fromCurrentBlock; }
+    bool hasLinkageOrNot() { return hasLinkage; }
 
   private:
     std::string newName;
     bool fromCurrentBlock;
+    bool hasLinkage;
 };
 
-class VariableResolutionPass {
+class IdentifierResolutionPass {
   public:
-    int resolveVariables(std::shared_ptr<Program> program);
+    int resolveIdentifiers(std::shared_ptr<Program> program);
 
   private:
     int variableResolutionCounter = 0;
     std::string generateUniqueVariableName(const std::string &identifier);
     std::unordered_map<std::string, MapEntry>
-    copyVariableMap(std::unordered_map<std::string, MapEntry> &variableMap);
-    std::shared_ptr<VariableDeclaration> resolveVariableVariableDeclaration(
+    copyIdentifierMap(std::unordered_map<std::string, MapEntry> &identifierMap);
+    std::shared_ptr<VariableDeclaration> resolveVariableDeclaration(
         std::shared_ptr<VariableDeclaration> declaration,
-        std::unordered_map<std::string, MapEntry> &variableMap);
+        std::unordered_map<std::string, MapEntry> &identifierMap);
     std::shared_ptr<Statement>
     resolveStatement(std::shared_ptr<Statement> statement,
-                     std::unordered_map<std::string, MapEntry> &variableMap);
+                     std::unordered_map<std::string, MapEntry> &identifierMap);
     std::shared_ptr<Expression>
     resolveExpression(std::shared_ptr<Expression> expression,
-                      std::unordered_map<std::string, MapEntry> &variableMap);
+                      std::unordered_map<std::string, MapEntry> &identifierMap);
     std::shared_ptr<Block>
     resolveBlock(std::shared_ptr<Block> block,
-                 std::unordered_map<std::string, MapEntry> &variableMap);
+                 std::unordered_map<std::string, MapEntry> &identifierMap);
     std::shared_ptr<ForInit>
     resolveForInit(std::shared_ptr<ForInit> forInit,
-                   std::unordered_map<std::string, MapEntry> &variableMap);
+                   std::unordered_map<std::string, MapEntry> &identifierMap);
+    std::shared_ptr<FunctionDeclaration> resolveFunctionDeclaration(
+        std::shared_ptr<FunctionDeclaration> declaration,
+        std::unordered_map<std::string, MapEntry> &identifierMap);
+    std::string
+    resolveParameter(std::string parameter,
+                     std::unordered_map<std::string, MapEntry> &identifierMap);
 };
 
 class LoopLabelingPass {

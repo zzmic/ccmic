@@ -15,6 +15,7 @@ void PrintVisitor::visit(Program &program) {
 
     if (program.getFunctionDeclarations()) {
         for (auto &functionDeclaration : *program.getFunctionDeclarations()) {
+            std::cout << ",\n";
             functionDeclaration->accept(*this);
         }
     }
@@ -483,6 +484,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
 
     for (auto &arg : *functionCallExpression.getArguments()) {
         arg->accept(*this);
+        std::cout << ", ";
     }
 
     std::cout << "\n)";

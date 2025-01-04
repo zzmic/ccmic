@@ -13,6 +13,9 @@ class Program : public AST {
     void accept(Visitor &visitor) override;
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
     getFunctionDeclarations() const;
+    void setFunctionDeclarations(
+        std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
+            functionDeclarations);
 
   private:
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>

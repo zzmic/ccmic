@@ -13,4 +13,9 @@ std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
 Program::getFunctionDeclarations() const {
     return functionDeclarations;
 }
+void Program::setFunctionDeclarations(
+    std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
+        functionDeclarations) {
+    this->functionDeclarations = functionDeclarations;
+}
 } // Namespace AST

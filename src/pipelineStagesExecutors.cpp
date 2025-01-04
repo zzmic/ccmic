@@ -57,9 +57,9 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 int PipelineStagesExecutors::semanticAnalysisExecutor(
     std::shared_ptr<AST::Program> astProgram) {
     try {
-        AST::VariableResolutionPass variableResolutionPass;
+        AST::IdentifierResolutionPass IdentifierResolutionPass;
         int variableResolutionCounter =
-            variableResolutionPass.resolveVariables(astProgram);
+            IdentifierResolutionPass.resolveIdentifiers(astProgram);
         AST::LoopLabelingPass loopLabelingPass;
         loopLabelingPass.labelLoops(astProgram);
         AST::PrintVisitor printVisitor;
