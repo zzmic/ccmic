@@ -4,56 +4,55 @@ namespace IR {
 IRGenerator::IRGenerator(
     int variableResolutionCounter,
     std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
-        symbols) {
-    // Initialize the IR temporaries counter.
-    this->irTemporariesCounter = variableResolutionCounter;
-    this->symbols = symbols;
-}
+        symbols)
+    : irTemporariesCounter(variableResolutionCounter), symbols(symbols) {}
 
 std::shared_ptr<IR::Program>
 IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
-    // Get the function declaration of the main function from the AST program.
-    // TODO(zzmic): This is a temporary solution.
-    auto astMainFunctionDeclaration =
-        astProgram->getFunctionDeclarations()->at(0);
-
-    // Create a shared pointer to a vector of shared pointers of
-    // FunctionDefinition.
-    auto functionDefinition = std::make_shared<
+    // Initialize the vector of IR function definitions.
+    auto functionDefinitions = std::make_shared<
         std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
 
-    // Create a shared pointer for the specific FunctionDefinition and add
-    // it to the vector.
-    // TODO(zzmic): This is a temporary solution.
-    functionDefinition->emplace_back(std::make_shared<IR::FunctionDefinition>(
-        astMainFunctionDeclaration->getIdentifier()));
+    // Get the function declarations from the AST program.
+    auto functionDeclarations = astProgram->getFunctionDeclarations();
 
-    // Initialize the function body with an empty vector of instructions.
-    functionDefinition->at(0)->setFunctionBody(
-        std::make_shared<std::vector<std::shared_ptr<IR::Instruction>>>(
-            std::vector<std::shared_ptr<IR::Instruction>>()));
+    // Generate IR instructions for each function declaration.
+    for (auto &functionDeclaration : *functionDeclarations) {
+        // Create a new vector of IR instructions for the function.
+        auto instructions =
+            std::make_shared<std::vector<std::shared_ptr<IR::Instruction>>>();
 
-    // Get the body of the function.
-    // TODO(zzmic): This is a temporary solution.
-    auto astBody = astMainFunctionDeclaration->getOptBody().value();
+        // Get the parameters of the function declaration.
+        auto parameters = functionDeclaration->getParameters();
 
-    // Generate IR instructions for the body of the function.
-    generateIRBlock(astBody, functionDefinition->at(0)->getFunctionBody());
+        // Get the body of the function declaration.
+        auto optBody = functionDeclaration->getOptBody();
+        if (optBody.has_value()) {
+            // Generate IR instructions for the body of the function.
+            generateIRBlock(optBody.value(), instructions);
+        }
 
-    // If the function does not end with a return instruction, add a return
-    // instruction with constant value 0.
-    if ((functionDefinition->at(0)->getFunctionBody()->empty()) ||
-        (std::dynamic_pointer_cast<IR::ReturnInstruction>(
-             functionDefinition->at(0)->getFunctionBody()->back()) ==
-         nullptr)) {
-        auto functionBody = functionDefinition->at(0)->getFunctionBody();
-        functionBody->emplace_back(std::make_shared<IR::ReturnInstruction>(
-            std::make_shared<IR::ConstantValue>(0)));
-        functionDefinition->at(0)->setFunctionBody(functionBody);
+        // Create a new IR function definition with the function identifier,
+        // the parameters, and the vector of IR instructions.
+        auto functionDefinition = std::make_shared<IR::FunctionDefinition>(
+            functionDeclaration->getIdentifier(), parameters, instructions);
+
+        // Add the IR function definition to the vector of IR function
+        // definitions.
+        functionDefinitions->emplace_back(std::move(functionDefinition));
+
+        // If the function does not end with a return instruction, add a return
+        // instruction with constant value 0.
+        if (instructions->empty() ||
+            !std::dynamic_pointer_cast<IR::ReturnInstruction>(
+                instructions->back())) {
+            instructions->emplace_back(std::make_shared<IR::ReturnInstruction>(
+                std::make_shared<IR::ConstantValue>(0)));
+        }
     }
 
     // Return the generated IR program.
-    return std::make_shared<IR::Program>(std::move(functionDefinition));
+    return std::make_shared<IR::Program>(std::move(functionDefinitions));
 }
 
 void IRGenerator::generateIRBlock(
@@ -68,12 +67,20 @@ void IRGenerator::generateIRBlock(
         // If the block item is a `DBlockItem` (i.e., a declaration), ...
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
-            // Generate IR instructions for the declaration.
-            // TODO(zzmic): This is a temporary solution.
-            generateIRVariableDeclaration(
-                std::static_pointer_cast<AST::VariableDeclaration>(
-                    dBlockItem->getDeclaration()),
-                instructions);
+            // Generate IR instructions for the variable declaration (that has
+            // an initializer).
+            if (auto variableDeclaration =
+                    std::dynamic_pointer_cast<AST::VariableDeclaration>(
+                        dBlockItem->getDeclaration())) {
+                generateIRVariableDefinition(variableDeclaration, instructions);
+            }
+            // Generate IR instructions for the function declaration (that has a
+            // body).
+            else if (auto functionDeclaration =
+                         std::dynamic_pointer_cast<AST::FunctionDeclaration>(
+                             dBlockItem->getDeclaration())) {
+                generateIRFunctionDefinition(functionDeclaration, instructions);
+            }
         }
         // If the block item is a `SBockItem` (i.e., a statement), ...
         else if (auto sBlockItem =
@@ -84,13 +91,27 @@ void IRGenerator::generateIRBlock(
     }
 }
 
-void IRGenerator::generateIRVariableDeclaration(
-    std::shared_ptr<AST::VariableDeclaration> astDeclaration,
+void IRGenerator::generateIRFunctionDefinition(
+    std::shared_ptr<AST::FunctionDeclaration> astFunctionDeclaration,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Get the body of the function.
+    auto optBody = astFunctionDeclaration->getOptBody();
+    if (optBody.has_value()) {
+        // Generate IR instructions for the body of the function.
+        generateIRBlock(optBody.value(), instructions);
+    }
+    // Otherwise (i.e., if the function does not have a body), we do not need
+    // to generate any IR instructions.
+}
+
+void IRGenerator::generateIRVariableDefinition(
+    std::shared_ptr<AST::VariableDeclaration> astVariableDeclaration,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // If the declaration has an initializer, ...
-    auto identifier = astDeclaration->getIdentifier();
-    auto initializer = astDeclaration->getOptInitializer();
+    auto identifier = astVariableDeclaration->getIdentifier();
+    auto initializer = astVariableDeclaration->getOptInitializer();
     if (initializer.has_value()) {
         // Generate IR instructions for the initializer.
         auto result = generateIRInstruction(initializer.value(), instructions);
@@ -325,8 +346,8 @@ void IRGenerator::generateIRForStatement(
     }
     else if (auto initDecl =
                  std::dynamic_pointer_cast<AST::InitDecl>(forInit)) {
-        generateIRVariableDeclaration(initDecl->getVariableDeclaration(),
-                                      instructions);
+        generateIRVariableDefinition(initDecl->getVariableDeclaration(),
+                                     instructions);
     }
     // Generate a new start label.
     auto startLabel = generateIRStartLabel();
@@ -372,13 +393,10 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
         return std::make_shared<IR::ConstantValue>(constantExpr->getValue());
     }
-
     else if (auto unaryExpr =
                  std::dynamic_pointer_cast<AST::UnaryExpression>(e)) {
         return generateIRUnaryInstruction(unaryExpr, instructions);
     }
-
-    // If the expression is a binary expression, ...
     else if (auto binaryExpr =
                  std::dynamic_pointer_cast<AST::BinaryExpression>(e)) {
         // If the binary operator in the AST binary expression is a
@@ -402,13 +420,11 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             return generateIRBinaryInstruction(binaryExpr, instructions);
         }
     }
-
     else if (auto variableExpr =
                  std::dynamic_pointer_cast<AST::VariableExpression>(e)) {
         return std::make_shared<IR::VariableValue>(
             variableExpr->getIdentifier());
     }
-
     else if (auto assignmentExpr =
                  std::dynamic_pointer_cast<AST::AssignmentExpression>(e)) {
         if (auto variableExpr =
@@ -445,6 +461,17 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             conditionalExpr->getElseExpression(), instructions);
         generateIRCopyInstruction(e2Value, resultValue, instructions);
         generateIRLabelInstruction(endLabel, instructions);
+        return resultValue;
+    }
+    else if (auto functionCallExpr =
+                 std::dynamic_pointer_cast<AST::FunctionCallExpression>(e)) {
+        auto functionIdentifier = functionCallExpr->getIdentifier();
+        auto args = std::make_shared<std::vector<std::shared_ptr<IR::Value>>>();
+        for (auto &arg : *functionCallExpr->getArguments()) {
+            args->emplace_back(generateIRInstruction(arg, instructions));
+        }
+        auto resultValue = generateIRFunctionCallInstruction(
+            functionIdentifier, args, instructions);
         return resultValue;
     }
     else {
@@ -642,6 +669,25 @@ void IRGenerator::generateIRLabelInstruction(
     // Generate a label instruction with the label identifier.
     instructions->emplace_back(
         std::make_shared<IR::LabelInstruction>(identifier));
+}
+
+std::shared_ptr<IR::VariableValue>
+IRGenerator::generateIRFunctionCallInstruction(
+    std::string functionIdentifier,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> arguments,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Create a temporary variable (in string) to store the result of
+    // the function call.
+    auto tmpName = generateIRTemporary();
+    // Create a variable value for the temporary variable.
+    auto dst = std::make_shared<IR::VariableValue>(tmpName);
+    // Generate a function call instruction with the function identifier,
+    // the arguments, and the destination value.
+    instructions->emplace_back(std::make_shared<IR::FunctionCallInstruction>(
+        functionIdentifier, arguments, dst));
+    // Return the destination value.
+    return dst;
 }
 
 std::string IRGenerator::generateIRTemporary() {

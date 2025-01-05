@@ -54,6 +54,11 @@ void PrettyPrinters::printIRInstruction(
                  std::dynamic_pointer_cast<IR::LabelInstruction>(instruction)) {
         printIRLabelInstruction(labelInstruction);
     }
+    else if (auto functionCallInstruction =
+                 std::dynamic_pointer_cast<IR::FunctionCallInstruction>(
+                     instruction)) {
+        printIRFunctionCallInstruction(functionCallInstruction);
+    }
 }
 
 void PrettyPrinters::printIRReturnInstruction(
@@ -254,6 +259,30 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
 void PrettyPrinters::printIRLabelInstruction(
     std::shared_ptr<IR::LabelInstruction> labelInstruction) {
     std::cout << "    Label(" << labelInstruction->getLabel() << ")\n";
+}
+
+void PrettyPrinters::printIRFunctionCallInstruction(
+    std::shared_ptr<IR::FunctionCallInstruction> functionCallInstruction) {
+    auto dst = functionCallInstruction->getDst();
+    if (auto variableValue =
+            std::dynamic_pointer_cast<IR::VariableValue>(dst)) {
+        std::cout << "    " << variableValue->getIdentifier() << " = ";
+    }
+
+    auto functionIdentifier = functionCallInstruction->getFunctionIdentifier();
+    std::cout << functionIdentifier << "(";
+    for (auto arg : *functionCallInstruction->getArgs()) {
+        if (auto variableValue =
+                std::dynamic_pointer_cast<IR::VariableValue>(arg)) {
+            std::cout << variableValue->getIdentifier();
+        }
+        else if (auto constantValue =
+                     std::dynamic_pointer_cast<IR::ConstantValue>(arg)) {
+            std::cout << constantValue->getValue();
+        }
+        std::cout << ", ";
+    }
+    std::cout << ")\n";
 }
 /*
  * End: Functions to print the IR program onto the stdout.

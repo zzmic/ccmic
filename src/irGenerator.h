@@ -30,8 +30,12 @@ class IRGenerator {
         std::shared_ptr<AST::Block> astBlock,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
-    void generateIRVariableDeclaration(
-        std::shared_ptr<AST::VariableDeclaration> astDeclaration,
+    void generateIRFunctionDefinition(
+        std::shared_ptr<AST::FunctionDeclaration> astFunctionDeclaration,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+    void generateIRVariableDefinition(
+        std::shared_ptr<AST::VariableDeclaration> astVariableDeclaration,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     void generateIRStatement(
@@ -108,6 +112,11 @@ class IRGenerator {
             instructions);
     void generateIRLabelInstruction(
         std::string identifier,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+    std::shared_ptr<IR::VariableValue> generateIRFunctionCallInstruction(
+        std::string functionIdentifier,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> args,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     std::string generateIRTemporary();

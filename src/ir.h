@@ -202,14 +202,45 @@ class LabelInstruction : public Instruction {
     void setLabel(std::string label) { this->label = label; }
 };
 
+class FunctionCallInstruction : public Instruction {
+  private:
+    std::string functionIdentifier;
+    std::shared_ptr<std::vector<std::shared_ptr<Value>>> args;
+    std::shared_ptr<Value> dst;
+
+  public:
+    FunctionCallInstruction(
+        std::string functionIdentifier,
+        std::shared_ptr<std::vector<std::shared_ptr<Value>>> args,
+        std::shared_ptr<Value> dst)
+        : functionIdentifier(functionIdentifier), args(args), dst(dst) {}
+    std::string getFunctionIdentifier() { return functionIdentifier; }
+    std::shared_ptr<std::vector<std::shared_ptr<Value>>> getArgs() {
+        return args;
+    }
+    std::shared_ptr<Value> getDst() { return dst; }
+    void setFunctionIdentifier(std::string functionIdentifier) {
+        this->functionIdentifier = functionIdentifier;
+    }
+    void setArgs(std::shared_ptr<std::vector<std::shared_ptr<Value>>> args) {
+        this->args = args;
+    }
+    void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
+};
+
 class FunctionDefinition {
   private:
     std::string functionIdentifier;
+    std::shared_ptr<std::vector<std::string>> parameters;
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
 
   public:
-    FunctionDefinition(const std::string functionIdentifier)
-        : functionIdentifier(functionIdentifier) {}
+    FunctionDefinition(
+        std::string functionIdentifier,
+        std::shared_ptr<std::vector<std::string>> parameters,
+        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody)
+        : functionIdentifier(functionIdentifier), parameters(parameters),
+          functionBody(functionBody) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
     getFunctionBody() {

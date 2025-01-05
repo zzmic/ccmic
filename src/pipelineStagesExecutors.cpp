@@ -128,11 +128,13 @@ std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
 // Function to generate (but not yet emit) the assembly program from the AST
 // program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
-    std::shared_ptr<IR::Program> irProgram) {
+    std::shared_ptr<IR::Program> irProgram,
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Instantiate an assembly generator object and generate the assembly.
-        Assembly::AssemblyGenerator assemblyGenerator;
+        Assembly::AssemblyGenerator assemblyGenerator(symbols);
         assemblyProgram = assemblyGenerator.generate(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and return the offset.

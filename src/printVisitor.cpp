@@ -23,7 +23,7 @@ void PrintVisitor::visit(Program &program) {
         throw std::runtime_error("Null function declarations in program");
     }
 
-    std::cout << "\n)\n";
+    std::cout << ")\n";
 }
 
 void PrintVisitor::visit(Function &function) {

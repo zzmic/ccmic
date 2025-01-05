@@ -1,6 +1,11 @@
 #include "assemblyGenerator.h"
 
 namespace Assembly {
+AssemblyGenerator::AssemblyGenerator(
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols)
+    : symbols(symbols) {}
+
 std::shared_ptr<Assembly::Program>
 AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
     // Get the function from the IR program.

@@ -3,14 +3,21 @@
 
 #include "assembly.h"
 #include "ir.h"
+#include "types.h"
+#include <unordered_map>
 
 namespace Assembly {
 class AssemblyGenerator {
   public:
+    AssemblyGenerator(
+        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+            symbols);
     std::shared_ptr<Assembly::Program>
     generate(std::shared_ptr<IR::Program> irProgram);
 
   private:
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols;
     void generateAssyStatement(
         std::shared_ptr<IR::Instruction> irInstruction,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>

@@ -33,6 +33,8 @@ class PrettyPrinters {
         std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction);
     static void printIRLabelInstruction(
         std::shared_ptr<IR::LabelInstruction> labelInstruction);
+    static void printIRFunctionCallInstruction(
+        std::shared_ptr<IR::FunctionCallInstruction> functionCallInstruction);
 
     // Auxiliary functions for printing the assembly program.
     static void printAssyFunctionDefinition(

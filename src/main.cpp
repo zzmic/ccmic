@@ -131,6 +131,8 @@ int main(int argc, char *argv[]) {
 
     // Perform semantic analysis on the AST program.
     auto result = PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
+    // Extract the variable resolution counter and the symbol table from the
+    // result since they are needed for the later stages.
     int variableResolutionCounter = result.first;
     std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
         symbols = result.second;
@@ -155,7 +157,7 @@ int main(int argc, char *argv[]) {
 
     // Convert the AST program to an IR program and generate the assembly.
     std::shared_ptr<Assembly::Program> assemblyProgram =
-        PipelineStagesExecutors::codegenExecutor(irProgram);
+        PipelineStagesExecutors::codegenExecutor(irProgram, symbols);
 
     // Print out the (assembly) instructions that would be emitted from the
     // assembly program.
