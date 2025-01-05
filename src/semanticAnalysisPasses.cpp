@@ -5,8 +5,7 @@ namespace AST {
 /*
  * Start: Functions for the identifier-resolution pass.
  */
-int IdentifierResolutionPass::resolveIdentifiers(
-    std::shared_ptr<Program> program) {
+int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
     // Initialize an empty identifier map (that will be passed to the helpers).
     // Instead of maintaining a "global" identifier map, we pass the identifier
     // map to the helper functions to, together with `copyIdentifierMap`, ensure
@@ -196,7 +195,8 @@ std::shared_ptr<Statement> IdentifierResolutionPass::resolveStatement(
         return nullStatement;
     }
     else {
-        throw std::runtime_error("Unsupported statement type");
+        throw std::runtime_error(
+            "Unsupported statement type for identifier resolution");
     }
 }
 
@@ -306,7 +306,8 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
                                                         resolvedArguments);
     }
     else {
-        throw std::runtime_error("Unsupported expression type");
+        throw std::runtime_error(
+            "Unsupported expression type for identifier resolution");
     }
 }
 
@@ -334,7 +335,8 @@ std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
                 dBlockItem->setDeclaration(resolvedDeclaration);
             }
             else {
-                throw std::runtime_error("Unsupported declaration type");
+                throw std::runtime_error(
+                    "Unsupported declaration type for identifier resolution");
             }
         }
         else if (auto sBlockItem =
@@ -344,7 +346,8 @@ std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
             sBlockItem->setStatement(resolvedStatement);
         }
         else {
-            throw std::runtime_error("Unsupported block item type");
+            throw std::runtime_error(
+                "Unsupported block item typen for identifier resolution");
         }
     }
 
@@ -373,7 +376,8 @@ std::shared_ptr<ForInit> IdentifierResolutionPass::resolveForInit(
         return std::make_shared<InitDecl>(std::move(resolvedDecl));
     }
     else {
-        throw std::runtime_error("Unsupported for init type");
+        throw std::runtime_error(
+            "Unsupported for-init type for identifier resolution");
     }
 }
 
@@ -433,10 +437,225 @@ std::string IdentifierResolutionPass::resolveParameter(
  */
 
 /*
+ * Start: Functions for the type-checking pass.
+ */
+std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
+    symbols = std::unordered_map<std::string,
+                                 std::pair<std::shared_ptr<Type>, bool>>();
+    for (auto &functionDeclaration : *program->getFunctionDeclarations()) {
+        typeCheckFunctionDeclaration(functionDeclaration);
+    }
+    // The symbol table "will need to be accessible in later compiler passes."
+    return symbols;
+}
+
+void TypeCheckingPass::typeCheckFunctionDeclaration(
+    std::shared_ptr<FunctionDeclaration> declaration) {
+    auto funType =
+        std::make_shared<FunctionType>(declaration->getParameters()->size());
+    auto hasBody = declaration->getOptBody().has_value();
+    auto alreadyDefined = false;
+    if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
+        auto oldType = symbols[declaration->getIdentifier()].first;
+        if (*oldType != *funType) {
+            throw std::runtime_error("Incompatible function declarations");
+        }
+        alreadyDefined = symbols[declaration->getIdentifier()].second;
+        if (alreadyDefined && hasBody) {
+            throw std::runtime_error(
+                "Function redefinition (i.e., it is defined more than once)");
+        }
+    }
+    symbols[declaration->getIdentifier()] = {funType,
+                                             (alreadyDefined || hasBody)};
+    if (hasBody) {
+        for (auto &parameter : *declaration->getParameters()) {
+            symbols[parameter] = {std::make_shared<IntType>(), false};
+        }
+        typeCheckBlock(declaration->getOptBody().value());
+    }
+}
+
+void TypeCheckingPass::typeCheckVariableDeclaration(
+    std::shared_ptr<VariableDeclaration> declaration) {
+    symbols[declaration->getIdentifier()] = {std::make_shared<IntType>(),
+                                             false};
+    if (declaration->getOptInitializer().has_value()) {
+        typeCheckExpression(declaration->getOptInitializer().value());
+    }
+}
+
+void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block) {
+    for (auto &blockItem : *block->getBlockItems()) {
+        if (auto dBlockItem =
+                std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
+            if (auto variableDeclaration =
+                    std::dynamic_pointer_cast<VariableDeclaration>(
+                        dBlockItem->getDeclaration())) {
+                typeCheckVariableDeclaration(variableDeclaration);
+            }
+            else if (auto functionDeclaration =
+                         std::dynamic_pointer_cast<FunctionDeclaration>(
+                             dBlockItem->getDeclaration())) {
+                if (functionDeclaration->getOptBody().has_value()) {
+                    throw std::runtime_error(
+                        "Nested function definitions are not permitted");
+                }
+                typeCheckFunctionDeclaration(functionDeclaration);
+            }
+            else {
+                throw std::runtime_error(
+                    "Unsupported declaration type for type-checking");
+            }
+        }
+        else if (auto sBlockItem =
+                     std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
+            typeCheckStatement(sBlockItem->getStatement());
+        }
+        else {
+            throw std::runtime_error(
+                "Unsupported block item type for type-checking");
+        }
+    }
+}
+
+void TypeCheckingPass::typeCheckExpression(
+    std::shared_ptr<Expression> expression) {
+    if (auto functionCallExpression =
+            std::dynamic_pointer_cast<FunctionCallExpression>(expression)) {
+        auto fType = symbols[functionCallExpression->getIdentifier()].first;
+        if (*fType == IntType()) {
+            std::stringstream msg;
+            msg << "Variable used as function name: "
+                << functionCallExpression->getIdentifier();
+            throw std::runtime_error(msg.str());
+        }
+        if (*fType !=
+            FunctionType(functionCallExpression->getArguments()->size())) {
+            std::stringstream msg;
+            msg << "Function called with the wrong number of arguments: "
+                << functionCallExpression->getIdentifier();
+            throw std::runtime_error(msg.str());
+        }
+        for (auto &argument : *functionCallExpression->getArguments()) {
+            typeCheckExpression(argument);
+        }
+    }
+    else if (auto variableExpression =
+                 std::dynamic_pointer_cast<VariableExpression>(expression)) {
+        if (*(symbols[variableExpression->getIdentifier()].first) !=
+            IntType()) {
+            std::stringstream msg;
+            msg << "Function name used as variable: "
+                << variableExpression->getIdentifier();
+            throw std::runtime_error(msg.str());
+        }
+    }
+    else if (auto assignmentExpression =
+                 std::dynamic_pointer_cast<AssignmentExpression>(expression)) {
+        auto left = assignmentExpression->getLeft();
+        auto right = assignmentExpression->getRight();
+        typeCheckExpression(left);
+        typeCheckExpression(right);
+        // Note: For now, we only support assignments to int-type variables.
+        if (*(symbols[std::dynamic_pointer_cast<VariableExpression>(left)
+                          ->getIdentifier()]
+                  .first) != IntType()) {
+            std::stringstream msg;
+            msg << "Assignment to a function name: "
+                << std::dynamic_pointer_cast<VariableExpression>(left)
+                       ->getIdentifier();
+            throw std::runtime_error(msg.str());
+        }
+    }
+    else if (auto unaryExpression =
+                 std::dynamic_pointer_cast<UnaryExpression>(expression)) {
+        typeCheckExpression(unaryExpression->getExpression());
+    }
+    else if (auto binaryExpression =
+                 std::dynamic_pointer_cast<BinaryExpression>(expression)) {
+        typeCheckExpression(binaryExpression->getLeft());
+        typeCheckExpression(binaryExpression->getRight());
+    }
+    else if (auto conditionalExpression =
+                 std::dynamic_pointer_cast<ConditionalExpression>(expression)) {
+        typeCheckExpression(conditionalExpression->getCondition());
+        typeCheckExpression(conditionalExpression->getThenExpression());
+        typeCheckExpression(conditionalExpression->getElseExpression());
+    }
+}
+
+void TypeCheckingPass::typeCheckStatement(
+    std::shared_ptr<Statement> statement) {
+    if (auto returnStatement =
+            std::dynamic_pointer_cast<ReturnStatement>(statement)) {
+        if (returnStatement->getExpression()) {
+            typeCheckExpression(returnStatement->getExpression());
+        }
+    }
+    else if (auto expressionStatement =
+                 std::dynamic_pointer_cast<ExpressionStatement>(statement)) {
+        typeCheckExpression(expressionStatement->getExpression());
+    }
+    else if (auto compoundStatement =
+                 std::dynamic_pointer_cast<CompoundStatement>(statement)) {
+        typeCheckBlock(compoundStatement->getBlock());
+    }
+    else if (auto whileStatement =
+                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
+        typeCheckExpression(whileStatement->getCondition());
+        typeCheckStatement(whileStatement->getBody());
+    }
+    else if (auto doWhileStatement =
+                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
+        typeCheckExpression(doWhileStatement->getCondition());
+        typeCheckStatement(doWhileStatement->getBody());
+    }
+    else if (auto forStatement =
+                 std::dynamic_pointer_cast<ForStatement>(statement)) {
+        if (forStatement->getForInit()) {
+            typeCheckForInit(forStatement->getForInit());
+        }
+        if (forStatement->getOptCondition().has_value()) {
+            typeCheckExpression(forStatement->getOptCondition().value());
+        }
+        if (forStatement->getOptPost().has_value()) {
+            typeCheckExpression(forStatement->getOptPost().value());
+        }
+        typeCheckStatement(forStatement->getBody());
+    }
+    else if (auto ifStatement =
+                 std::dynamic_pointer_cast<IfStatement>(statement)) {
+        typeCheckExpression(ifStatement->getCondition());
+        typeCheckStatement(ifStatement->getThenStatement());
+        if (ifStatement->getElseOptStatement().has_value()) {
+            typeCheckStatement(ifStatement->getElseOptStatement().value());
+        }
+    }
+}
+
+void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
+    if (auto initExpr = std::dynamic_pointer_cast<InitExpr>(forInit)) {
+        if (initExpr->getExpression()) {
+            typeCheckExpression(initExpr->getExpression().value());
+        }
+    }
+    else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
+        typeCheckVariableDeclaration(initDecl->getVariableDeclaration());
+    }
+    else {
+        throw std::runtime_error("Unsupported for-init type for type-checking");
+    }
+}
+/*
+ * End: Functions for the type-checking pass.
+ */
+
+/*
  * Start: Functions for the loop-labeling pass.
  */
 void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
-    // TODO(zzmic): This is a temporary solution.
     for (auto &functionDeclaration : *program->getFunctionDeclarations()) {
         if (functionDeclaration->getOptBody().has_value()) {
             auto resolvedBody =
@@ -573,7 +792,8 @@ LoopLabelingPass::labelBlock(std::shared_ptr<Block> block, std::string label) {
             newBlockItems->emplace_back(std::move(labeledSBlockItem));
         }
         else {
-            throw std::runtime_error("Unsupported block item type");
+            throw std::runtime_error(
+                "Unsupported block item type for loop labeling");
         }
     }
     return std::make_shared<Block>(std::move(newBlockItems));

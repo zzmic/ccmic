@@ -8,17 +8,24 @@
 #include "ir.h"
 #include "program.h"
 #include "statement.h"
+#include "types.h"
 #include <optional>
+#include <unordered_map>
 
 namespace IR {
 class IRGenerator {
   public:
-    IRGenerator(int variableResolutionCounter);
+    IRGenerator(
+        int variableResolutionCounter,
+        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+            symbols);
     std::shared_ptr<IR::Program>
     generate(std::shared_ptr<AST::Program> astProgram);
 
   private:
     int irTemporariesCounter = 0;
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols;
     void generateIRBlock(
         std::shared_ptr<AST::Block> astBlock,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>

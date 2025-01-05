@@ -3,9 +3,15 @@
 
 #include "declaration.h"
 #include "program.h"
+#include "types.h"
 #include <unordered_map>
 
 namespace AST {
+class SemanticAnalysisPass {
+  public:
+    virtual ~SemanticAnalysisPass() = default;
+};
+
 class MapEntry {
   public:
     MapEntry() : newName(""), fromCurrentBlock(false), hasLinkage(false) {}
@@ -22,9 +28,9 @@ class MapEntry {
     bool hasLinkage;
 };
 
-class IdentifierResolutionPass {
+class IdentifierResolutionPass : public SemanticAnalysisPass {
   public:
-    int resolveIdentifiers(std::shared_ptr<Program> program);
+    int resolveProgram(std::shared_ptr<Program> program);
 
   private:
     int variableResolutionCounter = 0;
@@ -54,7 +60,25 @@ class IdentifierResolutionPass {
                      std::unordered_map<std::string, MapEntry> &identifierMap);
 };
 
-class LoopLabelingPass {
+class TypeCheckingPass : public SemanticAnalysisPass {
+  public:
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    typeCheckProgram(std::shared_ptr<Program> program);
+
+  private:
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols;
+    void typeCheckFunctionDeclaration(
+        std::shared_ptr<FunctionDeclaration> declaration);
+    void typeCheckVariableDeclaration(
+        std::shared_ptr<VariableDeclaration> declaration);
+    void typeCheckExpression(std::shared_ptr<Expression> expression);
+    void typeCheckBlock(std::shared_ptr<Block> block);
+    void typeCheckStatement(std::shared_ptr<Statement> statement);
+    void typeCheckForInit(std::shared_ptr<ForInit> forInit);
+};
+
+class LoopLabelingPass : public SemanticAnalysisPass {
   public:
     void labelLoops(std::shared_ptr<Program> program);
 

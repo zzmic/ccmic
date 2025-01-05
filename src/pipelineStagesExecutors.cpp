@@ -54,33 +54,68 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 }
 
 // Function to perform semantic-analysis passes on the AST program.
-int PipelineStagesExecutors::semanticAnalysisExecutor(
+std::pair<int, std::unordered_map<std::string,
+                                  std::pair<std::shared_ptr<Type>, bool>>>
+PipelineStagesExecutors::semanticAnalysisExecutor(
     std::shared_ptr<AST::Program> astProgram) {
+    AST::IdentifierResolutionPass IdentifierResolutionPass;
+    AST::TypeCheckingPass typeCheckingPass;
+    AST::LoopLabelingPass loopLabelingPass;
+    int variableResolutionCounter = 0;
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols;
+
     try {
-        AST::IdentifierResolutionPass IdentifierResolutionPass;
-        int variableResolutionCounter =
-            IdentifierResolutionPass.resolveIdentifiers(astProgram);
-        AST::LoopLabelingPass loopLabelingPass;
+        // Perform the identifier-resolution pass.
+        variableResolutionCounter =
+            IdentifierResolutionPass.resolveProgram(astProgram);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "Identifier resolution error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
+    try {
+        // Perform the type-checking pass.
+        symbols = typeCheckingPass.typeCheckProgram(astProgram);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "Type-checking error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
+    try {
+        // Perform the loop-labeling pass.
         loopLabelingPass.labelLoops(astProgram);
+    } catch (const std::runtime_error &e) {
+        std::stringstream msg;
+        msg << "Loop-labeling error: " << e.what();
+        throw std::runtime_error(msg.str());
+    }
+    try {
+        // Print the AST after semantic analysis.
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
         astProgram->accept(printVisitor);
-        return variableResolutionCounter;
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Semantic analysis error: " << e.what();
+        msg << "Printing AST error (in semantic analysis): " << e.what();
         throw std::runtime_error(msg.str());
     }
+
+    // Return the variable resolution counter and the symbol table
+    // altogether.
+    return {variableResolutionCounter, symbols};
 }
 
 // Function to generate the IR from the AST program.
 std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
-    std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter) {
+    std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols) {
     std::cout << "\n";
 
     std::shared_ptr<IR::Program> irProgram;
     try {
-        IR::IRGenerator irGenerator(variableResolutionCounter);
+        IR::IRGenerator irGenerator(variableResolutionCounter, symbols);
         irProgram = irGenerator.generate(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;

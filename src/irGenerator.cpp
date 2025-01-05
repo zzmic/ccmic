@@ -1,9 +1,13 @@
 #include "irGenerator.h"
 
 namespace IR {
-IRGenerator::IRGenerator(int variableResolutionCounter) {
+IRGenerator::IRGenerator(
+    int variableResolutionCounter,
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols) {
     // Initialize the IR temporaries counter.
     this->irTemporariesCounter = variableResolutionCounter;
+    this->symbols = symbols;
 }
 
 std::shared_ptr<IR::Program>

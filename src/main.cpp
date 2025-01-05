@@ -129,10 +129,11 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
-    // Perform semantic analysis on the AST program and return the global
-    // counter.
-    int variableResolutionCounter =
-        PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
+    // Perform semantic analysis on the AST program.
+    auto result = PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
+    int variableResolutionCounter = result.first;
+    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        symbols = result.second;
 
     if (tillValidate) {
         std::cout << "Semantic analysis completed.\n";
@@ -141,8 +142,8 @@ int main(int argc, char *argv[]) {
 
     // Generate the IR from the AST program and return the IR program.
     std::shared_ptr<IR::Program> irProgram =
-        PipelineStagesExecutors::irGeneratorExecutor(astProgram,
-                                                     variableResolutionCounter);
+        PipelineStagesExecutors::irGeneratorExecutor(
+            astProgram, variableResolutionCounter, symbols);
 
     // Print the IR program onto the stdout.
     PrettyPrinters::printIRProgram(irProgram);

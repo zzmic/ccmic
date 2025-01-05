@@ -23,11 +23,14 @@ class PipelineStagesExecutors {
     static std::vector<Token> lexerExecutor(const std::string &sourceFile);
     static std::shared_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
-    static int
+    static std::pair<
+        int,
+        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>>
     semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
-    static std::shared_ptr<IR::Program>
-    irGeneratorExecutor(std::shared_ptr<AST::Program> astProgram,
-                        int variableResolutionCounter);
+    static std::shared_ptr<IR::Program> irGeneratorExecutor(
+        std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
+        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+            symbols);
     static std::shared_ptr<Assembly::Program>
     codegenExecutor(std::shared_ptr<IR::Program> irProgram);
     static void
