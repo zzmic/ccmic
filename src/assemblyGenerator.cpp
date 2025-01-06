@@ -8,42 +8,30 @@ AssemblyGenerator::AssemblyGenerator(
 
 std::shared_ptr<Assembly::Program>
 AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
-    // Get the function from the IR program.
-    auto irFunction = irProgram->getFunctionDefinition();
-
-    // Create a function definition with the IR function's name to hold the
-    // generated instructions.
-    // At this point, there is only one function, `main`, in the IR program.
-    // Create a shared pointer to a vector of shared pointers of
-    // FunctionDefinition.
-    auto functionDefinition =
+    auto irFunctionDefinitions = irProgram->getFunctionDefinitions();
+    auto assyFunctionDefinitions =
         std::make_shared<std::vector<std::shared_ptr<FunctionDefinition>>>();
-    // Create a shared pointer for the specific FunctionDefinition with the
-    // function name.
-    auto funcDef = std::make_shared<FunctionDefinition>(
-        irFunction->at(0)->getFunctionIdentifier());
-
-    // Initialize the function body with an empty vector of instructions.
-    auto instructions =
-        std::make_shared<std::vector<std::shared_ptr<Assembly::Instruction>>>();
-    funcDef->setFunctionBody(std::move(instructions));
-    // Push the function definition to the vector of function definitions.
-    functionDefinition->emplace_back(std::move(funcDef));
-
-    // Get the body of the function, which is a list of IR instructions.
-    auto irBody = irFunction->at(0)->getFunctionBody();
-
-    // Generate assembly instructions for the body of the function.
-    for (auto irInstruction : *irBody) {
-        generateAssyStatement(irInstruction,
-                              functionDefinition->at(0)->getFunctionBody());
+    for (auto irFunctionDefinition : *irFunctionDefinitions) {
+        auto functionIdentifier = irFunctionDefinition->getFunctionIdentifier();
+        auto functionBody = irFunctionDefinition->getFunctionBody();
+        auto instructions =
+            std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
+        // Note: Parameters (in their string representations) are not needed to
+        // be stored in the instance of the `Assembly::FunctionDefinition`.
+        // They (in `irInstruction`) will be later converted to stack operands
+        // in `convertIRFunctionCallInstructionToAssy`.
+        auto assyFunctionDefinition = std::make_shared<FunctionDefinition>(
+            functionIdentifier, instructions);
+        for (auto irInstruction : *functionBody) {
+            generateAssyInstruction(irInstruction,
+                                    assyFunctionDefinition->getFunctionBody());
+        }
+        assyFunctionDefinitions->emplace_back(assyFunctionDefinition);
     }
-
-    // Return the generated assembly program.
-    return std::make_shared<Assembly::Program>(std::move(functionDefinition));
+    return std::make_shared<Program>(assyFunctionDefinitions);
 }
 
-void AssemblyGenerator::generateAssyStatement(
+void AssemblyGenerator::generateAssyInstruction(
     std::shared_ptr<IR::Instruction> irInstruction,
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
         instructions) {
@@ -82,6 +70,11 @@ void AssemblyGenerator::generateAssyStatement(
                  irInstruction)) {
         generateAssyLabelInstruction(labelInstr, instructions);
     }
+    else if (auto functionCallInstr =
+                 std::dynamic_pointer_cast<IR::FunctionCallInstruction>(
+                     irInstruction)) {
+        convertIRFunctionCallInstructionToAssy(functionCallInstr, instructions);
+    }
 }
 
 void AssemblyGenerator::generateAssyReturnInstruction(
@@ -90,9 +83,10 @@ void AssemblyGenerator::generateAssyReturnInstruction(
         instructions) {
     auto returnValue = convertValue(returnInstr->getReturnValue());
 
-    // Move the return value into the `eax` register.
+    // Move the return value into the `AX` register.
+    auto axReg = std::make_shared<Assembly::AX>();
     instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-        returnValue, std::make_shared<Assembly::RegisterOperand>("eax")));
+        returnValue, std::make_shared<Assembly::RegisterOperand>(axReg)));
 
     // Generate a `Ret` instruction to return from the function.
     instructions->emplace_back(std::make_shared<Assembly::RetInstruction>());
@@ -192,28 +186,31 @@ void AssemblyGenerator::generateAssyBinaryInstruction(
                 std::move(src2Operand), std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::DivideOperator>(binaryIROperator)) {
+        auto axReg = std::make_shared<Assembly::AX>();
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::move(src1Operand),
-            std::make_shared<Assembly::RegisterOperand>("eax")));
+            std::make_shared<Assembly::RegisterOperand>(axReg)));
         instructions->emplace_back(
             std::make_shared<Assembly::CdqInstruction>());
         instructions->emplace_back(std::make_shared<Assembly::IdivInstruction>(
             std::move(src2Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::RegisterOperand>("eax"),
+            std::make_shared<Assembly::RegisterOperand>(std::move(axReg)),
             std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::RemainderOperator>(
                  binaryIROperator)) {
+        auto axReg = std::make_shared<Assembly::AX>();
+        auto dxReg = std::make_shared<Assembly::DX>();
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
             std::move(src1Operand),
-            std::make_shared<Assembly::RegisterOperand>("eax")));
+            std::make_shared<Assembly::RegisterOperand>(std::move(axReg))));
         instructions->emplace_back(
             std::make_shared<Assembly::CdqInstruction>());
         instructions->emplace_back(std::make_shared<Assembly::IdivInstruction>(
             std::move(src2Operand)));
         instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::RegisterOperand>("edx"),
+            std::make_shared<Assembly::RegisterOperand>(std::move(dxReg)),
             std::move(dstOperand)));
     }
     else if (std::dynamic_pointer_cast<IR::EqualOperator>(binaryIROperator)) {
@@ -331,6 +328,98 @@ void AssemblyGenerator::generateAssyLabelInstruction(
     // Generate a `Label` instruction with the label name.
     instructions->emplace_back(
         std::make_shared<Assembly::LabelInstruction>(labelInstr->getLabel()));
+}
+
+void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
+    std::shared_ptr<IR::FunctionCallInstruction> functionCallInstr,
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions) {
+    std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
+                                                  "CX", "R8", "R9"};
+    auto axReg = std::make_shared<Assembly::AX>();
+
+    // Adjust the stack alignment (if the number of arguments on the stack is
+    // odd).
+    auto stackPadding = 0;
+    auto irArgs = functionCallInstr->getArgs();
+    auto irRegisterArgs =
+        std::make_shared<std::vector<std::shared_ptr<IR::Value>>>();
+    auto irStackArgs =
+        std::make_shared<std::vector<std::shared_ptr<IR::Value>>>();
+    if (irArgs->size() < 6) {
+        for (std::size_t i = 0; i < irArgs->size(); i++) {
+            irRegisterArgs->emplace_back(irArgs->at(i));
+        }
+    }
+    else {
+        for (std::size_t i = 0; i < irArgs->size(); i++) {
+            if (i < 6) {
+                irRegisterArgs->emplace_back(irArgs->at(i));
+            }
+            else {
+                irStackArgs->emplace_back(irArgs->at(i));
+            }
+        }
+    }
+    if (irStackArgs->size() % 2 != 0) {
+        stackPadding = 8;
+    }
+    else {
+        stackPadding = 0;
+    }
+    if (stackPadding != 0) {
+        instructions->emplace_back(
+            std::make_shared<Assembly::AllocateStackInstruction>(stackPadding));
+    }
+
+    // Pass the arguments in registers.
+    int registerIndex = 0;
+    for (auto irRegisterArg : *irRegisterArgs) {
+        auto registerOperand = std::make_shared<Assembly::RegisterOperand>(
+            argRegistersInStr[registerIndex]);
+        auto assyRegisterArg = convertValue(irRegisterArg);
+        instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
+            assyRegisterArg, registerOperand));
+        registerIndex++;
+    }
+
+    // Pass the arguments on the stack.
+    for (auto irStackArg : *irStackArgs) {
+        auto assyStackArg = convertValue(irStackArg);
+        if (std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                assyStackArg) ||
+            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+                assyStackArg)) {
+            instructions->emplace_back(
+                std::make_shared<Assembly::PushInstruction>(assyStackArg));
+        }
+        else {
+            instructions->emplace_back(
+                std::make_shared<Assembly::MovInstruction>(
+                    std::move(assyStackArg),
+                    std::make_shared<Assembly::RegisterOperand>(axReg)));
+            instructions->emplace_back(
+                std::make_shared<Assembly::PushInstruction>(
+                    std::make_shared<Assembly::RegisterOperand>(axReg)));
+        }
+    }
+
+    // Emit a `Call` instruction (to call the function).
+    instructions->emplace_back(std::make_shared<Assembly::CallInstruction>(
+        functionCallInstr->getFunctionIdentifier()));
+
+    // Adjust the stack pointer (after the function call).
+    auto bytesToPop = 8 * irStackArgs->size() + stackPadding;
+    if (bytesToPop != 0) {
+        instructions->emplace_back(
+            std::make_shared<Assembly::DeallocateStackInstruction>(bytesToPop));
+    }
+
+    // Retrieve the return value.
+    auto assyDst = convertValue(functionCallInstr->getDst());
+    instructions->emplace_back(std::make_shared<Assembly::MovInstruction>(
+        std::make_shared<Assembly::RegisterOperand>(std::move(axReg)),
+        std::move(assyDst)));
 }
 
 std::shared_ptr<Assembly::Operand>

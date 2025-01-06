@@ -7,9 +7,9 @@
 namespace Assembly {
 class PseudoToStackPass {
   public:
-    int replacePseudoWithStackAndReturnOffset(
+    void replacePseudoWithStackAndAssociateStackSize(
         std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-            &function);
+            &functionDefinitions);
 
   private:
     void replacePseudoWithStack(

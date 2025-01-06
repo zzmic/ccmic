@@ -242,6 +242,9 @@ class FunctionDefinition {
         : functionIdentifier(functionIdentifier), parameters(parameters),
           functionBody(functionBody) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
+    std::shared_ptr<std::vector<std::string>> getParameters() {
+        return parameters;
+    }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
     getFunctionBody() {
         return functionBody;
@@ -256,15 +259,15 @@ class FunctionDefinition {
 class Program {
   private:
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-        functionDefinition;
+        functionDefinitions;
 
   public:
     Program(std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-                functionDefinition)
-        : functionDefinition(functionDefinition) {}
+                functionDefinitions)
+        : functionDefinitions(functionDefinitions) {}
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-    getFunctionDefinition() {
-        return functionDefinition;
+    getFunctionDefinitions() {
+        return functionDefinitions;
     }
 };
 } // namespace IR

@@ -4,7 +4,7 @@
  * Start: Functions to print the IR program onto the stdout.
  */
 void PrettyPrinters::printIRProgram(std::shared_ptr<IR::Program> irProgram) {
-    for (auto function : *irProgram->getFunctionDefinition()) {
+    for (auto function : *irProgram->getFunctionDefinitions()) {
         printIRFunctionDefinition(function);
     }
 }
@@ -271,7 +271,9 @@ void PrettyPrinters::printIRFunctionCallInstruction(
 
     auto functionIdentifier = functionCallInstruction->getFunctionIdentifier();
     std::cout << functionIdentifier << "(";
-    for (auto arg : *functionCallInstruction->getArgs()) {
+    auto &args = *functionCallInstruction->getArgs();
+    for (auto it = args.begin(); it != args.end(); it++) {
+        auto &arg = *it;
         if (auto variableValue =
                 std::dynamic_pointer_cast<IR::VariableValue>(arg)) {
             std::cout << variableValue->getIdentifier();
@@ -280,7 +282,10 @@ void PrettyPrinters::printIRFunctionCallInstruction(
                      std::dynamic_pointer_cast<IR::ConstantValue>(arg)) {
             std::cout << constantValue->getValue();
         }
-        std::cout << ", ";
+        bool isLast = (std::next(it) == args.end());
+        if (!isLast) {
+            std::cout << ", ";
+        }
     }
     std::cout << ")\n";
 }
@@ -294,7 +299,7 @@ void PrettyPrinters::printIRFunctionCallInstruction(
 // Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(
     std::shared_ptr<Assembly::Program> assemblyProgram) {
-    for (auto function : *assemblyProgram->getFunctionDefinition()) {
+    for (auto function : *assemblyProgram->getFunctionDefinitions()) {
         printAssyFunctionDefinition(function);
     }
 }
@@ -383,7 +388,7 @@ void PrettyPrinters::printAssyMovInstruction(
     auto src = movInstruction->getSrc();
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        std::cout << "    movl %" << srcReg->getRegister();
+        std::cout << "    movl %" << srcReg->getRegisterInStr();
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
@@ -397,7 +402,7 @@ void PrettyPrinters::printAssyMovInstruction(
     auto dst = movInstruction->getDst();
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        std::cout << ", %" << dstReg->getRegister() << "\n";
+        std::cout << ", %" << dstReg->getRegisterInStr() << "\n";
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
@@ -443,7 +448,7 @@ void PrettyPrinters::printAssyUnaryInstruction(
     auto operand = unaryInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        std::cout << " %" << regOperand->getRegister() << "\n";
+        std::cout << " %" << regOperand->getRegisterInStr() << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -477,7 +482,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        std::cout << " %" << operand1Reg->getRegister() << ",";
+        std::cout << " %" << operand1Reg->getRegisterInStr() << ",";
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -487,7 +492,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        std::cout << " %" << operand2Reg->getRegister() << "\n";
+        std::cout << " %" << operand2Reg->getRegisterInStr() << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -507,7 +512,7 @@ void PrettyPrinters::printAssyCmpInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        std::cout << " %" << operand1Reg->getRegister();
+        std::cout << " %" << operand1Reg->getRegisterInStr();
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -519,7 +524,7 @@ void PrettyPrinters::printAssyCmpInstruction(
     auto operand2 = cmpInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        std::cout << " %" << operand2Reg->getRegister() << "\n";
+        std::cout << " %" << operand2Reg->getRegisterInStr() << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -534,7 +539,7 @@ void PrettyPrinters::printAssyIdivInstruction(
     auto operand = idivInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        std::cout << " %" << regOperand->getRegister() << "\n";
+        std::cout << " %" << regOperand->getRegisterInStr() << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -601,16 +606,16 @@ void PrettyPrinters::printAssySetCCInstruction(
     auto operand = setCCInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        if (regOperand->getRegister() == "%eax") {
+        if (regOperand->getRegisterInStr() == "%eax") {
             std::cout << " %al\n";
         }
-        else if (regOperand->getRegister() == "%edx") {
+        else if (regOperand->getRegisterInStr() == "%edx") {
             std::cout << " %dl\n";
         }
-        else if (regOperand->getRegister() == "%r10d") {
+        else if (regOperand->getRegisterInStr() == "%r10d") {
             std::cout << " %r10b\n";
         }
-        else if (regOperand->getRegister() == "%r11d") {
+        else if (regOperand->getRegisterInStr() == "%r11d") {
             std::cout << " %r11b\n";
         }
         else {

@@ -15,7 +15,17 @@ class Register {
 
 class AX : public Register {};
 
+class CX : public Register {};
+
 class DX : public Register {};
+
+class DI : public Register {};
+
+class SI : public Register {};
+
+class R8 : public Register {};
+
+class R9 : public Register {};
 
 class R10 : public Register {};
 
@@ -27,7 +37,7 @@ class Operand {
     virtual int getImmediate() const {
         throw std::runtime_error("Operand is not an immediate");
     };
-    virtual std::string getRegister() const {
+    virtual std::shared_ptr<Register> getRegister() const {
         throw std::runtime_error("Operand is not a register");
     };
     virtual std::string getPseudoRegister() const {
@@ -49,11 +59,75 @@ class ImmediateOperand : public Operand {
 
 class RegisterOperand : public Operand {
   private:
-    std::string reg;
+    std::shared_ptr<Register> reg;
 
   public:
-    RegisterOperand(std::string reg) : reg(reg) {}
-    std::string getRegister() const override { return reg; }
+    RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {}
+    RegisterOperand(std::string regInStr) {
+        if (regInStr == "AX") {
+            reg = std::make_shared<AX>();
+        }
+        else if (regInStr == "CX") {
+            reg = std::make_shared<CX>();
+        }
+        else if (regInStr == "DX") {
+            reg = std::make_shared<DX>();
+        }
+        else if (regInStr == "DI") {
+            reg = std::make_shared<DI>();
+        }
+        else if (regInStr == "SI") {
+            reg = std::make_shared<SI>();
+        }
+        else if (regInStr == "R8") {
+            reg = std::make_shared<R8>();
+        }
+        else if (regInStr == "R9") {
+            reg = std::make_shared<R9>();
+        }
+        else if (regInStr == "R10") {
+            reg = std::make_shared<R10>();
+        }
+        else if (regInStr == "R11") {
+            reg = std::make_shared<R11>();
+        }
+        else {
+            throw std::runtime_error("Unsupported register");
+        }
+    }
+    std::shared_ptr<Register> getRegister() const override { return reg; }
+    std::string getRegisterInStr() const {
+        if (std::dynamic_pointer_cast<AX>(reg)) {
+            return "%eax";
+        }
+        else if (std::dynamic_pointer_cast<CX>(reg)) {
+            return "%ecx";
+        }
+        else if (std::dynamic_pointer_cast<DX>(reg)) {
+            return "%edx";
+        }
+        else if (std::dynamic_pointer_cast<DI>(reg)) {
+            return "%edi";
+        }
+        else if (std::dynamic_pointer_cast<SI>(reg)) {
+            return "%esi";
+        }
+        else if (std::dynamic_pointer_cast<R8>(reg)) {
+            return "%r8d";
+        }
+        else if (std::dynamic_pointer_cast<R9>(reg)) {
+            return "%r9d";
+        }
+        else if (std::dynamic_pointer_cast<R10>(reg)) {
+            return "%r10d";
+        }
+        else if (std::dynamic_pointer_cast<R11>(reg)) {
+            return "%r11d";
+        }
+        else {
+            throw std::runtime_error("Unsupported register");
+        }
+    }
 };
 
 class PseudoRegisterOperand : public Operand {
@@ -273,16 +347,52 @@ class AllocateStackInstruction : public Instruction {
     int getAddressGivenOffsetFromRBP() { return addressGivenOffsetFromRBP; }
 };
 
+class DeallocateStackInstruction : public Instruction {
+  private:
+    int addressGivenOffsetFromRBP;
+
+  public:
+    DeallocateStackInstruction(int addressGivenOffsetFromRBP)
+        : addressGivenOffsetFromRBP(addressGivenOffsetFromRBP) {}
+    int getAddressGivenOffsetFromRBP() { return addressGivenOffsetFromRBP; }
+};
+
+class PushInstruction : public Instruction {
+  private:
+    std::shared_ptr<Operand> operand;
+
+  public:
+    PushInstruction(std::shared_ptr<Operand> operand) : operand(operand) {}
+    std::shared_ptr<Operand> getOperand() { return operand; }
+    void setOperand(std::shared_ptr<Operand> operand) {
+        this->operand = operand;
+    }
+};
+
+class CallInstruction : public Instruction {
+  private:
+    std::string functionIdentifier;
+
+  public:
+    CallInstruction(std::string functionIdentifier)
+        : functionIdentifier(functionIdentifier) {}
+    std::string getFunctionIdentifier() { return functionIdentifier; }
+};
+
 class RetInstruction : public Instruction {};
 
 class FunctionDefinition {
   private:
     std::string functionIdentifier;
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
+    std::size_t stackSize;
 
   public:
-    FunctionDefinition(const std::string functionIdentifier)
-        : functionIdentifier(functionIdentifier) {}
+    FunctionDefinition(
+        std::string functionIdentifier,
+        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody)
+        : functionIdentifier(functionIdentifier), functionBody(functionBody),
+          stackSize(0) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
     getFunctionBody() {
@@ -290,28 +400,30 @@ class FunctionDefinition {
     }
     void
     setFunctionBody(std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-                        newFunctionBody) {
-        functionBody = newFunctionBody;
+                        functionBody) {
+        this->functionBody = functionBody;
     }
+    std::size_t getStackSize() { return stackSize; }
+    void setStackSize(std::size_t stackSize) { this->stackSize = stackSize; }
 };
 
 class Program {
   private:
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-        functionDefinition;
+        functionDefinitions;
 
   public:
     Program(std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-                functionDefinition)
-        : functionDefinition(functionDefinition) {}
+                functionDefinitions)
+        : functionDefinitions(functionDefinitions) {}
     std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-    getFunctionDefinition() {
-        return functionDefinition;
+    getFunctionDefinitions() {
+        return functionDefinitions;
     }
-    void setFunctionDefinition(
+    void setFunctionDefinitions(
         std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-            newFunctionDefinition) {
-        functionDefinition = newFunctionDefinition;
+            functionDefinitions) {
+        this->functionDefinitions = functionDefinitions;
     }
 };
 } // namespace Assembly

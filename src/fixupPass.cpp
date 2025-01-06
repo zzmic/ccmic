@@ -2,44 +2,51 @@
 
 namespace Assembly {
 void FixupPass::fixup(
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>> function,
-    int stackSize) {
-    auto instructions = function->at(0)->getFunctionBody();
-
-    // Insert an allocate stack instruction at the beginning of the function.
-    insertAllocateStackInstruction(instructions, stackSize);
-
-    // Traverse the instructions and rewrite invalid instructions.
-    for (auto it = instructions->begin(); it != instructions->end(); it++) {
-        if (auto movInstr =
-                std::dynamic_pointer_cast<Assembly::MovInstruction>(*it)) {
-            // If the mov instruction is invalid, rewrite it.
-            // Replace the invalid mov instruction with two valid ones using
-            // R10.
-            // Replace the iterator with the new iterator returned by
-            // `rewriteInvalidMov`.
-            if (isInvalidMov(movInstr)) {
-                it = rewriteInvalidMov(instructions, it, movInstr);
+    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
+        functionDefinitions) {
+    for (auto functionDefinition : *functionDefinitions) {
+        auto instructions = functionDefinition->getFunctionBody();
+        auto preAlignedStackSize = functionDefinition->getStackSize();
+        // Align the stack size to the next multiple of 16.
+        // Reference: https://math.stackexchange.com/a/291494.
+        auto alignedStackSize = ((preAlignedStackSize - 1) | 15) + 1;
+        // Insert an allocate-stack instruction at the beginning of each
+        // function.
+        insertAllocateStackInstruction(instructions, alignedStackSize);
+        // Traverse the instructions (associated with (included in) the
+        // function) and rewrite invalid instructions.
+        for (auto it = instructions->begin(); it != instructions->end(); it++) {
+            if (auto movInstr =
+                    std::dynamic_pointer_cast<Assembly::MovInstruction>(*it)) {
+                // If the mov instruction is invalid, rewrite it.
+                // Replace the invalid mov instruction with two valid ones using
+                // R10.
+                // Replace the iterator with the new iterator returned by
+                // `rewriteInvalidMov`.
+                if (isInvalidMov(movInstr)) {
+                    it = rewriteInvalidMov(instructions, it, movInstr);
+                }
             }
-        }
-        else if (auto binInstr =
-                     std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
-                         *it)) {
-            if (isInvalidBinary(binInstr)) {
-                it = rewriteInvalidBinary(instructions, it, binInstr);
+            else if (auto binInstr =
+                         std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
+                             *it)) {
+                if (isInvalidBinary(binInstr)) {
+                    it = rewriteInvalidBinary(instructions, it, binInstr);
+                }
             }
-        }
-        else if (auto idivInstr =
-                     std::dynamic_pointer_cast<Assembly::IdivInstruction>(
-                         *it)) {
-            if (isInvalidIdiv(idivInstr)) {
-                it = rewriteInvalidIdiv(instructions, it, idivInstr);
+            else if (auto idivInstr =
+                         std::dynamic_pointer_cast<Assembly::IdivInstruction>(
+                             *it)) {
+                if (isInvalidIdiv(idivInstr)) {
+                    it = rewriteInvalidIdiv(instructions, it, idivInstr);
+                }
             }
-        }
-        else if (auto cmpInstr =
-                     std::dynamic_pointer_cast<Assembly::CmpInstruction>(*it)) {
-            if (isInvalidCmp(cmpInstr)) {
-                it = rewriteInvalidCmp(instructions, it, cmpInstr);
+            else if (auto cmpInstr =
+                         std::dynamic_pointer_cast<Assembly::CmpInstruction>(
+                             *it)) {
+                if (isInvalidCmp(cmpInstr)) {
+                    it = rewriteInvalidCmp(instructions, it, cmpInstr);
+                }
             }
         }
     }
@@ -108,7 +115,8 @@ FixupPass::rewriteInvalidMov(
     std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
     std::shared_ptr<Assembly::MovInstruction> movInst) {
     // Create a new register operand for R10 ("r10d").
-    auto r10d = std::make_shared<Assembly::RegisterOperand>("r10d");
+    auto r10d = std::make_shared<Assembly::RegisterOperand>(
+        std::make_shared<Assembly::R10>());
 
     // Create two new movInstructions using `r10d` as an intermediate register
     // based on the original source and destination operands.
@@ -141,7 +149,8 @@ FixupPass::rewriteInvalidBinary(
                 binInstr->getOperand1()) &&
             std::dynamic_pointer_cast<Assembly::StackOperand>(
                 binInstr->getOperand2())) {
-            auto r10d = std::make_shared<Assembly::RegisterOperand>("r10d");
+            auto r10d = std::make_shared<Assembly::RegisterOperand>(
+                std::make_shared<Assembly::R10>());
             auto newMov = std::make_shared<Assembly::MovInstruction>(
                 binInstr->getOperand1(), r10d);
             auto newBin = std::make_shared<Assembly::BinaryInstruction>(
@@ -155,7 +164,8 @@ FixupPass::rewriteInvalidBinary(
                  binInstr->getBinaryOperator())) {
         if (std::dynamic_pointer_cast<Assembly::StackOperand>(
                 binInstr->getOperand2())) {
-            auto r11d = std::make_shared<Assembly::RegisterOperand>("r11d");
+            auto r11d = std::make_shared<Assembly::RegisterOperand>(
+                std::make_shared<Assembly::R11>());
             auto newMov1 = std::make_shared<Assembly::MovInstruction>(
                 binInstr->getOperand2(), r11d);
             auto newImul = std::make_shared<Assembly::BinaryInstruction>(
@@ -177,7 +187,8 @@ FixupPass::rewriteInvalidIdiv(
         instructions,
     std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
     std::shared_ptr<Assembly::IdivInstruction> idivInstr) {
-    auto r10d = std::make_shared<Assembly::RegisterOperand>("r10d");
+    auto r10d = std::make_shared<Assembly::RegisterOperand>(
+        std::make_shared<Assembly::R10>());
 
     auto newMov = std::make_shared<Assembly::MovInstruction>(
         idivInstr->getOperand(), r10d);
@@ -199,7 +210,8 @@ FixupPass::rewriteInvalidCmp(
             cmpInstr->getOperand1()) &&
         std::dynamic_pointer_cast<Assembly::StackOperand>(
             cmpInstr->getOperand2())) {
-        auto r10d = std::make_shared<Assembly::RegisterOperand>("r10d");
+        auto r10d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R10>());
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             cmpInstr->getOperand1(), r10d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
@@ -209,7 +221,8 @@ FixupPass::rewriteInvalidCmp(
     }
     else if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                  cmpInstr->getOperand2())) {
-        auto r11d = std::make_shared<Assembly::RegisterOperand>("r11d");
+        auto r11d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R11>());
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             cmpInstr->getOperand2(), r11d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(

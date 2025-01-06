@@ -137,16 +137,17 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         Assembly::AssemblyGenerator assemblyGenerator(symbols);
         assemblyProgram = assemblyGenerator.generate(irProgram);
 
-        // Instantiate a pseudo-to-stack pass object and return the offset.
+        // Instantiate a pseudo-to-stack pass object and associate the stack
+        // size with each function.
         Assembly::PseudoToStackPass pseudoToStackPass;
-        auto functionDefinition = assemblyProgram->getFunctionDefinition();
-        int stackSize = pseudoToStackPass.replacePseudoWithStackAndReturnOffset(
-            functionDefinition);
+        auto functionDefinitions = assemblyProgram->getFunctionDefinitions();
+        pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
+            functionDefinitions);
 
         // Instantiate a fixup pass object and fixup the assembly program.
         Assembly::FixupPass fixupPass;
-        fixupPass.fixup(functionDefinition, stackSize);
-        assemblyProgram->setFunctionDefinition(functionDefinition);
+        fixupPass.fixup(functionDefinitions);
+        assemblyProgram->setFunctionDefinitions(functionDefinitions);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Code generation error: " << e.what();
@@ -168,7 +169,7 @@ void PipelineStagesExecutors::codeEmissionExecutor(
         throw std::runtime_error(msg.str());
     }
 
-    for (auto function : *assemblyProgram->getFunctionDefinition()) {
+    for (auto function : *assemblyProgram->getFunctionDefinitions()) {
         emitAssyFunctionDefinition(function, assemblyFileStream);
     }
 
@@ -272,7 +273,7 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     auto src = movInstruction->getSrc();
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        assemblyFileStream << "    movl %" << srcReg->getRegister();
+        assemblyFileStream << "    movl %" << srcReg->getRegisterInStr();
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
@@ -286,7 +287,7 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     auto dst = movInstruction->getDst();
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        assemblyFileStream << ", %" << dstReg->getRegister() << "\n";
+        assemblyFileStream << ", %" << dstReg->getRegisterInStr() << "\n";
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
@@ -336,7 +337,7 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     auto operand = unaryInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        assemblyFileStream << " %" << regOperand->getRegister() << "\n";
+        assemblyFileStream << " %" << regOperand->getRegisterInStr() << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -371,7 +372,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        assemblyFileStream << " %" << operand1Reg->getRegister() << ",";
+        assemblyFileStream << " %" << operand1Reg->getRegisterInStr() << ",";
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -381,7 +382,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        assemblyFileStream << " %" << operand2Reg->getRegister() << "\n";
+        assemblyFileStream << " %" << operand2Reg->getRegisterInStr() << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -402,7 +403,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        assemblyFileStream << " %" << operand1Reg->getRegister();
+        assemblyFileStream << " %" << operand1Reg->getRegisterInStr();
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -414,7 +415,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     auto operand2 = cmpInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        assemblyFileStream << " %" << operand2Reg->getRegister() << "\n";
+        assemblyFileStream << " %" << operand2Reg->getRegisterInStr() << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -430,7 +431,7 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
     auto operand = idivInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        assemblyFileStream << " %" << regOperand->getRegister() << "\n";
+        assemblyFileStream << " %" << regOperand->getRegisterInStr() << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -503,16 +504,16 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     auto operand = setCCInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        if (regOperand->getRegister() == "%eax") {
+        if (regOperand->getRegisterInStr() == "%eax") {
             assemblyFileStream << " %al\n";
         }
-        else if (regOperand->getRegister() == "%edx") {
+        else if (regOperand->getRegisterInStr() == "%edx") {
             assemblyFileStream << " %dl\n";
         }
-        else if (regOperand->getRegister() == "%r10d") {
+        else if (regOperand->getRegisterInStr() == "%r10d") {
             assemblyFileStream << " %r10b\n";
         }
-        else if (regOperand->getRegister() == "%r11d") {
+        else if (regOperand->getRegisterInStr() == "%r11d") {
             assemblyFileStream << " %r11b\n";
         }
         else {

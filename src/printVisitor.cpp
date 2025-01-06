@@ -14,9 +14,18 @@ void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
     if (program.getFunctionDeclarations()) {
-        for (auto &functionDeclaration : *program.getFunctionDeclarations()) {
+        auto &functionDeclarations = *program.getFunctionDeclarations();
+        for (auto it = functionDeclarations.begin();
+             it != functionDeclarations.end(); it++) {
+            auto &functionDeclaration = *it;
             functionDeclaration->accept(*this);
-            std::cout << ",\n";
+            bool isLast = (std::next(it) == functionDeclarations.end());
+            if (!isLast) {
+                std::cout << ",\n";
+            }
+            else {
+                std::cout << "\n";
+            }
         }
     }
     else {
@@ -124,10 +133,16 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << "\nparameters=(";
 
-    for (auto &parameter : *functionDeclaration.getParameters()) {
-        std::cout << parameter << ", ";
+    auto &parameters = *functionDeclaration.getParameters();
+    for (auto it = parameters.begin(); it != parameters.end(); ++it) {
+        auto &parameter = *it;
+        std::cout << parameter;
+        if (std::next(it) != parameters.end()) {
+            std::cout << ", ";
+        }
     }
-    std::cout << "\b\b)";
+
+    std::cout << ")";
 
     if (functionDeclaration.getOptBody().has_value()) {
         std::cout << "\nbody=";
@@ -482,9 +497,14 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
 
     std::cout << "\nargs=";
 
-    for (auto &arg : *functionCallExpression.getArguments()) {
+    auto &args = *functionCallExpression.getArguments();
+    for (auto it = args.begin(); it != args.end(); it++) {
+        auto &arg = *it;
         arg->accept(*this);
-        std::cout << ", ";
+        bool isLast = (std::next(it) == args.end());
+        if (!isLast) {
+            std::cout << ", ";
+        }
     }
 
     std::cout << "\n)";

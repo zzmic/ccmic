@@ -18,7 +18,7 @@ class AssemblyGenerator {
   private:
     std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
         symbols;
-    void generateAssyStatement(
+    void generateAssyInstruction(
         std::shared_ptr<IR::Instruction> irInstruction,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
@@ -52,6 +52,10 @@ class AssemblyGenerator {
             instructions);
     void generateAssyCopyInstruction(
         std::shared_ptr<IR::CopyInstruction> copyInstr,
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions);
+    void convertIRFunctionCallInstructionToAssy(
+        std::shared_ptr<IR::FunctionCallInstruction> functionCallInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
     std::shared_ptr<Assembly::Operand>

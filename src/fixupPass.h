@@ -8,8 +8,7 @@ namespace Assembly {
 class FixupPass {
   public:
     void fixup(std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-                   function,
-               int stackSize);
+                   functionDefinitions);
 
   private:
     void insertAllocateStackInstruction(
