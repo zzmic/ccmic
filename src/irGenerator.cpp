@@ -37,18 +37,19 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
         auto functionDefinition = std::make_shared<IR::FunctionDefinition>(
             functionDeclaration->getIdentifier(), parameters, instructions);
 
+        // If the function does not end with a return instruction, add a return
+        // instruction with constant value 0.
+        if (functionDefinition->getFunctionBody()->empty() ||
+            !std::dynamic_pointer_cast<IR::ReturnInstruction>(
+                functionDefinition->getFunctionBody()->back())) {
+            functionDefinition->getFunctionBody()->emplace_back(
+                std::make_shared<IR::ReturnInstruction>(
+                    std::make_shared<IR::ConstantValue>(0)));
+        }
+
         // Add the IR function definition to the vector of IR function
         // definitions.
         functionDefinitions->emplace_back(std::move(functionDefinition));
-
-        // If the function does not end with a return instruction, add a return
-        // instruction with constant value 0.
-        if (instructions->empty() ||
-            !std::dynamic_pointer_cast<IR::ReturnInstruction>(
-                instructions->back())) {
-            instructions->emplace_back(std::make_shared<IR::ReturnInstruction>(
-                std::make_shared<IR::ConstantValue>(0)));
-        }
     }
 
     // Return the generated IR program.

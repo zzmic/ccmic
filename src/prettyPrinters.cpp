@@ -472,6 +472,11 @@ void PrettyPrinters::printAssyPushInstruction(
         std::cout << "    pushq" << " "
                   << regOperand->getRegisterInBytesInStr(8) << "\n";
     }
+    else if (auto immOperand =
+                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+                     operand)) {
+        std::cout << "    pushq" << " $" << immOperand->getImmediate() << "\n";
+    }
 }
 
 void PrettyPrinters::printAssyCallInstruction(

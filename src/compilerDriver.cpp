@@ -22,7 +22,7 @@ void runCommand(const std::string &command) {
 // Preprocess the input file and write the result to the preprocessed file.
 void preprocess(const std::string &inputFile,
                 const std::string &preprocessedFile) {
-    std::string command = "gcc -E " + inputFile + " -o " + preprocessedFile;
+    std::string command = "gcc -E -P " + inputFile + " -o " + preprocessedFile;
     runCommand(command);
 }
 
@@ -48,8 +48,8 @@ void linkToExecutable(const std::vector<std::string> &objectFiles,
     for (const auto &objectFile : objectFiles) {
         command += " " + objectFile;
     }
-    command += " -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/ "
-               "-lc -o " +
-               executableFile;
+    command += " -o " + executableFile;
+    // Link against the C standard library.
+    command += " -lc";
     runCommand(command);
 }

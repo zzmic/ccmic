@@ -1,4 +1,5 @@
 #include "assemblyGenerator.h"
+#include <algorithm>
 
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
@@ -384,6 +385,9 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     }
 
     // Pass the arguments on the stack.
+    std::reverse(
+        irStackArgs->begin(),
+        irStackArgs->end()); // Reverse the order of the stack arguments.
     for (auto irStackArg : *irStackArgs) {
         auto assyStackArg = convertValue(irStackArg);
         if (std::dynamic_pointer_cast<Assembly::RegisterOperand>(
@@ -434,7 +438,8 @@ AssemblyGenerator::convertValue(std::shared_ptr<IR::Value> irValue) {
         return std::make_shared<Assembly::PseudoRegisterOperand>(
             varVal->getIdentifier());
     }
-    // Return a `nullptr` if the value is not convertible.
-    return nullptr;
+    else {
+        throw std::runtime_error("Unsupported IR value type");
+    }
 }
 } // namespace Assembly

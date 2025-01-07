@@ -65,14 +65,6 @@ int main(int argc, char *argv[]) {
     // Construct the executable file name.
     std::string executableFile = programName;
 
-    // // Preprocess the source file and write the result to the preprocessed.
-    // file preprocess(sourceFile, preprocessedFile);
-    // // Compile the preprocessed file to assembly and write the result to the
-    // // assembly file.
-    // compileToAssembly(preprocessedFile, assemblyFile);
-    // // Delete the preprocessed file after compiling it to assembly.
-    // std::filesystem::remove(preprocessedFile);
-
     // Initialize flags to control the intermediate stages of the compilation.
     bool tillLex = false;
     bool tillParse = false;
@@ -117,9 +109,15 @@ int main(int argc, char *argv[]) {
     else if (flag == "-c")
         tillObject = true;
 
+    // Preprocess the source file and write the result to the preprocessed.
+    preprocess(sourceFile, preprocessedFile);
+
     // Tokenize the input, print the tokens, and return the tokens.
     std::vector<Token> tokens =
-        PipelineStagesExecutors::lexerExecutor(sourceFile);
+        PipelineStagesExecutors::lexerExecutor(preprocessedFile);
+
+    // Delete the preprocessed file after compiling it to assembly.
+    std::filesystem::remove(preprocessedFile);
 
     if (tillLex) {
         std::cout << "Lexical tokenization completed.\n";
@@ -200,6 +198,9 @@ int main(int argc, char *argv[]) {
 
     // Link the object files to an executable file.
     linkToExecutable(objectFiles, executableFile);
+
+    // Remove the object file after linking it to the executable.
+    std::filesystem::remove(objectFile);
 
     std::cout << "Compilation completed. Executable file: " << executableFile
               << "\n";
