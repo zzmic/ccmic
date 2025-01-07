@@ -47,6 +47,13 @@ class PrettyPrinters {
     static void printAssyAllocateStackInstruction(
         std::shared_ptr<Assembly::AllocateStackInstruction>
             allocateStackInstruction);
+    static void printAssyDeallocateStackInstruction(
+        std::shared_ptr<Assembly::DeallocateStackInstruction>
+            deallocateStackInstruction);
+    static void printAssyPushInstruction(
+        std::shared_ptr<Assembly::PushInstruction> pushInstruction);
+    static void printAssyCallInstruction(
+        std::shared_ptr<Assembly::CallInstruction> callInstruction);
     static void printAssyUnaryInstruction(
         std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction);
     static void printAssyBinaryInstruction(

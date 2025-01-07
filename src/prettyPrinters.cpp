@@ -302,11 +302,21 @@ void PrettyPrinters::printAssemblyProgram(
     for (auto function : *assemblyProgram->getFunctionDefinitions()) {
         printAssyFunctionDefinition(function);
     }
+
+// If the underlying OS is Linux, add the following to enable an important
+// security hardening measure: it indicates that the code does not require an
+// executable stack.
+#ifdef __linux__
+    std::cout << ".section .note.GNU-stack,\"\",@progbits\n";
+#endif
 }
 
 void PrettyPrinters::printAssyFunctionDefinition(
     std::shared_ptr<Assembly::FunctionDefinition> functionDefinition) {
     std::string functionName = functionDefinition->getFunctionIdentifier();
+#ifdef __APPLE__
+    functionName = "_" + functionName;
+#endif
 
     // Print the function prologue (before printing the function body).
     std::cout << "\n"
@@ -335,6 +345,20 @@ void PrettyPrinters::printAssyInstruction(
                  std::dynamic_pointer_cast<Assembly::AllocateStackInstruction>(
                      instruction)) {
         printAssyAllocateStackInstruction(allocateStackInstruction);
+    }
+    else if (auto deallocateStackInstruction = std::dynamic_pointer_cast<
+                 Assembly::DeallocateStackInstruction>(instruction)) {
+        printAssyDeallocateStackInstruction(deallocateStackInstruction);
+    }
+    else if (auto pushInstruction =
+                 std::dynamic_pointer_cast<Assembly::PushInstruction>(
+                     instruction)) {
+        printAssyPushInstruction(pushInstruction);
+    }
+    else if (auto callInstruction =
+                 std::dynamic_pointer_cast<Assembly::CallInstruction>(
+                     instruction)) {
+        printAssyCallInstruction(callInstruction);
     }
     else if (auto unaryInstruction =
                  std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
@@ -388,7 +412,7 @@ void PrettyPrinters::printAssyMovInstruction(
     auto src = movInstruction->getSrc();
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        std::cout << "    movl %" << srcReg->getRegisterInStr();
+        std::cout << "    movl " << srcReg->getRegisterInBytesInStr(4);
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
@@ -402,7 +426,7 @@ void PrettyPrinters::printAssyMovInstruction(
     auto dst = movInstruction->getDst();
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        std::cout << ", %" << dstReg->getRegisterInStr() << "\n";
+        std::cout << ", " << dstReg->getRegisterInBytesInStr(4) << "\n";
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
@@ -424,6 +448,41 @@ void PrettyPrinters::printAssyAllocateStackInstruction(
     std::cout << "    subq $"
               << allocateStackInstruction->getAddressGivenOffsetFromRBP()
               << ", %rsp\n";
+}
+
+void PrettyPrinters::printAssyDeallocateStackInstruction(
+    std::shared_ptr<Assembly::DeallocateStackInstruction>
+        deallocateStackInstruction) {
+    std::cout << "    addq $"
+              << deallocateStackInstruction->getAddressGivenOffsetFromRBP()
+              << ", %rsp\n";
+}
+
+void PrettyPrinters::printAssyPushInstruction(
+    std::shared_ptr<Assembly::PushInstruction> pushInstruction) {
+    auto operand = pushInstruction->getOperand();
+    if (auto stackOperand =
+            std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+        std::cout << "    pushq" << " " << stackOperand->getOffset()
+                  << "(%rsp)\n";
+    }
+    else if (auto regOperand =
+                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                     operand)) {
+        std::cout << "    pushq" << " "
+                  << regOperand->getRegisterInBytesInStr(8) << "\n";
+    }
+}
+
+void PrettyPrinters::printAssyCallInstruction(
+    std::shared_ptr<Assembly::CallInstruction> callInstruction) {
+    std::cout << "    call " << callInstruction->getFunctionIdentifier();
+// If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
+// operand.
+#ifdef __linux__
+    std::cout << "@PLT";
+#endif
+    std::cout << "\n";
 }
 
 void PrettyPrinters::printAssyUnaryInstruction(
@@ -448,7 +507,7 @@ void PrettyPrinters::printAssyUnaryInstruction(
     auto operand = unaryInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        std::cout << " %" << regOperand->getRegisterInStr() << "\n";
+        std::cout << " " << regOperand->getRegisterInBytesInStr(4) << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -482,7 +541,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        std::cout << " %" << operand1Reg->getRegisterInStr() << ",";
+        std::cout << " " << operand1Reg->getRegisterInBytesInStr(4) << ",";
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -492,7 +551,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        std::cout << " %" << operand2Reg->getRegisterInStr() << "\n";
+        std::cout << " " << operand2Reg->getRegisterInBytesInStr(4) << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -512,7 +571,7 @@ void PrettyPrinters::printAssyCmpInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        std::cout << " %" << operand1Reg->getRegisterInStr();
+        std::cout << " " << operand1Reg->getRegisterInBytesInStr(4);
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -524,7 +583,7 @@ void PrettyPrinters::printAssyCmpInstruction(
     auto operand2 = cmpInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        std::cout << " %" << operand2Reg->getRegisterInStr() << "\n";
+        std::cout << " " << operand2Reg->getRegisterInBytesInStr(4) << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -539,7 +598,7 @@ void PrettyPrinters::printAssyIdivInstruction(
     auto operand = idivInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        std::cout << " %" << regOperand->getRegisterInStr() << "\n";
+        std::cout << " " << regOperand->getRegisterInBytesInStr(4) << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -606,22 +665,7 @@ void PrettyPrinters::printAssySetCCInstruction(
     auto operand = setCCInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        if (regOperand->getRegisterInStr() == "%eax") {
-            std::cout << " %al\n";
-        }
-        else if (regOperand->getRegisterInStr() == "%edx") {
-            std::cout << " %dl\n";
-        }
-        else if (regOperand->getRegisterInStr() == "%r10d") {
-            std::cout << " %r10b\n";
-        }
-        else if (regOperand->getRegisterInStr() == "%r11d") {
-            std::cout << " %r11b\n";
-        }
-        else {
-            throw std::runtime_error(
-                "Unsupported register conversion for SetCC instruction");
-        }
+        std::cout << " " << regOperand->getRegisterInBytesInStr(1) << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {

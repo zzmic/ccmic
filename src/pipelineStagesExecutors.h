@@ -56,6 +56,16 @@ class PipelineStagesExecutors {
         std::shared_ptr<Assembly::AllocateStackInstruction>
             allocateStackInstruction,
         std::ofstream &assemblyFileStream);
+    static void emitAssyDeallocateStackInstruction(
+        std::shared_ptr<Assembly::DeallocateStackInstruction>
+            deallocateStackInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyPushInstruction(
+        std::shared_ptr<Assembly::PushInstruction> pushInstruction,
+        std::ofstream &assemblyFileStream);
+    static void emitAssyCallInstruction(
+        std::shared_ptr<Assembly::CallInstruction> callInstruction,
+        std::ofstream &assemblyFileStream);
     static void emitAssyUnaryInstruction(
         std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction,
         std::ofstream &assemblyFileStream);

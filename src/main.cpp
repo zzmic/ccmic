@@ -9,7 +9,8 @@ int main(int argc, char *argv[]) {
     if (argc < 2 || argc > 3) {
         std::cerr << "Usage: " << argv[0]
                   << " [--lex] [--parse] [--validate] [--tacky] [--codegen] "
-                     "[-S] <sourceFile>\n";
+                     "[-S] [-c] [-o] <sourceFile>\n";
+        std::cerr << "Given argc: " << argc << "\n";
         return EXIT_FAILURE;
     }
     if (argc == 2) {
@@ -20,11 +21,13 @@ int main(int argc, char *argv[]) {
         flag = argv[1];
         sourceFile = argv[2];
         if (!(flag == "--lex" || flag == "--parse" || flag == "--validate" ||
-              flag == "--tacky" || flag == "--codegen" || flag == "-S")) {
+              flag == "--tacky" || flag == "--codegen" || flag == "-S" ||
+              flag == "-c" || flag == "-o")) {
             std::cerr
                 << "Usage: " << argv[0]
                 << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
-                   "<sourceFile>\n";
+                   "[-c] [-o] <sourceFile>\n";
+            std::cerr << "Given flag: " << flag << "\n";
             return EXIT_FAILURE;
         }
     }
@@ -77,7 +80,7 @@ int main(int argc, char *argv[]) {
     bool tillIR = false;
     bool tillCodegen = false;
     bool tillEmitAssembly = false;
-
+    bool tillObject = false;
     /*
      * None of the first five options should produce any output files, and all
      * should terminate with an exit code of 0 if no runtime errors occur.
@@ -109,6 +112,10 @@ int main(int argc, char *argv[]) {
     // link it.
     else if (flag == "-S")
         tillEmitAssembly = true;
+    // Direct the compiler to compile the source file into an object file
+    // without linking it into an executable.
+    else if (flag == "-c")
+        tillObject = true;
 
     // Tokenize the input, print the tokens, and return the tokens.
     std::vector<Token> tokens =
@@ -182,13 +189,19 @@ int main(int argc, char *argv[]) {
     assembleToObject(assemblyFile, objectFile);
     objectFiles.emplace_back(objectFile);
 
-    // Link the object files to an executable file.
-    linkToExecutable(objectFiles, executableFile);
-
     // Delete the assebmly file after assembling and linking it.
     std::filesystem::remove(assemblyFile);
 
-    std::cout << "Compilation completed. Output file: " << executableFile
+    if (tillObject) {
+        std::cout << "Compilation completed. Object file: " << objectFile
+                  << "\n";
+        return EXIT_SUCCESS;
+    }
+
+    // Link the object files to an executable file.
+    linkToExecutable(objectFiles, executableFile);
+
+    std::cout << "Compilation completed. Executable file: " << executableFile
               << "\n";
     return EXIT_SUCCESS;
 }

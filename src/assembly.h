@@ -4,6 +4,8 @@
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <typeindex>
+#include <unordered_map>
 #include <variant>
 #include <vector>
 
@@ -60,6 +62,37 @@ class ImmediateOperand : public Operand {
 class RegisterOperand : public Operand {
   private:
     std::shared_ptr<Register> reg;
+    std::unordered_map<int, std::unordered_map<std::type_index, std::string>>
+        regMappings = {{1, // 1-byte registers.
+                        {{typeid(AX), "%al"},
+                         {typeid(CX), "%cl"},
+                         {typeid(DX), "%dl"},
+                         {typeid(DI), "%dil"},
+                         {typeid(SI), "%sil"},
+                         {typeid(R8), "%r8b"},
+                         {typeid(R9), "%r9b"},
+                         {typeid(R10), "%r10b"},
+                         {typeid(R11), "%r11b"}}},
+                       {4, // 4-byte registers.
+                        {{typeid(AX), "%eax"},
+                         {typeid(CX), "%ecx"},
+                         {typeid(DX), "%edx"},
+                         {typeid(DI), "%edi"},
+                         {typeid(SI), "%esi"},
+                         {typeid(R8), "%r8d"},
+                         {typeid(R9), "%r9d"},
+                         {typeid(R10), "%r10d"},
+                         {typeid(R11), "%r11d"}}},
+                       {8, // 8-byte registers.
+                        {{typeid(AX), "%rax"},
+                         {typeid(CX), "%rcx"},
+                         {typeid(DX), "%rdx"},
+                         {typeid(DI), "%rdi"},
+                         {typeid(SI), "%rsi"},
+                         {typeid(R8), "%r8"},
+                         {typeid(R9), "%r9"},
+                         {typeid(R10), "%r10"},
+                         {typeid(R11), "%r11"}}}};
 
   public:
     RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {}
@@ -96,37 +129,18 @@ class RegisterOperand : public Operand {
         }
     }
     std::shared_ptr<Register> getRegister() const override { return reg; }
-    std::string getRegisterInStr() const {
-        if (std::dynamic_pointer_cast<AX>(reg)) {
-            return "%eax";
+    std::string getRegisterInBytesInStr(int size) const {
+        auto sizeIt = regMappings.find(size);
+        if (sizeIt == regMappings.end()) {
+            throw std::runtime_error("Unsupported register size");
         }
-        else if (std::dynamic_pointer_cast<CX>(reg)) {
-            return "%ecx";
-        }
-        else if (std::dynamic_pointer_cast<DX>(reg)) {
-            return "%edx";
-        }
-        else if (std::dynamic_pointer_cast<DI>(reg)) {
-            return "%edi";
-        }
-        else if (std::dynamic_pointer_cast<SI>(reg)) {
-            return "%esi";
-        }
-        else if (std::dynamic_pointer_cast<R8>(reg)) {
-            return "%r8d";
-        }
-        else if (std::dynamic_pointer_cast<R9>(reg)) {
-            return "%r9d";
-        }
-        else if (std::dynamic_pointer_cast<R10>(reg)) {
-            return "%r10d";
-        }
-        else if (std::dynamic_pointer_cast<R11>(reg)) {
-            return "%r11d";
-        }
-        else {
+        const auto &sizeMappings = sizeIt->second;
+        auto &r = *reg.get();
+        auto regIt = sizeMappings.find(typeid(r));
+        if (regIt == sizeMappings.end()) {
             throw std::runtime_error("Unsupported register");
         }
+        return regIt->second;
     }
 };
 

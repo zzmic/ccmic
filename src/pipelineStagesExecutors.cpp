@@ -177,7 +177,7 @@ void PipelineStagesExecutors::codeEmissionExecutor(
 // security hardening measure: it indicates that the code does not require an
 // executable stack.
 #ifdef __linux__
-    assemblyFileStream << "\n.section .note.GNU-stack,\"\",@progbits\n";
+    assemblyFileStream << ".section .note.GNU-stack,\"\",@progbits\n";
 #endif
 
     assemblyFileStream.close();
@@ -219,6 +219,21 @@ void PipelineStagesExecutors::emitAssyInstruction(
                      instruction)) {
         emitAssyAllocateStackInstruction(allocateStackInstruction,
                                          assemblyFileStream);
+    }
+    else if (auto deallocateStackInstruction = std::dynamic_pointer_cast<
+                 Assembly::DeallocateStackInstruction>(instruction)) {
+        emitAssyDeallocateStackInstruction(deallocateStackInstruction,
+                                           assemblyFileStream);
+    }
+    else if (auto pushInstruction =
+                 std::dynamic_pointer_cast<Assembly::PushInstruction>(
+                     instruction)) {
+        emitAssyPushInstruction(pushInstruction, assemblyFileStream);
+    }
+    else if (auto callInstruction =
+                 std::dynamic_pointer_cast<Assembly::CallInstruction>(
+                     instruction)) {
+        emitAssyCallInstruction(callInstruction, assemblyFileStream);
     }
     else if (auto unaryInstruction =
                  std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
@@ -273,7 +288,7 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     auto src = movInstruction->getSrc();
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        assemblyFileStream << "    movl %" << srcReg->getRegisterInStr();
+        assemblyFileStream << "    movl " << srcReg->getRegisterInBytesInStr(4);
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
@@ -287,7 +302,8 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     auto dst = movInstruction->getDst();
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        assemblyFileStream << ", %" << dstReg->getRegisterInStr() << "\n";
+        assemblyFileStream << ", " << dstReg->getRegisterInBytesInStr(4)
+                           << "\n";
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
@@ -314,6 +330,46 @@ void PipelineStagesExecutors::emitAssyAllocateStackInstruction(
         << ", %rsp\n";
 }
 
+void PipelineStagesExecutors::emitAssyDeallocateStackInstruction(
+    std::shared_ptr<Assembly::DeallocateStackInstruction>
+        deallocateStackInstruction,
+    std::ofstream &assemblyFileStream) {
+    assemblyFileStream
+        << "    addq $"
+        << deallocateStackInstruction->getAddressGivenOffsetFromRBP()
+        << ", %rsp\n";
+}
+
+void PipelineStagesExecutors::emitAssyPushInstruction(
+    std::shared_ptr<Assembly::PushInstruction> pushInstruction,
+    std::ofstream &assemblyFileStream) {
+    auto operand = pushInstruction->getOperand();
+    if (auto stackOperand =
+            std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+        assemblyFileStream << "    pushq" << " " << stackOperand->getOffset()
+                           << "(%rsp)\n";
+    }
+    else if (auto regOperand =
+                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
+                     operand)) {
+        assemblyFileStream << "    pushq" << " "
+                           << regOperand->getRegisterInBytesInStr(8) << "\n";
+    }
+}
+
+void PipelineStagesExecutors::emitAssyCallInstruction(
+    std::shared_ptr<Assembly::CallInstruction> callInstruction,
+    std::ofstream &assemblyFileStream) {
+    assemblyFileStream << "    call "
+                       << callInstruction->getFunctionIdentifier();
+// If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
+// operand.
+#ifdef __linux__
+    assemblyFileStream << "@PLT";
+#endif
+    assemblyFileStream << "\n";
+}
+
 void PipelineStagesExecutors::emitAssyUnaryInstruction(
     std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction,
     std::ofstream &assemblyFileStream) {
@@ -337,7 +393,8 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     auto operand = unaryInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        assemblyFileStream << " %" << regOperand->getRegisterInStr() << "\n";
+        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(4)
+                           << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -372,7 +429,8 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        assemblyFileStream << " %" << operand1Reg->getRegisterInStr() << ",";
+        assemblyFileStream << " " << operand1Reg->getRegisterInBytesInStr(4)
+                           << ",";
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -382,7 +440,8 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        assemblyFileStream << " %" << operand2Reg->getRegisterInStr() << "\n";
+        assemblyFileStream << " " << operand2Reg->getRegisterInBytesInStr(4)
+                           << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -403,7 +462,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        assemblyFileStream << " %" << operand1Reg->getRegisterInStr();
+        assemblyFileStream << " " << operand1Reg->getRegisterInBytesInStr(4);
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -415,7 +474,8 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     auto operand2 = cmpInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        assemblyFileStream << " %" << operand2Reg->getRegisterInStr() << "\n";
+        assemblyFileStream << " " << operand2Reg->getRegisterInBytesInStr(4)
+                           << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -431,7 +491,8 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
     auto operand = idivInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        assemblyFileStream << " %" << regOperand->getRegisterInStr() << "\n";
+        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(4)
+                           << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -504,22 +565,8 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     auto operand = setCCInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        if (regOperand->getRegisterInStr() == "%eax") {
-            assemblyFileStream << " %al\n";
-        }
-        else if (regOperand->getRegisterInStr() == "%edx") {
-            assemblyFileStream << " %dl\n";
-        }
-        else if (regOperand->getRegisterInStr() == "%r10d") {
-            assemblyFileStream << " %r10b\n";
-        }
-        else if (regOperand->getRegisterInStr() == "%r11d") {
-            assemblyFileStream << " %r11b\n";
-        }
-        else {
-            throw std::runtime_error(
-                "Unsupported register conversion for SetCC instruction");
-        }
+        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(1)
+                           << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {

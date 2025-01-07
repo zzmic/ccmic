@@ -41,13 +41,15 @@ void assembleToObject(const std::string &assemblyFile,
     runCommand(command);
 }
 
-// Link the object files to an executable file
+// Link the object files to an executable file.
 void linkToExecutable(const std::vector<std::string> &objectFiles,
                       const std::string &executableFile) {
     std::string command = "gcc";
     for (const auto &objectFile : objectFiles) {
         command += " " + objectFile;
     }
-    command += " -o " + executableFile;
+    command += " -L/usr/lib/gcc/x86_64-linux-gnu/13/../../../x86_64-linux-gnu/ "
+               "-lc -o " +
+               executableFile;
     runCommand(command);
 }
