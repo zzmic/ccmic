@@ -174,6 +174,17 @@ class StackOperand : public Operand {
     std::shared_ptr<ReservedRegister> getReservedRegister() const override {
         return reservedReg;
     }
+    std::string getReservedRegisterInStr() const {
+        if (auto sp = std::dynamic_pointer_cast<SP>(reservedReg)) {
+            return "%rsp";
+        }
+        else if (auto bp = std::dynamic_pointer_cast<BP>(reservedReg)) {
+            return "%rbp";
+        }
+        else {
+            throw std::runtime_error("Unsupported reserved register");
+        }
+    }
 };
 
 class CondCode {
@@ -418,9 +429,10 @@ class FunctionDefinition {
   public:
     FunctionDefinition(
         std::string functionIdentifier,
-        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody)
+        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
+        std::size_t stackSize)
         : functionIdentifier(functionIdentifier), functionBody(functionBody),
-          stackSize(0) {}
+          stackSize(stackSize) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
     getFunctionBody() {

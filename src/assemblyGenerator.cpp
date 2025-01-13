@@ -18,7 +18,8 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
         auto instructions =
             std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
 
-        // Generate instructions to move parameters from registers to the stack.
+        // Generate instructions to move parameters from registers to the
+        // stack.
         auto irParameters = irFunctionDefinition->getParameters();
         if (irParameters->size() > 0) {
             std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
@@ -49,9 +50,11 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
                 }
             }
         }
-
+        // Generate function definition that is corresponding to the IR function
+        // definition (after conversion).
         auto assyFunctionDefinition = std::make_shared<FunctionDefinition>(
-            functionIdentifier, instructions);
+            functionIdentifier, instructions, 0);
+
         for (auto irInstruction : *functionBody) {
             generateAssyInstruction(irInstruction,
                                     assyFunctionDefinition->getFunctionBody());
@@ -368,9 +371,6 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
                                                   "CX", "R8", "R9"};
     auto axReg = std::make_shared<Assembly::AX>();
 
-    // Adjust the stack alignment (if the number of arguments on the stack is
-    // odd).
-    auto stackPadding = 0;
     auto irArgs = functionCallInstr->getArgs();
     auto irRegisterArgs =
         std::make_shared<std::vector<std::shared_ptr<IR::Value>>>();
@@ -391,12 +391,9 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
             }
         }
     }
-    if (irStackArgs->size() % 2 != 0) {
-        stackPadding = 8;
-    }
-    else {
-        stackPadding = 0;
-    }
+    // Adjust the stack alignment (if the number of arguments on the stack is
+    // odd).
+    auto stackPadding = irStackArgs->size() % 2 != 0 ? 8 : 0;
     if (stackPadding != 0) {
         instructions->emplace_back(
             std::make_shared<Assembly::AllocateStackInstruction>(stackPadding));
@@ -425,7 +422,8 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
             std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                 assyStackArg)) {
             instructions->emplace_back(
-                std::make_shared<Assembly::PushInstruction>(assyStackArg));
+                std::make_shared<Assembly::PushInstruction>(
+                    std::move(assyStackArg)));
         }
         else {
             instructions->emplace_back(

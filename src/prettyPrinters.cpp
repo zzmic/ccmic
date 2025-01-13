@@ -420,7 +420,8 @@ void PrettyPrinters::printAssyMovInstruction(
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
-        std::cout << "    movl " << srcStack->getOffset() << "(%rsp)";
+        std::cout << "    movl " << srcStack->getOffset() << "("
+                  << srcStack->getReservedRegisterInStr() << ")";
     }
 
     auto dst = movInstruction->getDst();
@@ -430,7 +431,8 @@ void PrettyPrinters::printAssyMovInstruction(
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
-        std::cout << ", " << dstStack->getOffset() << "(%rsp)\n";
+        std::cout << ", " << dstStack->getOffset() << "("
+                  << dstStack->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -463,8 +465,8 @@ void PrettyPrinters::printAssyPushInstruction(
     auto operand = pushInstruction->getOperand();
     if (auto stackOperand =
             std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        std::cout << "    pushq" << " " << stackOperand->getOffset()
-                  << "(%rsp)\n";
+        std::cout << "    pushq" << " " << stackOperand->getOffset() << "("
+                  << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto regOperand =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
@@ -516,7 +518,8 @@ void PrettyPrinters::printAssyUnaryInstruction(
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        std::cout << " " << stackOperand->getOffset() << "(%rsp)\n";
+        std::cout << " " << stackOperand->getOffset() << "("
+                  << stackOperand->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -550,7 +553,8 @@ void PrettyPrinters::printAssyBinaryInstruction(
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
-        std::cout << " " << operand1Stack->getOffset() << "(%rsp),";
+        std::cout << " " << operand1Stack->getOffset() << "("
+                  << operand1Stack->getReservedRegisterInStr() << "),";
     }
 
     auto operand2 = binaryInstruction->getOperand2();
@@ -560,7 +564,8 @@ void PrettyPrinters::printAssyBinaryInstruction(
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
-        std::cout << " " << operand2Stack->getOffset() << "(%rsp)\n";
+        std::cout << " " << operand2Stack->getOffset() << "("
+                  << operand2Stack->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -580,7 +585,8 @@ void PrettyPrinters::printAssyCmpInstruction(
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
-        std::cout << " " << operand1Stack->getOffset() << "(%rsp)";
+        std::cout << " " << operand1Stack->getOffset() << "("
+                  << operand1Stack->getReservedRegisterInStr() << ")";
     }
 
     std::cout << ",";
@@ -592,7 +598,8 @@ void PrettyPrinters::printAssyCmpInstruction(
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
-        std::cout << " " << operand2Stack->getOffset() << "(%rsp)\n";
+        std::cout << " " << operand2Stack->getOffset() << "("
+                  << operand2Stack->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -607,7 +614,8 @@ void PrettyPrinters::printAssyIdivInstruction(
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        std::cout << " " << stackOperand->getOffset() << "(%rsp)\n";
+        std::cout << " " << stackOperand->getOffset() << "("
+                  << stackOperand->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -674,7 +682,8 @@ void PrettyPrinters::printAssySetCCInstruction(
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        std::cout << " " << stackOperand->getOffset() << "(%rsp)\n";
+        std::cout << " " << stackOperand->getOffset() << "("
+                  << stackOperand->getReservedRegisterInStr() << ")\n";
     }
 }
 

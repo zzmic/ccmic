@@ -296,7 +296,8 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
-        assemblyFileStream << "    movl " << srcStack->getOffset() << "(%rsp)";
+        assemblyFileStream << "    movl " << srcStack->getOffset() << "("
+                           << srcStack->getReservedRegisterInStr() << ")";
     }
 
     auto dst = movInstruction->getDst();
@@ -307,7 +308,8 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
-        assemblyFileStream << ", " << dstStack->getOffset() << "(%rsp)\n";
+        assemblyFileStream << ", " << dstStack->getOffset() << "("
+                           << dstStack->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -347,7 +349,8 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
     if (auto stackOperand =
             std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
         assemblyFileStream << "    pushq" << " " << stackOperand->getOffset()
-                           << "(%rsp)\n";
+                           << "(" << stackOperand->getReservedRegisterInStr()
+                           << ")\n";
     }
     else if (auto regOperand =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
@@ -404,7 +407,8 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        assemblyFileStream << " " << stackOperand->getOffset() << "(%rsp)\n";
+        assemblyFileStream << " " << stackOperand->getOffset() << "("
+                           << stackOperand->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -440,7 +444,8 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
-        assemblyFileStream << " " << operand1Stack->getOffset() << "(%rsp),";
+        assemblyFileStream << " " << operand1Stack->getOffset() << "("
+                           << operand1Stack->getReservedRegisterInStr() << "),";
     }
 
     auto operand2 = binaryInstruction->getOperand2();
@@ -451,7 +456,9 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
-        assemblyFileStream << " " << operand2Stack->getOffset() << "(%rsp)\n";
+        assemblyFileStream << " " << operand2Stack->getOffset() << "("
+                           << operand2Stack->getReservedRegisterInStr()
+                           << ")\n";
     }
 }
 
@@ -472,7 +479,8 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
-        assemblyFileStream << " " << operand1Stack->getOffset() << "(%rsp)";
+        assemblyFileStream << " " << operand1Stack->getOffset() << "("
+                           << operand1Stack->getReservedRegisterInStr() << ")";
     }
 
     assemblyFileStream << ",";
@@ -485,7 +493,9 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
-        assemblyFileStream << " " << operand2Stack->getOffset() << "(%rsp)\n";
+        assemblyFileStream << " " << operand2Stack->getOffset() << "("
+                           << operand2Stack->getReservedRegisterInStr()
+                           << ")\n";
     }
 }
 
@@ -502,7 +512,8 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        assemblyFileStream << " " << stackOperand->getOffset() << "(%rsp)\n";
+        assemblyFileStream << " " << stackOperand->getOffset() << "("
+                           << stackOperand->getReservedRegisterInStr() << ")\n";
     }
 }
 
@@ -576,7 +587,8 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        assemblyFileStream << " " << stackOperand->getOffset() << "(%rsp)\n";
+        assemblyFileStream << " " << stackOperand->getOffset() << "("
+                           << stackOperand->getReservedRegisterInStr() << ")\n";
     }
 }
 
