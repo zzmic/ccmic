@@ -11,14 +11,14 @@ BIN_DIR = bin
 
 # Source files.
 SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
-          $(wildcard $(MIDEND_DIR)/*.cpp) \
-          $(wildcard $(BACKEND_DIR)/*.cpp) \
-          $(wildcard $(SRC_DIR)/*.cpp)
+		  $(wildcard $(MIDEND_DIR)/*.cpp) \
+		  $(wildcard $(BACKEND_DIR)/*.cpp) \
+		  $(wildcard $(SRC_DIR)/*.cpp)
 # Header files.
 HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
-          $(wildcard $(MIDEND_DIR)/*.h) \
-          $(wildcard $(BACKEND_DIR)/*.h) \
-          $(wildcard $(SRC_DIR)/*.h)
+		  $(wildcard $(MIDEND_DIR)/*.h) \
+		  $(wildcard $(BACKEND_DIR)/*.h) \
+		  $(wildcard $(SRC_DIR)/*.h)
 # Object files.
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 # Executable file.
@@ -37,6 +37,7 @@ $(BIN_DIR):
 # but changes to this directory won't trigger a rebuild of the object files.
 # https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html.
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
+	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Link the object files to create the executable.
