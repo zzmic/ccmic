@@ -158,7 +158,7 @@ void PseudoToStackPass::replaceOperand(
         }
 
         operand = std::make_shared<Assembly::StackOperand>(
-            pseudoToStackMap[pseudoRegister]);
+            pseudoToStackMap[pseudoRegister], std::make_shared<Assembly::SP>());
     }
 }
 } // namespace Assembly

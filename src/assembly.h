@@ -33,6 +33,12 @@ class R10 : public Register {};
 
 class R11 : public Register {};
 
+class ReservedRegister : public Register {};
+
+class SP : public ReservedRegister {};
+
+class BP : public ReservedRegister {};
+
 class Operand {
   public:
     virtual ~Operand() = default;
@@ -41,6 +47,9 @@ class Operand {
     };
     virtual std::shared_ptr<Register> getRegister() const {
         throw std::runtime_error("Operand is not a register");
+    };
+    virtual std::shared_ptr<ReservedRegister> getReservedRegister() const {
+        throw std::runtime_error("Operand is not a reserved register");
     };
     virtual std::string getPseudoRegister() const {
         throw std::runtime_error("Operand is not a pseudo register");
@@ -156,10 +165,15 @@ class PseudoRegisterOperand : public Operand {
 class StackOperand : public Operand {
   private:
     int offset;
+    std::shared_ptr<ReservedRegister> reservedReg;
 
   public:
-    StackOperand(int offset) : offset(offset) {}
+    StackOperand(int offset, std::shared_ptr<ReservedRegister> reservedReg)
+        : offset(offset), reservedReg(reservedReg) {}
     int getOffset() const override { return offset; }
+    std::shared_ptr<ReservedRegister> getReservedRegister() const override {
+        return reservedReg;
+    }
 };
 
 class CondCode {

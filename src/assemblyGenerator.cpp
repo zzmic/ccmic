@@ -17,10 +17,39 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
         auto functionBody = irFunctionDefinition->getFunctionBody();
         auto instructions =
             std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
-        // Note: Parameters (in their string representations) are not needed to
-        // be stored in the instance of the `Assembly::FunctionDefinition`.
-        // They (in `irInstruction`) will be later converted to stack operands
-        // in `convertIRFunctionCallInstructionToAssy`.
+
+        // Generate instructions to move parameters from registers to the stack.
+        auto irParameters = irFunctionDefinition->getParameters();
+        if (irParameters->size() > 0) {
+            std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
+                                                          "CX", "R8", "R9"};
+            int registerIndex = 0;
+            for (std::size_t i = 0; i < irParameters->size(); i++) {
+                auto irParam = irParameters->at(i);
+                auto irParamOperand =
+                    std::make_shared<Assembly::PseudoRegisterOperand>(irParam);
+                if (i < 6) { // First six parameters from registers.
+                    auto registerOperand =
+                        std::make_shared<Assembly::RegisterOperand>(
+                            argRegistersInStr[registerIndex]);
+                    instructions->emplace_back(
+                        std::make_shared<Assembly::MovInstruction>(
+                            registerOperand, irParamOperand));
+                    ++registerIndex;
+                }
+                else { // Remaining parameters from the stack.
+                    // Calculate the offset from the base pointer.
+                    auto stackOffset = 8 * (i - 6 + 1);
+                    auto stackOperand =
+                        std::make_shared<Assembly::StackOperand>(
+                            stackOffset, std::make_shared<Assembly::BP>());
+                    instructions->emplace_back(
+                        std::make_shared<Assembly::MovInstruction>(
+                            stackOperand, irParamOperand));
+                }
+            }
+        }
+
         auto assyFunctionDefinition = std::make_shared<FunctionDefinition>(
             functionIdentifier, instructions);
         for (auto irInstruction : *functionBody) {
@@ -387,7 +416,8 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     // Pass the arguments on the stack.
     std::reverse(
         irStackArgs->begin(),
-        irStackArgs->end()); // Reverse the order of the stack arguments.
+        irStackArgs->end()); // Reverse the order of the stack arguments since
+                             // they should be pushed in the reverse order.
     for (auto irStackArg : *irStackArgs) {
         auto assyStackArg = convertValue(irStackArg);
         if (std::dynamic_pointer_cast<Assembly::RegisterOperand>(
