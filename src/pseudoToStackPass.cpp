@@ -10,7 +10,7 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
     // Replace pseudo registers with stack operands in each instruction and
     // associate the stack size with each function.
     for (auto functionDefinition : *functionDefinitions) {
-        auto offset = 0;
+        auto offset = -4;
         for (auto instruction : *functionDefinition->getFunctionBody()) {
             replacePseudoWithStack(instruction, pseudoToStackMap, offset);
         }

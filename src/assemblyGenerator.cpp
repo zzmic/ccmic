@@ -40,7 +40,11 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
                 }
                 else { // Remaining parameters from the stack.
                     // Calculate the offset from the base pointer.
-                    auto stackOffset = 8 * (i - 6 + 1);
+                    // `(%rbp)` stores the base pointer.
+                    // `(%rbp + 8)` stores the return address.
+                    // `(%rbp + 16)` stores the first stack parameter (if any).
+                    // ...
+                    auto stackOffset = 8 * (i - 6 + 2);
                     auto stackOperand =
                         std::make_shared<Assembly::StackOperand>(
                             stackOffset, std::make_shared<Assembly::BP>());
