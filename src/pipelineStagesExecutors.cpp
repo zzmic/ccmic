@@ -369,8 +369,12 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
 void PipelineStagesExecutors::emitAssyCallInstruction(
     std::shared_ptr<Assembly::CallInstruction> callInstruction,
     std::ofstream &assemblyFileStream) {
-    assemblyFileStream << "    call "
-                       << callInstruction->getFunctionIdentifier();
+    std::string functionName = callInstruction->getFunctionIdentifier();
+// If the underlying OS is macOS, prepend an underscore to the function name.
+#ifdef __APPLE__
+    functionName = "_" + functionName;
+#endif
+    assemblyFileStream << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
 // operand.
 #ifdef __linux__

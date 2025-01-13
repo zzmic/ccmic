@@ -321,7 +321,7 @@ void PrettyPrinters::printAssyFunctionDefinition(
     // Print the function prologue (before printing the function body).
     std::cout << "\n"
               << "    .globl " << functionName << "\n";
-    std::cout << functionDefinition->getFunctionIdentifier() << ":\n";
+    std::cout << functionName << ":\n";
     std::cout << "    pushq %rbp\n";
     std::cout << "    movq %rsp, %rbp\n";
 
@@ -483,7 +483,12 @@ void PrettyPrinters::printAssyPushInstruction(
 
 void PrettyPrinters::printAssyCallInstruction(
     std::shared_ptr<Assembly::CallInstruction> callInstruction) {
-    std::cout << "    call " << callInstruction->getFunctionIdentifier();
+    std::string functionName = callInstruction->getFunctionIdentifier();
+// If the underlying OS is macOS, prepend an underscore to the function name.
+#ifdef __APPLE__
+    functionName = "_" + functionName;
+#endif
+    std::cout << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
 // operand.
 #ifdef __linux__
