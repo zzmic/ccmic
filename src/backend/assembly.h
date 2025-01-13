@@ -1,5 +1,5 @@
-#ifndef ASSEMBLY_H
-#define ASSEMBLY_H
+#ifndef BACKEND_ASSEMBLY_H
+#define BACKEND_ASSEMBLY_H
 
 #include <memory>
 #include <stdexcept>
@@ -468,4 +468,4 @@ class Program {
 };
 } // namespace Assembly
 
-#endif // ASSEMBLY_H
+#endif // BACKEND_ASSEMBLY_H

@@ -1,5 +1,5 @@
-#ifndef BLOCK_ITEM_H
-#define BLOCK_ITEM_H
+#ifndef FRONDEND_BLOCK_ITEM_H
+#define FRONDEND_BLOCK_ITEM_H
 
 #include "ast.h"
 #include "declaration.h"
@@ -31,4 +31,4 @@ class DBlockItem : public BlockItem {
 };
 } // namespace AST
 
-#endif // BLOCK_ITEM_H
+#endif // FRONDEND_BLOCK_ITEM_H

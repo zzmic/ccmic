@@ -1,5 +1,5 @@
-#ifndef OPERATOR_H
-#define OPERATOR_H
+#ifndef FRONTEND_OPERATOR_H
+#define FRONTEND_OPERATOR_H
 
 #include "ast.h"
 #include <string>
@@ -114,4 +114,4 @@ class AssignmentOperator : public BinaryOperator {
 };
 } // Namespace AST
 
-#endif // OPERATOR_H
+#endif // FRONTEND_OPERATOR_H

@@ -1,5 +1,5 @@
-#ifndef TYPES_H
-#define TYPES_H
+#ifndef FRONTEND_TYPES_H
+#define FRONTEND_TYPES_H
 
 #include <typeinfo>
 
@@ -48,4 +48,4 @@ class FunctionType : public Type {
     int numParameters;
 };
 
-#endif // TYPES_H
+#endif // FRONTEND_TYPES_H

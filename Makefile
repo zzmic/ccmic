@@ -4,27 +4,32 @@ CXXFLAGS = -Wall -Wextra -std=c++20
 
 # Directories.
 SRC_DIR = src
+FRONTEND_DIR = $(SRC_DIR)/frontend
+MIDEND_DIR = $(SRC_DIR)/midend
+BACKEND_DIR = $(SRC_DIR)/backend
 BIN_DIR = bin
 
 # Source files.
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
+          $(wildcard $(MIDEND_DIR)/*.cpp) \
+          $(wildcard $(BACKEND_DIR)/*.cpp) \
+          $(wildcard $(SRC_DIR)/*.cpp)
 # Header files.
-HEADERS = $(wildcard $(SRC_DIR)/*.h)
+HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
+          $(wildcard $(MIDEND_DIR)/*.h) \
+          $(wildcard $(BACKEND_DIR)/*.h) \
+          $(wildcard $(SRC_DIR)/*.h)
 # Object files.
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 # Executable file.
 EXECUTABLE = $(BIN_DIR)/main
 
 # Default target.
-all: $(EXECUTABLE)
+all: $(BIN_DIR) $(EXECUTABLE)
 
 # Create the `bin` directory if it does not exist.
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
-
-# Link the object files to create the executable.
-$(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@
 
 # Compile the source files to object files.
 # The `|` symbol indicates that the `$(BIN_DIR)` directory must exist
@@ -33,6 +38,10 @@ $(EXECUTABLE): $(OBJECTS)
 # https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html.
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Link the object files to create the executable.
+$(EXECUTABLE): $(OBJECTS)
+	$(CXX) $(OBJECTS) -o $@
 
 # Format the source files and the header files.
 format:

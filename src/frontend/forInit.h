@@ -1,5 +1,5 @@
-#ifndef FOR_INIT_H
-#define FOR_INIT_H
+#ifndef FRONTEND_FOR_INIT_H
+#define FRONTEND_FOR_INIT_H
 
 #include "ast.h"
 #include "declaration.h"
@@ -30,4 +30,4 @@ class InitExpr : public ForInit {
 };
 } // Namespace AST
 
-#endif // FOR_INIT_H
+#endif // FRONTEND_FOR_INIT_H

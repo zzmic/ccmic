@@ -1,5 +1,5 @@
-#ifndef STATEMENT_H
-#define STATEMENT_H
+#ifndef FRONTEND_STATEMENT_H
+#define FRONTEND_STATEMENT_H
 
 #include "ast.h"
 #include "block.h"
@@ -142,4 +142,4 @@ class NullStatement : public Statement {
 };
 } // Namespace AST
 
-#endif // STATEMENT_H
+#endif // FRONTEND_STATEMENT_H

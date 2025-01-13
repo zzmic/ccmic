@@ -1,17 +1,17 @@
 #ifndef PIPELINE_STAGES_EXECUTORS_H
 #define PIPELINE_STAGES_EXECUTORS_H
 
-#include "assembly.h"
-#include "assemblyGenerator.h"
+#include "backend/assembly.h"
+#include "backend/assemblyGenerator.h"
+#include "backend/fixupPass.h"
+#include "backend/pseudoToStackPass.h"
 #include "compilerDriver.h"
-#include "fixupPass.h"
-#include "ir.h"
-#include "irGenerator.h"
-#include "lexer.h"
-#include "parser.h"
-#include "printVisitor.h"
-#include "pseudoToStackPass.h"
-#include "semanticAnalysisPasses.h"
+#include "frontend/lexer.h"
+#include "frontend/parser.h"
+#include "frontend/printVisitor.h"
+#include "frontend/semanticAnalysisPasses.h"
+#include "midend/ir.h"
+#include "midend/irGenerator.h"
 #include <filesystem>
 #include <fstream>
 #include <iostream>

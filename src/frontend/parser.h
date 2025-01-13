@@ -1,5 +1,5 @@
-#ifndef PARSER_H
-#define PARSER_H
+#ifndef FRONTEND_PARSER_H
+#define FRONTEND_PARSER_H
 
 #include "ast.h"
 #include "declaration.h"
@@ -47,4 +47,4 @@ class Parser {
 };
 } // Namespace AST
 
-#endif // PARSER_H
+#endif // FRONTEND_PARSER_H

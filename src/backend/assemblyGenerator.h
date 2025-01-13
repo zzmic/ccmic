@@ -1,9 +1,9 @@
-#ifndef ASSEMBLY_GENERATOR_H
-#define ASSEMBLY_GENERATOR_H
+#ifndef BACKEND_ASSEMBLY_GENERATOR_H
+#define BACKEND_ASSEMBLY_GENERATOR_H
 
+#include "../frontend/types.h"
+#include "../midend/ir.h"
 #include "assembly.h"
-#include "ir.h"
-#include "types.h"
 #include <unordered_map>
 
 namespace Assembly {
@@ -63,4 +63,4 @@ class AssemblyGenerator {
 };
 } // namespace Assembly
 
-#endif // ASSEMBLY_GENERATOR_H
+#endif // BACKEND_ASSEMBLY_GENERATOR_H

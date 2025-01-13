@@ -1,5 +1,5 @@
-#ifndef LEXER_H
-#define LEXER_H
+#ifndef FRONTEND_LEXER_H
+#define FRONTEND_LEXER_H
 
 #include <iostream>
 #include <regex>
@@ -63,4 +63,4 @@ std::vector<Token> lexer(const std::string &input);
 void printTokens(const std::vector<Token> &tokens);
 std::string tokenTypeToString(TokenType type);
 
-#endif // LEXER_H
+#endif // FRONTEND_LEXER_H

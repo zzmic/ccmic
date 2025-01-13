@@ -1,5 +1,5 @@
-#ifndef BLOCK_H
-#define BLOCK_H
+#ifndef FRONTEND_BLOCK_H
+#define FRONTEND_BLOCK_H
 
 #include "blockItem.h"
 #include <vector>
@@ -20,4 +20,4 @@ class Block : public AST {
 };
 } // namespace AST
 
-#endif // BLOCK_H
+#endif // FRONTEND_BLOCK_H

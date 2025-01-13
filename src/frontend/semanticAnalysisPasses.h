@@ -1,8 +1,10 @@
-#ifndef SEMANTIC_ANALYSIS_PASSES_H
-#define SEMANTIC_ANALYSIS_PASSES_H
+#ifndef FRONTEND_SEMANTIC_ANALYSIS_PASSES_H
+#define FRONTEND_SEMANTIC_ANALYSIS_PASSES_H
 
 #include "declaration.h"
+#include "expression.h"
 #include "program.h"
+#include "statement.h"
 #include "types.h"
 #include <unordered_map>
 
@@ -94,4 +96,4 @@ class LoopLabelingPass : public SemanticAnalysisPass {
 };
 } // namespace AST
 
-#endif // SEMANTIC_ANALYSIS_PASSES_H
+#endif // FRONTEND_SEMANTIC_ANALYSIS_PASSES_H

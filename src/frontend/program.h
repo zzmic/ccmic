@@ -1,5 +1,5 @@
-#ifndef PROGRAM_H
-#define PROGRAM_H
+#ifndef FRONTEND_PROGRAM_H
+#define FRONTEND_PROGRAM_H
 
 #include "ast.h"
 #include "function.h"
@@ -23,4 +23,4 @@ class Program : public AST {
 };
 } // Namespace AST
 
-#endif // PROGRAM_H
+#endif // FRONTEND_PROGRAM_H

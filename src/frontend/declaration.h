@@ -1,5 +1,5 @@
-#ifndef DECLARATION_H
-#define DECLARATION_H
+#ifndef FRONTEND_DECLARATION_H
+#define FRONTEND_DECLARATION_H
 
 #include "ast.h"
 #include "expression.h"
@@ -43,4 +43,4 @@ class FunctionDeclaration : public Declaration {
 };
 } // Namespace AST
 
-#endif // DECLARATION_H
+#endif // FRONTEND_DECLARATION_H

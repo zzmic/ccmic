@@ -1,5 +1,5 @@
-#ifndef EXPRESSION_H
-#define EXPRESSION_H
+#ifndef FRONTEND_EXPRESSION_H
+#define FRONTEND_EXPRESSION_H
 
 #include "ast.h"
 #include "operator.h"
@@ -111,4 +111,4 @@ class FunctionCallExpression : public Expression {
 };
 } // Namespace AST
 
-#endif // EXPRESSION_H
+#endif // FRONTEND_EXPRESSION_H

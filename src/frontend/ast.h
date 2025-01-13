@@ -1,5 +1,5 @@
-#ifndef AST_H
-#define AST_H
+#ifndef FRONTEND_AST_H
+#define FRONTEND_AST_H
 
 #include "visitor.h"
 
@@ -14,4 +14,4 @@ class AST {
 };
 } // Namespace AST
 
-#endif // AST_H
+#endif // FRONTEND_AST_H

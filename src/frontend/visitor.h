@@ -6,8 +6,8 @@
  * themselves For each AST node, its interface will declare an accept method
  * that takes a visitor as an argument.
  */
-#ifndef VISITOR_H
-#define VISITOR_H
+#ifndef FRONTEND_VISITOR_H
+#define FRONTEND_VISITOR_H
 
 namespace AST {
 // Forward declarations of AST nodes/classes.
@@ -115,4 +115,4 @@ class Visitor {
 };
 } // Namespace AST
 
-#endif // VISITOR_H
+#endif // FRONTEND_VISITOR_H

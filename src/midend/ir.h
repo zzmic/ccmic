@@ -1,5 +1,5 @@
-#ifndef IR_H
-#define IR_H
+#ifndef MIDEND_IR_H
+#define MIDEND_IR_H
 
 #include <memory>
 #include <set>
@@ -272,4 +272,4 @@ class Program {
 };
 } // namespace IR
 
-#endif // IR_H
+#endif // MIDEND_IR_H

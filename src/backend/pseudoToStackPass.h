@@ -1,5 +1,5 @@
-#ifndef PSEUDO_TO_STACK_PASS_H
-#define PSEUDO_TO_STACK_PASS_H
+#ifndef BACKEND_PSEUDO_TO_STACK_PASS_H
+#define BACKEND_PSEUDO_TO_STACK_PASS_H
 
 #include "assembly.h"
 #include <unordered_map>
@@ -22,4 +22,4 @@ class PseudoToStackPass {
 };
 } // namespace Assembly
 
-#endif // PSEUDO_TO_STACK_PASS_H
+#endif // BACKEND_PSEUDO_TO_STACK_PASS_H

@@ -1,5 +1,5 @@
-#ifndef PRINT_VISITOR_H
-#define PRINT_VISITOR_H
+#ifndef FRONTEND_PRINT_VISITOR_H
+#define FRONTEND_PRINT_VISITOR_H
 
 #include "visitor.h"
 #include <iostream>
@@ -53,4 +53,4 @@ class PrintVisitor : public Visitor {
 };
 } // namespace AST
 
-#endif // PRINT_VISITOR_H
+#endif // FRONTEND_PRINT_VISITOR_H

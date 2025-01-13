@@ -1,5 +1,5 @@
-#ifndef FIXUP_PASS_H
-#define FIXUP_PASS_H
+#ifndef BACKEND_FIXUP_PASS_H
+#define BACKEND_FIXUP_PASS_H
 
 #include "assembly.h"
 #include <memory>
@@ -48,4 +48,4 @@ class FixupPass {
 };
 } // Namespace Assembly
 
-#endif // FIXUP_PASS_H
+#endif // BACKEND_FIXUP_PASS_H

@@ -1,14 +1,14 @@
-#ifndef IR_GENERATOR_H
-#define IR_GENERATOR_H
+#ifndef MIDEND_IR_GENERATOR_H
+#define MIDEND_IR_GENERATOR_H
 
-#include "block.h"
-#include "declaration.h"
-#include "expression.h"
-#include "function.h"
+#include "../frontend/block.h"
+#include "../frontend/declaration.h"
+#include "../frontend/expression.h"
+#include "../frontend/function.h"
+#include "../frontend/program.h"
+#include "../frontend/statement.h"
+#include "../frontend/types.h"
 #include "ir.h"
-#include "program.h"
-#include "statement.h"
-#include "types.h"
 #include <optional>
 #include <unordered_map>
 
@@ -136,4 +136,4 @@ class IRGenerator {
 };
 } // namespace IR
 
-#endif // IR_GENERATOR_H
+#endif // MIDEND_IR_GENERATOR_H

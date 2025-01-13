@@ -1,5 +1,5 @@
-#ifndef FUNCTION_H
-#define FUNCTION_H
+#ifndef FRONTEND_FUNCTION_H
+#define FRONTEND_FUNCTION_H
 
 #include "ast.h"
 #include "block.h"
@@ -23,4 +23,4 @@ class Function : public AST {
 };
 } // Namespace AST
 
-#endif // FUNCTION_H
+#endif // FRONTEND_FUNCTION_H

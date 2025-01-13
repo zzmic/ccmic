@@ -1,8 +1,8 @@
 #ifndef PRETTY_PRINTERS_H
 #define PRETTY_PRINTERS_H
 
-#include "assembly.h"
-#include "ir.h"
+#include "backend/assembly.h"
+#include "midend/ir.h"
 #include <iostream>
 
 class PrettyPrinters {
