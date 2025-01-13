@@ -18,6 +18,14 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
 
     // Generate IR instructions for each function declaration.
     for (auto &functionDeclaration : *functionDeclarations) {
+        // Get the body of the function declaration.
+        auto optBody = functionDeclaration->getOptBody();
+
+        // Skip generating IR instructions for forward declarations.
+        if (!optBody.has_value()) {
+            continue;
+        }
+
         // Create a new vector of IR instructions for the function.
         auto instructions =
             std::make_shared<std::vector<std::shared_ptr<IR::Instruction>>>();
@@ -25,12 +33,8 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
         // Get the parameters of the function declaration.
         auto parameters = functionDeclaration->getParameters();
 
-        // Get the body of the function declaration.
-        auto optBody = functionDeclaration->getOptBody();
-        if (optBody.has_value()) {
-            // Generate IR instructions for the body of the function.
-            generateIRBlock(optBody.value(), instructions);
-        }
+        // Generate IR instructions for the body of the function.
+        generateIRBlock(optBody.value(), instructions);
 
         // Create a new IR function definition with the function identifier,
         // the parameters, and the vector of IR instructions.
@@ -103,7 +107,7 @@ void IRGenerator::generateIRFunctionDefinition(
         generateIRBlock(optBody.value(), instructions);
     }
     // Otherwise (i.e., if the function does not have a body), we do not need
-    // to generate any IR instructions.
+    // to generate any IR instructions for now.
 }
 
 void IRGenerator::generateIRVariableDefinition(

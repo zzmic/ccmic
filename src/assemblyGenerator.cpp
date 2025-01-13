@@ -35,7 +35,7 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
                     instructions->emplace_back(
                         std::make_shared<Assembly::MovInstruction>(
                             registerOperand, irParamOperand));
-                    ++registerIndex;
+                    registerIndex++;
                 }
                 else { // Remaining parameters from the stack.
                     // Calculate the offset from the base pointer.
