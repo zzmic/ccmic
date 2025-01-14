@@ -17,6 +17,8 @@ const std::regex whileKeyword_regex(R"(^while\b)");
 const std::regex forKeyword_regex(R"(^for\b)");
 const std::regex breakKeyword_regex(R"(^break\b)");
 const std::regex continueKeyword_regex(R"(^continue\b)");
+const std::regex staticKeyword_regex(R"(^static\b)");
+const std::regex externKeyword_regex(R"(^extern\b)");
 const std::regex comma_regex(R"(^\,)");
 const std::regex questionMark_regex(R"(^\?)");
 const std::regex colon_regex(R"(^\:)");
@@ -89,6 +91,10 @@ Token matchToken(const std::string &input) {
         return {TokenType::breakKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, continueKeyword_regex))
         return {TokenType::continueKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, staticKeyword_regex))
+        return {TokenType::staticKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, externKeyword_regex))
+        return {TokenType::externKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, comma_regex))
         return {TokenType::Comma, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, questionMark_regex))
@@ -263,6 +269,12 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::continueKeyword:
             typeStr = "continueKeyword";
             break;
+        case TokenType::staticKeyword:
+            typeStr = "staticKeyword";
+            break;
+        case TokenType::externKeyword:
+            typeStr = "externKeyword";
+            break;
         case TokenType::Comma:
             typeStr = "Comma";
             break;
@@ -397,6 +409,12 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::continueKeyword:
         typeStr = "continueKeyword";
+        break;
+    case TokenType::staticKeyword:
+        typeStr = "staticKeyword";
+        break;
+    case TokenType::externKeyword:
+        typeStr = "externKeyword";
         break;
     case TokenType::Comma:
         typeStr = "Comma";
