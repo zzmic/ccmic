@@ -13,8 +13,18 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
     auto functionDefinitions = std::make_shared<
         std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
 
-    // Get the function declarations from the AST program.
-    auto functionDeclarations = astProgram->getFunctionDeclarations();
+    // Get the declarations from the AST program.
+    auto declarations = astProgram->getDeclarations();
+    // TODO(zzmic): This is a temporary solution.
+    std::shared_ptr<std::vector<std::shared_ptr<AST::FunctionDeclaration>>>
+        functionDeclarations;
+    for (auto &declaration : *declarations) {
+        if (auto functionDeclaration =
+                std::dynamic_pointer_cast<AST::FunctionDeclaration>(
+                    declaration)) {
+            functionDeclarations->emplace_back(functionDeclaration);
+        }
+    }
 
     // Generate IR instructions for each function declaration.
     for (auto &functionDeclaration : *functionDeclarations) {

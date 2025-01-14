@@ -7,8 +7,20 @@ VariableDeclaration::VariableDeclaration(const std::string &identifier)
 
 VariableDeclaration::VariableDeclaration(
     const std::string &identifier,
-    std::optional<std::shared_ptr<Expression>> initializer)
-    : identifier(identifier), optInitializer(initializer) {}
+    std::optional<std::shared_ptr<Expression>> optInitializer)
+    : identifier(identifier), optInitializer(optInitializer) {}
+
+VariableDeclaration::VariableDeclaration(
+    const std::string &identifier,
+    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
+    : identifier(identifier), optStorageClass(optStorageClass) {}
+
+VariableDeclaration::VariableDeclaration(
+    const std::string &identifier,
+    std::optional<std::shared_ptr<Expression>> optInitializer,
+    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
+    : identifier(identifier), optInitializer(optInitializer),
+      optStorageClass(optStorageClass) {}
 
 void VariableDeclaration::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -21,6 +33,11 @@ VariableDeclaration::getOptInitializer() const {
     return optInitializer;
 }
 
+std::optional<std::shared_ptr<StorageClass>>
+VariableDeclaration::getOptStorageClass() const {
+    return optStorageClass;
+}
+
 FunctionDeclaration::FunctionDeclaration(
     const std::string &identifier,
     std::shared_ptr<std::vector<std::string>> parameters)
@@ -31,6 +48,21 @@ FunctionDeclaration::FunctionDeclaration(
     std::shared_ptr<std::vector<std::string>> parameters,
     std::optional<std::shared_ptr<Block>> optBody)
     : identifier(identifier), parameters(parameters), optBody(optBody) {}
+
+FunctionDeclaration::FunctionDeclaration(
+    const std::string &identifier,
+    std::shared_ptr<std::vector<std::string>> parameters,
+    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
+    : identifier(identifier), parameters(parameters),
+      optStorageClass(optStorageClass) {}
+
+FunctionDeclaration::FunctionDeclaration(
+    const std::string &identifier,
+    std::shared_ptr<std::vector<std::string>> parameters,
+    std::optional<std::shared_ptr<Block>> optBody,
+    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
+    : identifier(identifier), parameters(parameters), optBody(optBody),
+      optStorageClass(optStorageClass) {}
 
 void FunctionDeclaration::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -50,5 +82,15 @@ std::optional<std::shared_ptr<Block>> FunctionDeclaration::getOptBody() const {
 void FunctionDeclaration::setOptBody(
     std::optional<std::shared_ptr<Block>> optBody) {
     this->optBody = optBody;
+}
+
+std::optional<std::shared_ptr<StorageClass>>
+FunctionDeclaration::getOptStorageClass() const {
+    return optStorageClass;
+}
+
+void FunctionDeclaration::setOptStorageClass(
+    std::optional<std::shared_ptr<StorageClass>> optStorageClass) {
+    this->optStorageClass = optStorageClass;
 }
 } // Namespace AST

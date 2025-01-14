@@ -3,19 +3,18 @@
 
 namespace AST {
 Program::Program(
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-        functionDeclarations)
-    : functionDeclarations(functionDeclarations) {}
+    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations)
+    : declarations(declarations) {}
 
 void Program::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-Program::getFunctionDeclarations() const {
-    return functionDeclarations;
+std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+Program::getDeclarations() const {
+    return declarations;
 }
-void Program::setFunctionDeclarations(
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-        functionDeclarations) {
-    this->functionDeclarations = functionDeclarations;
+
+void Program::setDeclarations(
+    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations) {
+    this->declarations = declarations;
 }
 } // Namespace AST

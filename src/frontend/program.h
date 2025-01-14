@@ -8,18 +8,17 @@
 namespace AST {
 class Program : public AST {
   public:
-    Program(std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-                functionDeclarations);
+    Program(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+                declarations);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-    getFunctionDeclarations() const;
-    void setFunctionDeclarations(
-        std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-            functionDeclarations);
+    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+    getDeclarations() const;
+    void
+    setDeclarations(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+                        declarations);
 
   private:
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDeclaration>>>
-        functionDeclarations;
+    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations;
 };
 } // Namespace AST
 

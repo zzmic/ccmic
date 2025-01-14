@@ -13,13 +13,12 @@ namespace AST {
 void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
-    if (program.getFunctionDeclarations()) {
-        auto &functionDeclarations = *program.getFunctionDeclarations();
-        for (auto it = functionDeclarations.begin();
-             it != functionDeclarations.end(); it++) {
+    if (program.getDeclarations()) {
+        auto &declarations = *program.getDeclarations();
+        for (auto it = declarations.begin(); it != declarations.end(); it++) {
             auto &functionDeclaration = *it;
             functionDeclaration->accept(*this);
-            bool isLast = (std::next(it) == functionDeclarations.end());
+            bool isLast = (std::next(it) == declarations.end());
             if (!isLast) {
                 std::cout << ",\n";
             }
@@ -29,7 +28,7 @@ void PrintVisitor::visit(Program &program) {
         }
     }
     else {
-        throw std::runtime_error("Null function declarations in program");
+        throw std::runtime_error("Null declarations in program");
     }
 
     std::cout << ")\n";
@@ -116,6 +115,11 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         declaration.getOptInitializer().value()->accept(*this);
     }
 
+    if (declaration.getOptStorageClass().has_value()) {
+        std::cout << "\nstorageClass=";
+        declaration.getOptStorageClass().value()->accept(*this);
+    }
+
     std::cout << "\n)";
 }
 
@@ -149,7 +153,22 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
         functionDeclaration.getOptBody().value()->accept(*this);
     }
 
+    if (functionDeclaration.getOptStorageClass().has_value()) {
+        std::cout << "\nstorageClass=";
+        functionDeclaration.getOptStorageClass().value()->accept(*this);
+    }
+
     std::cout << "\n)";
+}
+
+void PrintVisitor::visit(StaticStorageClass &staticStorageClass) {
+    (void)staticStorageClass;
+    std::cout << "StaticStorageClass()";
+}
+
+void PrintVisitor::visit(ExternStorageClass &externStorageClass) {
+    (void)externStorageClass;
+    std::cout << "ExternStorageClass()";
 }
 
 void PrintVisitor::visit(InitDecl &initDecl) {

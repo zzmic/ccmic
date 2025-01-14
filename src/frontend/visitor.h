@@ -20,6 +20,9 @@ class DBlockItem;
 class Declaration;
 class VariableDeclaration;
 class FunctionDeclaration;
+class StorageClass;
+class StaticStorageClass;
+class ExternStorageClass;
 class ForInit;
 class InitDecl;
 class InitExpr;
@@ -75,6 +78,8 @@ class Visitor {
     virtual void visit(DBlockItem &dBlockItem) = 0;
     virtual void visit(VariableDeclaration &declaration) = 0;
     virtual void visit(FunctionDeclaration &functionDeclaration) = 0;
+    virtual void visit(StaticStorageClass &staticStorageClass) = 0;
+    virtual void visit(ExternStorageClass &externStorageClass) = 0;
     virtual void visit(InitDecl &initDecl) = 0;
     virtual void visit(InitExpr &initExpr) = 0;
     virtual void visit(ReturnStatement &returnStatement) = 0;

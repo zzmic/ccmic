@@ -12,16 +12,23 @@ int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
     // that each identifier map is corresponding to a specific block.
     auto identifierMap = std::unordered_map<std::string, MapEntry>();
 
-    // At the top level, resolve the list of function declarations in the
+    // At the top level, resolve the list of declarations in the
     // program.
-    auto resolvedFunctionDeclarations =
-        std::make_shared<std::vector<std::shared_ptr<FunctionDeclaration>>>();
-    for (auto &functionDeclaration : *program->getFunctionDeclarations()) {
-        auto resolvedFunctionDeclaration =
-            resolveFunctionDeclaration(functionDeclaration, identifierMap);
-        resolvedFunctionDeclarations->emplace_back(resolvedFunctionDeclaration);
+    auto resolvedDeclarations =
+        std::make_shared<std::vector<std::shared_ptr<Declaration>>>();
+    for (auto &declaration : *program->getDeclarations()) {
+        // TODO(zzmic): This is a temporary solution.
+        if (auto functionDeclaration =
+                std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
+            auto resolvedFunctionDeclaration =
+                resolveFunctionDeclaration(functionDeclaration, identifierMap);
+            resolvedDeclarations->emplace_back(resolvedFunctionDeclaration);
+        }
     }
-    program->setFunctionDeclarations(resolvedFunctionDeclarations);
+    // TODO(zzmic): This is a temporary solution.
+    program->setDeclarations(
+        std::static_pointer_cast<std::vector<std::shared_ptr<Declaration>>>(
+            resolvedDeclarations));
 
     return this->variableResolutionCounter;
 }
@@ -443,8 +450,12 @@ std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
 TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
     symbols = std::unordered_map<std::string,
                                  std::pair<std::shared_ptr<Type>, bool>>();
-    for (auto &functionDeclaration : *program->getFunctionDeclarations()) {
-        typeCheckFunctionDeclaration(functionDeclaration);
+    for (auto &declaration : *program->getDeclarations()) {
+        // TODO(zzmic): This is a temporary solution.
+        if (auto functionDeclaration =
+                std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
+            typeCheckFunctionDeclaration(functionDeclaration);
+        }
     }
     // The symbol table "will need to be accessible in later compiler passes."
     return symbols;
@@ -656,11 +667,16 @@ void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
  * Start: Functions for the loop-labeling pass.
  */
 void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
-    for (auto &functionDeclaration : *program->getFunctionDeclarations()) {
-        if (functionDeclaration->getOptBody().has_value()) {
-            auto resolvedBody =
-                labelBlock(functionDeclaration->getOptBody().value(), "");
-            functionDeclaration->setOptBody(std::make_optional(resolvedBody));
+    for (auto &declaration : *program->getDeclarations()) {
+        // TODO(zzmic): This is a temporary solution.
+        if (auto functionDeclaration =
+                std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
+            if (functionDeclaration->getOptBody().has_value()) {
+                auto resolvedBody =
+                    labelBlock(functionDeclaration->getOptBody().value(), "");
+                functionDeclaration->setOptBody(
+                    std::make_optional(resolvedBody));
+            }
         }
     }
 }

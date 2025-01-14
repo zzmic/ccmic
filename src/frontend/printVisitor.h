@@ -14,6 +14,8 @@ class PrintVisitor : public Visitor {
     void visit(DBlockItem &dBlockItem) override;
     void visit(VariableDeclaration &variableDeclaration) override;
     void visit(FunctionDeclaration &functionDeclaration) override;
+    void visit(StaticStorageClass &staticStorageClass) override;
+    void visit(ExternStorageClass &externStorageClass) override;
     void visit(InitDecl &initDecl) override;
     void visit(InitExpr &initExpr) override;
     void visit(ReturnStatement &returnStatement) override;

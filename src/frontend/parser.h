@@ -8,6 +8,7 @@
 #include "lexer.h"
 #include "program.h"
 #include "statement.h"
+#include "types.h"
 #include <unordered_map>
 
 namespace AST {
@@ -33,9 +34,7 @@ class Parser {
     bool matchToken(TokenType type);
     Token consumeToken(TokenType type);
     void expectToken(TokenType type);
-    std::shared_ptr<Function> parseFunction();
-    std::shared_ptr<VariableDeclaration> parseVariableDeclaration();
-    std::shared_ptr<FunctionDeclaration> parseFunctionDeclaration();
+    std::shared_ptr<Declaration> parseDeclaration();
     std::shared_ptr<BlockItem> parseBlockItem();
     std::shared_ptr<Block> parseBlock();
     std::shared_ptr<ForInit> parseForInit();
@@ -43,6 +42,9 @@ class Parser {
     std::shared_ptr<Expression> parseFactor();
     std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);
     std::shared_ptr<Expression> parseConditionalMiddle();
+    std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
+    parseTypeAndStorageClass(std::vector<std::string> &specifierList);
+    std::shared_ptr<StorageClass> parseStorageClass(std::string &specifier);
     int getPrecedence(const Token &token);
 };
 } // Namespace AST

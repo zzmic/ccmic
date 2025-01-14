@@ -5,13 +5,13 @@ namespace AST {
 Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
 
 std::shared_ptr<Program> Parser::parse() {
-    auto functionDeclarations =
-        std::make_shared<std::vector<std::shared_ptr<FunctionDeclaration>>>();
+    auto declarations =
+        std::make_shared<std::vector<std::shared_ptr<Declaration>>>();
     while (current < tokens.size()) {
-        auto functionDeclaration = parseFunctionDeclaration();
-        functionDeclarations->emplace_back(std::move(functionDeclaration));
+        auto declaration = parseDeclaration();
+        declarations->emplace_back(std::move(declaration));
     }
-    return std::make_shared<Program>(std::move(functionDeclarations));
+    return std::make_shared<Program>(std::move(declarations));
 }
 
 bool Parser::matchToken(TokenType type) {
@@ -50,27 +50,10 @@ void Parser::expectToken(TokenType type) {
     consumeToken(type);
 }
 
-std::shared_ptr<Function> Parser::parseFunction() {
-    expectToken(TokenType::intKeyword);
-    auto functionNameToken = consumeToken(TokenType::Identifier);
-    expectToken(TokenType::OpenParenthesis);
-    expectToken(TokenType::voidKeyword);
-    expectToken(TokenType::CloseParenthesis);
-    auto functionBody = parseBlock();
-    if (current < tokens.size()) {
-        std::stringstream msg;
-        msg << "Malformed function: unexpected token: "
-            << tokens[current].value;
-        msg << " of type " << tokenTypeToString(tokens[current].type);
-        msg << " since the token search should be saturated";
-        throw std::runtime_error(msg.str());
-    }
-    return std::make_shared<Function>(functionNameToken.value,
-                                      std::move(functionBody));
-}
-
 std::shared_ptr<BlockItem> Parser::parseBlockItem() {
-    if (matchToken(TokenType::intKeyword)) {
+    if (matchToken(TokenType::intKeyword) ||
+        matchToken(TokenType::staticKeyword) ||
+        matchToken(TokenType::externKeyword)) {
         // Peek ahead to check if this is a function declaration.
         size_t nextIndex = current + 1;
         if (nextIndex < tokens.size() &&
@@ -81,13 +64,13 @@ std::shared_ptr<BlockItem> Parser::parseBlockItem() {
                     TokenType::OpenParenthesis) {
                 // If the sequence matches `int <identifier> (<params>)`, it's a
                 // function declaration.
-                auto functionDeclaration = parseFunctionDeclaration();
+                auto functionDeclaration = parseDeclaration();
                 return std::make_shared<DBlockItem>(
                     std::move(functionDeclaration));
             }
         }
         // Otherwise, treat it as a variable declaration.
-        auto declaration = parseVariableDeclaration();
+        auto declaration = parseDeclaration();
         return std::make_shared<DBlockItem>(std::move(declaration));
     }
     else {
@@ -108,64 +91,127 @@ std::shared_ptr<Block> Parser::parseBlock() {
     return std::make_shared<Block>(std::move(blockItems));
 }
 
-std::shared_ptr<VariableDeclaration> Parser::parseVariableDeclaration() {
-    expectToken(TokenType::intKeyword);
-    auto variableNameToken = consumeToken(TokenType::Identifier);
-    if (matchToken(TokenType::Assign)) {
-        consumeToken(TokenType::Assign);
-        auto expr = parseExpression(0);
-        expectToken(TokenType::Semicolon);
-        return std::make_shared<VariableDeclaration>(variableNameToken.value,
-                                                     std::move(expr));
-    }
-    else {
-        expectToken(TokenType::Semicolon);
-        return std::make_shared<VariableDeclaration>(variableNameToken.value);
-    }
-}
-
-std::shared_ptr<FunctionDeclaration> Parser::parseFunctionDeclaration() {
-    expectToken(TokenType::intKeyword);
-    auto functionNameToken = consumeToken(TokenType::Identifier);
-    expectToken(TokenType::OpenParenthesis);
-    auto parameters = std::make_shared<std::vector<std::string>>();
-    if (matchToken(TokenType::voidKeyword)) {
-        consumeToken(TokenType::voidKeyword);
-    }
-    else if (matchToken(TokenType::intKeyword)) {
-        expectToken(TokenType::intKeyword);
-        auto parameterNameToken = consumeToken(TokenType::Identifier);
-        parameters->emplace_back("int");
-        parameters->emplace_back(parameterNameToken.value);
-        // Parse additional parameters if they exist.
-        while (matchToken(TokenType::Comma)) {
-            consumeToken(TokenType::Comma);
-            expectToken(TokenType::intKeyword);
-            auto additionalParameterNameToken =
-                consumeToken(TokenType::Identifier);
-            parameters->emplace_back("int");
-            parameters->emplace_back(additionalParameterNameToken.value);
+std::shared_ptr<Declaration> Parser::parseDeclaration() {
+    // Parse the specifier list.
+    std::vector<std::string> specifierList;
+    while (matchToken(TokenType::intKeyword) ||
+           matchToken(TokenType::staticKeyword) ||
+           matchToken(TokenType::externKeyword)) {
+        if (matchToken(TokenType::intKeyword)) {
+            specifierList.emplace_back("int");
+            consumeToken(TokenType::intKeyword);
+        }
+        else if (matchToken(TokenType::staticKeyword)) {
+            specifierList.emplace_back("static");
+            consumeToken(TokenType::staticKeyword);
+        }
+        else if (matchToken(TokenType::externKeyword)) {
+            specifierList.emplace_back("extern");
+            consumeToken(TokenType::externKeyword);
         }
     }
-    expectToken(TokenType::CloseParenthesis);
-    if (matchToken(TokenType::Semicolon)) {
-        consumeToken(TokenType::Semicolon);
-        return std::make_shared<FunctionDeclaration>(functionNameToken.value,
-                                                     std::move(parameters));
+    // Parse the type and storage class.
+    auto typesAndStorageClass = parseTypeAndStorageClass(specifierList);
+    auto type = typesAndStorageClass.first;
+    auto storageClass = typesAndStorageClass.second;
+    // Consume an identifier token (common to both variable and function
+    // declarations).
+    auto identifierToken = consumeToken(TokenType::Identifier);
+    if (matchToken(TokenType::OpenParenthesis)) {
+        // Parse a function declaration.
+        expectToken(TokenType::OpenParenthesis);
+        auto parameters = std::make_shared<std::vector<std::string>>();
+        if (matchToken(TokenType::voidKeyword)) {
+            consumeToken(TokenType::voidKeyword);
+        }
+        else if (matchToken(TokenType::intKeyword)) {
+            expectToken(TokenType::intKeyword);
+            auto parameterNameToken = consumeToken(TokenType::Identifier);
+            parameters->emplace_back("int");
+            parameters->emplace_back(parameterNameToken.value);
+            // Parse additional parameters if they exist.
+            while (matchToken(TokenType::Comma)) {
+                consumeToken(TokenType::Comma);
+                expectToken(TokenType::intKeyword);
+                auto additionalParameterNameToken =
+                    consumeToken(TokenType::Identifier);
+                parameters->emplace_back("int");
+                parameters->emplace_back(additionalParameterNameToken.value);
+            }
+        }
+        expectToken(TokenType::CloseParenthesis);
+        if (matchToken(TokenType::Semicolon)) {
+            consumeToken(TokenType::Semicolon);
+            if (storageClass) {
+                return std::make_shared<FunctionDeclaration>(
+                    identifierToken.value, std::move(parameters),
+                    std::move(storageClass));
+            }
+            else {
+                return std::make_shared<FunctionDeclaration>(
+                    identifierToken.value, std::move(parameters));
+            }
+        }
+        else {
+            auto functionBody = parseBlock();
+            auto optFunctionBody = std::make_optional(std::move(functionBody));
+            if (storageClass) {
+                return std::make_shared<FunctionDeclaration>(
+                    identifierToken.value, std::move(parameters),
+                    std::move(optFunctionBody), std::move(storageClass));
+            }
+            else {
+                return std::make_shared<FunctionDeclaration>(
+                    identifierToken.value, std::move(parameters),
+                    std::move(optFunctionBody));
+            }
+        }
     }
     else {
-        auto functionBody = parseBlock();
-        auto optFunctionBody = std::make_optional(std::move(functionBody));
-        return std::make_shared<FunctionDeclaration>(
-            functionNameToken.value, std::move(parameters),
-            std::move(optFunctionBody));
+        // Parse a variable declaration.
+        if (matchToken(TokenType::Assign)) {
+            consumeToken(TokenType::Assign);
+            auto expr = parseExpression(0);
+            expectToken(TokenType::Semicolon);
+            if (storageClass) {
+                return std::make_shared<VariableDeclaration>(
+                    identifierToken.value, std::move(expr),
+                    std::move(storageClass));
+            }
+            else {
+                return std::make_shared<VariableDeclaration>(
+                    identifierToken.value, std::move(expr));
+            }
+        }
+        else {
+            expectToken(TokenType::Semicolon);
+            if (storageClass) {
+                return std::make_shared<VariableDeclaration>(
+                    identifierToken.value, std::move(storageClass));
+            }
+            else {
+                return std::make_shared<VariableDeclaration>(
+                    identifierToken.value);
+            }
+        }
     }
 }
 
 std::shared_ptr<ForInit> Parser::parseForInit() {
-    if (matchToken(TokenType::intKeyword)) {
-        auto declaration = parseVariableDeclaration();
-        return std::make_shared<InitDecl>(std::move(declaration));
+    if (matchToken(TokenType::intKeyword) ||
+        matchToken(TokenType::staticKeyword) ||
+        matchToken(TokenType::externKeyword)) {
+        auto declaration = parseDeclaration();
+        if (std::dynamic_pointer_cast<VariableDeclaration>(declaration)) {
+            return std::make_shared<InitDecl>(
+                std::static_pointer_cast<VariableDeclaration>(declaration));
+        }
+        else {
+            throw std::runtime_error(
+                "Function declarations aren't permitted in for-loop headers");
+        }
+        return std::make_shared<InitDecl>(
+            std::static_pointer_cast<VariableDeclaration>(declaration));
     }
     else {
         if (matchToken(TokenType::Semicolon)) {
@@ -357,6 +403,9 @@ std::shared_ptr<Expression> Parser::parseFactor() {
     else {
         std::stringstream msg;
         msg << "Malformed factor: unexpected token: " << tokens[current].value;
+        msg << tokens[current - 1].value;
+        msg << tokens[current - 2].value;
+        msg << tokens[current - 3].value;
         throw std::runtime_error(msg.str());
     }
 }
@@ -423,6 +472,48 @@ std::shared_ptr<Expression> Parser::parseConditionalMiddle() {
     // Consume the colon token.
     consumeToken(TokenType::Colon);
     return middle;
+}
+
+std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
+Parser::parseTypeAndStorageClass(std::vector<std::string> &specifierList) {
+    std::vector<std::string> types;
+    std::vector<std::string> storageClasses;
+    for (const auto &specifier : specifierList) {
+        if (specifier == "int") {
+            types.emplace_back(specifier);
+        }
+        else {
+            storageClasses.emplace_back(specifier);
+        }
+    }
+    if (types.size() != 1) {
+        throw std::runtime_error("Invalid type specifier");
+    }
+    if (storageClasses.size() > 1) {
+        throw std::runtime_error("Invalid storage class (specifier)");
+    }
+    auto type = std::make_shared<IntType>();
+    std::shared_ptr<StorageClass> storageClass;
+    if (storageClasses.size() == 1) {
+        storageClass = parseStorageClass(storageClasses[0]);
+    }
+    else {
+        storageClass = nullptr;
+    }
+    return std::make_pair(type, storageClass);
+}
+
+std::shared_ptr<StorageClass>
+Parser::parseStorageClass(std::string &specifier) {
+    if (specifier == "static") {
+        return std::make_shared<StaticStorageClass>();
+    }
+    else if (specifier == "extern") {
+        return std::make_shared<ExternStorageClass>();
+    }
+    else {
+        throw std::runtime_error("Invalid storage class (specifier)");
+    }
 }
 
 int Parser::getPrecedence(const Token &token) {
