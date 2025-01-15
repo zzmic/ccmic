@@ -44,7 +44,7 @@ int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
 std::unordered_map<std::string, MapEntry>
 IdentifierResolutionPass::copyIdentifierMap(
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    // Make a copy of the identifier map and set the `fromCurrentBlock` flag to
+    // Make a copy of the identifier map and set the `fromCurrentScope` flag to
     // false for every entry.
     auto copiedIdentifierMap = std::unordered_map<std::string, MapEntry>();
     for (auto &entry : identifierMap) {
@@ -83,7 +83,7 @@ IdentifierResolutionPass::resolveLocalVariableDeclaration(
     if (identifierMap.find(declaration->getIdentifier()) !=
         identifierMap.end()) {
         auto previousEntry = identifierMap[declaration->getIdentifier()];
-        if (previousEntry.fromCurrentBlockOrNot()) {
+        if (previousEntry.fromCurrentScopeOrNot()) {
             if (!(previousEntry.hasLinkageOrNot() &&
                   declaration->getOptStorageClass().has_value() &&
                   std::dynamic_pointer_cast<ExternStorageClass>(
@@ -431,7 +431,7 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
     if (identifierMap.find(declaration->getIdentifier()) !=
         identifierMap.end()) {
         auto previousEntry = identifierMap[declaration->getIdentifier()];
-        if (previousEntry.fromCurrentBlockOrNot() &&
+        if (previousEntry.fromCurrentScopeOrNot() &&
             !previousEntry.hasLinkageOrNot()) {
             std::stringstream msg;
             msg << "Duplicate function declaration: "
@@ -465,14 +465,16 @@ std::string IdentifierResolutionPass::resolveParameter(
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     if (identifierMap.find(parameter) != identifierMap.end()) {
         auto previousEntry = identifierMap[parameter];
-        if (previousEntry.fromCurrentBlockOrNot()) {
+        if (previousEntry.fromCurrentScopeOrNot()) {
             std::stringstream msg;
             msg << "Duplicate parameter declaration: " << parameter;
             throw std::runtime_error(msg.str());
         }
     }
     auto uniqueVariableName = generateUniqueVariableName(parameter);
-    identifierMap[parameter] = MapEntry(uniqueVariableName, true, true);
+    // A parameter should be considered in the current scope and should not have
+    // linkage.
+    identifierMap[parameter] = MapEntry(uniqueVariableName, true, false);
     return uniqueVariableName;
 }
 /*

@@ -16,17 +16,17 @@ class SemanticAnalysisPass {
 
 class MapEntry {
   public:
-    MapEntry() : newName(""), fromCurrentBlock(false), hasLinkage(false) {}
-    MapEntry(std::string newName, bool fromCurrentBlock, bool hasLinkage)
-        : newName(newName), fromCurrentBlock(fromCurrentBlock),
+    MapEntry() : newName(""), fromCurrentScope(false), hasLinkage(false) {}
+    MapEntry(std::string newName, bool fromCurrentScope, bool hasLinkage)
+        : newName(newName), fromCurrentScope(fromCurrentScope),
           hasLinkage(hasLinkage) {}
     std::string getNewName() { return newName; }
-    bool fromCurrentBlockOrNot() { return fromCurrentBlock; }
+    bool fromCurrentScopeOrNot() { return fromCurrentScope; }
     bool hasLinkageOrNot() { return hasLinkage; }
 
   private:
     std::string newName;
-    bool fromCurrentBlock;
+    bool fromCurrentScope;
     bool hasLinkage;
 };
 
