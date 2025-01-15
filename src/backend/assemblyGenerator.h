@@ -1,6 +1,7 @@
 #ifndef BACKEND_ASSEMBLY_GENERATOR_H
 #define BACKEND_ASSEMBLY_GENERATOR_H
 
+#include "../frontend/semanticAnalysisPasses.h"
 #include "../frontend/types.h"
 #include "../midend/ir.h"
 #include "assembly.h"
@@ -10,13 +11,17 @@ namespace Assembly {
 class AssemblyGenerator {
   public:
     AssemblyGenerator(
-        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     std::shared_ptr<Assembly::Program>
     generate(std::shared_ptr<IR::Program> irProgram);
 
   private:
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
         symbols;
     void generateAssyInstruction(
         std::shared_ptr<IR::Instruction> irInstruction,

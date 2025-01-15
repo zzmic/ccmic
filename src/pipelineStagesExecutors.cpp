@@ -54,15 +54,19 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 }
 
 // Function to perform semantic-analysis passes on the AST program.
-std::pair<int, std::unordered_map<std::string,
-                                  std::pair<std::shared_ptr<Type>, bool>>>
+std::pair<
+    int, std::unordered_map<
+             std::string, std::pair<std::shared_ptr<Type>,
+                                    std::shared_ptr<AST::IdentifierAttribute>>>>
 PipelineStagesExecutors::semanticAnalysisExecutor(
     std::shared_ptr<AST::Program> astProgram) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
     AST::TypeCheckingPass typeCheckingPass;
     AST::LoopLabelingPass loopLabelingPass;
     int variableResolutionCounter = 0;
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
         symbols;
 
     try {
@@ -109,7 +113,9 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
 // Function to generate the IR from the AST program.
 std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
     std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
         symbols) {
     std::cout << "\n";
 
@@ -129,7 +135,9 @@ std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
 // program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     std::shared_ptr<IR::Program> irProgram,
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
         symbols) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {

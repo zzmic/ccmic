@@ -3,7 +3,9 @@
 
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
         symbols)
     : symbols(symbols) {}
 

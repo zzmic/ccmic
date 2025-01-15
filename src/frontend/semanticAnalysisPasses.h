@@ -39,7 +39,10 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
     std::string generateUniqueVariableName(const std::string &identifier);
     std::unordered_map<std::string, MapEntry>
     copyIdentifierMap(std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<VariableDeclaration> resolveVariableDeclaration(
+    std::shared_ptr<Declaration> resolveFileScopeVariableDeclaration(
+        std::shared_ptr<Declaration> declaration,
+        std::unordered_map<std::string, MapEntry> &identifierMap);
+    std::shared_ptr<VariableDeclaration> resolveLocalVariableDeclaration(
         std::shared_ptr<VariableDeclaration> declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
     std::shared_ptr<Statement>
@@ -62,17 +65,72 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
                      std::unordered_map<std::string, MapEntry> &identifierMap);
 };
 
+class InitialValue {
+  public:
+    virtual ~InitialValue() = default;
+};
+
+class Tentative : public InitialValue {};
+
+class ConstantInitial : public InitialValue {
+  public:
+    ConstantInitial(int value) : value(value) {}
+    int getValue() { return value; }
+
+  private:
+    int value;
+};
+
+class NoInitializer : public InitialValue {};
+
+class IdentifierAttribute {
+  public:
+    virtual ~IdentifierAttribute() = default;
+};
+
+class FunctionAttribute : public IdentifierAttribute {
+  public:
+    FunctionAttribute(bool defined, bool global)
+        : defined(defined), global(global) {}
+    bool isDefined() { return defined; }
+    bool isGlobal() { return global; }
+
+  private:
+    bool defined;
+    bool global;
+};
+
+class StaticAttribute : public IdentifierAttribute {
+  public:
+    StaticAttribute(std::shared_ptr<InitialValue> initialValue, bool global)
+        : initialValue(initialValue), global(global) {}
+    std::shared_ptr<InitialValue> getInitialValue() { return initialValue; }
+    bool isGlobal() { return global; }
+
+  private:
+    std::shared_ptr<InitialValue> initialValue;
+    bool global;
+};
+
+class LocalAttribute : public IdentifierAttribute {};
+
 class TypeCheckingPass : public SemanticAnalysisPass {
   public:
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<
+        std::string,
+        std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>
     typeCheckProgram(std::shared_ptr<Program> program);
 
   private:
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<
+        std::string,
+        std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>
         symbols;
     void typeCheckFunctionDeclaration(
         std::shared_ptr<FunctionDeclaration> declaration);
-    void typeCheckVariableDeclaration(
+    void typeCheckFileScopeVariableDeclaration(
+        std::shared_ptr<VariableDeclaration> declaration);
+    void typeCheckLocalVariableDeclaration(
         std::shared_ptr<VariableDeclaration> declaration);
     void typeCheckExpression(std::shared_ptr<Expression> expression);
     void typeCheckBlock(std::shared_ptr<Block> block);

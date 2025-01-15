@@ -17,18 +17,26 @@ int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
     auto resolvedDeclarations =
         std::make_shared<std::vector<std::shared_ptr<Declaration>>>();
     for (auto &declaration : *program->getDeclarations()) {
-        // TODO(zzmic): This is a temporary solution.
         if (auto functionDeclaration =
                 std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
             auto resolvedFunctionDeclaration =
                 resolveFunctionDeclaration(functionDeclaration, identifierMap);
             resolvedDeclarations->emplace_back(resolvedFunctionDeclaration);
         }
+        else if (auto variableDeclaration =
+                     std::dynamic_pointer_cast<VariableDeclaration>(
+                         declaration)) {
+            auto resolvedVariableDeclaration =
+                resolveFileScopeVariableDeclaration(variableDeclaration,
+                                                    identifierMap);
+            resolvedDeclarations->emplace_back(resolvedVariableDeclaration);
+        }
+        else {
+            throw std::runtime_error(
+                "Unsupported declaration type for identifier resolution");
+        }
     }
-    // TODO(zzmic): This is a temporary solution.
-    program->setDeclarations(
-        std::static_pointer_cast<std::vector<std::shared_ptr<Declaration>>>(
-            resolvedDeclarations));
+    program->setDeclarations(resolvedDeclarations);
 
     return this->variableResolutionCounter;
 }
@@ -52,36 +60,64 @@ std::string IdentifierResolutionPass::generateUniqueVariableName(
     return identifier + "." + std::to_string(this->variableResolutionCounter++);
 }
 
+std::shared_ptr<Declaration>
+IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
+    std::shared_ptr<Declaration> declaration,
+    std::unordered_map<std::string, MapEntry> &identifierMap) {
+    if (auto variableDeclaration =
+            std::dynamic_pointer_cast<VariableDeclaration>(declaration)) {
+        identifierMap[variableDeclaration->getIdentifier()] =
+            MapEntry(variableDeclaration->getIdentifier(), true, true);
+        return declaration;
+    }
+    else {
+        throw std::runtime_error(
+            "Unsupported declaration type for file-scope variable resolution");
+    }
+}
+
 std::shared_ptr<VariableDeclaration>
-IdentifierResolutionPass::resolveVariableDeclaration(
+IdentifierResolutionPass::resolveLocalVariableDeclaration(
     std::shared_ptr<VariableDeclaration> declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    // Get the identifier from the declaration, check if it is already in the
-    // identifier map, and generate a unique variable name for it if it is not.
-    auto declarationIdentifier = declaration->getIdentifier();
-    if (identifierMap.find(declarationIdentifier) != identifierMap.end() &&
-        identifierMap[declarationIdentifier].fromCurrentBlockOrNot()) {
-        std::stringstream msg;
-        msg << "Duplicate variable declaration: " << declarationIdentifier;
-        throw std::runtime_error(msg.str());
+    if (identifierMap.find(declaration->getIdentifier()) !=
+        identifierMap.end()) {
+        auto previousEntry = identifierMap[declaration->getIdentifier()];
+        if (previousEntry.fromCurrentBlockOrNot()) {
+            if (!(previousEntry.hasLinkageOrNot() &&
+                  declaration->getOptStorageClass().has_value() &&
+                  std::dynamic_pointer_cast<ExternStorageClass>(
+                      declaration->getOptStorageClass().value()))) {
+                std::stringstream msg;
+                msg << "Conflicting local variable declaration: "
+                    << declaration->getIdentifier();
+                throw std::runtime_error(msg.str());
+            }
+        }
     }
-    auto uniqueVariableName = generateUniqueVariableName(declarationIdentifier);
-    identifierMap[declarationIdentifier] =
-        MapEntry(uniqueVariableName, true, false);
-
-    // If the declaration has an initializer, resolve the expression in the
-    // initializer.
-    auto optInitializer = declaration->getOptInitializer();
-    if (optInitializer.has_value()) {
-        auto tmpInitializer =
-            resolveExpression(optInitializer.value(), identifierMap);
-        optInitializer = std::make_optional(tmpInitializer);
+    if (declaration->getOptStorageClass().has_value() &&
+        std::dynamic_pointer_cast<ExternStorageClass>(
+            declaration->getOptStorageClass().value())) {
+        identifierMap[declaration->getIdentifier()] =
+            MapEntry(declaration->getIdentifier(), true, true);
+        return declaration;
     }
-
-    // Return a new declaration with the resolved identifier and initializer.
-    return std::make_shared<VariableDeclaration>(
-        identifierMap[declarationIdentifier].getNewName(),
-        std::move(optInitializer));
+    else {
+        auto declarationIdentifier = declaration->getIdentifier();
+        auto uniqueVariableName =
+            generateUniqueVariableName(declarationIdentifier);
+        identifierMap[declarationIdentifier] =
+            MapEntry(uniqueVariableName, true, false);
+        auto optInitializer = declaration->getOptInitializer();
+        if (optInitializer.has_value()) {
+            auto tmpInitializer =
+                resolveExpression(optInitializer.value(), identifierMap);
+            optInitializer = std::make_optional(tmpInitializer);
+        }
+        return std::make_shared<VariableDeclaration>(
+            identifierMap[declarationIdentifier].getNewName(),
+            std::move(optInitializer), declaration->getOptStorageClass());
+    }
 }
 
 std::shared_ptr<Statement> IdentifierResolutionPass::resolveStatement(
@@ -330,7 +366,7 @@ std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
             if (auto variableDeclaration =
                     std::dynamic_pointer_cast<VariableDeclaration>(
                         dBlockItem->getDeclaration())) {
-                auto resolvedDeclaration = resolveVariableDeclaration(
+                auto resolvedDeclaration = resolveLocalVariableDeclaration(
                     variableDeclaration, identifierMap);
                 dBlockItem->setDeclaration(resolvedDeclaration);
             }
@@ -378,7 +414,7 @@ std::shared_ptr<ForInit> IdentifierResolutionPass::resolveForInit(
         }
     }
     else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
-        auto resolvedDecl = resolveVariableDeclaration(
+        auto resolvedDecl = resolveLocalVariableDeclaration(
             initDecl->getVariableDeclaration(), identifierMap);
         return std::make_shared<InitDecl>(std::move(resolvedDecl));
     }
@@ -419,9 +455,9 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
         resolvedOptBody = std::make_optional(resolveBlock(
             declaration->getOptBody().value(), innerIdentifierMap));
     }
-    return std::make_shared<FunctionDeclaration>(declaration->getIdentifier(),
-                                                 std::move(resolvedParameters),
-                                                 std::move(resolvedOptBody));
+    return std::make_shared<FunctionDeclaration>(
+        declaration->getIdentifier(), std::move(resolvedParameters),
+        std::move(resolvedOptBody), declaration->getOptStorageClass());
 }
 
 std::string IdentifierResolutionPass::resolveParameter(
@@ -446,19 +482,30 @@ std::string IdentifierResolutionPass::resolveParameter(
 /*
  * Start: Functions for the type-checking pass.
  */
-std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+std::unordered_map<std::string, std::pair<std::shared_ptr<Type>,
+                                          std::shared_ptr<IdentifierAttribute>>>
 TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
-    symbols = std::unordered_map<std::string,
-                                 std::pair<std::shared_ptr<Type>, bool>>();
+    this->symbols =
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<IdentifierAttribute>>>();
     for (auto &declaration : *program->getDeclarations()) {
-        // TODO(zzmic): This is a temporary solution.
         if (auto functionDeclaration =
                 std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
             typeCheckFunctionDeclaration(functionDeclaration);
         }
+        else if (auto variableDeclaration =
+                     std::dynamic_pointer_cast<VariableDeclaration>(
+                         declaration)) {
+            typeCheckFileScopeVariableDeclaration(variableDeclaration);
+        }
+        else {
+            throw std::runtime_error(
+                "Unsupported declaration type for type checking at top level");
+        }
     }
     // The symbol table "will need to be accessible in later compiler passes."
-    return symbols;
+    return this->symbols;
 }
 
 void TypeCheckingPass::typeCheckFunctionDeclaration(
@@ -467,33 +514,165 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
         std::make_shared<FunctionType>(declaration->getParameters()->size());
     auto hasBody = declaration->getOptBody().has_value();
     auto alreadyDefined = false;
+    auto global = true;
+    if (declaration->getOptStorageClass().has_value() &&
+        std::dynamic_pointer_cast<StaticStorageClass>(
+            declaration->getOptStorageClass().value())) {
+        global = false;
+    }
     if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
-        auto oldType = symbols[declaration->getIdentifier()].first;
+        auto oldDeclaration = symbols[declaration->getIdentifier()];
+        auto oldType = oldDeclaration.first;
         if (*oldType != *funType) {
             throw std::runtime_error("Incompatible function declarations");
         }
-        alreadyDefined = symbols[declaration->getIdentifier()].second;
+        auto oldFunctionAttribute =
+            std::dynamic_pointer_cast<FunctionAttribute>(oldDeclaration.second);
+        alreadyDefined = oldFunctionAttribute->isDefined();
         if (alreadyDefined && hasBody) {
-            throw std::runtime_error(
-                "Function redefinition (i.e., it is defined more than once)");
+            throw std::runtime_error("Function redefinition");
         }
+        if (oldFunctionAttribute->isGlobal() &&
+            declaration->getOptStorageClass().has_value() &&
+            std::dynamic_pointer_cast<StaticStorageClass>(
+                declaration->getOptStorageClass().value())) {
+            throw std::runtime_error(
+                "Static function declaration follows non-static");
+        }
+        global = oldFunctionAttribute->isGlobal();
     }
-    symbols[declaration->getIdentifier()] = {funType,
-                                             (alreadyDefined || hasBody)};
+    auto attribute =
+        std::make_shared<FunctionAttribute>(alreadyDefined || hasBody, global);
+    symbols[declaration->getIdentifier()] = {funType, attribute};
     if (hasBody) {
         for (auto &parameter : *declaration->getParameters()) {
-            symbols[parameter] = {std::make_shared<IntType>(), false};
+            symbols[parameter] = {std::make_shared<IntType>(),
+                                  std::make_shared<LocalAttribute>()};
         }
         typeCheckBlock(declaration->getOptBody().value());
     }
 }
 
-void TypeCheckingPass::typeCheckVariableDeclaration(
+void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     std::shared_ptr<VariableDeclaration> declaration) {
-    symbols[declaration->getIdentifier()] = {std::make_shared<IntType>(),
-                                             false};
-    if (declaration->getOptInitializer().has_value()) {
-        typeCheckExpression(declaration->getOptInitializer().value());
+    auto initialValue = std::make_shared<InitialValue>();
+    if (declaration->getOptInitializer().has_value() &&
+        std::dynamic_pointer_cast<ConstantExpression>(
+            declaration->getOptInitializer().value())) {
+        initialValue = std::make_shared<ConstantInitial>(
+            std::dynamic_pointer_cast<ConstantExpression>(
+                declaration->getOptInitializer().value())
+                ->getValue());
+    }
+    else if (!declaration->getOptInitializer().has_value()) {
+        if (declaration->getOptStorageClass().has_value() &&
+            std::dynamic_pointer_cast<ExternStorageClass>(
+                declaration->getOptStorageClass().value())) {
+            initialValue = std::make_shared<NoInitializer>();
+        }
+        else {
+            initialValue = std::make_shared<Tentative>();
+        }
+    }
+    else {
+        throw std::runtime_error("Non-constant initializer!");
+    }
+    auto global = (!declaration->getOptStorageClass().has_value()) ||
+                  (declaration->getOptStorageClass().has_value() &&
+                   !(std::dynamic_pointer_cast<StaticStorageClass>(
+                       declaration->getOptStorageClass().value())));
+    if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
+        auto oldDeclaration = symbols[declaration->getIdentifier()];
+        auto oldType = oldDeclaration.first;
+        if (*oldType != IntType()) {
+            throw std::runtime_error("Function redclared as variable");
+        }
+        auto oldStaticAttribute =
+            std::dynamic_pointer_cast<StaticAttribute>(oldDeclaration.second);
+        if (declaration->getOptStorageClass().has_value() &&
+            std::dynamic_pointer_cast<ExternStorageClass>(
+                declaration->getOptStorageClass().value())) {
+            global = oldStaticAttribute->isGlobal();
+        }
+        else if (oldStaticAttribute->isGlobal() != global) {
+            throw std::runtime_error("Conflicting variable linkage");
+        }
+        if (auto oldInitialValue = std::dynamic_pointer_cast<ConstantInitial>(
+                oldStaticAttribute->getInitialValue())) {
+            if (std::dynamic_pointer_cast<ConstantInitial>(initialValue)) {
+                throw std::runtime_error(
+                    "Conflicting file-scope variable definitions");
+            }
+            else {
+                initialValue = oldInitialValue;
+            }
+        }
+        else if (!std::dynamic_pointer_cast<ConstantInitial>(initialValue) &&
+                 std::dynamic_pointer_cast<Tentative>(
+                     oldStaticAttribute->getInitialValue())) {
+            initialValue = std::make_shared<Tentative>();
+        }
+    }
+    auto attribute = std::make_shared<StaticAttribute>(initialValue, global);
+    symbols[declaration->getIdentifier()] =
+        std::make_pair(std::make_shared<IntType>(), attribute);
+}
+
+void TypeCheckingPass::typeCheckLocalVariableDeclaration(
+    std::shared_ptr<VariableDeclaration> declaration) {
+    if (declaration->getOptStorageClass().has_value() &&
+        std::dynamic_pointer_cast<ExternStorageClass>(
+            declaration->getOptStorageClass().value())) {
+        if (declaration->getOptInitializer().has_value()) {
+            throw std::runtime_error(
+                "Initializer on local extern variable declaration");
+        }
+        if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
+            auto oldDeclaration = symbols[declaration->getIdentifier()];
+            auto oldType = oldDeclaration.first;
+            if (*oldType != IntType()) {
+                throw std::runtime_error("Function redeclared as variable");
+            }
+        }
+        else {
+            auto staticAttribute = std::make_shared<StaticAttribute>(
+                std::make_shared<NoInitializer>(), true);
+            symbols[declaration->getIdentifier()] =
+                std::make_pair(std::make_shared<IntType>(), staticAttribute);
+        }
+    }
+    else if (declaration->getOptStorageClass().has_value() &&
+             std::dynamic_pointer_cast<StaticStorageClass>(
+                 declaration->getOptStorageClass().value())) {
+        auto initialValue = std::make_shared<InitialValue>();
+        if (declaration->getOptInitializer().has_value() &&
+            std::dynamic_pointer_cast<ConstantExpression>(
+                declaration->getOptInitializer().value())) {
+            auto constantExpression =
+                std::dynamic_pointer_cast<ConstantExpression>(
+                    declaration->getOptInitializer().value());
+            initialValue = std::make_shared<ConstantInitial>(
+                constantExpression->getValue());
+        }
+        else if (!declaration->getOptInitializer().has_value()) {
+            initialValue = std::make_shared<ConstantInitial>(0);
+        }
+        else {
+            throw std::runtime_error(
+                "Non-constant initializer on local static variable");
+        }
+        auto staticAttribute =
+            std::make_shared<StaticAttribute>(initialValue, false);
+        symbols[declaration->getIdentifier()] =
+            std::make_pair(std::make_shared<IntType>(), staticAttribute);
+    }
+    else {
+        auto localAttribute = std::make_shared<LocalAttribute>();
+        symbols[declaration->getIdentifier()] =
+            std::make_pair(std::make_shared<IntType>(), localAttribute);
+        if (declaration->getOptInitializer().has_value()) {
+            typeCheckExpression(declaration->getOptInitializer().value());
+        }
     }
 }
 
@@ -504,7 +683,7 @@ void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block) {
             if (auto variableDeclaration =
                     std::dynamic_pointer_cast<VariableDeclaration>(
                         dBlockItem->getDeclaration())) {
-                typeCheckVariableDeclaration(variableDeclaration);
+                typeCheckLocalVariableDeclaration(variableDeclaration);
             }
             else if (auto functionDeclaration =
                          std::dynamic_pointer_cast<FunctionDeclaration>(
@@ -512,6 +691,13 @@ void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block) {
                 if (functionDeclaration->getOptBody().has_value()) {
                     throw std::runtime_error(
                         "Nested function definitions are not permitted");
+                }
+                if (functionDeclaration->getOptStorageClass().has_value() &&
+                    std::dynamic_pointer_cast<StaticStorageClass>(
+                        functionDeclaration->getOptStorageClass().value())) {
+                    throw std::runtime_error(
+                        "Static storage class on block-scope function "
+                        "declaration");
                 }
                 typeCheckFunctionDeclaration(functionDeclaration);
             }
@@ -653,7 +839,12 @@ void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
         }
     }
     else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
-        typeCheckVariableDeclaration(initDecl->getVariableDeclaration());
+        if (initDecl->getVariableDeclaration()
+                ->getOptStorageClass()
+                .has_value()) {
+            throw std::runtime_error("Storage class in for-init declaration");
+        }
+        typeCheckLocalVariableDeclaration(initDecl->getVariableDeclaration());
     }
     else {
         throw std::runtime_error("Unsupported for-init type for type-checking");
@@ -668,7 +859,6 @@ void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
  */
 void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
     for (auto &declaration : *program->getDeclarations()) {
-        // TODO(zzmic): This is a temporary solution.
         if (auto functionDeclaration =
                 std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
             if (functionDeclaration->getOptBody().has_value()) {

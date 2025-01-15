@@ -6,6 +6,7 @@
 #include "../frontend/expression.h"
 #include "../frontend/function.h"
 #include "../frontend/program.h"
+#include "../frontend/semanticAnalysisPasses.h"
 #include "../frontend/statement.h"
 #include "../frontend/types.h"
 #include "ir.h"
@@ -17,14 +18,18 @@ class IRGenerator {
   public:
     IRGenerator(
         int variableResolutionCounter,
-        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     std::shared_ptr<IR::Program>
     generate(std::shared_ptr<AST::Program> astProgram);
 
   private:
     int irTemporariesCounter = 0;
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
         symbols;
     void generateIRBlock(
         std::shared_ptr<AST::Block> astBlock,

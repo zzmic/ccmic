@@ -25,15 +25,21 @@ class PipelineStagesExecutors {
     parserExecutor(const std::vector<Token> &tokens);
     static std::pair<
         int,
-        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>>
+        std::unordered_map<
+            std::string, std::pair<std::shared_ptr<Type>,
+                                   std::shared_ptr<AST::IdentifierAttribute>>>>
     semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
     static std::shared_ptr<IR::Program> irGeneratorExecutor(
         std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
-        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     static std::shared_ptr<Assembly::Program> codegenExecutor(
         std::shared_ptr<IR::Program> irProgram,
-        std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     static void
     codeEmissionExecutor(std::shared_ptr<Assembly::Program> assemblyProgram,

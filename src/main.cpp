@@ -138,9 +138,8 @@ int main(int argc, char *argv[]) {
     auto result = PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
     // Extract the variable resolution counter and the symbol table from the
     // result since they are needed for the later stages.
-    int variableResolutionCounter = result.first;
-    std::unordered_map<std::string, std::pair<std::shared_ptr<Type>, bool>>
-        symbols = result.second;
+    auto variableResolutionCounter = result.first;
+    auto symbols = result.second;
 
     if (tillValidate) {
         std::cout << "Semantic analysis completed.\n";
