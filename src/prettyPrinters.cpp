@@ -1,20 +1,48 @@
 #include "prettyPrinters.h"
+#include <iomanip>
 
 /*
  * Start: Functions to print the IR program onto the stdout.
  */
 void PrettyPrinters::printIRProgram(std::shared_ptr<IR::Program> irProgram) {
-    for (auto function : *irProgram->getFunctionDefinitions()) {
-        printIRFunctionDefinition(function);
+    auto topLevels = irProgram->getTopLevels();
+    for (auto topLevel : *topLevels) {
+        if (auto functionDefinition =
+                std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
+            printIRFunctionDefinition(functionDefinition);
+        }
+        else if (auto staticVariable =
+                     std::dynamic_pointer_cast<IR::StaticVariable>(topLevel)) {
+            printIRStaticVariable(staticVariable);
+        }
     }
 }
 
 void PrettyPrinters::printIRFunctionDefinition(
     std::shared_ptr<IR::FunctionDefinition> functionDefinition) {
-    std::cout << functionDefinition->getFunctionIdentifier() << ":\n";
+    std::cout << functionDefinition->getFunctionIdentifier();
+    std::cout << std::boolalpha;
+    std::cout << "[isGlobal: " << functionDefinition->isGlobal() << "]";
+    std::cout << "(";
+    auto &parameters = *functionDefinition->getParameters();
+    for (auto it = parameters.begin(); it != parameters.end(); it++) {
+        auto &parameter = *it;
+        std::cout << parameter;
+        bool isLast = (std::next(it) == parameters.end());
+        if (!isLast) {
+            std::cout << ", ";
+        }
+    }
+    std::cout << "):\n";
     for (auto instruction : *functionDefinition->getFunctionBody()) {
         printIRInstruction(instruction);
     }
+}
+
+void PrettyPrinters::printIRStaticVariable(
+    std::shared_ptr<IR::StaticVariable> staticVariable) {
+    std::cout << "[static] " << staticVariable->getIdentifier() << " = "
+              << staticVariable->getInitialValue() << "\n";
 }
 
 void PrettyPrinters::printIRInstruction(

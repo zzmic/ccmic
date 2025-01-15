@@ -9,67 +9,86 @@ IRGenerator::IRGenerator(
         symbols)
     : irTemporariesCounter(variableResolutionCounter), symbols(symbols) {}
 
-std::shared_ptr<IR::Program>
+std::pair<std::shared_ptr<IR::Program>,
+          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
 IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
-    // Initialize the vector of IR function definitions.
-    auto functionDefinitions = std::make_shared<
-        std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
+    // Initialize the vector of IR top-levels (top-level elements).
+    auto topLevels =
+        std::make_shared<std::vector<std::shared_ptr<IR::TopLevel>>>();
 
-    // Get the declarations from the AST program.
-    auto declarations = astProgram->getDeclarations();
-    // TODO(zzmic): This is a temporary solution.
-    std::shared_ptr<std::vector<std::shared_ptr<AST::FunctionDeclaration>>>
-        functionDeclarations;
-    for (auto &declaration : *declarations) {
+    // Generate IR instructions for each AST top-level element.
+    auto astDeclarations = astProgram->getDeclarations();
+    for (auto &astDeclaration : *astDeclarations) {
         if (auto functionDeclaration =
                 std::dynamic_pointer_cast<AST::FunctionDeclaration>(
-                    declaration)) {
-            functionDeclarations->emplace_back(functionDeclaration);
+                    astDeclaration)) {
+            // Get the body of the function declaration.
+            auto optBody = functionDeclaration->getOptBody();
+            // Skip generating IR instructions for forward declarations.
+            if (!optBody.has_value()) {
+                continue;
+            }
+            // Create a new vector of IR instructions for the function.
+            auto instructions = std::make_shared<
+                std::vector<std::shared_ptr<IR::Instruction>>>();
+            // Get the identifier and the parameters of the function
+            // declaration.
+            auto identifier = functionDeclaration->getIdentifier();
+            auto parameters = functionDeclaration->getParameters();
+            // Find the global attribute of the function declaration in the
+            // symbols and set the global flag.
+            bool global = false;
+            if (symbols.find(identifier) != symbols.end()) {
+                if (auto functionAttribute =
+                        std::dynamic_pointer_cast<AST::FunctionAttribute>(
+                            symbols[identifier].second)) {
+                    global = functionAttribute->isGlobal();
+                }
+                else {
+                    throw std::runtime_error(
+                        "Function attribute not found in symbols");
+                }
+            }
+            else {
+                throw std::runtime_error(
+                    "Function declaration not found in symbols");
+            }
+            // Generate IR instructions for the body of the function.
+            generateIRBlock(optBody.value(), instructions);
+            // Create a new IR function definition with the function identifier,
+            // the parameters, and the vector of IR instructions.
+            auto functionDefinition = std::make_shared<IR::FunctionDefinition>(
+                functionDeclaration->getIdentifier(), global, parameters,
+                instructions);
+            // If the function does not end with a return instruction, add a
+            // return instruction with constant value 0.
+            if (functionDefinition->getFunctionBody()->empty() ||
+                !std::dynamic_pointer_cast<IR::ReturnInstruction>(
+                    functionDefinition->getFunctionBody()->back())) {
+                functionDefinition->getFunctionBody()->emplace_back(
+                    std::make_shared<IR::ReturnInstruction>(
+                        std::make_shared<IR::ConstantValue>(0)));
+            }
+            // Add the IR function definition to the vector of IR top-levels.
+            topLevels->emplace_back(std::move(functionDefinition));
         }
-    }
-
-    // Generate IR instructions for each function declaration.
-    for (auto &functionDeclaration : *functionDeclarations) {
-        // Get the body of the function declaration.
-        auto optBody = functionDeclaration->getOptBody();
-
-        // Skip generating IR instructions for forward declarations.
-        if (!optBody.has_value()) {
+        else if (auto variableDeclaration =
+                     std::dynamic_pointer_cast<AST::VariableDeclaration>(
+                         astDeclaration)) {
+            // Continue: Do not generate IR instructions for file-scope variable
+            // declarations or for local variable declarations with `static` or
+            // `extern` storage-class specifiers.
             continue;
         }
-
-        // Create a new vector of IR instructions for the function.
-        auto instructions =
-            std::make_shared<std::vector<std::shared_ptr<IR::Instruction>>>();
-
-        // Get the parameters of the function declaration.
-        auto parameters = functionDeclaration->getParameters();
-
-        // Generate IR instructions for the body of the function.
-        generateIRBlock(optBody.value(), instructions);
-
-        // Create a new IR function definition with the function identifier,
-        // the parameters, and the vector of IR instructions.
-        auto functionDefinition = std::make_shared<IR::FunctionDefinition>(
-            functionDeclaration->getIdentifier(), parameters, instructions);
-
-        // If the function does not end with a return instruction, add a return
-        // instruction with constant value 0.
-        if (functionDefinition->getFunctionBody()->empty() ||
-            !std::dynamic_pointer_cast<IR::ReturnInstruction>(
-                functionDefinition->getFunctionBody()->back())) {
-            functionDefinition->getFunctionBody()->emplace_back(
-                std::make_shared<IR::ReturnInstruction>(
-                    std::make_shared<IR::ConstantValue>(0)));
-        }
-
-        // Add the IR function definition to the vector of IR function
-        // definitions.
-        functionDefinitions->emplace_back(std::move(functionDefinition));
     }
 
+    // Examine every entry in the symbol table and generate `StaticVariable` IR
+    // constructs for some of them after traversing the AST.
+    auto irStaticVariables = convertSymbolsToIRStaticVariables();
+
     // Return the generated IR program.
-    return std::make_shared<IR::Program>(std::move(functionDefinitions));
+    return std::make_pair(std::make_shared<IR::Program>(std::move(topLevels)),
+                          std::move(irStaticVariables));
 }
 
 void IRGenerator::generateIRBlock(
@@ -126,6 +145,17 @@ void IRGenerator::generateIRVariableDefinition(
     std::shared_ptr<AST::VariableDeclaration> astVariableDeclaration,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
+    // Return (directly): Do not generate IR instructions for file-scope
+    // variable declarations or for local variable declarations with `static` or
+    // `extern` storage-class specifiers.
+    if (astVariableDeclaration->getOptStorageClass().has_value()) {
+        if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
+                astVariableDeclaration->getOptStorageClass().value()) ||
+            std::dynamic_pointer_cast<AST::ExternStorageClass>(
+                astVariableDeclaration->getOptStorageClass().value())) {
+            return;
+        }
+    }
     // If the declaration has an initializer, ...
     auto identifier = astVariableDeclaration->getIdentifier();
     auto initializer = astVariableDeclaration->getOptInitializer();
@@ -760,6 +790,44 @@ IRGenerator::generateIRBreakLoopLabel(std::string loopLabelingLabel) {
 std::string IRGenerator::generateIRStartLabel() {
     static int counter = 0;
     return "start" + std::to_string(counter++);
+}
+
+std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+IRGenerator::convertSymbolsToIRStaticVariables() {
+    auto irDefs =
+        std::make_shared<std::vector<std::shared_ptr<IR::StaticVariable>>>();
+    for (auto &symbol : symbols) {
+        auto name = symbol.first;
+        auto type = symbol.second.first;
+        auto attribute = symbol.second.second;
+        if (auto staticAttribute =
+                std::dynamic_pointer_cast<AST::StaticAttribute>(attribute)) {
+            auto initialValue = staticAttribute->getInitialValue();
+            auto global = staticAttribute->isGlobal();
+            if (auto constantInitial =
+                    std::dynamic_pointer_cast<AST::ConstantInitial>(
+                        initialValue)) {
+                irDefs->emplace_back(std::make_shared<StaticVariable>(
+                    name, global, constantInitial->getValue()));
+            }
+            else if (auto tentative = std::dynamic_pointer_cast<AST::Tentative>(
+                         initialValue)) {
+                irDefs->emplace_back(
+                    std::make_shared<StaticVariable>(name, global, 0));
+            }
+            else if (std::dynamic_pointer_cast<AST::NoInitializer>(
+                         initialValue)) {
+                continue;
+            }
+            else {
+                throw std::runtime_error("Unsupported initial value type");
+            }
+        }
+        else {
+            continue;
+        }
+    }
+    return irDefs;
 }
 
 std::shared_ptr<IR::UnaryOperator>

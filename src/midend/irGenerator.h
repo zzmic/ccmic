@@ -22,7 +22,8 @@ class IRGenerator {
                            std::pair<std::shared_ptr<Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
-    std::shared_ptr<IR::Program>
+    std::pair<std::shared_ptr<IR::Program>,
+              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
     generate(std::shared_ptr<AST::Program> astProgram);
 
   private:
@@ -134,6 +135,8 @@ class IRGenerator {
     std::string generateIRContinueLoopLabel(std::string loopLabelingLabel);
     std::string generateIRBreakLoopLabel(std::string loopLabelingLabel);
     std::string generateIRStartLabel();
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+    convertSymbolsToIRStaticVariables();
     std::shared_ptr<IR::UnaryOperator>
     convertUnop(std::shared_ptr<AST::UnaryOperator> op);
     std::shared_ptr<IR::BinaryOperator>

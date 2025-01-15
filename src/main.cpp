@@ -113,8 +113,7 @@ int main(int argc, char *argv[]) {
     preprocess(sourceFile, preprocessedFile);
 
     // Tokenize the input, print the tokens, and return the tokens.
-    std::vector<Token> tokens =
-        PipelineStagesExecutors::lexerExecutor(preprocessedFile);
+    auto tokens = PipelineStagesExecutors::lexerExecutor(preprocessedFile);
 
     // Delete the preprocessed file after compiling it to assembly.
     std::filesystem::remove(preprocessedFile);
@@ -126,8 +125,7 @@ int main(int argc, char *argv[]) {
 
     // Parse the tokens, generate the AST, visit the AST, and print the AST, and
     // return the AST program.
-    std::shared_ptr<AST::Program> astProgram =
-        PipelineStagesExecutors::parserExecutor(tokens);
+    auto astProgram = PipelineStagesExecutors::parserExecutor(tokens);
 
     if (tillParse) {
         std::cout << "Parsing completed.\n";
@@ -147,9 +145,11 @@ int main(int argc, char *argv[]) {
     }
 
     // Generate the IR from the AST program and return the IR program.
-    std::shared_ptr<IR::Program> irProgram =
+    auto irProgramAndIRStaticVariables =
         PipelineStagesExecutors::irGeneratorExecutor(
             astProgram, variableResolutionCounter, symbols);
+    auto irProgram = irProgramAndIRStaticVariables.first;
+    auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
     // Print the IR program onto the stdout.
     PrettyPrinters::printIRProgram(irProgram);
@@ -159,9 +159,10 @@ int main(int argc, char *argv[]) {
         return EXIT_SUCCESS;
     }
 
-    // Convert the AST program to an IR program and generate the assembly.
+    // Generate the assembly program from the IR program and the IR static
+    // variables.
     std::shared_ptr<Assembly::Program> assemblyProgram =
-        PipelineStagesExecutors::codegenExecutor(irProgram, symbols);
+        PipelineStagesExecutors::codegenExecutor(irProgram, irStaticVariables);
 
     // Print out the (assembly) instructions that would be emitted from the
     // assembly program.

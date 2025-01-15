@@ -29,7 +29,10 @@ class PipelineStagesExecutors {
             std::string, std::pair<std::shared_ptr<Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>>
     semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
-    static std::shared_ptr<IR::Program> irGeneratorExecutor(
+    static std::pair<
+        std::shared_ptr<IR::Program>,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+    irGeneratorExecutor(
         std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
         std::unordered_map<std::string,
                            std::pair<std::shared_ptr<Type>,
@@ -37,10 +40,8 @@ class PipelineStagesExecutors {
             symbols);
     static std::shared_ptr<Assembly::Program> codegenExecutor(
         std::shared_ptr<IR::Program> irProgram,
-        std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<Type>,
-                                     std::shared_ptr<AST::IdentifierAttribute>>>
-            symbols);
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+            irStaticVariables);
     static void
     codeEmissionExecutor(std::shared_ptr<Assembly::Program> assemblyProgram,
                          const std::string &assemblyFile);

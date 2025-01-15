@@ -111,7 +111,9 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
 }
 
 // Function to generate the IR from the AST program.
-std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
+std::pair<std::shared_ptr<IR::Program>,
+          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+PipelineStagesExecutors::irGeneratorExecutor(
     std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
     std::unordered_map<std::string,
                        std::pair<std::shared_ptr<Type>,
@@ -119,30 +121,30 @@ std::shared_ptr<IR::Program> PipelineStagesExecutors::irGeneratorExecutor(
         symbols) {
     std::cout << "\n";
 
-    std::shared_ptr<IR::Program> irProgram;
+    std::pair<std::shared_ptr<IR::Program>,
+              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+        irProgramAndIRStaticVariables;
     try {
         IR::IRGenerator irGenerator(variableResolutionCounter, symbols);
-        irProgram = irGenerator.generate(astProgram);
+        irProgramAndIRStaticVariables = irGenerator.generate(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "IR generation error: " << e.what();
         throw std::runtime_error(msg.str());
     }
-    return irProgram;
+    return irProgramAndIRStaticVariables;
 }
 
 // Function to generate (but not yet emit) the assembly program from the AST
 // program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     std::shared_ptr<IR::Program> irProgram,
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols) {
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+        irStaticVariables) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Instantiate an assembly generator object and generate the assembly.
-        Assembly::AssemblyGenerator assemblyGenerator(symbols);
+        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables);
         assemblyProgram = assemblyGenerator.generate(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and associate the stack

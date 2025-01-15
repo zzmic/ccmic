@@ -11,18 +11,14 @@ namespace Assembly {
 class AssemblyGenerator {
   public:
     AssemblyGenerator(
-        std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<Type>,
-                                     std::shared_ptr<AST::IdentifierAttribute>>>
-            symbols);
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+            irStaticVariables);
     std::shared_ptr<Assembly::Program>
     generate(std::shared_ptr<IR::Program> irProgram);
 
   private:
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols;
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+        irStaticVariables;
     void generateAssyInstruction(
         std::shared_ptr<IR::Instruction> irInstruction,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>

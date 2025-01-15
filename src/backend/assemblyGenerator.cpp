@@ -3,15 +3,16 @@
 
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols)
-    : symbols(symbols) {}
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+        irStaticVariables)
+    : irStaticVariables(irStaticVariables) {}
 
 std::shared_ptr<Assembly::Program>
 AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
-    auto irFunctionDefinitions = irProgram->getFunctionDefinitions();
+    auto irTopLevels = irProgram->getTopLevels();
+    // TODO(zzmic): This is a temporary solution.
+    auto irFunctionDefinitions = std::make_shared<
+        std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
     auto assyFunctionDefinitions =
         std::make_shared<std::vector<std::shared_ptr<FunctionDefinition>>>();
     for (auto irFunctionDefinition : *irFunctionDefinitions) {

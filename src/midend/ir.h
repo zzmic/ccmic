@@ -228,20 +228,27 @@ class FunctionCallInstruction : public Instruction {
     void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
 };
 
-class FunctionDefinition {
+class TopLevel {
+  public:
+    virtual ~TopLevel() = default;
+};
+
+class FunctionDefinition : public TopLevel {
   private:
     std::string functionIdentifier;
+    bool global;
     std::shared_ptr<std::vector<std::string>> parameters;
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
 
   public:
     FunctionDefinition(
-        std::string functionIdentifier,
+        std::string functionIdentifier, bool global,
         std::shared_ptr<std::vector<std::string>> parameters,
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody)
-        : functionIdentifier(functionIdentifier), parameters(parameters),
-          functionBody(functionBody) {}
+        : functionIdentifier(functionIdentifier), global(global),
+          parameters(parameters), functionBody(functionBody) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
+    bool isGlobal() { return global; }
     std::shared_ptr<std::vector<std::string>> getParameters() {
         return parameters;
     }
@@ -256,18 +263,29 @@ class FunctionDefinition {
     }
 };
 
-class Program {
+class StaticVariable : public TopLevel {
   private:
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-        functionDefinitions;
+    std::string identifier;
+    bool global;
+    int initialValue;
 
   public:
-    Program(std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-                functionDefinitions)
-        : functionDefinitions(functionDefinitions) {}
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-    getFunctionDefinitions() {
-        return functionDefinitions;
+    StaticVariable(std::string identifier, bool global, int initialValue)
+        : identifier(identifier), global(global), initialValue(initialValue) {}
+    std::string getIdentifier() { return identifier; }
+    bool isGlobal() { return global; }
+    int getInitialValue() { return initialValue; }
+};
+
+class Program {
+  private:
+    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels;
+
+  public:
+    Program(std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels)
+        : topLevels(topLevels) {}
+    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> getTopLevels() {
+        return topLevels;
     }
 };
 } // namespace IR

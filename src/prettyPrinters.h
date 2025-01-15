@@ -12,9 +12,11 @@ class PrettyPrinters {
     printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram);
 
   private:
-    // Auxiliary functions for printing the IR program.
+    /* Auxiliary functions for printing the IR program. */
     static void printIRFunctionDefinition(
         std::shared_ptr<IR::FunctionDefinition> functionDefinition);
+    static void
+    printIRStaticVariable(std::shared_ptr<IR::StaticVariable> staticVariable);
     static void
     printIRInstruction(std::shared_ptr<IR::Instruction> instruction);
     static void printIRReturnInstruction(
@@ -36,7 +38,7 @@ class PrettyPrinters {
     static void printIRFunctionCallInstruction(
         std::shared_ptr<IR::FunctionCallInstruction> functionCallInstruction);
 
-    // Auxiliary functions for printing the assembly program.
+    /* Auxiliary functions for printing the assembly program. */
     static void printAssyFunctionDefinition(
         std::shared_ptr<Assembly::FunctionDefinition> functionDefinition);
     static void
