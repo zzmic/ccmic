@@ -56,6 +56,9 @@ class PipelineStagesExecutors {
     static void emitAssyFunctionDefinition(
         std::shared_ptr<Assembly::FunctionDefinition> functionDefinition,
         std::ofstream &assemblyFileStream);
+    static void emitAssyStaticVariable(
+        std::shared_ptr<Assembly::StaticVariable> staticVariable,
+        std::ofstream &assemblyFileStream);
     static void
     emitAssyInstruction(std::shared_ptr<Assembly::Instruction> instruction,
                         std::ofstream &assemblyFileStream);

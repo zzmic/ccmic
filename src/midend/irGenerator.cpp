@@ -78,7 +78,14 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
             // Continue: Do not generate IR instructions for file-scope variable
             // declarations or for local variable declarations with `static` or
             // `extern` storage-class specifiers.
-            continue;
+            if (variableDeclaration->getOptStorageClass().has_value()) {
+                if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
+                        variableDeclaration->getOptStorageClass().value()) ||
+                    std::dynamic_pointer_cast<AST::ExternStorageClass>(
+                        variableDeclaration->getOptStorageClass().value())) {
+                    continue;
+                }
+            }
         }
     }
 
@@ -145,20 +152,9 @@ void IRGenerator::generateIRVariableDefinition(
     std::shared_ptr<AST::VariableDeclaration> astVariableDeclaration,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
-    // Return (directly): Do not generate IR instructions for file-scope
-    // variable declarations or for local variable declarations with `static` or
-    // `extern` storage-class specifiers.
-    if (astVariableDeclaration->getOptStorageClass().has_value()) {
-        if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
-                astVariableDeclaration->getOptStorageClass().value()) ||
-            std::dynamic_pointer_cast<AST::ExternStorageClass>(
-                astVariableDeclaration->getOptStorageClass().value())) {
-            return;
-        }
-    }
-    // If the declaration has an initializer, ...
     auto identifier = astVariableDeclaration->getIdentifier();
     auto initializer = astVariableDeclaration->getOptInitializer();
+    // If the declaration has an initializer, ...
     if (initializer.has_value()) {
         // Generate IR instructions for the initializer.
         auto result = generateIRInstruction(initializer.value(), instructions);

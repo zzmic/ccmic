@@ -74,8 +74,10 @@ bool FixupPass::isInvalidMov(
                 movInstr->getSrc()) != nullptr ||
             std::dynamic_pointer_cast<Assembly::DataOperand>(
                 movInstr->getSrc()) != nullptr) &&
-           std::dynamic_pointer_cast<Assembly::StackOperand>(
-               movInstr->getDst()) != nullptr;
+           (std::dynamic_pointer_cast<Assembly::StackOperand>(
+                movInstr->getDst()) != nullptr ||
+            std::dynamic_pointer_cast<Assembly::DataOperand>(
+                movInstr->getDst()) != nullptr);
 }
 
 bool FixupPass::isInvalidBinary(
@@ -84,14 +86,20 @@ bool FixupPass::isInvalidBinary(
             binInstr->getBinaryOperator()) ||
         std::dynamic_pointer_cast<Assembly::SubtractOperator>(
             binInstr->getBinaryOperator())) {
-        return std::dynamic_pointer_cast<Assembly::StackOperand>(
-                   binInstr->getOperand1()) != nullptr &&
-               std::dynamic_pointer_cast<Assembly::StackOperand>(
-                   binInstr->getOperand2()) != nullptr;
+        return (std::dynamic_pointer_cast<Assembly::StackOperand>(
+                    binInstr->getOperand1()) != nullptr ||
+                std::dynamic_pointer_cast<Assembly::DataOperand>(
+                    binInstr->getOperand1()) != nullptr) &&
+               (std::dynamic_pointer_cast<Assembly::StackOperand>(
+                    binInstr->getOperand2()) != nullptr ||
+                std::dynamic_pointer_cast<Assembly::DataOperand>(
+                    binInstr->getOperand2()) != nullptr);
     }
     else if (std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
                  binInstr->getBinaryOperator())) {
         return std::dynamic_pointer_cast<Assembly::StackOperand>(
+                   binInstr->getOperand2()) != nullptr ||
+               std::dynamic_pointer_cast<Assembly::DataOperand>(
                    binInstr->getOperand2()) != nullptr;
     }
     return false;
@@ -105,10 +113,14 @@ bool FixupPass::isInvalidIdiv(
 
 bool FixupPass::isInvalidCmp(
     std::shared_ptr<Assembly::CmpInstruction> cmpInstr) {
-    if (std::dynamic_pointer_cast<Assembly::StackOperand>(
-            cmpInstr->getOperand1()) &&
-        std::dynamic_pointer_cast<Assembly::StackOperand>(
-            cmpInstr->getOperand2())) {
+    if ((std::dynamic_pointer_cast<Assembly::StackOperand>(
+             cmpInstr->getOperand1()) ||
+         std::dynamic_pointer_cast<Assembly::DataOperand>(
+             cmpInstr->getOperand1())) &&
+        (std::dynamic_pointer_cast<Assembly::StackOperand>(
+             cmpInstr->getOperand2()) ||
+         std::dynamic_pointer_cast<Assembly::DataOperand>(
+             cmpInstr->getOperand2()))) {
         return true;
     }
     else if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(

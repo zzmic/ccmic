@@ -337,8 +337,7 @@ void PrettyPrinters::printAssemblyProgram(
         else if (auto staticVariable =
                      std::dynamic_pointer_cast<Assembly::StaticVariable>(
                          topLevel)) {
-            std::cout << "[static] " << staticVariable->getIdentifier() << " = "
-                      << staticVariable->getInitialValue() << "\n";
+            printAssyStaticVariable(staticVariable);
         }
     }
 
@@ -360,12 +359,46 @@ void PrettyPrinters::printAssyFunctionDefinition(
     // Print the function prologue (before printing the function body).
     std::cout << "\n"
               << "    .globl " << functionName << "\n";
+    std::cout << "    .text\n";
     std::cout << functionName << ":\n";
     std::cout << "    pushq %rbp\n";
     std::cout << "    movq %rsp, %rbp\n";
 
     for (auto instruction : *functionDefinition->getFunctionBody()) {
         printAssyInstruction(instruction);
+    }
+}
+
+void PrettyPrinters::printAssyStaticVariable(
+    std::shared_ptr<Assembly::StaticVariable> staticVariable) {
+    auto alignDirective = ".align 4";
+// If the underlying OS is macOS, use the `.balign 4` directive instead of the
+// `.align 4` directive.
+#ifdef __APPLE__
+    alignDirective = ".balign 4";
+#endif
+    auto global = staticVariable->isGlobal();
+    auto globalDirective = ".globl ";
+    if (!global) {
+        globalDirective = "";
+    }
+    auto variableIdentifier = staticVariable->getIdentifier();
+    auto initialValue = staticVariable->getInitialValue();
+
+    std::cout << "\n";
+    if (initialValue != 0) {
+        std::cout << "    " << globalDirective << variableIdentifier << "\n";
+        std::cout << "    .data\n";
+        std::cout << "    " << alignDirective << "\n";
+        std::cout << variableIdentifier << ":\n";
+        std::cout << "    .long " << initialValue << "\n";
+    }
+    else if (initialValue == 0) {
+        std::cout << "    " << globalDirective << variableIdentifier << "\n";
+        std::cout << "    .bss\n";
+        std::cout << "    " << alignDirective << "\n";
+        std::cout << variableIdentifier << ":\n";
+        std::cout << "    .zero 4\n";
     }
 }
 
@@ -462,6 +495,14 @@ void PrettyPrinters::printAssyMovInstruction(
         std::cout << "    movl " << srcStack->getOffset() << "("
                   << srcStack->getReservedRegisterInStr() << ")";
     }
+    else if (auto srcData =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+        auto identifier = srcData->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << "    movl " << identifier << "(%rip)";
+    }
 
     auto dst = movInstruction->getDst();
     if (auto dstReg =
@@ -472,6 +513,14 @@ void PrettyPrinters::printAssyMovInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
         std::cout << ", " << dstStack->getOffset() << "("
                   << dstStack->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dstData =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+        auto identifier = dstData->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << ", " << identifier << "(%rip)\n";
     }
 }
 
@@ -517,6 +566,14 @@ void PrettyPrinters::printAssyPushInstruction(
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                      operand)) {
         std::cout << "    pushq" << " $" << immOperand->getImmediate() << "\n";
+    }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << "    pushq" << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -565,6 +622,14 @@ void PrettyPrinters::printAssyUnaryInstruction(
         std::cout << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
     }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip)\n";
+    }
 }
 
 void PrettyPrinters::printAssyBinaryInstruction(
@@ -600,6 +665,14 @@ void PrettyPrinters::printAssyBinaryInstruction(
         std::cout << " " << operand1Stack->getOffset() << "("
                   << operand1Stack->getReservedRegisterInStr() << "),";
     }
+    else if (auto operand1Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+        auto identifier = operand1Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip),";
+    }
 
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
@@ -610,6 +683,14 @@ void PrettyPrinters::printAssyBinaryInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
         std::cout << " " << operand2Stack->getOffset() << "("
                   << operand2Stack->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto operand2Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+        auto identifier = operand2Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -632,6 +713,14 @@ void PrettyPrinters::printAssyCmpInstruction(
         std::cout << " " << operand1Stack->getOffset() << "("
                   << operand1Stack->getReservedRegisterInStr() << ")";
     }
+    else if (auto operand1Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+        auto identifier = operand1Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip)";
+    }
 
     std::cout << ",";
 
@@ -644,6 +733,14 @@ void PrettyPrinters::printAssyCmpInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
         std::cout << " " << operand2Stack->getOffset() << "("
                   << operand2Stack->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto operand2Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+        auto identifier = operand2Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -660,6 +757,14 @@ void PrettyPrinters::printAssyIdivInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
         std::cout << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -728,6 +833,14 @@ void PrettyPrinters::printAssySetCCInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
         std::cout << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        std::cout << " " << identifier << "(%rip)\n";
     }
 }
 

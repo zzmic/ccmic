@@ -41,6 +41,8 @@ class PrettyPrinters {
     /* Auxiliary functions for printing the assembly program. */
     static void printAssyFunctionDefinition(
         std::shared_ptr<Assembly::FunctionDefinition> functionDefinition);
+    static void printAssyStaticVariable(
+        std::shared_ptr<Assembly::StaticVariable> staticVariable);
     static void
     printAssyInstruction(std::shared_ptr<Assembly::Instruction> instruction);
     static void printAssyMovInstruction(

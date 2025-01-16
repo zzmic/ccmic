@@ -197,9 +197,7 @@ void PipelineStagesExecutors::codeEmissionExecutor(
         else if (auto staticVariable =
                      std::dynamic_pointer_cast<Assembly::StaticVariable>(
                          topLevel)) {
-            assemblyFileStream << "[static] " << staticVariable->getIdentifier()
-                               << " = " << staticVariable->getInitialValue()
-                               << "\n";
+            emitAssyStaticVariable(staticVariable, assemblyFileStream);
         }
     }
 
@@ -223,12 +221,49 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
 
     // Emit the function prologue (before emitting the function body).
     assemblyFileStream << "    .globl " << functionName << "\n";
+    assemblyFileStream << "    .text\n";
     assemblyFileStream << functionName << ":\n";
     assemblyFileStream << "    pushq %rbp\n";
     assemblyFileStream << "    movq %rsp, %rbp\n";
 
     for (auto instruction : *functionDefinition->getFunctionBody()) {
         emitAssyInstruction(instruction, assemblyFileStream);
+    }
+}
+
+void PipelineStagesExecutors::emitAssyStaticVariable(
+    std::shared_ptr<Assembly::StaticVariable> staticVariable,
+    std::ofstream &assemblyFileStream) {
+    auto alignDirective = ".align 4";
+// If the underlying OS is macOS, use the `.balign 4` directive instead of the
+// `.align 4` directive.
+#ifdef __APPLE__
+    alignDirective = ".balign 4";
+#endif
+    auto global = staticVariable->isGlobal();
+    auto globalDirective = ".globl ";
+    if (!global) {
+        globalDirective = "";
+    }
+    auto variableIdentifier = staticVariable->getIdentifier();
+    auto initialValue = staticVariable->getInitialValue();
+
+    assemblyFileStream << "\n";
+    if (initialValue != 0) {
+        assemblyFileStream << "    " << globalDirective << variableIdentifier
+                           << "\n";
+        assemblyFileStream << "    .data\n";
+        assemblyFileStream << "    " << alignDirective << "\n";
+        assemblyFileStream << variableIdentifier << ":\n";
+        assemblyFileStream << "    .long " << initialValue << "\n";
+    }
+    else if (initialValue == 0) {
+        assemblyFileStream << "    " << globalDirective << variableIdentifier
+                           << "\n";
+        assemblyFileStream << "    .bss\n";
+        assemblyFileStream << "    " << alignDirective << "\n";
+        assemblyFileStream << variableIdentifier << ":\n";
+        assemblyFileStream << "    .zero 4\n";
     }
 }
 
@@ -329,6 +364,14 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
         assemblyFileStream << "    movl " << srcStack->getOffset() << "("
                            << srcStack->getReservedRegisterInStr() << ")";
     }
+    else if (auto srcData =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+        auto identifier = srcData->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << "    movl " << identifier << "(%rip)";
+    }
 
     auto dst = movInstruction->getDst();
     if (auto dstReg =
@@ -340,6 +383,14 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
         assemblyFileStream << ", " << dstStack->getOffset() << "("
                            << dstStack->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dstData =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+        auto identifier = dstData->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << ", " << identifier << "(%rip)\n";
     }
 }
 
@@ -394,6 +445,14 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
         assemblyFileStream << "    pushq" << " $" << immOperand->getImmediate()
                            << "\n";
     }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << "    pushq" << " " << identifier << "(%rip)\n";
+    }
 }
 
 void PipelineStagesExecutors::emitAssyCallInstruction(
@@ -444,6 +503,14 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
         assemblyFileStream << " " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
     }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip)\n";
+    }
 }
 
 void PipelineStagesExecutors::emitAssyBinaryInstruction(
@@ -481,6 +548,14 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
         assemblyFileStream << " " << operand1Stack->getOffset() << "("
                            << operand1Stack->getReservedRegisterInStr() << "),";
     }
+    else if (auto operand1Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+        auto identifier = operand1Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip),";
+    }
 
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
@@ -493,6 +568,14 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
         assemblyFileStream << " " << operand2Stack->getOffset() << "("
                            << operand2Stack->getReservedRegisterInStr()
                            << ")\n";
+    }
+    else if (auto operand2Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+        auto identifier = operand2Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -516,6 +599,14 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
         assemblyFileStream << " " << operand1Stack->getOffset() << "("
                            << operand1Stack->getReservedRegisterInStr() << ")";
     }
+    else if (auto operand1Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+        auto identifier = operand1Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip)";
+    }
 
     assemblyFileStream << ",";
 
@@ -530,6 +621,14 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
         assemblyFileStream << " " << operand2Stack->getOffset() << "("
                            << operand2Stack->getReservedRegisterInStr()
                            << ")\n";
+    }
+    else if (auto operand2Data =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+        auto identifier = operand2Data->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -548,6 +647,14 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
         assemblyFileStream << " " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
 
@@ -623,6 +730,14 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
         assemblyFileStream << " " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dataOperand =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+#ifdef __APPLE__
+        identifier = "_" + identifier;
+#endif
+        assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
 
