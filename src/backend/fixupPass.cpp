@@ -167,37 +167,29 @@ FixupPass::rewriteInvalidBinary(
             binInstr->getBinaryOperator()) ||
         std::dynamic_pointer_cast<Assembly::SubtractOperator>(
             binInstr->getBinaryOperator())) {
-        if (std::dynamic_pointer_cast<Assembly::StackOperand>(
-                binInstr->getOperand1()) &&
-            std::dynamic_pointer_cast<Assembly::StackOperand>(
-                binInstr->getOperand2())) {
-            auto r10d = std::make_shared<Assembly::RegisterOperand>(
-                std::make_shared<Assembly::R10>());
-            auto newMov = std::make_shared<Assembly::MovInstruction>(
-                binInstr->getOperand1(), r10d);
-            auto newBin = std::make_shared<Assembly::BinaryInstruction>(
-                binInstr->getBinaryOperator(), std::move(r10d),
-                binInstr->getOperand2());
-            *it = std::move(newMov);
-            it = instructions->insert(it + 1, std::move(newBin));
-        }
+        auto r10d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R10>());
+        auto newMov = std::make_shared<Assembly::MovInstruction>(
+            binInstr->getOperand1(), r10d);
+        auto newBin = std::make_shared<Assembly::BinaryInstruction>(
+            binInstr->getBinaryOperator(), std::move(r10d),
+            binInstr->getOperand2());
+        *it = std::move(newMov);
+        it = instructions->insert(it + 1, std::move(newBin));
     }
     else if (std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
                  binInstr->getBinaryOperator())) {
-        if (std::dynamic_pointer_cast<Assembly::StackOperand>(
-                binInstr->getOperand2())) {
-            auto r11d = std::make_shared<Assembly::RegisterOperand>(
-                std::make_shared<Assembly::R11>());
-            auto newMov1 = std::make_shared<Assembly::MovInstruction>(
-                binInstr->getOperand2(), r11d);
-            auto newImul = std::make_shared<Assembly::BinaryInstruction>(
-                binInstr->getBinaryOperator(), binInstr->getOperand1(), r11d);
-            auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-                std::move(r11d), binInstr->getOperand2());
-            *it = std::move(newMov1);
-            it = instructions->insert(it + 1, std::move(newImul));
-            it = instructions->insert(it + 1, std::move(newMov2));
-        }
+        auto r11d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R11>());
+        auto newMov1 = std::make_shared<Assembly::MovInstruction>(
+            binInstr->getOperand2(), r11d);
+        auto newImul = std::make_shared<Assembly::BinaryInstruction>(
+            binInstr->getBinaryOperator(), binInstr->getOperand1(), r11d);
+        auto newMov2 = std::make_shared<Assembly::MovInstruction>(
+            std::move(r11d), binInstr->getOperand2());
+        *it = std::move(newMov1);
+        it = instructions->insert(it + 1, std::move(newImul));
+        it = instructions->insert(it + 1, std::move(newMov2));
     }
 
     return it;
@@ -222,16 +214,21 @@ FixupPass::rewriteInvalidIdiv(
     return it;
 }
 
+// TODO(zzmic): Potentially revise the below.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidCmp(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
         instructions,
     std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
     std::shared_ptr<Assembly::CmpInstruction> cmpInstr) {
-    if (std::dynamic_pointer_cast<Assembly::StackOperand>(
-            cmpInstr->getOperand1()) &&
-        std::dynamic_pointer_cast<Assembly::StackOperand>(
-            cmpInstr->getOperand2())) {
+    if ((std::dynamic_pointer_cast<Assembly::StackOperand>(
+             cmpInstr->getOperand1()) ||
+         std::dynamic_pointer_cast<Assembly::DataOperand>(
+             cmpInstr->getOperand1())) &&
+        (std::dynamic_pointer_cast<Assembly::StackOperand>(
+             cmpInstr->getOperand2()) ||
+         std::dynamic_pointer_cast<Assembly::DataOperand>(
+             cmpInstr->getOperand2()))) {
         auto r10d = std::make_shared<Assembly::RegisterOperand>(
             std::make_shared<Assembly::R10>());
         auto newMov = std::make_shared<Assembly::MovInstruction>(
