@@ -245,12 +245,15 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
 #ifdef __APPLE__
     alignDirective = ".balign 4";
 #endif
+    auto variableIdentifier = staticVariable->getIdentifier();
+#ifdef __APPLE__
+    variableIdentifier = "_" + variableIdentifier;
+#endif
     auto global = staticVariable->isGlobal();
-    auto globalDirective = ".globl " + staticVariable->getIdentifier() + "\n";
+    auto globalDirective = ".globl " + variableIdentifier + "\n";
     if (!global) {
         globalDirective = "";
     }
-    auto variableIdentifier = staticVariable->getIdentifier();
     auto initialValue = staticVariable->getInitialValue();
 
     assemblyFileStream << "\n";
