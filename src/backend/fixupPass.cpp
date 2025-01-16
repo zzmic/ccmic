@@ -2,52 +2,11 @@
 
 namespace Assembly {
 void FixupPass::fixup(
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-        functionDefinitions) {
-    for (auto functionDefinition : *functionDefinitions) {
-        auto instructions = functionDefinition->getFunctionBody();
-        auto preAlignedStackSize = functionDefinition->getStackSize();
-        // Align the stack size to the next multiple of 16.
-        // Reference: https://math.stackexchange.com/a/291494.
-        auto alignedStackSize = ((preAlignedStackSize - 1) | 15) + 1;
-        // Insert an allocate-stack instruction at the beginning of each
-        // function.
-        insertAllocateStackInstruction(instructions, alignedStackSize);
-        // Traverse the instructions (associated with (included in) the
-        // function) and rewrite invalid instructions.
-        for (auto it = instructions->begin(); it != instructions->end(); it++) {
-            if (auto movInstr =
-                    std::dynamic_pointer_cast<Assembly::MovInstruction>(*it)) {
-                // If the mov instruction is invalid, rewrite it.
-                // Replace the invalid mov instruction with two valid ones using
-                // R10.
-                // Replace the iterator with the new iterator returned by
-                // `rewriteInvalidMov`.
-                if (isInvalidMov(movInstr)) {
-                    it = rewriteInvalidMov(instructions, it, movInstr);
-                }
-            }
-            else if (auto binInstr =
-                         std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
-                             *it)) {
-                if (isInvalidBinary(binInstr)) {
-                    it = rewriteInvalidBinary(instructions, it, binInstr);
-                }
-            }
-            else if (auto idivInstr =
-                         std::dynamic_pointer_cast<Assembly::IdivInstruction>(
-                             *it)) {
-                if (isInvalidIdiv(idivInstr)) {
-                    it = rewriteInvalidIdiv(instructions, it, idivInstr);
-                }
-            }
-            else if (auto cmpInstr =
-                         std::dynamic_pointer_cast<Assembly::CmpInstruction>(
-                             *it)) {
-                if (isInvalidCmp(cmpInstr)) {
-                    it = rewriteInvalidCmp(instructions, it, cmpInstr);
-                }
-            }
+    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels) {
+    for (auto topLevel : *topLevels) {
+        if (auto functionDefinition =
+                std::dynamic_pointer_cast<FunctionDefinition>(topLevel)) {
+            rewriteFunctionDefinition(functionDefinition);
         }
     }
 }
@@ -60,10 +19,61 @@ void FixupPass::insertAllocateStackInstruction(
                          std::make_shared<AllocateStackInstruction>(stackSize));
 }
 
+void FixupPass::rewriteFunctionDefinition(
+    std::shared_ptr<FunctionDefinition> functionDefinition) {
+    auto instructions = functionDefinition->getFunctionBody();
+    auto preAlignedStackSize = functionDefinition->getStackSize();
+    // Align the stack size to the next multiple of 16.
+    // Reference: https://math.stackexchange.com/a/291494.
+    auto alignedStackSize = ((preAlignedStackSize - 1) | 15) + 1;
+    // Insert an allocate-stack instruction at the beginning of each
+    // function.
+    insertAllocateStackInstruction(instructions, alignedStackSize);
+    // Traverse the instructions (associated with (included in) the
+    // function) and rewrite invalid instructions.
+    for (auto it = instructions->begin(); it != instructions->end(); it++) {
+        if (auto movInstr =
+                std::dynamic_pointer_cast<Assembly::MovInstruction>(*it)) {
+            // If the mov instruction is invalid, rewrite it.
+            // Replace the invalid mov instruction with two valid ones using
+            // R10.
+            // Replace the iterator with the new iterator returned by
+            // `rewriteInvalidMov`.
+            if (isInvalidMov(movInstr)) {
+                it = rewriteInvalidMov(instructions, it, movInstr);
+            }
+        }
+        else if (auto binInstr =
+                     std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
+                         *it)) {
+            if (isInvalidBinary(binInstr)) {
+                it = rewriteInvalidBinary(instructions, it, binInstr);
+            }
+        }
+        else if (auto idivInstr =
+                     std::dynamic_pointer_cast<Assembly::IdivInstruction>(
+                         *it)) {
+            if (isInvalidIdiv(idivInstr)) {
+                it = rewriteInvalidIdiv(instructions, it, idivInstr);
+            }
+        }
+        else if (auto cmpInstr =
+                     std::dynamic_pointer_cast<Assembly::CmpInstruction>(*it)) {
+            if (isInvalidCmp(cmpInstr)) {
+                it = rewriteInvalidCmp(instructions, it, cmpInstr);
+            }
+        }
+    }
+}
+
 bool FixupPass::isInvalidMov(
     std::shared_ptr<Assembly::MovInstruction> movInstr) {
-    return std::dynamic_pointer_cast<Assembly::StackOperand>(
-               movInstr->getSrc()) != nullptr &&
+    // Stack operands and data operands are memory addresses (memory-address
+    // operands).
+    return (std::dynamic_pointer_cast<Assembly::StackOperand>(
+                movInstr->getSrc()) != nullptr ||
+            std::dynamic_pointer_cast<Assembly::DataOperand>(
+                movInstr->getSrc()) != nullptr) &&
            std::dynamic_pointer_cast<Assembly::StackOperand>(
                movInstr->getDst()) != nullptr;
 }

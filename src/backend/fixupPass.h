@@ -7,14 +7,16 @@
 namespace Assembly {
 class FixupPass {
   public:
-    void fixup(std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-                   functionDefinitions);
+    void
+    fixup(std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels);
 
   private:
     void insertAllocateStackInstruction(
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions,
         int stackSize);
+    void rewriteFunctionDefinition(
+        std::shared_ptr<FunctionDefinition> functionDefinition);
     bool isInvalidMov(std::shared_ptr<Assembly::MovInstruction> movInstr);
     bool isInvalidBinary(std::shared_ptr<Assembly::BinaryInstruction> binInstr);
     bool isInvalidIdiv(std::shared_ptr<Assembly::IdivInstruction> idivInstr);

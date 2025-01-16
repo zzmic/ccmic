@@ -140,24 +140,32 @@ PipelineStagesExecutors::irGeneratorExecutor(
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     std::shared_ptr<IR::Program> irProgram,
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables) {
+        irStaticVariables,
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
+        symbols) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Instantiate an assembly generator object and generate the assembly.
-        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables);
+        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables,
+                                                      symbols);
         assemblyProgram = assemblyGenerator.generate(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and associate the stack
-        // size with each function.
-        Assembly::PseudoToStackPass pseudoToStackPass;
-        auto functionDefinitions = assemblyProgram->getFunctionDefinitions();
+        // size with each top-level element.
+        Assembly::PseudoToStackPass pseudoToStackPass(symbols);
+        auto topLevels = assemblyProgram->getTopLevels();
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
-            functionDefinitions);
+            topLevels);
 
         // Instantiate a fixup pass object and fixup the assembly program.
         Assembly::FixupPass fixupPass;
-        fixupPass.fixup(functionDefinitions);
-        assemblyProgram->setFunctionDefinitions(functionDefinitions);
+        fixupPass.fixup(topLevels);
+
+        // Set the top-level elements of the assembly program after all the
+        // passes.
+        assemblyProgram->setTopLevels(topLevels);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Code generation error: " << e.what();
@@ -179,8 +187,20 @@ void PipelineStagesExecutors::codeEmissionExecutor(
         throw std::runtime_error(msg.str());
     }
 
-    for (auto function : *assemblyProgram->getFunctionDefinitions()) {
-        emitAssyFunctionDefinition(function, assemblyFileStream);
+    auto assyTopLevels = assemblyProgram->getTopLevels();
+    for (auto topLevel : *assyTopLevels) {
+        if (auto functionDefinition =
+                std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
+                    topLevel)) {
+            emitAssyFunctionDefinition(functionDefinition, assemblyFileStream);
+        }
+        else if (auto staticVariable =
+                     std::dynamic_pointer_cast<Assembly::StaticVariable>(
+                         topLevel)) {
+            assemblyFileStream << "[static] " << staticVariable->getIdentifier()
+                               << " = " << staticVariable->getInitialValue()
+                               << "\n";
+        }
     }
 
 // If the underlying OS is Linux, add the following to enable an important

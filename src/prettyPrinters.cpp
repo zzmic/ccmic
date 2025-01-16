@@ -327,8 +327,19 @@ void PrettyPrinters::printIRFunctionCallInstruction(
 // Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(
     std::shared_ptr<Assembly::Program> assemblyProgram) {
-    for (auto function : *assemblyProgram->getFunctionDefinitions()) {
-        printAssyFunctionDefinition(function);
+    auto assyTopLevels = assemblyProgram->getTopLevels();
+    for (auto topLevel : *assyTopLevels) {
+        if (auto functionDefinition =
+                std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
+                    topLevel)) {
+            printAssyFunctionDefinition(functionDefinition);
+        }
+        else if (auto staticVariable =
+                     std::dynamic_pointer_cast<Assembly::StaticVariable>(
+                         topLevel)) {
+            std::cout << "[static] " << staticVariable->getIdentifier() << " = "
+                      << staticVariable->getInitialValue() << "\n";
+        }
     }
 
 // If the underlying OS is Linux, add the following to enable an important

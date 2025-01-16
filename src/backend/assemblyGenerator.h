@@ -12,13 +12,30 @@ class AssemblyGenerator {
   public:
     AssemblyGenerator(
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables);
+            irStaticVariables,
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<AST::IdentifierAttribute>>>
+            symbols);
     std::shared_ptr<Assembly::Program>
     generate(std::shared_ptr<IR::Program> irProgram);
 
   private:
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
         irStaticVariables;
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
+        symbols;
+    std::shared_ptr<Assembly::FunctionDefinition>
+    generateAssyFunctionDefinition(
+        std::shared_ptr<IR::FunctionDefinition> irFunctionDefinition,
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions);
+    std::shared_ptr<Assembly::StaticVariable> generateAssyStaticVariable(
+        std::shared_ptr<IR::StaticVariable> irStaticVariable,
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions);
     void generateAssyInstruction(
         std::shared_ptr<IR::Instruction> irInstruction,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>

@@ -4,71 +4,112 @@
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables)
-    : irStaticVariables(irStaticVariables) {}
+        irStaticVariables,
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>
+        symbols)
+    : irStaticVariables(irStaticVariables), symbols(symbols) {}
 
 std::shared_ptr<Assembly::Program>
 AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
     auto irTopLevels = irProgram->getTopLevels();
-    // TODO(zzmic): This is a temporary solution.
-    auto irFunctionDefinitions = std::make_shared<
-        std::vector<std::shared_ptr<IR::FunctionDefinition>>>();
-    auto assyFunctionDefinitions =
-        std::make_shared<std::vector<std::shared_ptr<FunctionDefinition>>>();
-    for (auto irFunctionDefinition : *irFunctionDefinitions) {
-        auto functionIdentifier = irFunctionDefinition->getFunctionIdentifier();
-        auto functionBody = irFunctionDefinition->getFunctionBody();
-        auto instructions =
-            std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
+    auto assyTopLevels =
+        std::make_shared<std::vector<std::shared_ptr<TopLevel>>>();
+    auto instructions =
+        std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
 
-        // Generate instructions to move parameters from registers to the
-        // stack.
-        auto irParameters = irFunctionDefinition->getParameters();
-        if (irParameters->size() > 0) {
-            std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
-                                                          "CX", "R8", "R9"};
-            int registerIndex = 0;
-            for (std::size_t i = 0; i < irParameters->size(); i++) {
-                auto irParam = irParameters->at(i);
-                auto irParamOperand =
-                    std::make_shared<Assembly::PseudoRegisterOperand>(irParam);
-                if (i < 6) { // First six parameters from registers.
-                    auto registerOperand =
-                        std::make_shared<Assembly::RegisterOperand>(
-                            argRegistersInStr[registerIndex]);
-                    instructions->emplace_back(
-                        std::make_shared<Assembly::MovInstruction>(
-                            registerOperand, irParamOperand));
-                    registerIndex++;
-                }
-                else { // Remaining parameters from the stack.
-                    // Calculate the offset from the base pointer.
-                    // `(%rbp)` stores the base pointer.
-                    // `(%rbp + 8)` stores the return address.
-                    // `(%rbp + 16)` stores the first stack parameter (if any).
-                    // ...
-                    auto stackOffset = 8 * (i - 6 + 2);
-                    auto stackOperand =
-                        std::make_shared<Assembly::StackOperand>(
-                            stackOffset, std::make_shared<Assembly::BP>());
-                    instructions->emplace_back(
-                        std::make_shared<Assembly::MovInstruction>(
-                            stackOperand, irParamOperand));
-                }
+    for (auto irTopLevel : *irTopLevels) {
+        if (auto irFunctionDefinition =
+                std::dynamic_pointer_cast<IR::FunctionDefinition>(irTopLevel)) {
+            auto assyFunctionDefinition = generateAssyFunctionDefinition(
+                irFunctionDefinition, instructions);
+            assyTopLevels->emplace_back(assyFunctionDefinition);
+        }
+        else if (auto irStaticVariable =
+                     std::dynamic_pointer_cast<IR::StaticVariable>(
+                         irTopLevel)) {
+            auto assyStaticVariable =
+                generateAssyStaticVariable(irStaticVariable, instructions);
+            assyTopLevels->emplace_back(assyStaticVariable);
+        }
+    }
+
+    return std::make_shared<Program>(assyTopLevels);
+}
+
+std::shared_ptr<Assembly::FunctionDefinition>
+AssemblyGenerator::generateAssyFunctionDefinition(
+    std::shared_ptr<IR::FunctionDefinition> irFunctionDefinition,
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions) {
+    auto functionIdentifier = irFunctionDefinition->getFunctionIdentifier();
+    auto functionGlobal = irFunctionDefinition->isGlobal();
+    auto functionBody = irFunctionDefinition->getFunctionBody();
+
+    // Generate instructions to move parameters from registers to the
+    // stack.
+    auto irParameters = irFunctionDefinition->getParameters();
+    if (irParameters->size() > 0) {
+        std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
+                                                      "CX", "R8", "R9"};
+        int registerIndex = 0;
+        for (std::size_t i = 0; i < irParameters->size(); i++) {
+            auto irParam = irParameters->at(i);
+            auto irParamOperand =
+                std::make_shared<Assembly::PseudoRegisterOperand>(irParam);
+            if (i < 6) { // First six parameters from registers.
+                auto registerOperand =
+                    std::make_shared<Assembly::RegisterOperand>(
+                        argRegistersInStr[registerIndex]);
+                instructions->emplace_back(
+                    std::make_shared<Assembly::MovInstruction>(registerOperand,
+                                                               irParamOperand));
+                registerIndex++;
+            }
+            else { // Remaining parameters from the stack.
+                // Calculate the offset from the base pointer.
+                // `(%rbp)` stores the base pointer.
+                // `(%rbp + 8)` stores the return address.
+                // `(%rbp + 16)` stores the first stack parameter (if any).
+                // ...
+                auto stackOffset = 8 * (i - 6 + 2);
+                auto stackOperand = std::make_shared<Assembly::StackOperand>(
+                    stackOffset, std::make_shared<Assembly::BP>());
+                instructions->emplace_back(
+                    std::make_shared<Assembly::MovInstruction>(stackOperand,
+                                                               irParamOperand));
             }
         }
-        // Generate function definition that is corresponding to the IR function
-        // definition (after conversion).
-        auto assyFunctionDefinition = std::make_shared<FunctionDefinition>(
-            functionIdentifier, instructions, 0);
-
-        for (auto irInstruction : *functionBody) {
-            generateAssyInstruction(irInstruction,
-                                    assyFunctionDefinition->getFunctionBody());
-        }
-        assyFunctionDefinitions->emplace_back(assyFunctionDefinition);
     }
-    return std::make_shared<Program>(assyFunctionDefinitions);
+    // Generate function definition that is corresponding to the IR function
+    // definition (after conversion).
+    auto assyFunctionDefinition = std::make_shared<FunctionDefinition>(
+        functionIdentifier, functionGlobal, instructions, 0);
+
+    // Generate assembly instructions for the function body.
+    for (auto irInstruction : *functionBody) {
+        generateAssyInstruction(irInstruction,
+                                assyFunctionDefinition->getFunctionBody());
+    }
+
+    return assyFunctionDefinition;
+}
+
+std::shared_ptr<Assembly::StaticVariable>
+AssemblyGenerator::generateAssyStaticVariable(
+    std::shared_ptr<IR::StaticVariable> irStaticVariable,
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions) {
+    auto identifier = irStaticVariable->getIdentifier();
+    auto global = irStaticVariable->isGlobal();
+    auto initialValue = irStaticVariable->getInitialValue();
+
+    // TODO(zzmic): Check whether IR instructions are needed to be generated for
+    // static variables.
+    (void)instructions;
+
+    return std::make_shared<StaticVariable>(identifier, global, initialValue);
 }
 
 void AssemblyGenerator::generateAssyInstruction(

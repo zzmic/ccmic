@@ -41,7 +41,11 @@ class PipelineStagesExecutors {
     static std::shared_ptr<Assembly::Program> codegenExecutor(
         std::shared_ptr<IR::Program> irProgram,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables);
+            irStaticVariables,
+        std::unordered_map<std::string,
+                           std::pair<std::shared_ptr<Type>,
+                                     std::shared_ptr<AST::IdentifierAttribute>>>
+            symbols);
     static void
     codeEmissionExecutor(std::shared_ptr<Assembly::Program> assemblyProgram,
                          const std::string &assemblyFile);

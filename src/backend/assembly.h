@@ -57,6 +57,9 @@ class Operand {
     virtual int getOffset() const {
         throw std::runtime_error("Operand is not a stack (operand)");
     };
+    virtual std::string getIdentifier() const {
+        throw std::runtime_error("Operand is not a data (operand)");
+    };
 };
 
 class ImmediateOperand : public Operand {
@@ -185,6 +188,15 @@ class StackOperand : public Operand {
             throw std::runtime_error("Unsupported reserved register");
         }
     }
+};
+
+class DataOperand : public Operand {
+  private:
+    std::string identifier;
+
+  public:
+    DataOperand(std::string identifier) : identifier(identifier) {}
+    std::string getIdentifier() const override { return identifier; }
 };
 
 class CondCode {
@@ -420,20 +432,27 @@ class CallInstruction : public Instruction {
 
 class RetInstruction : public Instruction {};
 
-class FunctionDefinition {
+class TopLevel {
+  public:
+    virtual ~TopLevel() = default;
+};
+
+class FunctionDefinition : public TopLevel {
   private:
     std::string functionIdentifier;
+    bool global;
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
     std::size_t stackSize;
 
   public:
     FunctionDefinition(
-        std::string functionIdentifier,
+        std::string functionIdentifier, bool global,
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
         std::size_t stackSize)
-        : functionIdentifier(functionIdentifier), functionBody(functionBody),
-          stackSize(stackSize) {}
+        : functionIdentifier(functionIdentifier), global(global),
+          functionBody(functionBody), stackSize(stackSize) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
+    bool isGlobal() { return global; }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
     getFunctionBody() {
         return functionBody;
@@ -447,23 +466,34 @@ class FunctionDefinition {
     void setStackSize(std::size_t stackSize) { this->stackSize = stackSize; }
 };
 
-class Program {
+class StaticVariable : public TopLevel {
   private:
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-        functionDefinitions;
+    std::string identifier;
+    bool global;
+    int initialValue;
+    // TODO(zzmic): Check whether `stackSize` is needed for static variables.
 
   public:
-    Program(std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-                functionDefinitions)
-        : functionDefinitions(functionDefinitions) {}
-    std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-    getFunctionDefinitions() {
-        return functionDefinitions;
+    StaticVariable(std::string identifier, bool global, int initialValue)
+        : identifier(identifier), global(global), initialValue(initialValue) {}
+    std::string getIdentifier() { return identifier; }
+    bool isGlobal() { return global; }
+    int getInitialValue() { return initialValue; }
+};
+
+class Program {
+  private:
+    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels;
+
+  public:
+    Program(std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels)
+        : topLevels(topLevels) {}
+    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> getTopLevels() {
+        return topLevels;
     }
-    void setFunctionDefinitions(
-        std::shared_ptr<std::vector<std::shared_ptr<FunctionDefinition>>>
-            functionDefinitions) {
-        this->functionDefinitions = functionDefinitions;
+    void setTopLevels(
+        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels) {
+        this->topLevels = topLevels;
     }
 };
 } // namespace Assembly

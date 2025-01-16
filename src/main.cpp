@@ -162,7 +162,8 @@ int main(int argc, char *argv[]) {
     // Generate the assembly program from the IR program and the IR static
     // variables.
     std::shared_ptr<Assembly::Program> assemblyProgram =
-        PipelineStagesExecutors::codegenExecutor(irProgram, irStaticVariables);
+        PipelineStagesExecutors::codegenExecutor(irProgram, irStaticVariables,
+                                                 symbols);
 
     // Print out the (assembly) instructions that would be emitted from the
     // assembly program.
