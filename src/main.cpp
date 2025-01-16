@@ -152,7 +152,7 @@ int main(int argc, char *argv[]) {
     auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
     // Print the IR program onto the stdout.
-    PrettyPrinters::printIRProgram(irProgram);
+    PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
 
     if (tillIR) {
         std::cout << "IR generation completed.\n";

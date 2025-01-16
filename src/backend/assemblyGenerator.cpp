@@ -16,23 +16,27 @@ AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
     auto irTopLevels = irProgram->getTopLevels();
     auto assyTopLevels =
         std::make_shared<std::vector<std::shared_ptr<TopLevel>>>();
-    auto instructions =
-        std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
 
+    // Generate assembly instructions for each IR top-level function definition.
     for (auto irTopLevel : *irTopLevels) {
         if (auto irFunctionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(irTopLevel)) {
+            auto instructions =
+                std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
             auto assyFunctionDefinition = generateAssyFunctionDefinition(
                 irFunctionDefinition, instructions);
             assyTopLevels->emplace_back(assyFunctionDefinition);
         }
-        else if (auto irStaticVariable =
-                     std::dynamic_pointer_cast<IR::StaticVariable>(
-                         irTopLevel)) {
-            auto assyStaticVariable =
-                generateAssyStaticVariable(irStaticVariable, instructions);
-            assyTopLevels->emplace_back(assyStaticVariable);
+        else {
+            throw std::runtime_error("Unsupported top-level element");
         }
+    }
+
+    // Generate assembly instructions for each IR (either top-level or local)
+    // static variable.
+    for (auto irStaticVariable : *irStaticVariables) {
+        auto assyStaticVariable = generateAssyStaticVariable(irStaticVariable);
+        assyTopLevels->emplace_back(assyStaticVariable);
     }
 
     return std::make_shared<Program>(assyTopLevels);
@@ -98,17 +102,10 @@ AssemblyGenerator::generateAssyFunctionDefinition(
 
 std::shared_ptr<Assembly::StaticVariable>
 AssemblyGenerator::generateAssyStaticVariable(
-    std::shared_ptr<IR::StaticVariable> irStaticVariable,
-    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-        instructions) {
+    std::shared_ptr<IR::StaticVariable> irStaticVariable) {
     auto identifier = irStaticVariable->getIdentifier();
     auto global = irStaticVariable->isGlobal();
     auto initialValue = irStaticVariable->getInitialValue();
-
-    // TODO(zzmic): Check whether IR instructions are needed to be generated for
-    // static variables.
-    (void)instructions;
-
     return std::make_shared<StaticVariable>(identifier, global, initialValue);
 }
 

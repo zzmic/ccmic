@@ -7,7 +7,10 @@
 
 class PrettyPrinters {
   public:
-    static void printIRProgram(std::shared_ptr<IR::Program> irProgram);
+    static void printIRProgram(
+        std::shared_ptr<IR::Program> irProgram,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+            irStaticVariables);
     static void
     printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram);
 

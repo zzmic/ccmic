@@ -4,17 +4,22 @@
 /*
  * Start: Functions to print the IR program onto the stdout.
  */
-void PrettyPrinters::printIRProgram(std::shared_ptr<IR::Program> irProgram) {
+void PrettyPrinters::printIRProgram(
+    std::shared_ptr<IR::Program> irProgram,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+        irStaticVariables) {
     auto topLevels = irProgram->getTopLevels();
     for (auto topLevel : *topLevels) {
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
             printIRFunctionDefinition(functionDefinition);
         }
-        else if (auto staticVariable =
-                     std::dynamic_pointer_cast<IR::StaticVariable>(topLevel)) {
-            printIRStaticVariable(staticVariable);
+        else {
+            throw std::runtime_error("Unsupported top-level element");
         }
+    }
+    for (auto irStaticVariable : *irStaticVariables) {
+        printIRStaticVariable(irStaticVariable);
     }
 }
 
@@ -355,10 +360,14 @@ void PrettyPrinters::printAssyFunctionDefinition(
 #ifdef __APPLE__
     functionName = "_" + functionName;
 #endif
+    auto global = functionDefinition->isGlobal();
+    auto globalDirective = "    .globl " + functionName + "\n";
+    if (!global) {
+        globalDirective = "";
+    }
 
     // Print the function prologue (before printing the function body).
-    std::cout << "\n"
-              << "    .globl " << functionName << "\n";
+    std::cout << "\n" << globalDirective;
     std::cout << "    .text\n";
     std::cout << functionName << ":\n";
     std::cout << "    pushq %rbp\n";
@@ -378,7 +387,7 @@ void PrettyPrinters::printAssyStaticVariable(
     alignDirective = ".balign 4";
 #endif
     auto global = staticVariable->isGlobal();
-    auto globalDirective = ".globl ";
+    auto globalDirective = ".globl " + staticVariable->getIdentifier() + "\n";
     if (!global) {
         globalDirective = "";
     }
@@ -387,14 +396,14 @@ void PrettyPrinters::printAssyStaticVariable(
 
     std::cout << "\n";
     if (initialValue != 0) {
-        std::cout << "    " << globalDirective << variableIdentifier << "\n";
+        std::cout << globalDirective;
         std::cout << "    .data\n";
         std::cout << "    " << alignDirective << "\n";
         std::cout << variableIdentifier << ":\n";
         std::cout << "    .long " << initialValue << "\n";
     }
     else if (initialValue == 0) {
-        std::cout << "    " << globalDirective << variableIdentifier << "\n";
+        std::cout << globalDirective;
         std::cout << "    .bss\n";
         std::cout << "    " << alignDirective << "\n";
         std::cout << variableIdentifier << ":\n";

@@ -218,9 +218,14 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
 #ifdef __APPLE__
     functionName = "_" + functionName;
 #endif
+    auto global = functionDefinition->isGlobal();
+    auto globalDirective = "    .globl " + functionName + "\n";
+    if (!global) {
+        globalDirective = "";
+    }
 
     // Emit the function prologue (before emitting the function body).
-    assemblyFileStream << "    .globl " << functionName << "\n";
+    assemblyFileStream << globalDirective;
     assemblyFileStream << "    .text\n";
     assemblyFileStream << functionName << ":\n";
     assemblyFileStream << "    pushq %rbp\n";
@@ -241,7 +246,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     alignDirective = ".balign 4";
 #endif
     auto global = staticVariable->isGlobal();
-    auto globalDirective = ".globl ";
+    auto globalDirective = ".globl " + staticVariable->getIdentifier() + "\n";
     if (!global) {
         globalDirective = "";
     }
@@ -250,16 +255,14 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
 
     assemblyFileStream << "\n";
     if (initialValue != 0) {
-        assemblyFileStream << "    " << globalDirective << variableIdentifier
-                           << "\n";
+        assemblyFileStream << globalDirective;
         assemblyFileStream << "    .data\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
         assemblyFileStream << "    .long " << initialValue << "\n";
     }
     else if (initialValue == 0) {
-        assemblyFileStream << "    " << globalDirective << variableIdentifier
-                           << "\n";
+        assemblyFileStream << globalDirective;
         assemblyFileStream << "    .bss\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";

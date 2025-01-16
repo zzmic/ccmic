@@ -25,8 +25,6 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
             }
             functionDefinition->setStackSize(-offset);
         }
-        // TODO(zzmic): Check if static variables are needed to perform this
-        // pass.
     }
 
     // Check that all pseudo registers have been replaced.
@@ -37,8 +35,6 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
             checkPseudoRegistersInFunctionDefinitionReplaced(
                 functionDefinition);
         }
-        // TODO(zzmic): Check if static variables are needed to perform this
-        // pass.
     }
 }
 

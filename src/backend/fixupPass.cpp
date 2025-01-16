@@ -214,7 +214,6 @@ FixupPass::rewriteInvalidIdiv(
     return it;
 }
 
-// TODO(zzmic): Potentially revise the below.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidCmp(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>

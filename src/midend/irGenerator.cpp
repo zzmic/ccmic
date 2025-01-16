@@ -77,7 +77,7 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
                          astDeclaration)) {
             // Continue: Do not generate IR instructions for file-scope variable
             // declarations or for local variable declarations with `static` or
-            // `extern` storage-class specifiers.
+            // `extern` storage-class specifiers (for now).
             if (variableDeclaration->getOptStorageClass().has_value()) {
                 if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
                         variableDeclaration->getOptStorageClass().value()) ||
@@ -115,7 +115,23 @@ void IRGenerator::generateIRBlock(
             if (auto variableDeclaration =
                     std::dynamic_pointer_cast<AST::VariableDeclaration>(
                         dBlockItem->getDeclaration())) {
-                generateIRVariableDefinition(variableDeclaration, instructions);
+                // Continue: Do not generate IR instructions for file-scope
+                // variable declarations or for local variable declarations with
+                // `static` or `extern` storage-class specifiers (for now).
+                if (variableDeclaration->getOptStorageClass().has_value()) {
+                    if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
+                            variableDeclaration->getOptStorageClass()
+                                .value()) ||
+                        std::dynamic_pointer_cast<AST::ExternStorageClass>(
+                            variableDeclaration->getOptStorageClass()
+                                .value())) {
+                        continue;
+                    }
+                }
+                else {
+                    generateIRVariableDefinition(variableDeclaration,
+                                                 instructions);
+                }
             }
             // Generate IR instructions for the function declaration (that has a
             // body).

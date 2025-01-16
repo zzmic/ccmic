@@ -33,9 +33,7 @@ class AssemblyGenerator {
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
     std::shared_ptr<Assembly::StaticVariable> generateAssyStaticVariable(
-        std::shared_ptr<IR::StaticVariable> irStaticVariable,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        std::shared_ptr<IR::StaticVariable> irStaticVariable);
     void generateAssyInstruction(
         std::shared_ptr<IR::Instruction> irInstruction,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>

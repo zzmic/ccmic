@@ -471,7 +471,6 @@ class StaticVariable : public TopLevel {
     std::string identifier;
     bool global;
     int initialValue;
-    // TODO(zzmic): Check whether `stackSize` is needed for static variables.
 
   public:
     StaticVariable(std::string identifier, bool global, int initialValue)
