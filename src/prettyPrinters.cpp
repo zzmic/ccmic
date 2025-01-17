@@ -357,9 +357,7 @@ void PrettyPrinters::printAssemblyProgram(
 void PrettyPrinters::printAssyFunctionDefinition(
     std::shared_ptr<Assembly::FunctionDefinition> functionDefinition) {
     std::string functionName = functionDefinition->getFunctionIdentifier();
-#ifdef __APPLE__
-    functionName = "_" + functionName;
-#endif
+    prependUnderscoreToIdentifierIfMacOS(functionName);
     auto global = functionDefinition->isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
     if (!global) {
@@ -387,9 +385,7 @@ void PrettyPrinters::printAssyStaticVariable(
     alignDirective = ".balign 4";
 #endif
     auto variableIdentifier = staticVariable->getIdentifier();
-#ifdef __APPLE__
-    variableIdentifier = "_" + variableIdentifier;
-#endif
+    prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
     auto global = staticVariable->isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
     if (!global) {
@@ -510,9 +506,7 @@ void PrettyPrinters::printAssyMovInstruction(
     else if (auto srcData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
         auto identifier = srcData->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << "    movl " << identifier << "(%rip)";
     }
 
@@ -529,9 +523,7 @@ void PrettyPrinters::printAssyMovInstruction(
     else if (auto dstData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
         auto identifier = dstData->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << ", " << identifier << "(%rip)\n";
     }
 }
@@ -582,9 +574,7 @@ void PrettyPrinters::printAssyPushInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << "    pushq" << " " << identifier << "(%rip)\n";
     }
 }
@@ -592,10 +582,7 @@ void PrettyPrinters::printAssyPushInstruction(
 void PrettyPrinters::printAssyCallInstruction(
     std::shared_ptr<Assembly::CallInstruction> callInstruction) {
     std::string functionName = callInstruction->getFunctionIdentifier();
-// If the underlying OS is macOS, prepend an underscore to the function name.
-#ifdef __APPLE__
-    functionName = "_" + functionName;
-#endif
+    prependUnderscoreToIdentifierIfMacOS(functionName);
     std::cout << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
 // operand.
@@ -637,9 +624,7 @@ void PrettyPrinters::printAssyUnaryInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
     }
 }
@@ -680,9 +665,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
     else if (auto operand1Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip),";
     }
 
@@ -699,9 +682,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
     else if (auto operand2Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
     }
 }
@@ -728,9 +709,7 @@ void PrettyPrinters::printAssyCmpInstruction(
     else if (auto operand1Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)";
     }
 
@@ -749,9 +728,7 @@ void PrettyPrinters::printAssyCmpInstruction(
     else if (auto operand2Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
     }
 }
@@ -773,9 +750,7 @@ void PrettyPrinters::printAssyIdivInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
     }
 }
@@ -849,9 +824,7 @@ void PrettyPrinters::printAssySetCCInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
     }
 }
@@ -860,6 +833,15 @@ void PrettyPrinters::printAssyLabelInstruction(
     std::shared_ptr<Assembly::LabelInstruction> labelInstruction) {
     auto label = labelInstruction->getLabel();
     std::cout << ".L" << label << ":\n";
+}
+
+void PrettyPrinters::prependUnderscoreToIdentifierIfMacOS(
+    std::string &identifier) {
+// If the underlying OS is macOS, prepend an underscore to the function name.
+// Otherwise, leave the function name as is.
+#ifdef __APPLE__
+    identifier = "_" + identifier;
+#endif
 }
 /*
  * End: Functions to print the assembly program onto the stdout.

@@ -105,6 +105,7 @@ class PipelineStagesExecutors {
     static void emitAssyLabelInstruction(
         std::shared_ptr<Assembly::LabelInstruction> labelInstruction,
         std::ofstream &assemblyFileStream);
+    static void prependUnderscoreToIdentifierIfMacOS(std::string &identifier);
 };
 
 #endif // PIPELINE_STAGES_EXECUTORS_H

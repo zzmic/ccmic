@@ -78,6 +78,7 @@ class PrettyPrinters {
         std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction);
     static void printAssyLabelInstruction(
         std::shared_ptr<Assembly::LabelInstruction> labelInstruction);
+    static void prependUnderscoreToIdentifierIfMacOS(std::string &identifier);
 };
 
 #endif // PRETTY_PRINTERS_H

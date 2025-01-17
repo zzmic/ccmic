@@ -215,9 +215,7 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
     std::shared_ptr<Assembly::FunctionDefinition> functionDefinition,
     std::ofstream &assemblyFileStream) {
     std::string functionName = functionDefinition->getFunctionIdentifier();
-#ifdef __APPLE__
-    functionName = "_" + functionName;
-#endif
+    prependUnderscoreToIdentifierIfMacOS(functionName);
     auto global = functionDefinition->isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
     if (!global) {
@@ -246,9 +244,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     alignDirective = ".balign 4";
 #endif
     auto variableIdentifier = staticVariable->getIdentifier();
-#ifdef __APPLE__
-    variableIdentifier = "_" + variableIdentifier;
-#endif
+    prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
     auto global = staticVariable->isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
     if (!global) {
@@ -373,9 +369,7 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     else if (auto srcData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
         auto identifier = srcData->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << "    movl " << identifier << "(%rip)";
     }
 
@@ -393,9 +387,7 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     else if (auto dstData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
         auto identifier = dstData->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << ", " << identifier << "(%rip)\n";
     }
 }
@@ -454,9 +446,7 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << "    pushq" << " " << identifier << "(%rip)\n";
     }
 }
@@ -465,10 +455,7 @@ void PipelineStagesExecutors::emitAssyCallInstruction(
     std::shared_ptr<Assembly::CallInstruction> callInstruction,
     std::ofstream &assemblyFileStream) {
     std::string functionName = callInstruction->getFunctionIdentifier();
-// If the underlying OS is macOS, prepend an underscore to the function name.
-#ifdef __APPLE__
-    functionName = "_" + functionName;
-#endif
+    prependUnderscoreToIdentifierIfMacOS(functionName);
     assemblyFileStream << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
 // operand.
@@ -512,9 +499,7 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
@@ -557,9 +542,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     else if (auto operand1Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip),";
     }
 
@@ -578,9 +561,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     else if (auto operand2Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
@@ -608,9 +589,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     else if (auto operand1Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)";
     }
 
@@ -631,9 +610,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     else if (auto operand2Data =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
@@ -657,9 +634,7 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
@@ -740,9 +715,7 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
-#ifdef __APPLE__
-        identifier = "_" + identifier;
-#endif
+        prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
 }
@@ -752,4 +725,13 @@ void PipelineStagesExecutors::emitAssyLabelInstruction(
     std::ofstream &assemblyFileStream) {
     auto label = labelInstruction->getLabel();
     assemblyFileStream << ".L" << label << ":\n";
+}
+
+void PipelineStagesExecutors::prependUnderscoreToIdentifierIfMacOS(
+    std::string &identifier) {
+// If the underlying OS is macOS, prepend an underscore to the function name.
+// Otherwise, leave the function name as is.
+#ifdef __APPLE__
+    identifier = "_" + identifier;
+#endif
 }
