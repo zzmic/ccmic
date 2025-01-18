@@ -3,31 +3,97 @@
 
 int main(int argc, char *argv[]) {
     // Check if the user provided the input file (and suggest the proper usage
-    // if not) and extract the source file name and the flag.
-    std::string flag;
+    // if not) and extract the source file (name) and the flag(s).
+    std::vector<std::string> flags;
     std::string sourceFile;
-    if (argc < 2 || argc > 3) {
+    if (argc < 2) {
         std::cerr << "Usage: " << argv[0]
                   << " [--lex] [--parse] [--validate] [--tacky] [--codegen] "
-                     "[-S] [-c] [-o] <sourceFile>\n";
+                     "[-S] [-c] [-o] [--fold-constants] [--propagate-copies] "
+                     "[--eliminate-unreachable-code] [--eliminate-dead-stores] "
+                     "[--optimize] <sourceFile>\n";
         std::cerr << "Given argc: " << argc << "\n";
         return EXIT_FAILURE;
     }
-    if (argc == 2) {
-        flag = "";
-        sourceFile = argv[1];
+    // Parse the command line arguments and extract the flag(s) and the source
+    // file (name).
+    for (int i = 1; i < argc - 1; i++) {
+        flags.emplace_back(argv[i]);
     }
-    else {
-        flag = argv[1];
-        sourceFile = argv[2];
-        if (!(flag == "--lex" || flag == "--parse" || flag == "--validate" ||
-              flag == "--tacky" || flag == "--codegen" || flag == "-S" ||
-              flag == "-c" || flag == "-o")) {
-            std::cerr
-                << "Usage: " << argv[0]
-                << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
-                   "[-c] [-o] <sourceFile>\n";
-            std::cerr << "Given flag: " << flag << "\n";
+    sourceFile = argv[argc - 1];
+
+    // Initialize flags to control the intermediate stages of the compilation.
+    bool tillLex = false;
+    bool tillParse = false;
+    bool tillValidate = false;
+    bool tillIR = false;
+    bool tillCodegen = false;
+    bool tillEmitAssembly = false;
+    bool tillObject = false;
+    bool foldConstantsPass = false;
+    bool propagateCopiesPass = false;
+    bool eliminateUnreachableCodePass = false;
+    bool eliminateDeadStoresPass = false;
+    for (const auto &flag : flags) {
+        // Direct the compiler to run the lexer, but stop before the parser.
+        if (flag == "--lex") {
+            tillLex = true;
+        }
+        // Direct the compiler to run the lexer and parser, but stop before
+        // assembly generation.
+        else if (flag == "--parse") {
+            tillParse = true;
+        }
+        // Direct the compiler to run the lexer, parser, and validator, but stop
+        // before IR generation.
+        else if (flag == "--validate") {
+            tillValidate = true;
+        }
+        // Direct the compiler to run the lexer, parser, and IR generator, but
+        // stop before assembly generation.
+        else if (flag == "--tacky") {
+            tillIR = true;
+        }
+        // Direct the compiler to perform lexing, parsing, IR generation, and
+        // assembly generation, but stop before assembly emission.
+        else if (flag == "--codegen") {
+            tillCodegen = true;
+        }
+        // Direct the compiler to emit the assembly file, but not to assemble
+        // and link it.
+        else if (flag == "-S") {
+            tillEmitAssembly = true;
+        }
+        // Direct the compiler to compile the source file into an object file
+        // without linking it into an executable.
+        else if (flag == "-c") {
+            tillObject = true;
+        }
+        // Direct the compiler to fold constants.
+        else if (flag == "--fold-constants") {
+            foldConstantsPass = true;
+        }
+        // Direct the compiler to propagate copies.
+        else if (flag == "--propagate-copies") {
+            propagateCopiesPass = true;
+        }
+        // Direct the compiler to eliminate unreachable code.
+        else if (flag == "--eliminate-unreachable-code") {
+            eliminateUnreachableCodePass = true;
+        }
+        // Direct the compiler to eliminate dead stores.
+        else if (flag == "--eliminate-dead-stores") {
+            eliminateDeadStoresPass = true;
+        }
+        // Direct the compiler to perform all the optimization passes.
+        else if (flag == "--optimize") {
+            foldConstantsPass = true;
+            propagateCopiesPass = true;
+            eliminateUnreachableCodePass = true;
+            eliminateDeadStoresPass = true;
+        }
+        else {
+            std::cerr << "Unknown/invalid flag: " << flag << "\n";
             return EXIT_FAILURE;
         }
     }
@@ -52,7 +118,6 @@ int main(int argc, char *argv[]) {
         throw std::runtime_error(msg.str());
     }
     std::string programName = sourceFile.substr(0, sourceFile.rfind('.'));
-
     // Construct the preprocessed file name by appending the ".i" extension.
     std::string preprocessedFile = programName + ".i";
     // Construct the assembly file name by appending the ".s" extension.
@@ -64,50 +129,6 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> objectFiles;
     // Construct the executable file name.
     std::string executableFile = programName;
-
-    // Initialize flags to control the intermediate stages of the compilation.
-    bool tillLex = false;
-    bool tillParse = false;
-    bool tillValidate = false;
-    bool tillIR = false;
-    bool tillCodegen = false;
-    bool tillEmitAssembly = false;
-    bool tillObject = false;
-    /*
-     * None of the first five options should produce any output files, and all
-     * should terminate with an exit code of 0 if no runtime errors occur.
-     */
-    // Direct the compiler to run the lexer, but stop before the parser.
-    if (flag == "--lex") {
-        tillLex = true;
-    }
-    // Direct the compiler to run the lexer and parser, but stop before
-    // assembly generation.
-    else if (flag == "--parse") {
-        tillParse = true;
-    }
-    // Direct the compiler to run the lexer, parser, and validator, but stop
-    // before IR generation.
-    else if (flag == "--validate") {
-        tillValidate = true;
-    }
-    // Direct the compiler to run the lexer, parser, and IR generator, but stop
-    // before assembly generation.
-    else if (flag == "--tacky") {
-        tillIR = true;
-    }
-    // Direct the compiler to perform lexing, parsing, IR generation, and
-    // assembly generation, but stop before assembly emission.
-    else if (flag == "--codegen")
-        tillCodegen = true;
-    // Direct the compiler to emit the assembly file, but not to assemble and
-    // link it.
-    else if (flag == "-S")
-        tillEmitAssembly = true;
-    // Direct the compiler to compile the source file into an object file
-    // without linking it into an executable.
-    else if (flag == "-c")
-        tillObject = true;
 
     // Preprocess the source file and write the result to the preprocessed.
     preprocess(sourceFile, preprocessedFile);
@@ -157,6 +178,28 @@ int main(int argc, char *argv[]) {
     if (tillIR) {
         std::cout << "IR generation completed.\n";
         return EXIT_SUCCESS;
+    }
+
+    // Perform the optimization passes on the IR program.
+    if (foldConstantsPass) {
+        // TODO(zzmic).
+        // OptimizationPasses::foldConstants(irProgram);
+        std::cout << "Constant folding completed.\n";
+    }
+    if (eliminateUnreachableCodePass) {
+        // TODO(zzmic).
+        // OptimizationPasses::eliminateUnreachableCode(irProgram);
+        std::cout << "Unreachable code elimination completed.\n";
+    }
+    if (propagateCopiesPass) {
+        // TODO(zzmic).
+        // OptimizationPasses::propagateCopies(irProgram);
+        std::cout << "Copy propagation completed.\n";
+    }
+    if (eliminateDeadStoresPass) {
+        // TODO(zzmic).
+        // OptimizationPasses::eliminateDeadStores(irProgram);
+        std::cout << "Dead store elimination completed.\n";
     }
 
     // Generate the assembly program from the IR program and the IR static
