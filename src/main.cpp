@@ -1,5 +1,5 @@
-#include "pipelineStagesExecutors.h"
-#include "prettyPrinters.h"
+#include "utils/pipelineStagesExecutors.h"
+#include "utils/prettyPrinters.h"
 
 int main(int argc, char *argv[]) {
     // Check if the user provided the input file (and suggest the proper usage

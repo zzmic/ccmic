@@ -728,7 +728,7 @@ void PipelineStagesExecutors::emitAssyLabelInstruction(
 }
 
 void PipelineStagesExecutors::prependUnderscoreToIdentifierIfMacOS(
-    std::string &identifier) {
+    [[maybe_unused]] std::string &identifier) {
 // If the underlying OS is macOS, prepend an underscore to the function name.
 // Otherwise, leave the function name as is.
 #ifdef __APPLE__

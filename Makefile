@@ -7,17 +7,20 @@ SRC_DIR = src
 FRONTEND_DIR = $(SRC_DIR)/frontend
 MIDEND_DIR = $(SRC_DIR)/midend
 BACKEND_DIR = $(SRC_DIR)/backend
+UTILS_DIR = $(SRC_DIR)/utils
 BIN_DIR = bin
 
 # Source files.
 SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
 		  $(wildcard $(MIDEND_DIR)/*.cpp) \
 		  $(wildcard $(BACKEND_DIR)/*.cpp) \
+		  $(wildcard $(UTILS_DIR)/*.cpp) \
 		  $(wildcard $(SRC_DIR)/*.cpp)
 # Header files.
 HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
 		  $(wildcard $(MIDEND_DIR)/*.h) \
 		  $(wildcard $(BACKEND_DIR)/*.h) \
+		  $(wildcard $(UTILS_DIR)/*.h) \
 		  $(wildcard $(SRC_DIR)/*.h)
 # Object files.
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
