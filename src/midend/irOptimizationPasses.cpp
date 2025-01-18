@@ -1,4 +1,4 @@
-#include "optimizationPasses.h"
+#include "irOptimizationPasses.h"
 
 namespace IR {
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>

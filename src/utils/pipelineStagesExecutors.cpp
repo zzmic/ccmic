@@ -136,7 +136,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
 }
 
 // Function to perform optimization passes on the IR program.
-void PipelineStagesExecutors::optimizationPassesExecutor(
+void PipelineStagesExecutors::irOptimizationPassesExecutor(
     std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
     bool propagateCopiesPass, bool eliminateUnreachableCodePass,
     bool eliminateDeadStoresPass) {
@@ -145,7 +145,7 @@ void PipelineStagesExecutors::optimizationPassesExecutor(
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
             auto functionBody = functionDefinition->getFunctionBody();
-            auto optimizedFunctionBody = optimizationPassesExecutorHelper(
+            auto optimizedFunctionBody = irOptimizationPassesExecutorHelper(
                 functionBody, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
             functionDefinition->setFunctionBody(optimizedFunctionBody);
@@ -155,7 +155,7 @@ void PipelineStagesExecutors::optimizationPassesExecutor(
 
 // Helper function to perform optimization passes on the IR function definition.
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-PipelineStagesExecutors::optimizationPassesExecutorHelper(
+PipelineStagesExecutors::irOptimizationPassesExecutorHelper(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> functionBody,
     bool foldConstantsPass, bool propagateCopiesPass,
     bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {

@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
         eliminateUnreachableCodePass || eliminateDeadStoresPass) {
         // Perform the optimization passes on the IR program (if any of the
         // flags is set to true).
-        PipelineStagesExecutors::optimizationPassesExecutor(
+        PipelineStagesExecutors::irOptimizationPassesExecutor(
             irProgram, foldConstantsPass, propagateCopiesPass,
             eliminateUnreachableCodePass, eliminateDeadStoresPass);
         // Print the optimized IR program onto the stdout (after the

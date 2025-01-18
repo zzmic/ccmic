@@ -1,5 +1,5 @@
-#ifndef MIDEND_OPTIMIZATION_PASSES_H
-#define MIDEND_OPTIMIZATION_PASSES_H
+#ifndef MIDEND_IR_OPTIMIZATION_PASSES_H
+#define MIDEND_IR_OPTIMIZATION_PASSES_H
 
 #include "../frontend/block.h"
 #include "../frontend/declaration.h"
@@ -52,4 +52,4 @@ class DeadStoreEliminationPass : public OptimizationPass {
 };
 } // namespace IR
 
-#endif // MIDEND_OPTIMIZATION_PASSES_H
+#endif // MIDEND_IR_OPTIMIZATION_PASSES_H
