@@ -1,5 +1,5 @@
-#ifndef PIPELINE_STAGES_EXECUTORS_H
-#define PIPELINE_STAGES_EXECUTORS_H
+#ifndef UTILS_PIPELINE_STAGES_EXECUTORS_H
+#define UTILS_PIPELINE_STAGES_EXECUTORS_H
 
 #include "../backend/assembly.h"
 #include "../backend/assemblyGenerator.h"
@@ -11,6 +11,7 @@
 #include "../frontend/semanticAnalysisPasses.h"
 #include "../midend/ir.h"
 #include "../midend/irGenerator.h"
+#include "../midend/optimizationPasses.h"
 #include "compilerDriver.h"
 #include <filesystem>
 #include <fstream>
@@ -38,6 +39,17 @@ class PipelineStagesExecutors {
                            std::pair<std::shared_ptr<Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
+    static void
+    optimizationPassesExecutor(std::shared_ptr<IR::Program> &irProgram,
+                               bool foldConstantsPass, bool propagateCopiesPass,
+                               bool eliminateUnreachableCodePass,
+                               bool eliminateDeadStoresPass);
+    static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+    optimizationPassesExecutorHelper(
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            functionBody,
+        bool foldConstantsPass, bool propagateCopiesPass,
+        bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
     static std::shared_ptr<Assembly::Program> codegenExecutor(
         std::shared_ptr<IR::Program> irProgram,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
@@ -105,7 +117,8 @@ class PipelineStagesExecutors {
     static void emitAssyLabelInstruction(
         std::shared_ptr<Assembly::LabelInstruction> labelInstruction,
         std::ofstream &assemblyFileStream);
-    static void prependUnderscoreToIdentifierIfMacOS(std::string &identifier);
+    static void prependUnderscoreToIdentifierIfMacOS(
+        [[maybe_unused]] std::string &identifier);
 };
 
-#endif // PIPELINE_STAGES_EXECUTORS_H
+#endif // UTILS_PIPELINE_STAGES_EXECUTORS_H

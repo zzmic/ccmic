@@ -135,6 +135,57 @@ PipelineStagesExecutors::irGeneratorExecutor(
     return irProgramAndIRStaticVariables;
 }
 
+// Function to perform optimization passes on the IR program.
+void PipelineStagesExecutors::optimizationPassesExecutor(
+    std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
+    bool propagateCopiesPass, bool eliminateUnreachableCodePass,
+    bool eliminateDeadStoresPass) {
+    auto topLevels = irProgram->getTopLevels();
+    for (auto topLevel : *topLevels) {
+        if (auto functionDefinition =
+                std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
+            auto functionBody = functionDefinition->getFunctionBody();
+            auto optimizedFunctionBody = optimizationPassesExecutorHelper(
+                functionBody, foldConstantsPass, propagateCopiesPass,
+                eliminateUnreachableCodePass, eliminateDeadStoresPass);
+            functionDefinition->setFunctionBody(optimizedFunctionBody);
+        }
+    }
+}
+
+// Helper function to perform optimization passes on the IR function definition.
+std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+PipelineStagesExecutors::optimizationPassesExecutorHelper(
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> functionBody,
+    bool foldConstantsPass, bool propagateCopiesPass,
+    bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {
+    while (true) {
+        auto postConstantFoldingFunctionBody = functionBody;
+        if (foldConstantsPass) {
+            postConstantFoldingFunctionBody =
+                IR::ConstantFoldingPass::foldConstants(functionBody);
+        }
+        auto cfg =
+            IR::CFG::makeControlFlowGraph(postConstantFoldingFunctionBody);
+        if (eliminateUnreachableCodePass) {
+            cfg = IR::UnreachableCodeEliminationPass::eliminateUnreachableCode(
+                cfg);
+        }
+        if (propagateCopiesPass) {
+            cfg = IR::CopyPropagationPass::propagateCopies(cfg);
+        }
+        if (eliminateDeadStoresPass) {
+            cfg = IR::DeadStoreEliminationPass::eliminateDeadStores(cfg);
+        }
+        auto optimizedFunctionBody = IR::CFG::cfgToInstructions(cfg);
+        if (optimizedFunctionBody == functionBody ||
+            optimizedFunctionBody->empty()) {
+            return optimizedFunctionBody;
+        }
+        functionBody = optimizedFunctionBody;
+    }
+}
+
 // Function to generate (but not yet emit) the assembly program from the AST
 // program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(

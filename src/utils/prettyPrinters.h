@@ -1,5 +1,5 @@
-#ifndef PRETTY_PRINTERS_H
-#define PRETTY_PRINTERS_H
+#ifndef UTILS_PRETTY_PRINTERS_H
+#define UTILS_PRETTY_PRINTERS_H
 
 #include "../backend/assembly.h"
 #include "../midend/ir.h"
@@ -78,7 +78,8 @@ class PrettyPrinters {
         std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction);
     static void printAssyLabelInstruction(
         std::shared_ptr<Assembly::LabelInstruction> labelInstruction);
-    static void prependUnderscoreToIdentifierIfMacOS(std::string &identifier);
+    static void prependUnderscoreToIdentifierIfMacOS(
+        [[maybe_unused]] std::string &identifier);
 };
 
-#endif // PRETTY_PRINTERS_H
+#endif // UTILS_PRETTY_PRINTERS_H

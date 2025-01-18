@@ -175,31 +175,22 @@ int main(int argc, char *argv[]) {
     // Print the IR program onto the stdout.
     PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
 
-    if (tillIR) {
-        std::cout << "IR generation completed.\n";
-        return EXIT_SUCCESS;
+    if (foldConstantsPass || propagateCopiesPass ||
+        eliminateUnreachableCodePass || eliminateDeadStoresPass) {
+        // Perform the optimization passes on the IR program (if any of the
+        // flags is set to true).
+        PipelineStagesExecutors::optimizationPassesExecutor(
+            irProgram, foldConstantsPass, propagateCopiesPass,
+            eliminateUnreachableCodePass, eliminateDeadStoresPass);
+        // Print the optimized IR program onto the stdout (after the
+        // optimization passes).
+        PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
     }
 
-    // Perform the optimization passes on the IR program.
-    if (foldConstantsPass) {
-        // TODO(zzmic).
-        // OptimizationPasses::foldConstants(irProgram);
-        std::cout << "Constant folding completed.\n";
-    }
-    if (eliminateUnreachableCodePass) {
-        // TODO(zzmic).
-        // OptimizationPasses::eliminateUnreachableCode(irProgram);
-        std::cout << "Unreachable code elimination completed.\n";
-    }
-    if (propagateCopiesPass) {
-        // TODO(zzmic).
-        // OptimizationPasses::propagateCopies(irProgram);
-        std::cout << "Copy propagation completed.\n";
-    }
-    if (eliminateDeadStoresPass) {
-        // TODO(zzmic).
-        // OptimizationPasses::eliminateDeadStores(irProgram);
-        std::cout << "Dead store elimination completed.\n";
+    if (tillIR) {
+        std::cout
+            << "IR generation (and potential optimization passes) completed.\n";
+        return EXIT_SUCCESS;
     }
 
     // Generate the assembly program from the IR program and the IR static

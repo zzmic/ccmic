@@ -1,5 +1,5 @@
-#ifndef COMPILER_DRIVER_H
-#define COMPILER_DRIVER_H
+#ifndef UTILS_COMPILER_DRIVER_H
+#define UTILS_COMPILER_DRIVER_H
 
 #include <string>
 #include <vector>
@@ -14,4 +14,4 @@ void assembleToObject(const std::string &assemblyFile,
 void linkToExecutable(const std::vector<std::string> &objectFiles,
                       const std::string &executableFile);
 
-#endif // COMPILER_DRIVER_H
+#endif // UTILS_COMPILER_DRIVER_H
