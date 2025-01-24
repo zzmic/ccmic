@@ -189,8 +189,8 @@ int main(int argc, char *argv[]) {
     }
 
     if (tillIR) {
-        std::cout
-            << "IR generation (and potential optimization passes) completed.\n";
+        std::cout << "IR generation (and potential executions of optimization "
+                     "passes) completed.\n";
         return EXIT_SUCCESS;
     }
 

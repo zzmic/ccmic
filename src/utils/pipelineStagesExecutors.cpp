@@ -137,7 +137,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
 
 // Function to perform optimization passes on the IR program.
 void PipelineStagesExecutors::irOptimizationExecutor(
-    std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
+    std::shared_ptr<IR::Program> irProgram, bool foldConstantsPass,
     bool propagateCopiesPass, bool eliminateUnreachableCodePass,
     bool eliminateDeadStoresPass) {
     auto topLevels = irProgram->getTopLevels();

@@ -39,7 +39,7 @@ class PipelineStagesExecutors {
                            std::pair<std::shared_ptr<Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
-    static void irOptimizationExecutor(std::shared_ptr<IR::Program> &irProgram,
+    static void irOptimizationExecutor(std::shared_ptr<IR::Program> irProgram,
                                        bool foldConstantsPass,
                                        bool propagateCopiesPass,
                                        bool eliminateUnreachableCodePass,

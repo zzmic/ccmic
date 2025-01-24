@@ -10,13 +10,26 @@ ConstantFoldingPass::foldConstants(
     for (auto it = postConstantFoldingFunctionBody->begin();
          it != postConstantFoldingFunctionBody->end();) {
         auto instruction = *it;
-        // Handle Unary instructions with a constant source operand.
+        // Handle unary instructions with a constant source operand.
         if (auto unaryInstruction =
                 std::dynamic_pointer_cast<IR::UnaryInstruction>(instruction)) {
             if (auto constantValue =
                     std::dynamic_pointer_cast<IR::ConstantValue>(
                         unaryInstruction->getSrc())) {
                 auto constantResult = constantValue->getValue();
+                auto unaryOperator = unaryInstruction->getUnaryOperator();
+                if (std::dynamic_pointer_cast<IR::NegateOperator>(
+                        unaryOperator)) {
+                    constantResult = -constantResult;
+                }
+                else if (std::dynamic_pointer_cast<IR::ComplementOperator>(
+                             unaryOperator)) {
+                    constantResult = ~constantResult;
+                }
+                else if (std::dynamic_pointer_cast<IR::NotOperator>(
+                             unaryOperator)) {
+                    constantResult = !constantResult;
+                }
                 auto copyInstruction = std::make_shared<IR::CopyInstruction>(
                     std::make_shared<IR::ConstantValue>(constantResult),
                     unaryInstruction->getDst());
@@ -24,7 +37,7 @@ ConstantFoldingPass::foldConstants(
             }
             it++;
         }
-        // Handle Binary instructions with two constant source operands.
+        // Handle binary instructions with two constant source operands.
         else if (auto binaryInstruction =
                      std::dynamic_pointer_cast<IR::BinaryInstruction>(
                          instruction)) {
@@ -100,28 +113,34 @@ ConstantFoldingPass::foldConstants(
                     }
                     else if (std::dynamic_pointer_cast<IR::EqualOperator>(
                                  binaryOperator)) {
-                        constantResult = constantValue1 == constantValue2;
+                        constantResult = constantValue1->getValue() ==
+                                         constantValue2->getValue();
                     }
                     else if (std::dynamic_pointer_cast<IR::NotEqualOperator>(
                                  binaryOperator)) {
-                        constantResult = constantValue1 != constantValue2;
+                        constantResult = constantValue1->getValue() !=
+                                         constantValue2->getValue();
                     }
                     else if (std::dynamic_pointer_cast<IR::LessThanOperator>(
                                  binaryOperator)) {
-                        constantResult = constantValue1 < constantValue2;
+                        constantResult = constantValue1->getValue() <
+                                         constantValue2->getValue();
                     }
                     else if (std::dynamic_pointer_cast<
                                  IR::LessThanOrEqualOperator>(binaryOperator)) {
-                        constantResult = constantValue1 <= constantValue2;
+                        constantResult = constantValue1->getValue() <=
+                                         constantValue2->getValue();
                     }
                     else if (std::dynamic_pointer_cast<IR::GreaterThanOperator>(
                                  binaryOperator)) {
-                        constantResult = constantValue1 > constantValue2;
+                        constantResult = constantValue1->getValue() >
+                                         constantValue2->getValue();
                     }
                     else if (std::dynamic_pointer_cast<
                                  IR::GreaterThanOrEqualOperator>(
                                  binaryOperator)) {
-                        constantResult = constantValue1 >= constantValue2;
+                        constantResult = constantValue1->getValue() >=
+                                         constantValue2->getValue();
                     }
                     auto copyInstruction =
                         std::make_shared<IR::CopyInstruction>(
