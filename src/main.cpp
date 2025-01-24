@@ -173,18 +173,25 @@ int main(int argc, char *argv[]) {
     auto irProgram = irProgramAndIRStaticVariables.first;
     auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
-    // Print the IR program onto the stdout.
-    PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
-
     if (foldConstantsPass || propagateCopiesPass ||
         eliminateUnreachableCodePass || eliminateDeadStoresPass) {
+        // Print the IR program onto the stdout.
+        std::cout << "<<< Before optimization passes: >>>\n";
+        PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+
         // Perform the optimization passes on the IR program (if any of the
         // flags is set to true).
         PipelineStagesExecutors::irOptimizationExecutor(
             irProgram, foldConstantsPass, propagateCopiesPass,
             eliminateUnreachableCodePass, eliminateDeadStoresPass);
+
         // Print the optimized IR program onto the stdout (after the
         // optimization passes).
+        std::cout << "<<< After optimization passes: >>>\n";
+        PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+    }
+    else {
+        // Print the IR program onto the stdout.
         PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
     }
 
