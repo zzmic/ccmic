@@ -136,7 +136,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
 }
 
 // Function to perform optimization passes on the IR program.
-void PipelineStagesExecutors::irOptimizationPassesExecutor(
+void PipelineStagesExecutors::irOptimizationExecutor(
     std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
     bool propagateCopiesPass, bool eliminateUnreachableCodePass,
     bool eliminateDeadStoresPass) {
@@ -145,7 +145,7 @@ void PipelineStagesExecutors::irOptimizationPassesExecutor(
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
             auto functionBody = functionDefinition->getFunctionBody();
-            auto optimizedFunctionBody = irOptimizationPassesExecutorHelper(
+            auto optimizedFunctionBody = irOptimizationExecutorHelper(
                 functionBody, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
             functionDefinition->setFunctionBody(optimizedFunctionBody);
@@ -155,10 +155,14 @@ void PipelineStagesExecutors::irOptimizationPassesExecutor(
 
 // Helper function to perform optimization passes on the IR function definition.
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-PipelineStagesExecutors::irOptimizationPassesExecutorHelper(
+PipelineStagesExecutors::irOptimizationExecutorHelper(
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> functionBody,
     bool foldConstantsPass, bool propagateCopiesPass,
     bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {
+    // Preemptively return the (original) function body if it is empty.
+    if (functionBody->empty()) {
+        return functionBody;
+    }
     while (true) {
         auto postConstantFoldingFunctionBody = functionBody;
         if (foldConstantsPass) {

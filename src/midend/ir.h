@@ -22,8 +22,8 @@ class ComplementOperator : public UnaryOperator {};
 
 class NotOperator : public UnaryOperator {};
 
-// Note: The logical-and and logical-or operators in the AST are NOT binary
-// operators in the IR.
+/* Note: The logical-and and logical-or operators in the AST are NOT binary
+ * operators in the IR. */
 class BinaryOperator : public Operator {};
 
 class AddOperator : public BinaryOperator {};

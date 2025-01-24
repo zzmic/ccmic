@@ -39,12 +39,13 @@ class PipelineStagesExecutors {
                            std::pair<std::shared_ptr<Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
-    static void irOptimizationPassesExecutor(
-        std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
-        bool propagateCopiesPass, bool eliminateUnreachableCodePass,
-        bool eliminateDeadStoresPass);
+    static void irOptimizationExecutor(std::shared_ptr<IR::Program> &irProgram,
+                                       bool foldConstantsPass,
+                                       bool propagateCopiesPass,
+                                       bool eliminateUnreachableCodePass,
+                                       bool eliminateDeadStoresPass);
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-    irOptimizationPassesExecutorHelper(
+    irOptimizationExecutorHelper(
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             functionBody,
         bool foldConstantsPass, bool propagateCopiesPass,

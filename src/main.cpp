@@ -7,11 +7,12 @@ int main(int argc, char *argv[]) {
     std::vector<std::string> flags;
     std::string sourceFile;
     if (argc < 2) {
-        std::cerr << "Usage: " << argv[0]
-                  << " [--lex] [--parse] [--validate] [--tacky] [--codegen] "
-                     "[-S] [-c] [-o] [--fold-constants] [--propagate-copies] "
-                     "[--eliminate-unreachable-code] [--eliminate-dead-stores] "
-                     "[--optimize] <sourceFile>\n";
+        std::cerr
+            << "Usage: " << argv[0]
+            << " [--lex] [--parse] [--validate] [--tacky] [--codegen] "
+               "[-S] [-s] [-c] [-o] [--fold-constants] [--propagate-copies] "
+               "[--eliminate-unreachable-code] [--eliminate-dead-stores] "
+               "[--optimize] <sourceFile>\n";
         std::cerr << "Given argc: " << argc << "\n";
         return EXIT_FAILURE;
     }
@@ -61,7 +62,7 @@ int main(int argc, char *argv[]) {
         }
         // Direct the compiler to emit the assembly file, but not to assemble
         // and link it.
-        else if (flag == "-S") {
+        else if (flag == "-S" || flag == "-s") {
             tillEmitAssembly = true;
         }
         // Direct the compiler to compile the source file into an object file
@@ -179,7 +180,7 @@ int main(int argc, char *argv[]) {
         eliminateUnreachableCodePass || eliminateDeadStoresPass) {
         // Perform the optimization passes on the IR program (if any of the
         // flags is set to true).
-        PipelineStagesExecutors::irOptimizationPassesExecutor(
+        PipelineStagesExecutors::irOptimizationExecutor(
             irProgram, foldConstantsPass, propagateCopiesPass,
             eliminateUnreachableCodePass, eliminateDeadStoresPass);
         // Print the optimized IR program onto the stdout (after the

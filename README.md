@@ -36,5 +36,5 @@ make
 ## Usage
 To compile a C source file, use the following command in the root directory of the repository:
 ```
-bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-c] [-o] <sourceFile>
+bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o] <sourceFile>
 ```

@@ -138,7 +138,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
     std::cout << "\nparameters=(";
 
     auto &parameters = *functionDeclaration.getParameters();
-    for (auto it = parameters.begin(); it != parameters.end(); ++it) {
+    for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         std::cout << parameter;
         if (std::next(it) != parameters.end()) {
@@ -372,7 +372,7 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
         std::cout << value;
     }
     else {
-        throw std::runtime_error("Constant (int) value out of range");
+        throw std::overflow_error("Constant (int) value out of range");
     }
     std::cout << ")";
 }
