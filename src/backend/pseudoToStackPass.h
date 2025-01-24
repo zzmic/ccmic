@@ -2,7 +2,7 @@
 #define BACKEND_PSEUDO_TO_STACK_PASS_H
 
 #include "../frontend/semanticAnalysisPasses.h"
-#include "../frontend/types.h"
+#include "../frontend/type.h"
 #include "assembly.h"
 #include <unordered_map>
 

@@ -2,7 +2,7 @@
 #define BACKEND_ASSEMBLY_GENERATOR_H
 
 #include "../frontend/semanticAnalysisPasses.h"
-#include "../frontend/types.h"
+#include "../frontend/type.h"
 #include "../midend/ir.h"
 #include "assembly.h"
 #include <unordered_map>

@@ -38,7 +38,7 @@ $(BIN_DIR):
 # The `|` symbol indicates that the `$(BIN_DIR)` directory must exist
 # before the target can be built,
 # but changes to this directory won't trigger a rebuild of the object files.
-# https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html.
+# https://www.gnu.org/software/make/manual/html_node/Prerequisite-type.html.
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@

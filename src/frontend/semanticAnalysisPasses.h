@@ -5,7 +5,7 @@
 #include "expression.h"
 #include "program.h"
 #include "statement.h"
-#include "types.h"
+#include "type.h"
 #include <unordered_map>
 
 namespace AST {

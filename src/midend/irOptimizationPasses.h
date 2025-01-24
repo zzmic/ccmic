@@ -8,7 +8,7 @@
 #include "../frontend/program.h"
 #include "../frontend/semanticAnalysisPasses.h"
 #include "../frontend/statement.h"
-#include "../frontend/types.h"
+#include "../frontend/type.h"
 #include "ir.h"
 
 namespace IR {
