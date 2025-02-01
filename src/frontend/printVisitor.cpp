@@ -36,7 +36,7 @@ void PrintVisitor::visit(Program &program) {
 
 void PrintVisitor::visit(Function &function) {
     std::cout << "Function(\n";
-    std::cout << "name=\"";
+    std::cout << "name = \"";
 
     if (function.getName().size() > 0) {
         std::cout << function.getName();
@@ -46,7 +46,7 @@ void PrintVisitor::visit(Function &function) {
     }
 
     std::cout << "\",\n";
-    std::cout << "body=";
+    std::cout << "body = ";
 
     auto functionBody = function.getBody();
     if (functionBody) {
@@ -101,7 +101,7 @@ void PrintVisitor::visit(DBlockItem &dBlockItem) {
 void PrintVisitor::visit(VariableDeclaration &declaration) {
     std::cout << "VariableDeclaration(\n";
 
-    std::cout << "identifier=";
+    std::cout << "identifier = ";
 
     if (declaration.getIdentifier().size() > 0) {
         std::cout << declaration.getIdentifier();
@@ -111,12 +111,12 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
     }
 
     if (declaration.getOptInitializer().has_value()) {
-        std::cout << "\ninitializer=";
+        std::cout << "\ninitializer = ";
         declaration.getOptInitializer().value()->accept(*this);
     }
 
     if (declaration.getVarType()) {
-        std::cout << "\ntype=";
+        std::cout << "\ntype = ";
         declaration.getVarType()->accept(*this);
     }
     else {
@@ -124,7 +124,7 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
     }
 
     if (declaration.getOptStorageClass().has_value()) {
-        std::cout << "\nstorageClass=";
+        std::cout << "\nstorageClass = ";
         declaration.getOptStorageClass().value()->accept(*this);
     }
 
@@ -134,7 +134,7 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
 void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
     std::cout << "FunctionDeclaration(\n";
 
-    std::cout << "identifier=";
+    std::cout << "identifier = ";
 
     if (functionDeclaration.getIdentifier().size() > 0) {
         std::cout << functionDeclaration.getIdentifier();
@@ -143,7 +143,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
         throw std::runtime_error("Null identifier in function declaration");
     }
 
-    std::cout << "\nparameters=(";
+    std::cout << "\nparameters = (";
 
     auto &parameters = *functionDeclaration.getParameters();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
@@ -157,11 +157,11 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
     std::cout << ")";
 
     if (functionDeclaration.getOptBody().has_value()) {
-        std::cout << "\nbody=";
+        std::cout << "\nbody = ";
         functionDeclaration.getOptBody().value()->accept(*this);
     }
 
-    std::cout << "\nfuntionType=";
+    std::cout << "\nfuntionType = ";
     if (functionDeclaration.getFunType()) {
         functionDeclaration.getFunType()->accept(*this);
     }
@@ -170,7 +170,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
     }
 
     if (functionDeclaration.getOptStorageClass().has_value()) {
-        std::cout << "\nstorageClass=";
+        std::cout << "\nstorageClass = ";
         functionDeclaration.getOptStorageClass().value()->accept(*this);
     }
 
@@ -190,7 +190,7 @@ void PrintVisitor::visit(LongType &longType) {
 void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << "FunctionType(\n";
 
-    std::cout << "parameters=(";
+    std::cout << "parameters = (";
 
     auto &parameters = *functionType.getParameters();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
@@ -203,7 +203,7 @@ void PrintVisitor::visit(FunctionType &functionType) {
 
     std::cout << ")";
 
-    std::cout << "\nreturnType=";
+    std::cout << "\nreturnType = ";
     functionType.getReturnType()->accept(*this);
 
     std::cout << "\n)";
@@ -243,7 +243,7 @@ void PrintVisitor::visit(InitExpr &initExpr) {
 }
 
 void PrintVisitor::visit(ReturnStatement &returnStatement) {
-    std::cout << "Return(\n";
+    std::cout << "Return(";
 
     if (returnStatement.getExpression()) {
         returnStatement.getExpression()->accept(*this);
@@ -252,7 +252,7 @@ void PrintVisitor::visit(ReturnStatement &returnStatement) {
         throw std::runtime_error("Null expression in return statement");
     }
 
-    std::cout << "\n)";
+    std::cout << ")";
 }
 
 void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
@@ -271,7 +271,7 @@ void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
 void PrintVisitor::visit(IfStatement &ifStatement) {
     std::cout << "IfStatement(\n";
 
-    std::cout << "condition=";
+    std::cout << "condition = ";
 
     if (ifStatement.getCondition()) {
         ifStatement.getCondition()->accept(*this);
@@ -280,7 +280,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
         throw std::runtime_error("Null condition in if-statement");
     }
 
-    std::cout << "\nthen=";
+    std::cout << "\nthen = ";
 
     if (ifStatement.getThenStatement()) {
         ifStatement.getThenStatement()->accept(*this);
@@ -290,7 +290,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
     }
 
     if (ifStatement.getElseOptStatement().has_value()) {
-        std::cout << "\nelse=";
+        std::cout << "\nelse = ";
         ifStatement.getElseOptStatement().value()->accept(*this);
     }
 
@@ -322,7 +322,7 @@ void PrintVisitor::visit(ContinueStatement &continueStatement) {
 void PrintVisitor::visit(WhileStatement &whileStatement) {
     std::cout << "WhileStatement" << "_" << whileStatement.getLabel() << "(\n";
 
-    std::cout << "condition=";
+    std::cout << "condition = ";
 
     if (whileStatement.getCondition()) {
         whileStatement.getCondition()->accept(*this);
@@ -331,7 +331,7 @@ void PrintVisitor::visit(WhileStatement &whileStatement) {
         throw std::runtime_error("Null condition in while-statement");
     }
 
-    std::cout << "\nbody=";
+    std::cout << "\nbody = ";
 
     if (whileStatement.getBody()) {
         whileStatement.getBody()->accept(*this);
@@ -347,7 +347,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
     std::cout << "DoWhileStatement" << "_" << doWhileStatement.getLabel()
               << "(\n";
 
-    std::cout << "condition=";
+    std::cout << "condition = ";
 
     if (doWhileStatement.getCondition()) {
         doWhileStatement.getCondition()->accept(*this);
@@ -356,7 +356,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
         throw std::runtime_error("Null condition in do-while-statement");
     }
 
-    std::cout << "\nbody=";
+    std::cout << "\nbody = ";
 
     if (doWhileStatement.getBody()) {
         doWhileStatement.getBody()->accept(*this);
@@ -371,7 +371,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
 void PrintVisitor::visit(ForStatement &forStatement) {
     std::cout << "ForStatement" << "_" << forStatement.getLabel() << "(\n";
 
-    std::cout << "init=";
+    std::cout << "init = ";
 
     if (forStatement.getForInit()) {
         forStatement.getForInit()->accept(*this);
@@ -381,20 +381,20 @@ void PrintVisitor::visit(ForStatement &forStatement) {
     }
 
     if (forStatement.getOptCondition().has_value()) {
-        std::cout << "\ncondition=";
+        std::cout << "\ncondition = ";
         if (forStatement.getOptCondition().value()) {
             forStatement.getOptCondition().value()->accept(*this);
         }
     }
 
     if (forStatement.getOptPost().has_value()) {
-        std::cout << "\npost=";
+        std::cout << "\npost = ";
         if (forStatement.getOptPost().value()) {
             forStatement.getOptPost().value()->accept(*this);
         }
     }
 
-    std::cout << "\nbody=";
+    std::cout << "\nbody = ";
 
     if (forStatement.getBody()) {
         forStatement.getBody()->accept(*this);
@@ -446,7 +446,7 @@ void PrintVisitor::visit(VariableExpression &variableExpression) {
 void PrintVisitor::visit(CastExpression &castExpression) {
     std::cout << "CastExpression(\n";
 
-    std::cout << "targetType=";
+    std::cout << "targetType = ";
 
     if (castExpression.getTargetType()) {
         castExpression.getTargetType()->accept(*this);
@@ -455,7 +455,7 @@ void PrintVisitor::visit(CastExpression &castExpression) {
         throw std::runtime_error("Null target type in cast expression");
     }
 
-    std::cout << "\nexpression=";
+    std::cout << "\nexpression = ";
 
     if (castExpression.getExpression()) {
         castExpression.getExpression()->accept(*this);
@@ -545,7 +545,7 @@ void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
 void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
     std::cout << "ConditionalExpression(\n";
 
-    std::cout << "condition=";
+    std::cout << "condition = ";
 
     if (conditionalExpression.getCondition()) {
         conditionalExpression.getCondition()->accept(*this);
@@ -554,7 +554,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
         throw std::runtime_error("Null condition in conditional expression");
     }
 
-    std::cout << "\ntrue=";
+    std::cout << "\ntrue = ";
 
     if (conditionalExpression.getThenExpression()) {
         conditionalExpression.getThenExpression()->accept(*this);
@@ -564,7 +564,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
             "Null true expression in conditional expression");
     }
 
-    std::cout << "\nfalse=";
+    std::cout << "\nfalse = ";
 
     if (conditionalExpression.getElseExpression()) {
         conditionalExpression.getElseExpression()->accept(*this);
@@ -580,7 +580,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
 void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
     std::cout << "FunctionCallExpression(\n";
 
-    std::cout << "function=";
+    std::cout << "function = ";
 
     if (functionCallExpression.getIdentifier().size() > 0) {
         std::cout << functionCallExpression.getIdentifier();
@@ -589,7 +589,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
         throw std::runtime_error("Null function in function call expression");
     }
 
-    std::cout << "\nargs=";
+    std::cout << "\nargs = ";
 
     auto &args = *functionCallExpression.getArguments();
     for (auto it = args.begin(); it != args.end(); it++) {
