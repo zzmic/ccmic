@@ -4,7 +4,7 @@ namespace IR {
 IRGenerator::IRGenerator(
     int variableResolutionCounter,
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols)
     : irTemporariesCounter(variableResolutionCounter), symbols(symbols) {}
@@ -450,7 +450,9 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         instructions) {
     if (auto constantExpr =
             std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
-        return std::make_shared<IR::ConstantValue>(constantExpr->getValue());
+        // TODO(zzmic): This is a temporary solution.
+        return std::make_shared<IR::ConstantValue>(
+            constantExpr->getConstantInInt());
     }
     else if (auto unaryExpr =
                  std::dynamic_pointer_cast<AST::UnaryExpression>(e)) {

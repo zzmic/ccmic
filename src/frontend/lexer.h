@@ -11,9 +11,10 @@
 // It asserts that the current position in the string is at the beginning of a
 // line or the string.
 const std::regex identifier_regex(R"(^[a-zA-Z_]\w*\b)");
-const std::regex longIntConstant_regex(R"(^[0-9]+[lL]\b)");
+const std::regex LongConstant_regex(R"(^[0-9]+[lL]\b)");
 const std::regex intConstant_regex(R"(^[0-9]+\b)");
 const std::regex intKeyword_regex(R"(^int\b)");
+const std::regex longKeyword_regex(R"(^long\b)");
 const std::regex voidKeyword_regex(R"(^void\b)");
 const std::regex returnKeyword_regex(R"(^return\b)");
 const std::regex ifKeyword_regex(R"(^if\b)");
@@ -25,7 +26,6 @@ const std::regex breakKeyword_regex(R"(^break\b)");
 const std::regex continueKeyword_regex(R"(^continue\b)");
 const std::regex staticKeyword_regex(R"(^static\b)");
 const std::regex externKeyword_regex(R"(^extern\b)");
-const std::regex longKeyword_regex(R"(^long\b)");
 const std::regex comma_regex(R"(^\,)");
 const std::regex questionMark_regex(R"(^\?)");
 const std::regex colon_regex(R"(^\:)");
@@ -59,9 +59,10 @@ const std::regex preprocessorDirective_regex(R"(^#\w+)");
 // Define token types as an enum class.
 enum class TokenType {
     Identifier,
-    LongIntConstant,
+    LongConstant,
     IntConstant,
     intKeyword,
+    longKeyword,
     voidKeyword,
     returnKeyword,
     ifKeyword,
@@ -73,7 +74,6 @@ enum class TokenType {
     continueKeyword,
     staticKeyword,
     externKeyword,
-    longKeyword,
     Comma,
     QuestionMark,
     Colon,

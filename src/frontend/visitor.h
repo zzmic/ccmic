@@ -20,6 +20,10 @@ class DBlockItem;
 class Declaration;
 class VariableDeclaration;
 class FunctionDeclaration;
+class Type;
+class IntType;
+class LongType;
+class FunctionType;
 class StorageClass;
 class StaticStorageClass;
 class ExternStorageClass;
@@ -40,6 +44,7 @@ class NullStatement;
 class Expression;
 class ConstantExpression;
 class VariableExpression;
+class CastExpression;
 class UnaryExpression;
 class BinaryExpression;
 class AssignmentExpression;
@@ -65,6 +70,9 @@ class LessThanOrEqualOperator;
 class GreaterThanOperator;
 class GreaterThanOrEqualOperator;
 class AssignmentOperator;
+class Constant;
+class ConstantInt;
+class ConstantLong;
 
 class Visitor {
   public:
@@ -78,6 +86,9 @@ class Visitor {
     virtual void visit(DBlockItem &dBlockItem) = 0;
     virtual void visit(VariableDeclaration &declaration) = 0;
     virtual void visit(FunctionDeclaration &functionDeclaration) = 0;
+    virtual void visit(IntType &intType) = 0;
+    virtual void visit(LongType &longType) = 0;
+    virtual void visit(FunctionType &functionType) = 0;
     virtual void visit(StaticStorageClass &staticStorageClass) = 0;
     virtual void visit(ExternStorageClass &externStorageClass) = 0;
     virtual void visit(InitDecl &initDecl) = 0;
@@ -94,6 +105,7 @@ class Visitor {
     virtual void visit(NullStatement &nullStatement) = 0;
     virtual void visit(ConstantExpression &constantExpression) = 0;
     virtual void visit(VariableExpression &variableExpression) = 0;
+    virtual void visit(CastExpression &castExpression) = 0;
     virtual void visit(UnaryExpression &unaryExpression) = 0;
     virtual void visit(BinaryExpression &binaryExpression) = 0;
     virtual void visit(AssignmentExpression &assignmentExpression) = 0;
@@ -117,6 +129,8 @@ class Visitor {
     virtual void
     visit(GreaterThanOrEqualOperator &greaterThanOrEqualOperator) = 0;
     virtual void visit(AssignmentOperator &assignmentOperator) = 0;
+    virtual void visit(ConstantInt &constantInt) = 0;
+    virtual void visit(ConstantLong &constantLong) = 0;
 };
 } // Namespace AST
 

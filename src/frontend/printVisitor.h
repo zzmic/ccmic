@@ -14,6 +14,9 @@ class PrintVisitor : public Visitor {
     void visit(DBlockItem &dBlockItem) override;
     void visit(VariableDeclaration &variableDeclaration) override;
     void visit(FunctionDeclaration &functionDeclaration) override;
+    void visit(IntType &intType) override;
+    void visit(LongType &longType) override;
+    void visit(FunctionType &functionType) override;
     void visit(StaticStorageClass &staticStorageClass) override;
     void visit(ExternStorageClass &externStorageClass) override;
     void visit(InitDecl &initDecl) override;
@@ -30,6 +33,7 @@ class PrintVisitor : public Visitor {
     void visit(NullStatement &nullStatement) override;
     void visit(ConstantExpression &constantExpression) override;
     void visit(VariableExpression &variableExpression) override;
+    void visit(CastExpression &castExpression) override;
     void visit(UnaryExpression &unaryExpression) override;
     void visit(BinaryExpression &binaryExpression) override;
     void visit(AssignmentExpression &assignmentExpression) override;
@@ -52,6 +56,8 @@ class PrintVisitor : public Visitor {
     void visit(GreaterThanOperator &greaterThanOperator) override;
     void visit(GreaterThanOrEqualOperator &greaterThanOrEqualOperator) override;
     void visit(AssignmentOperator &assignmentOperator) override;
+    void visit(ConstantInt &constantInt) override;
+    void visit(ConstantLong &constantLong) override;
 };
 } // namespace AST
 

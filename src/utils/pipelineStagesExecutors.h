@@ -27,7 +27,7 @@ class PipelineStagesExecutors {
     static std::pair<
         int,
         std::unordered_map<
-            std::string, std::pair<std::shared_ptr<Type>,
+            std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>>
     semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
     static std::pair<
@@ -36,7 +36,7 @@ class PipelineStagesExecutors {
     irGeneratorExecutor(
         std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
         std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<Type>,
+                           std::pair<std::shared_ptr<AST::Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     static void irOptimizationExecutor(std::shared_ptr<IR::Program> irProgram,
@@ -49,7 +49,7 @@ class PipelineStagesExecutors {
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
             irStaticVariables,
         std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<Type>,
+                           std::pair<std::shared_ptr<AST::Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     static void

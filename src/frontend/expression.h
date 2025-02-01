@@ -2,7 +2,9 @@
 #define FRONTEND_EXPRESSION_H
 
 #include "ast.h"
+#include "constant.h"
 #include "operator.h"
+#include "type.h"
 #include <memory>
 #include <string>
 #include <vector>
@@ -14,12 +16,14 @@ class Factor : public Expression {};
 
 class ConstantExpression : public Factor {
   public:
-    ConstantExpression(int value);
+    ConstantExpression(std::shared_ptr<Constant> constant);
     void accept(Visitor &visitor) override;
-    int getValue() const;
+    std::shared_ptr<Constant> getConstant() const;
+    // TODO(zzmic): This is a temporary solution.
+    int getConstantInInt() const;
 
   private:
-    int value;
+    std::shared_ptr<Constant> constant;
 };
 
 class VariableExpression : public Factor {
@@ -30,6 +34,19 @@ class VariableExpression : public Factor {
 
   private:
     std::string identifier;
+};
+
+class CastExpression : public Factor {
+  public:
+    CastExpression(std::shared_ptr<Type> targetType,
+                   std::shared_ptr<Expression> expr);
+    void accept(Visitor &visitor) override;
+    std::shared_ptr<Type> getTargetType() const;
+    std::shared_ptr<Expression> getExpression() const;
+
+  private:
+    std::shared_ptr<Type> targetType;
+    std::shared_ptr<Expression> expr;
 };
 
 class UnaryExpression : public Factor {

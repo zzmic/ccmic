@@ -1,4 +1,5 @@
 #include "parser.h"
+#include <cmath>
 #include <sstream>
 
 namespace AST {
@@ -52,6 +53,7 @@ void Parser::expectToken(TokenType type) {
 
 std::shared_ptr<BlockItem> Parser::parseBlockItem() {
     if (matchToken(TokenType::intKeyword) ||
+        matchToken(TokenType::longKeyword) ||
         matchToken(TokenType::staticKeyword) ||
         matchToken(TokenType::externKeyword)) {
         // Peek ahead to check if this is a function declaration.
@@ -95,11 +97,16 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
     // Parse the specifier list.
     std::vector<std::string> specifierList;
     while (matchToken(TokenType::intKeyword) ||
+           matchToken(TokenType::longKeyword) ||
            matchToken(TokenType::staticKeyword) ||
            matchToken(TokenType::externKeyword)) {
         if (matchToken(TokenType::intKeyword)) {
             specifierList.emplace_back("int");
             consumeToken(TokenType::intKeyword);
+        }
+        else if (matchToken(TokenType::longKeyword)) {
+            specifierList.emplace_back("long");
+            consumeToken(TokenType::longKeyword);
         }
         else if (matchToken(TokenType::staticKeyword)) {
             specifierList.emplace_back("static");
@@ -125,18 +132,27 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
             consumeToken(TokenType::voidKeyword);
         }
         else if (matchToken(TokenType::intKeyword)) {
-            expectToken(TokenType::intKeyword);
+            parseTypeSpecifiersInParameters(parameters);
             auto parameterNameToken = consumeToken(TokenType::Identifier);
-            parameters->emplace_back("int");
             parameters->emplace_back(parameterNameToken.value);
             // Parse additional parameters if they exist.
             while (matchToken(TokenType::Comma)) {
                 consumeToken(TokenType::Comma);
-                expectToken(TokenType::intKeyword);
-                auto additionalParameterNameToken =
-                    consumeToken(TokenType::Identifier);
-                parameters->emplace_back("int");
-                parameters->emplace_back(additionalParameterNameToken.value);
+                parseTypeSpecifiersInParameters(parameters);
+                auto parameterNameToken = consumeToken(TokenType::Identifier);
+                parameters->emplace_back(parameterNameToken.value);
+            }
+        }
+        else if (matchToken(TokenType::longKeyword)) {
+            parseTypeSpecifiersInParameters(parameters);
+            auto parameterNameToken = consumeToken(TokenType::Identifier);
+            parameters->emplace_back(parameterNameToken.value);
+            // Parse additional parameters if they exist.
+            while (matchToken(TokenType::Comma)) {
+                consumeToken(TokenType::Comma);
+                parseTypeSpecifiersInParameters(parameters);
+                auto parameterNameToken = consumeToken(TokenType::Identifier);
+                parameters->emplace_back(parameterNameToken.value);
             }
         }
         expectToken(TokenType::CloseParenthesis);
@@ -145,25 +161,29 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
             if (storageClass) {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
-                    std::move(storageClass));
+                    std::move(type),
+                    std::make_optional(std::move(storageClass)));
             }
             else {
                 return std::make_shared<FunctionDeclaration>(
-                    identifierToken.value, std::move(parameters));
+                    identifierToken.value, std::move(parameters),
+                    std::move(type));
             }
         }
         else {
             auto functionBody = parseBlock();
-            auto optFunctionBody = std::make_optional(std::move(functionBody));
             if (storageClass) {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
-                    std::move(optFunctionBody), std::move(storageClass));
+                    std::make_optional(std::move(functionBody)),
+                    std::move(type),
+                    std::make_optional(std::move(storageClass)));
             }
             else {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
-                    std::move(optFunctionBody));
+                    std::make_optional(std::move(functionBody)),
+                    std::move(type));
             }
         }
     }
@@ -175,30 +195,47 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
             expectToken(TokenType::Semicolon);
             if (storageClass) {
                 return std::make_shared<VariableDeclaration>(
-                    identifierToken.value, std::move(expr),
+                    identifierToken.value, std::move(expr), std::move(type),
                     std::move(storageClass));
             }
             else {
                 return std::make_shared<VariableDeclaration>(
-                    identifierToken.value, std::move(expr));
+                    identifierToken.value, std::move(expr), std::move(type));
             }
         }
         else {
             expectToken(TokenType::Semicolon);
             if (storageClass) {
                 return std::make_shared<VariableDeclaration>(
-                    identifierToken.value, std::move(storageClass));
+                    identifierToken.value, std::move(type),
+                    std::move(storageClass));
             }
             else {
                 return std::make_shared<VariableDeclaration>(
-                    identifierToken.value);
+                    identifierToken.value, std::move(type));
             }
+        }
+    }
+}
+
+void Parser::parseTypeSpecifiersInParameters(
+    std::shared_ptr<std::vector<std::string>> &parameters) {
+    while (matchToken(TokenType::intKeyword) ||
+           matchToken(TokenType::longKeyword)) {
+        if (matchToken(TokenType::intKeyword)) {
+            expectToken(TokenType::intKeyword);
+            parameters->emplace_back("int");
+        }
+        else if (matchToken(TokenType::longKeyword)) {
+            expectToken(TokenType::longKeyword);
+            parameters->emplace_back("long");
         }
     }
 }
 
 std::shared_ptr<ForInit> Parser::parseForInit() {
     if (matchToken(TokenType::intKeyword) ||
+        matchToken(TokenType::longKeyword) ||
         matchToken(TokenType::staticKeyword) ||
         matchToken(TokenType::externKeyword)) {
         auto declaration = parseDeclaration();
@@ -336,10 +373,9 @@ std::shared_ptr<Statement> Parser::parseStatement() {
 }
 
 std::shared_ptr<Expression> Parser::parseFactor() {
-    if (matchToken(TokenType::IntConstant)) {
-        auto constantToken = consumeToken(TokenType::IntConstant);
-        return std::make_shared<ConstantExpression>(
-            std::stoi(constantToken.value));
+    if (matchToken(TokenType::IntConstant) ||
+        matchToken(TokenType::LongConstant)) {
+        return std::make_shared<ConstantExpression>(parseConstant());
     }
     else if (matchToken(TokenType::Identifier)) {
         auto identifierToken = consumeToken(TokenType::Identifier);
@@ -369,6 +405,28 @@ std::shared_ptr<Expression> Parser::parseFactor() {
         else {
             return std::make_shared<VariableExpression>(identifierToken.value);
         }
+    }
+    else if (matchToken(TokenType::OpenParenthesis) &&
+             (tokens[current + 1].type == TokenType::intKeyword ||
+              tokens[current + 1].type == TokenType::longKeyword)) {
+        consumeToken(TokenType::OpenParenthesis);
+        std::vector<std::string> specifierList;
+        while (matchToken(TokenType::intKeyword) ||
+               matchToken(TokenType::longKeyword)) {
+            if (matchToken(TokenType::intKeyword)) {
+                specifierList.emplace_back("int");
+                consumeToken(TokenType::intKeyword);
+            }
+            else if (matchToken(TokenType::longKeyword)) {
+                specifierList.emplace_back("long");
+                consumeToken(TokenType::longKeyword);
+            }
+        }
+        consumeToken(TokenType::CloseParenthesis);
+        auto targetType = parseType(specifierList);
+        auto innerExpr = parseFactor();
+        return std::make_shared<CastExpression>(std::move(targetType),
+                                                std::move(innerExpr));
     }
     else if (matchToken(TokenType::Tilde)) {
         auto tildeToken = consumeToken(TokenType::Tilde);
@@ -403,10 +461,30 @@ std::shared_ptr<Expression> Parser::parseFactor() {
     else {
         std::stringstream msg;
         msg << "Malformed factor: unexpected token: " << tokens[current].value;
-        msg << tokens[current - 1].value;
-        msg << tokens[current - 2].value;
-        msg << tokens[current - 3].value;
+        msg << " of type " << tokenTypeToString(tokens[current].type);
         throw std::runtime_error(msg.str());
+    }
+}
+
+std::shared_ptr<Constant> Parser::parseConstant() {
+    auto constantValue = std::stoll(tokens[current].value);
+    if (constantValue > pow(2, 63) - 1) {
+        throw std::runtime_error(
+            "Constant is too large to represent as an int or long");
+    }
+    else if (tokens[current].type == TokenType::IntConstant) {
+        if (constantValue <= pow(2, 31) - 1) {
+            consumeToken(TokenType::IntConstant);
+            return std::make_shared<ConstantInt>(constantValue);
+        }
+        else {
+            consumeToken(TokenType::IntConstant);
+            return std::make_shared<ConstantLong>(constantValue);
+        }
+    }
+    else {
+        consumeToken(TokenType::LongConstant);
+        return std::make_shared<ConstantLong>(constantValue);
     }
 }
 
@@ -445,6 +523,7 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
         else {
             auto binOpToken = consumeToken(tokens[current].type);
             if (!(matchToken(TokenType::IntConstant) ||
+                  matchToken(TokenType::LongConstant) ||
                   matchToken(TokenType::Tilde) ||
                   matchToken(TokenType::Minus) ||
                   matchToken(TokenType::LogicalNot) ||
@@ -479,21 +558,18 @@ Parser::parseTypeAndStorageClass(std::vector<std::string> &specifierList) {
     std::vector<std::string> types;
     std::vector<std::string> storageClasses;
     for (const auto &specifier : specifierList) {
-        if (specifier == "int") {
+        if (specifier == "int" || specifier == "long") {
             types.emplace_back(specifier);
         }
         else {
             storageClasses.emplace_back(specifier);
         }
     }
-    if (types.size() != 1) {
-        throw std::runtime_error("Invalid type specifier");
-    }
+    auto type = parseType(types);
+    std::shared_ptr<StorageClass> storageClass;
     if (storageClasses.size() > 1) {
         throw std::runtime_error("Invalid storage class (specifier)");
     }
-    auto type = std::make_shared<IntType>();
-    std::shared_ptr<StorageClass> storageClass;
     if (storageClasses.size() == 1) {
         storageClass = parseStorageClass(storageClasses[0]);
     }
@@ -501,6 +577,30 @@ Parser::parseTypeAndStorageClass(std::vector<std::string> &specifierList) {
         storageClass = nullptr;
     }
     return std::make_pair(type, storageClass);
+}
+
+std::shared_ptr<Type>
+Parser::parseType(std::vector<std::string> &specifierList) {
+    if (specifierList.size() == 1 && specifierList[0] == "int") {
+        return std::make_shared<IntType>();
+    }
+    else if ((specifierList.size() == 2) &&
+             ((specifierList[0] == "int" && specifierList[1] == "long") ||
+              (specifierList[0] == "long" && specifierList[1] == "int"))) {
+        return std::make_shared<LongType>();
+    }
+    else if (specifierList.size() == 1 && specifierList[0] == "long") {
+        return std::make_shared<LongType>();
+    }
+    else {
+        std::stringstream msg;
+        msg << "Invalid type specifier of size " << specifierList.size()
+            << ": ";
+        for (const auto &specifier : specifierList) {
+            msg << specifier << " ";
+        }
+        throw std::runtime_error(msg.str());
+    }
 }
 
 std::shared_ptr<StorageClass>

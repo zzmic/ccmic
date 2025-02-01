@@ -115,6 +115,14 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         declaration.getOptInitializer().value()->accept(*this);
     }
 
+    if (declaration.getVarType()) {
+        std::cout << "\ntype=";
+        declaration.getVarType()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null type in declaration");
+    }
+
     if (declaration.getOptStorageClass().has_value()) {
         std::cout << "\nstorageClass=";
         declaration.getOptStorageClass().value()->accept(*this);
@@ -153,10 +161,50 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
         functionDeclaration.getOptBody().value()->accept(*this);
     }
 
+    std::cout << "\nfuntionType=";
+    if (functionDeclaration.getFunType()) {
+        functionDeclaration.getFunType()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null function type in function declaration");
+    }
+
     if (functionDeclaration.getOptStorageClass().has_value()) {
         std::cout << "\nstorageClass=";
         functionDeclaration.getOptStorageClass().value()->accept(*this);
     }
+
+    std::cout << "\n)";
+}
+
+void PrintVisitor::visit(IntType &intType) {
+    (void)intType;
+    std::cout << "IntType()";
+}
+
+void PrintVisitor::visit(LongType &longType) {
+    (void)longType;
+    std::cout << "LongType()";
+}
+
+void PrintVisitor::visit(FunctionType &functionType) {
+    std::cout << "FunctionType(\n";
+
+    std::cout << "parameters=(";
+
+    auto &parameters = *functionType.getParameters();
+    for (auto it = parameters.begin(); it != parameters.end(); it++) {
+        auto &parameter = *it;
+        parameter->accept(*this);
+        if (std::next(it) != parameters.end()) {
+            std::cout << ", ";
+        }
+    }
+
+    std::cout << ")";
+
+    std::cout << "\nreturnType=";
+    functionType.getReturnType()->accept(*this);
 
     std::cout << "\n)";
 }
@@ -365,20 +413,24 @@ void PrintVisitor::visit(NullStatement &nullStatement) {
 
 void PrintVisitor::visit(ConstantExpression &constantExpression) {
     std::cout << "ConstantExpression(";
-    int minInt = std::numeric_limits<int>::min();
-    int maxInt = std::numeric_limits<int>::max();
-    int value = constantExpression.getValue();
-    if (minInt <= value && value <= maxInt) {
-        std::cout << value;
+
+    auto constant = constantExpression.getConstant();
+    if (auto intConst = std::dynamic_pointer_cast<ConstantInt>(constant)) {
+        std::cout << intConst->getValue();
+    }
+    else if (auto longConst =
+                 std::dynamic_pointer_cast<ConstantLong>(constant)) {
+        std::cout << longConst->getValue();
     }
     else {
-        throw std::overflow_error("Constant (int) value out of range");
+        throw std::runtime_error(
+            "Unknown constant type in constant expression");
     }
+
     std::cout << ")";
 }
 
 void PrintVisitor::visit(VariableExpression &variableExpression) {
-    // std::cout << "VariableExpression(\"";
     std::cout << "VariableExpression(";
 
     if (variableExpression.getIdentifier().size() > 0) {
@@ -388,8 +440,31 @@ void PrintVisitor::visit(VariableExpression &variableExpression) {
         throw std::runtime_error("Null identifier in variable expression");
     }
 
-    // std::cout << "\")";
     std::cout << ")";
+}
+
+void PrintVisitor::visit(CastExpression &castExpression) {
+    std::cout << "CastExpression(\n";
+
+    std::cout << "targetType=";
+
+    if (castExpression.getTargetType()) {
+        castExpression.getTargetType()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null target type in cast expression");
+    }
+
+    std::cout << "\nexpression=";
+
+    if (castExpression.getExpression()) {
+        castExpression.getExpression()->accept(*this);
+    }
+    else {
+        throw std::runtime_error("Null expression in cast expression");
+    }
+
+    std::cout << "\n)";
 }
 
 void PrintVisitor::visit(UnaryExpression &unaryExpression) {
@@ -601,5 +676,13 @@ void PrintVisitor::visit(
 void PrintVisitor::visit(AssignmentOperator &assignmentOperator) {
     std::cout << "AssignmentOperator(" << assignmentOperator.opInString()
               << ")";
+}
+
+void PrintVisitor::visit(ConstantInt &constantInt) {
+    std::cout << "ConstantInt(" << constantInt.getValue() << ")";
+}
+
+void PrintVisitor::visit(ConstantLong &constantLong) {
+    std::cout << "ConstantLong(" << constantLong.getValue() << ")";
 }
 } // Namespace AST

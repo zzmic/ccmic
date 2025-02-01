@@ -35,15 +35,19 @@ class Parser {
     Token consumeToken(TokenType type);
     void expectToken(TokenType type);
     std::shared_ptr<Declaration> parseDeclaration();
+    void parseTypeSpecifiersInParameters(
+        std::shared_ptr<std::vector<std::string>> &parameters);
     std::shared_ptr<BlockItem> parseBlockItem();
     std::shared_ptr<Block> parseBlock();
     std::shared_ptr<ForInit> parseForInit();
     std::shared_ptr<Statement> parseStatement();
     std::shared_ptr<Expression> parseFactor();
+    std::shared_ptr<Constant> parseConstant();
     std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);
     std::shared_ptr<Expression> parseConditionalMiddle();
     std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
     parseTypeAndStorageClass(std::vector<std::string> &specifierList);
+    std::shared_ptr<Type> parseType(std::vector<std::string> &specifierList);
     std::shared_ptr<StorageClass> parseStorageClass(std::string &specifier);
     int getPrecedence(const Token &token);
 };

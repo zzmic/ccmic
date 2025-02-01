@@ -6,7 +6,7 @@ AssemblyGenerator::AssemblyGenerator(
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
         irStaticVariables,
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols)
     : irStaticVariables(irStaticVariables), symbols(symbols) {}

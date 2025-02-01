@@ -4,7 +4,7 @@
 namespace Assembly {
 PseudoToStackPass::PseudoToStackPass(
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols)
     : symbols(symbols) {}

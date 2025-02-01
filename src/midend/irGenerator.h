@@ -19,7 +19,7 @@ class IRGenerator {
     IRGenerator(
         int variableResolutionCounter,
         std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<Type>,
+                           std::pair<std::shared_ptr<AST::Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     std::pair<std::shared_ptr<IR::Program>,
@@ -29,7 +29,7 @@ class IRGenerator {
   private:
     int irTemporariesCounter = 0;
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols;
     void generateIRBlock(

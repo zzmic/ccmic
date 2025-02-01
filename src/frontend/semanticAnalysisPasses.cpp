@@ -116,7 +116,8 @@ IdentifierResolutionPass::resolveLocalVariableDeclaration(
         }
         return std::make_shared<VariableDeclaration>(
             identifierMap[declarationIdentifier].getNewName(),
-            std::move(optInitializer), declaration->getOptStorageClass());
+            std::move(optInitializer), declaration->getVarType(),
+            declaration->getOptStorageClass());
     }
 }
 
@@ -457,7 +458,8 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
     }
     return std::make_shared<FunctionDeclaration>(
         declaration->getIdentifier(), std::move(resolvedParameters),
-        std::move(resolvedOptBody), declaration->getOptStorageClass());
+        std::move(resolvedOptBody), declaration->getFunType(),
+        declaration->getOptStorageClass());
 }
 
 std::string IdentifierResolutionPass::resolveParameter(
@@ -512,8 +514,10 @@ TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
 
 void TypeCheckingPass::typeCheckFunctionDeclaration(
     std::shared_ptr<FunctionDeclaration> declaration) {
-    auto funType =
-        std::make_shared<FunctionType>(declaration->getParameters()->size());
+    // TODO(zzmic): This is a temporary solution.
+    std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameters;
+    std::shared_ptr<Type> returnType;
+    auto funType = std::make_shared<FunctionType>(parameters, returnType);
     auto hasBody = declaration->getOptBody().has_value();
     auto alreadyDefined = false;
     auto global = true;
@@ -564,7 +568,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         initialValue = std::make_shared<ConstantInitial>(
             std::dynamic_pointer_cast<ConstantExpression>(
                 declaration->getOptInitializer().value())
-                ->getValue());
+                ->getConstantInInt());
     }
     else if (!declaration->getOptInitializer().has_value()) {
         if (declaration->getOptStorageClass().has_value() &&
@@ -654,7 +658,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                 std::dynamic_pointer_cast<ConstantExpression>(
                     declaration->getOptInitializer().value());
             initialValue = std::make_shared<ConstantInitial>(
-                constantExpression->getValue());
+                constantExpression->getConstantInInt());
         }
         else if (!declaration->getOptInitializer().has_value()) {
             initialValue = std::make_shared<ConstantInitial>(0);
@@ -730,8 +734,10 @@ void TypeCheckingPass::typeCheckExpression(
                 << functionCallExpression->getIdentifier();
             throw std::runtime_error(msg.str());
         }
-        if (*fType !=
-            FunctionType(functionCallExpression->getArguments()->size())) {
+        // TODO(zzmic): This is a temporary solution.
+        std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameters;
+        std::shared_ptr<Type> returnType;
+        if (*fType != FunctionType(parameters, returnType)) {
             std::stringstream msg;
             msg << "Function called with the wrong number of arguments: "
                 << functionCallExpression->getIdentifier();

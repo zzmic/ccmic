@@ -4,11 +4,29 @@
 #include <stdexcept>
 
 namespace AST {
-ConstantExpression::ConstantExpression(int value) : value(value) {}
+ConstantExpression::ConstantExpression(std::shared_ptr<Constant> constant)
+    : constant(constant) {}
 
 void ConstantExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
-int ConstantExpression::getValue() const { return value; }
+std::shared_ptr<Constant> ConstantExpression::getConstant() const {
+    return constant;
+}
+
+// TODO(zzmic): This is a temporary solution.
+int ConstantExpression::getConstantInInt() const {
+    if (auto intConst = std::dynamic_pointer_cast<ConstantInt>(constant)) {
+        return intConst->getValue();
+    }
+    else if (auto longConst =
+                 std::dynamic_pointer_cast<ConstantLong>(constant)) {
+        return longConst->getValue();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown constant type in constant expression");
+    }
+}
 
 VariableExpression::VariableExpression(const std::string &identifier)
     : identifier(identifier) {}
@@ -16,6 +34,20 @@ VariableExpression::VariableExpression(const std::string &identifier)
 void VariableExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::string VariableExpression::getIdentifier() const { return identifier; }
+
+CastExpression::CastExpression(std::shared_ptr<Type> targetType,
+                               std::shared_ptr<Expression> expr)
+    : targetType(targetType), expr(expr) {}
+
+void CastExpression::accept(Visitor &visitor) { visitor.visit(*this); }
+
+std::shared_ptr<Type> CastExpression::getTargetType() const {
+    return targetType;
+}
+
+std::shared_ptr<Expression> CastExpression::getExpression() const {
+    return expr;
+}
 
 UnaryExpression::UnaryExpression(const std::string &opInStr,
                                  std::shared_ptr<Expression> expr) {

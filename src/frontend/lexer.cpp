@@ -21,12 +21,14 @@ Token matchToken(const std::string &input) {
         return {TokenType::SingleLineComment, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, multiLineComment_regex))
         return {TokenType::MultiLineComment, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, longIntConstant_regex))
-        return {TokenType::LongIntConstant, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, LongConstant_regex))
+        return {TokenType::LongConstant, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, intConstant_regex))
         return {TokenType::IntConstant, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, intKeyword_regex))
         return {TokenType::intKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, longKeyword_regex))
+        return {TokenType::longKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, voidKeyword_regex))
         return {TokenType::voidKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, returnKeyword_regex))
@@ -49,8 +51,6 @@ Token matchToken(const std::string &input) {
         return {TokenType::staticKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, externKeyword_regex))
         return {TokenType::externKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, longKeyword_regex))
-        return {TokenType::longKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, comma_regex))
         return {TokenType::Comma, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, questionMark_regex))
@@ -192,14 +192,17 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::Identifier:
             typeStr = "Identifier";
             break;
-        case TokenType::LongIntConstant:
-            typeStr = "LongIntConstant";
+        case TokenType::LongConstant:
+            typeStr = "LongConstant";
             break;
         case TokenType::IntConstant:
             typeStr = "IntConstant";
             break;
         case TokenType::intKeyword:
             typeStr = "intKeyword";
+            break;
+        case TokenType::longKeyword:
+            typeStr = "longKeyword";
             break;
         case TokenType::voidKeyword:
             typeStr = "voidKeyword";
@@ -233,9 +236,6 @@ void printTokens(const std::vector<Token> &tokens) {
             break;
         case TokenType::externKeyword:
             typeStr = "externKeyword";
-            break;
-        case TokenType::longKeyword:
-            typeStr = "longKeyword";
             break;
         case TokenType::Comma:
             typeStr = "Comma";
@@ -339,14 +339,17 @@ std::string tokenTypeToString(TokenType type) {
     case TokenType::Identifier:
         typeStr = "Identifier";
         break;
-    case TokenType::LongIntConstant:
-        typeStr = "LongIntConstant";
+    case TokenType::LongConstant:
+        typeStr = "LongConstant";
         break;
     case TokenType::IntConstant:
         typeStr = "IntConstant";
         break;
     case TokenType::intKeyword:
         typeStr = "intKeyword";
+        break;
+    case TokenType::longKeyword:
+        typeStr = "longKeyword";
         break;
     case TokenType::voidKeyword:
         typeStr = "voidKeyword";
@@ -380,9 +383,6 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::externKeyword:
         typeStr = "externKeyword";
-        break;
-    case TokenType::longKeyword:
-        typeStr = "longKeyword";
         break;
     case TokenType::Comma:
         typeStr = "Comma";

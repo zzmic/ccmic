@@ -56,7 +56,7 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 // Function to perform semantic-analysis passes on the AST program.
 std::pair<
     int, std::unordered_map<
-             std::string, std::pair<std::shared_ptr<Type>,
+             std::string, std::pair<std::shared_ptr<AST::Type>,
                                     std::shared_ptr<AST::IdentifierAttribute>>>>
 PipelineStagesExecutors::semanticAnalysisExecutor(
     std::shared_ptr<AST::Program> astProgram) {
@@ -65,7 +65,7 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
     AST::LoopLabelingPass loopLabelingPass;
     int variableResolutionCounter = 0;
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols;
 
@@ -116,7 +116,7 @@ std::pair<std::shared_ptr<IR::Program>,
 PipelineStagesExecutors::irGeneratorExecutor(
     std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols) {
     std::cout << "\n";
@@ -160,7 +160,7 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
         irStaticVariables,
     std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<Type>,
+                       std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
         symbols) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
