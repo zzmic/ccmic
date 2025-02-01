@@ -336,8 +336,8 @@ std::shared_ptr<Statement> Parser::parseStatement() {
 }
 
 std::shared_ptr<Expression> Parser::parseFactor() {
-    if (matchToken(TokenType::Constant)) {
-        auto constantToken = consumeToken(TokenType::Constant);
+    if (matchToken(TokenType::IntConstant)) {
+        auto constantToken = consumeToken(TokenType::IntConstant);
         return std::make_shared<ConstantExpression>(
             std::stoi(constantToken.value));
     }
@@ -444,7 +444,7 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
         // Otherwise, the next token is (should be) a binary operator.
         else {
             auto binOpToken = consumeToken(tokens[current].type);
-            if (!(matchToken(TokenType::Constant) ||
+            if (!(matchToken(TokenType::IntConstant) ||
                   matchToken(TokenType::Tilde) ||
                   matchToken(TokenType::Minus) ||
                   matchToken(TokenType::LogicalNot) ||

@@ -1,54 +1,6 @@
 #include "lexer.h"
 #include <sstream>
 
-// Regular expressions for the different token types.
-// The caret symbol (^) matches the start of a line or a string.
-// It asserts that the current position in the string is at the beginning of a
-// line or the string.
-const std::regex identifier_regex(R"(^[a-zA-Z_]\w*\b)");
-const std::regex constant_regex(R"(^[0-9]+\b)");
-const std::regex intKeyword_regex(R"(^int\b)");
-const std::regex voidKeyword_regex(R"(^void\b)");
-const std::regex returnKeyword_regex(R"(^return\b)");
-const std::regex ifKeyword_regex(R"(^if\b)");
-const std::regex elseKeyword_regex(R"(^else\b)");
-const std::regex doKeyword_regex(R"(^do\b)");
-const std::regex whileKeyword_regex(R"(^while\b)");
-const std::regex forKeyword_regex(R"(^for\b)");
-const std::regex breakKeyword_regex(R"(^break\b)");
-const std::regex continueKeyword_regex(R"(^continue\b)");
-const std::regex staticKeyword_regex(R"(^static\b)");
-const std::regex externKeyword_regex(R"(^extern\b)");
-const std::regex comma_regex(R"(^\,)");
-const std::regex questionMark_regex(R"(^\?)");
-const std::regex colon_regex(R"(^\:)");
-const std::regex assign_regex(R"(^=)");
-const std::regex openParenthesis_regex(R"(^\()");
-const std::regex closeParenthesis_regex(R"(^\))");
-const std::regex openBrace_regex(R"(^\{)");
-const std::regex closeBrace_regex(R"(^\})");
-const std::regex semicolon_regex(R"(^;)");
-const std::regex tilde_regex(R"(^~)");
-const std::regex twoHyphen_regex(R"(^--)");
-const std::regex plus_regex(R"(^\+)");
-const std::regex minus_regex(R"(^-)"); // This is also used as a hyphen regex.
-const std::regex multiply_regex(R"(^\*)");
-const std::regex divide_regex(R"(^\/)");
-const std::regex modulo_regex(R"(^%)");
-const std::regex logicalNot_regex(R"(^!)");
-const std::regex logicalAnd_regex(R"(^&&)");
-const std::regex logicalOr_regex(R"(^\|\|)");
-const std::regex equal_regex(R"(^==)");
-const std::regex notEqual_regex(R"(^!=)");
-const std::regex lessThanOrEqual_regex(R"(^<=)");
-const std::regex greaterThanOrEqual_regex(R"(^>=)");
-const std::regex lessThan_regex(R"(^<)");
-const std::regex greaterThan_regex(R"(^>)");
-const std::regex singleLineComment_regex(R"(^\/\/[^\n]*\n?)");
-const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
-const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
-const std::regex preprocessorDirective_regex(R"(^#\w+)");
-
 // Match a token and return its type.
 Token matchToken(const std::string &input) {
     // Instantiate the `match_results` class template for matches on string
@@ -69,8 +21,10 @@ Token matchToken(const std::string &input) {
         return {TokenType::SingleLineComment, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, multiLineComment_regex))
         return {TokenType::MultiLineComment, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, constant_regex))
-        return {TokenType::Constant, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, longIntConstant_regex))
+        return {TokenType::LongIntConstant, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, intConstant_regex))
+        return {TokenType::IntConstant, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, intKeyword_regex))
         return {TokenType::intKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, voidKeyword_regex))
@@ -95,6 +49,8 @@ Token matchToken(const std::string &input) {
         return {TokenType::staticKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, externKeyword_regex))
         return {TokenType::externKeyword, tokenMatch.str()};
+    else if (std::regex_search(input, tokenMatch, longKeyword_regex))
+        return {TokenType::longKeyword, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, comma_regex))
         return {TokenType::Comma, tokenMatch.str()};
     else if (std::regex_search(input, tokenMatch, questionMark_regex))
@@ -236,8 +192,11 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::Identifier:
             typeStr = "Identifier";
             break;
-        case TokenType::Constant:
-            typeStr = "Constant";
+        case TokenType::LongIntConstant:
+            typeStr = "LongIntConstant";
+            break;
+        case TokenType::IntConstant:
+            typeStr = "IntConstant";
             break;
         case TokenType::intKeyword:
             typeStr = "intKeyword";
@@ -274,6 +233,9 @@ void printTokens(const std::vector<Token> &tokens) {
             break;
         case TokenType::externKeyword:
             typeStr = "externKeyword";
+            break;
+        case TokenType::longKeyword:
+            typeStr = "longKeyword";
             break;
         case TokenType::Comma:
             typeStr = "Comma";
@@ -377,8 +339,11 @@ std::string tokenTypeToString(TokenType type) {
     case TokenType::Identifier:
         typeStr = "Identifier";
         break;
-    case TokenType::Constant:
-        typeStr = "Constant";
+    case TokenType::LongIntConstant:
+        typeStr = "LongIntConstant";
+        break;
+    case TokenType::IntConstant:
+        typeStr = "IntConstant";
         break;
     case TokenType::intKeyword:
         typeStr = "intKeyword";
@@ -415,6 +380,9 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::externKeyword:
         typeStr = "externKeyword";
+        break;
+    case TokenType::longKeyword:
+        typeStr = "longKeyword";
         break;
     case TokenType::Comma:
         typeStr = "Comma";
