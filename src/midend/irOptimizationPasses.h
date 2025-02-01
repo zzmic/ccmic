@@ -12,6 +12,15 @@
 #include "ir.h"
 
 namespace IR {
+class IROptimizer {
+  public:
+    static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+    irOptimize(
+        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
+        bool foldConstantsPass, bool propagateCopiesPass,
+        bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
+};
+
 class OptimizationPass {
   public:
     virtual ~OptimizationPass() = default;

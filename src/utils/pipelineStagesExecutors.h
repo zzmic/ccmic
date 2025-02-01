@@ -44,12 +44,6 @@ class PipelineStagesExecutors {
                                        bool propagateCopiesPass,
                                        bool eliminateUnreachableCodePass,
                                        bool eliminateDeadStoresPass);
-    static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-    irOptimizationExecutorHelper(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            functionBody,
-        bool foldConstantsPass, bool propagateCopiesPass,
-        bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
     static std::shared_ptr<Assembly::Program> codegenExecutor(
         std::shared_ptr<IR::Program> irProgram,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
