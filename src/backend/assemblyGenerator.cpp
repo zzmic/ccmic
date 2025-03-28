@@ -58,7 +58,7 @@ AssemblyGenerator::generateAssyFunctionDefinition(
         std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
                                                       "CX", "R8", "R9"};
         int registerIndex = 0;
-        for (std::size_t i = 0; i < irParameters->size(); i++) {
+        for (size_t i = 0; i < irParameters->size(); ++i) {
             auto irParam = irParameters->at(i);
             auto irParamOperand =
                 std::make_shared<Assembly::PseudoRegisterOperand>(irParam);
@@ -422,12 +422,12 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     auto irStackArgs =
         std::make_shared<std::vector<std::shared_ptr<IR::Value>>>();
     if (irArgs->size() < 6) {
-        for (std::size_t i = 0; i < irArgs->size(); i++) {
+        for (size_t i = 0; i < irArgs->size(); ++i) {
             irRegisterArgs->emplace_back(irArgs->at(i));
         }
     }
     else {
-        for (std::size_t i = 0; i < irArgs->size(); i++) {
+        for (size_t i = 0; i < irArgs->size(); ++i) {
             if (i < 6) {
                 irRegisterArgs->emplace_back(irArgs->at(i));
             }

@@ -442,13 +442,13 @@ class FunctionDefinition : public TopLevel {
     std::string functionIdentifier;
     bool global;
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
-    std::size_t stackSize;
+    size_t stackSize;
 
   public:
     FunctionDefinition(
         std::string functionIdentifier, bool global,
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
-        std::size_t stackSize)
+        size_t stackSize)
         : functionIdentifier(functionIdentifier), global(global),
           functionBody(functionBody), stackSize(stackSize) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
@@ -462,8 +462,8 @@ class FunctionDefinition : public TopLevel {
                         functionBody) {
         this->functionBody = functionBody;
     }
-    std::size_t getStackSize() { return stackSize; }
-    void setStackSize(std::size_t stackSize) { this->stackSize = stackSize; }
+    size_t getStackSize() { return stackSize; }
+    void setStackSize(size_t stackSize) { this->stackSize = stackSize; }
 };
 
 class StaticVariable : public TopLevel {

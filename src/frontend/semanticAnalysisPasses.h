@@ -126,6 +126,10 @@ class TypeCheckingPass : public SemanticAnalysisPass {
         std::string,
         std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>
         symbols;
+    std::shared_ptr<Type> getCommonType(std::shared_ptr<Type> type1,
+                                        std::shared_ptr<Type> type2);
+    void convertTo(std::shared_ptr<Expression> expression,
+                   std::shared_ptr<Type> targetType);
     void typeCheckFunctionDeclaration(
         std::shared_ptr<FunctionDeclaration> declaration);
     void typeCheckFileScopeVariableDeclaration(
@@ -133,8 +137,10 @@ class TypeCheckingPass : public SemanticAnalysisPass {
     void typeCheckLocalVariableDeclaration(
         std::shared_ptr<VariableDeclaration> declaration);
     void typeCheckExpression(std::shared_ptr<Expression> expression);
-    void typeCheckBlock(std::shared_ptr<Block> block);
-    void typeCheckStatement(std::shared_ptr<Statement> statement);
+    void typeCheckBlock(std::shared_ptr<Block> block,
+                        std::string enclosingFunctionName = "");
+    void typeCheckStatement(std::shared_ptr<Statement> statement,
+                            std::string enclosingFunctionName = "");
     void typeCheckForInit(std::shared_ptr<ForInit> forInit);
 };
 

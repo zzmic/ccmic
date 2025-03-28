@@ -512,6 +512,33 @@ TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
     return this->symbols;
 }
 
+std::shared_ptr<Type>
+TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
+                                std::shared_ptr<Type> type2) {
+    // For now, there are only two primitive types: int and long.
+    // If both types are the same, return the type.
+    if (*type1 == *type2) {
+        return type1;
+    }
+    // Otherwise, return the larger type.
+    else {
+        return std::make_shared<LongType>();
+    }
+}
+
+void TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
+                                 std::shared_ptr<Type> targetType) {
+    if (expression->getExpType() == targetType) {
+        return;
+    }
+    // TODO(zzmic): Verify whether the type conversion is explicit.
+    // Otherwise, wrap the expression in a cast expression and annotate the
+    // result with the correct type.
+    auto castExpression =
+        std::make_shared<CastExpression>(targetType, expression);
+    expression = castExpression;
+}
+
 void TypeCheckingPass::typeCheckFunctionDeclaration(
     std::shared_ptr<FunctionDeclaration> declaration) {
     // TODO(zzmic): This is a temporary solution.
@@ -555,7 +582,10 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
             symbols[parameter] = {std::make_shared<IntType>(),
                                   std::make_shared<LocalAttribute>()};
         }
-        typeCheckBlock(declaration->getOptBody().value());
+        // Provide the enclosing function's name for the later type-checking of
+        // the return statement.
+        typeCheckBlock(declaration->getOptBody().value(),
+                       declaration->getIdentifier());
     }
 }
 
@@ -682,7 +712,8 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     }
 }
 
-void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block) {
+void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block,
+                                      std::string enclosingFunctionName) {
     for (auto &blockItem : *block->getBlockItems()) {
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
@@ -714,7 +745,10 @@ void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block) {
         }
         else if (auto sBlockItem =
                      std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
-            typeCheckStatement(sBlockItem->getStatement());
+            // Provide the enclosing function's name for the later type-checking
+            // of the return statement.
+            typeCheckStatement(sBlockItem->getStatement(),
+                               enclosingFunctionName);
         }
         else {
             throw std::runtime_error(
@@ -728,34 +762,68 @@ void TypeCheckingPass::typeCheckExpression(
     if (auto functionCallExpression =
             std::dynamic_pointer_cast<FunctionCallExpression>(expression)) {
         auto fType = symbols[functionCallExpression->getIdentifier()].first;
-        if (*fType == IntType()) {
-            std::stringstream msg;
-            msg << "Variable used as function name: "
-                << functionCallExpression->getIdentifier();
-            throw std::runtime_error(msg.str());
+        if (*fType == IntType() || *fType == LongType()) {
+            throw std::runtime_error("Function name used as variable: " +
+                                     functionCallExpression->getIdentifier());
         }
-        // TODO(zzmic): This is a temporary solution.
-        std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameters;
-        std::shared_ptr<Type> returnType;
-        if (*fType != FunctionType(parameters, returnType)) {
-            std::stringstream msg;
-            msg << "Function called with the wrong number of arguments: "
-                << functionCallExpression->getIdentifier();
-            throw std::runtime_error(msg.str());
+        else {
+            auto functionType = std::dynamic_pointer_cast<FunctionType>(fType);
+            auto parameterTypes = functionType->getParameterTypes();
+            auto arguments = functionCallExpression->getArguments();
+            if (parameterTypes->size() != arguments->size()) {
+                throw std::runtime_error(
+                    "Function called with a wrong number of arguments");
+            }
+            auto convertedArguments =
+                std::make_shared<std::vector<std::shared_ptr<Expression>>>();
+            // Iterate over the function's arguments and parameters together.
+            // Type-check each argument and convert it to the corresponding
+            // parameter type.
+            for (size_t i = 0; i < arguments->size(); ++i) {
+                auto argument = arguments->at(i);
+                auto parameterType = parameterTypes->at(i);
+                typeCheckExpression(argument);
+                convertTo(argument, parameterType);
+                convertedArguments->emplace_back(argument);
+            }
+            // Set the function call expression's arguments to the converted
+            // arguments.
+            functionCallExpression->setArguments(convertedArguments);
+            // Set the function call expression's type to the function's return
+            // type.
+            functionCallExpression->setExpType(functionType->getReturnType());
         }
-        for (auto &argument : *functionCallExpression->getArguments()) {
-            typeCheckExpression(argument);
+    }
+    else if (auto constantExpression =
+                 std::dynamic_pointer_cast<ConstantExpression>(expression)) {
+        auto constant = constantExpression->getConstant();
+        if (std::dynamic_pointer_cast<ConstantInt>(constant)) {
+            constantExpression->setExpType(std::make_shared<IntType>());
+        }
+        else if (std::dynamic_pointer_cast<ConstantLong>(constant)) {
+            constantExpression->setExpType(std::make_shared<LongType>());
+        }
+        else {
+            throw std::runtime_error("Unsupported constant type");
         }
     }
     else if (auto variableExpression =
                  std::dynamic_pointer_cast<VariableExpression>(expression)) {
-        if (*(symbols[variableExpression->getIdentifier()].first) !=
-            IntType()) {
+        auto variableType = symbols[variableExpression->getIdentifier()].first;
+        // If the variable is not of type int or long, it is of type function.
+        if (*variableType != IntType() && *variableType != LongType()) {
             std::stringstream msg;
             msg << "Function name used as variable: "
                 << variableExpression->getIdentifier();
             throw std::runtime_error(msg.str());
         }
+        // Otherwise, set the expression type to the variable type.
+        variableExpression->setExpType(variableType);
+    }
+    else if (auto castExpression =
+                 std::dynamic_pointer_cast<CastExpression>(expression)) {
+        typeCheckExpression(castExpression->getExpression());
+        castExpression->setExpType(castExpression->getTargetType());
     }
     else if (auto assignmentExpression =
                  std::dynamic_pointer_cast<AssignmentExpression>(expression)) {
@@ -763,40 +831,86 @@ void TypeCheckingPass::typeCheckExpression(
         auto right = assignmentExpression->getRight();
         typeCheckExpression(left);
         typeCheckExpression(right);
-        // Note: For now, we only support assignments to int-type variables.
-        if (*(symbols[std::dynamic_pointer_cast<VariableExpression>(left)
-                          ->getIdentifier()]
-                  .first) != IntType()) {
-            std::stringstream msg;
-            msg << "Assignment to a function name: "
-                << std::dynamic_pointer_cast<VariableExpression>(left)
-                       ->getIdentifier();
-            throw std::runtime_error(msg.str());
-        }
+        auto leftType = left->getExpType();
+        right->setExpType(leftType);
+        assignmentExpression->setExpType(leftType);
     }
     else if (auto unaryExpression =
                  std::dynamic_pointer_cast<UnaryExpression>(expression)) {
         typeCheckExpression(unaryExpression->getExpression());
+        if (std::dynamic_pointer_cast<NotOperator>(
+                unaryExpression->getOperator())) {
+            unaryExpression->setExpType(std::make_shared<IntType>());
+        }
+        else {
+            unaryExpression->setExpType(
+                unaryExpression->getExpression()->getExpType());
+        }
     }
     else if (auto binaryExpression =
                  std::dynamic_pointer_cast<BinaryExpression>(expression)) {
         typeCheckExpression(binaryExpression->getLeft());
         typeCheckExpression(binaryExpression->getRight());
+        auto binaryOperator = binaryExpression->getOperator();
+        if (std::dynamic_pointer_cast<AndOperator>(binaryOperator) ||
+            std::dynamic_pointer_cast<OrOperator>(binaryOperator)) {
+            return;
+        }
+        auto leftType = binaryExpression->getLeft()->getExpType();
+        auto rightType = binaryExpression->getRight()->getExpType();
+        auto commonType = getCommonType(leftType, rightType);
+        convertTo(binaryExpression->getLeft(), commonType);
+        convertTo(binaryExpression->getRight(), commonType);
+        if (std::dynamic_pointer_cast<AddOperator>(binaryOperator) ||
+            std::dynamic_pointer_cast<SubtractOperator>(binaryOperator) ||
+            std::dynamic_pointer_cast<MultiplyOperator>(binaryOperator) ||
+            std::dynamic_pointer_cast<DivideOperator>(binaryOperator) ||
+            std::dynamic_pointer_cast<RemainderOperator>(binaryOperator)) {
+            binaryExpression->setExpType(commonType);
+        }
+        else {
+            binaryExpression->setExpType(std::make_shared<IntType>());
+        }
     }
     else if (auto conditionalExpression =
                  std::dynamic_pointer_cast<ConditionalExpression>(expression)) {
         typeCheckExpression(conditionalExpression->getCondition());
         typeCheckExpression(conditionalExpression->getThenExpression());
         typeCheckExpression(conditionalExpression->getElseExpression());
+        auto conditionType =
+            conditionalExpression->getCondition()->getExpType();
+        auto thenType =
+            conditionalExpression->getThenExpression()->getExpType();
+        auto elseType =
+            conditionalExpression->getElseExpression()->getExpType();
+        // Get the common type of the then and else expressions/branches.
+        auto commonType = getCommonType(thenType, elseType);
+        // Convert the then and else expressions to the common type.
+        convertTo(conditionalExpression->getThenExpression(), commonType);
+        convertTo(conditionalExpression->getElseExpression(), commonType);
+        // Set the conditional expression type to the common type.
+        conditionalExpression->setExpType(commonType);
     }
 }
 
-void TypeCheckingPass::typeCheckStatement(
-    std::shared_ptr<Statement> statement) {
+void TypeCheckingPass::typeCheckStatement(std::shared_ptr<Statement> statement,
+                                          std::string enclosingFunctionName) {
     if (auto returnStatement =
             std::dynamic_pointer_cast<ReturnStatement>(statement)) {
+        // Look up the enclosing function's return type and convert the return
+        // value to that type.
+        // Use the enclosing function's name to look up the enclosing function's
+        // return type.
+        auto functionType = symbols[enclosingFunctionName].first;
+        if (*functionType == IntType() || *functionType == LongType()) {
+            throw std::runtime_error("Function name used as variable: " +
+                                     enclosingFunctionName);
+        }
+        auto returnType = std::dynamic_pointer_cast<FunctionType>(functionType);
         if (returnStatement->getExpression()) {
             typeCheckExpression(returnStatement->getExpression());
+            convertTo(returnStatement->getExpression(),
+                      returnType->getReturnType());
         }
     }
     else if (auto expressionStatement =

@@ -192,7 +192,7 @@ void PrintVisitor::visit(FunctionType &functionType) {
 
     std::cout << "parameters = (";
 
-    auto &parameters = *functionType.getParameters();
+    auto &parameters = *functionType.getParameterTypes();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         parameter->accept(*this);

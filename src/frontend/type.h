@@ -45,9 +45,10 @@ class LongType : public Type {
 
 class FunctionType : public Type {
   public:
-    FunctionType(std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameters,
-                 std::shared_ptr<Type> returnType)
-        : parameters(parameters), returnType(returnType) {}
+    FunctionType(
+        std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameterTypes,
+        std::shared_ptr<Type> returnType)
+        : parameterTypes(parameterTypes), returnType(returnType) {}
     void accept(Visitor &visitor) override { visitor.visit(*this); }
     // Override the `isEqual` function to check if the other type is a
     // `FunctionType`.
@@ -57,18 +58,18 @@ class FunctionType : public Type {
         // Return true if the other type is a `FunctionType` (i.e., the casted
         // type is not `nullptr`) and
         return otherFun != nullptr
-               // the parameters are equal and
-               && *parameters == *otherFun->parameters
+               // the parameterTypes are equivalent, and
+               && *parameterTypes == *otherFun->parameterTypes
                // the return type is equal.
                && *returnType == *otherFun->returnType;
     }
-    std::shared_ptr<std::vector<std::shared_ptr<Type>>> getParameters() {
-        return parameters;
+    std::shared_ptr<std::vector<std::shared_ptr<Type>>> getParameterTypes() {
+        return parameterTypes;
     }
     std::shared_ptr<Type> getReturnType() { return returnType; }
 
   private:
-    std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameters;
+    std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameterTypes;
     std::shared_ptr<Type> returnType;
 };
 } // namespace AST
