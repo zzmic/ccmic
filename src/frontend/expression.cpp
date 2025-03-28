@@ -23,14 +23,16 @@ void ConstantExpression::setExpType(std::shared_ptr<Type> expType) {
     this->expType = expType;
 }
 
-// TODO(zzmic): This is a temporary solution.
-int ConstantExpression::getConstantInInt() const {
-    if (auto intConst = std::dynamic_pointer_cast<ConstantInt>(constant)) {
-        return intConst->getValue();
+std::variant<int, long>
+ConstantExpression::getConstantInIntOrLongVariant() const {
+    // If the constant is an integer constant, return the integer value.
+    if (auto intConstant = std::dynamic_pointer_cast<ConstantInt>(constant)) {
+        return intConstant->getValue();
     }
-    else if (auto longConst =
+    // If the constant is a long constant, return the long value.
+    else if (auto longConstant =
                  std::dynamic_pointer_cast<ConstantLong>(constant)) {
-        return longConst->getValue();
+        return longConstant->getValue();
     }
     else {
         throw std::runtime_error(

@@ -38,8 +38,8 @@ void PrintVisitor::visit(Function &function) {
     std::cout << "Function(\n";
     std::cout << "name = \"";
 
-    if (function.getName().size() > 0) {
-        std::cout << function.getName();
+    if (function.getIdentifier().size() > 0) {
+        std::cout << function.getIdentifier();
     }
     else {
         throw std::runtime_error("Null name in function");

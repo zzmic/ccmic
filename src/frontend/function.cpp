@@ -2,12 +2,12 @@
 #include "visitor.h"
 
 namespace AST {
-Function::Function(const std::string &name, std::shared_ptr<Block> body)
-    : name(name), body(body) {}
+Function::Function(const std::string &identifier, std::shared_ptr<Block> body)
+    : identifier(identifier), body(body) {}
 
 void Function::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::string Function::getName() const { return name; }
+std::string Function::getIdentifier() const { return identifier; }
 
 std::shared_ptr<Block> Function::getBody() const { return body; }
 

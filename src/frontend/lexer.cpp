@@ -1,7 +1,9 @@
 #include "lexer.h"
 #include <sstream>
 
-// Match a token and return its type.
+// Function to match an input token against the regular expressions for the
+// different token types and return the token struct, containing the token type
+// and the token value (in string).
 Token matchToken(const std::string &input) {
     // Instantiate the `match_results` class template for matches on string
     // objects.
@@ -9,7 +11,7 @@ Token matchToken(const std::string &input) {
 
     // Match the input string against the regular expressions for the different
     // token types and return the token struct, containing the token type and
-    // the token value (string).
+    // the token value (in string).
     // Raise up the precedence of token-matching `singleLineComment_regex` and
     // `multiLineComment_regex` to resolve the conflict with the other token
     // matchings (e.g., `multiply_regex`).
@@ -116,7 +118,7 @@ Token matchToken(const std::string &input) {
         return {TokenType::Invalid, input};
 }
 
-// Tokenize the input.
+// Function to tokenize the input string and return a vector of tokens.
 std::vector<Token> lexer(const std::string &input) {
     std::vector<Token> tokens;
     std::string remainingInput = input;
@@ -182,7 +184,7 @@ std::vector<Token> lexer(const std::string &input) {
     return tokens;
 }
 
-// Print the tokens.
+// Function to pretty-print the tokens.
 void printTokens(const std::vector<Token> &tokens) {
     // For each token, print the token type (converted from each token type to
     // its corresponding string) and the token value.
@@ -332,7 +334,8 @@ void printTokens(const std::vector<Token> &tokens) {
     }
 }
 
-// Convert the token type to its corresponding string.
+// Function to convert each token type to its corresponding string
+// representation.
 std::string tokenTypeToString(TokenType type) {
     std::string typeStr;
     switch (type) {

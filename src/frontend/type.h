@@ -55,12 +55,12 @@ class FunctionType : public Type {
     bool isEqual(const Type &other) const override {
         // Dynamically cast the other type to a `FunctionType`.
         const auto *otherFun = dynamic_cast<const FunctionType *>(&other);
-        // Return true if the other type is a `FunctionType` (i.e., the casted
-        // type is not `nullptr`) and
+        // Return true if the `other` type is a `FunctionType` (i.e., it is not
+        // `nullptr` after casting)
         return otherFun != nullptr
-               // the parameterTypes are equivalent, and
+               // the parameter types are equivalent,
                && *parameterTypes == *otherFun->parameterTypes
-               // the return type is equal.
+               // the return types are equivalent.
                && *returnType == *otherFun->returnType;
     }
     std::shared_ptr<std::vector<std::shared_ptr<Type>>> getParameterTypes() {

@@ -7,6 +7,8 @@
 namespace AST {
 class PrintVisitor : public Visitor {
   public:
+    // Declare the overridden `visit` method for each AST node that is initially
+    // declared in the abstract `Visitor` class.
     void visit(Program &program) override;
     void visit(Function &function) override;
     void visit(Block &block) override;

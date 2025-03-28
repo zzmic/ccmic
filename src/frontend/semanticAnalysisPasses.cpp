@@ -595,10 +595,12 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     if (declaration->getOptInitializer().has_value() &&
         std::dynamic_pointer_cast<ConstantExpression>(
             declaration->getOptInitializer().value())) {
-        initialValue = std::make_shared<ConstantInitial>(
-            std::dynamic_pointer_cast<ConstantExpression>(
-                declaration->getOptInitializer().value())
-                ->getConstantInInt());
+        // TODO(zzmic): This is a temporary solution.
+        auto constantExpression = std::dynamic_pointer_cast<ConstantExpression>(
+            declaration->getOptInitializer().value());
+        auto variantValue = constantExpression->getConstantInIntOrLongVariant();
+        int intValue = std::get<int>(variantValue);
+        initialValue = std::make_shared<ConstantInitial>(intValue);
     }
     else if (!declaration->getOptInitializer().has_value()) {
         if (declaration->getOptStorageClass().has_value() &&
@@ -684,11 +686,14 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         if (declaration->getOptInitializer().has_value() &&
             std::dynamic_pointer_cast<ConstantExpression>(
                 declaration->getOptInitializer().value())) {
+            // TODO(zzmic): This is a temporary solution.
             auto constantExpression =
                 std::dynamic_pointer_cast<ConstantExpression>(
                     declaration->getOptInitializer().value());
-            initialValue = std::make_shared<ConstantInitial>(
-                constantExpression->getConstantInInt());
+            auto variantValue =
+                constantExpression->getConstantInIntOrLongVariant();
+            int intValue = std::get<int>(variantValue);
+            initialValue = std::make_shared<ConstantInitial>(intValue);
         }
         else if (!declaration->getOptInitializer().has_value()) {
             initialValue = std::make_shared<ConstantInitial>(0);
@@ -713,7 +718,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
 }
 
 void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block,
-                                      std::string enclosingFunctionName) {
+                                      std::string enclosingFunctionIdentifier) {
     for (auto &blockItem : *block->getBlockItems()) {
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
@@ -748,7 +753,7 @@ void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block,
             // Provide the enclosing function's name for the later type-checking
             // of the return statement.
             typeCheckStatement(sBlockItem->getStatement(),
-                               enclosingFunctionName);
+                               enclosingFunctionIdentifier);
         }
         else {
             throw std::runtime_error(
@@ -893,18 +898,19 @@ void TypeCheckingPass::typeCheckExpression(
     }
 }
 
-void TypeCheckingPass::typeCheckStatement(std::shared_ptr<Statement> statement,
-                                          std::string enclosingFunctionName) {
+void TypeCheckingPass::typeCheckStatement(
+    std::shared_ptr<Statement> statement,
+    std::string enclosingFunctionIdentifier) {
     if (auto returnStatement =
             std::dynamic_pointer_cast<ReturnStatement>(statement)) {
         // Look up the enclosing function's return type and convert the return
         // value to that type.
         // Use the enclosing function's name to look up the enclosing function's
         // return type.
-        auto functionType = symbols[enclosingFunctionName].first;
+        auto functionType = symbols[enclosingFunctionIdentifier].first;
         if (*functionType == IntType() || *functionType == LongType()) {
             throw std::runtime_error("Function name used as variable: " +
-                                     enclosingFunctionName);
+                                     enclosingFunctionIdentifier);
         }
         auto returnType = std::dynamic_pointer_cast<FunctionType>(functionType);
         if (returnStatement->getExpression()) {

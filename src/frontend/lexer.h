@@ -6,7 +6,7 @@
 #include <string>
 #include <vector>
 
-// Regular expressions for the different token types.
+// Regular expressions for different token types.
 // The caret symbol (^) matches the start of a line or a string.
 // It asserts that the current position in the string is at the beginning of a
 // line or the string.
@@ -38,7 +38,8 @@ const std::regex semicolon_regex(R"(^;)");
 const std::regex tilde_regex(R"(^~)");
 const std::regex twoHyphen_regex(R"(^--)");
 const std::regex plus_regex(R"(^\+)");
-const std::regex minus_regex(R"(^-)"); // This is also used as a hyphen regex.
+const std::regex
+    minus_regex(R"(^-)"); // This is also referred to as a hyphen regex.
 const std::regex multiply_regex(R"(^\*)");
 const std::regex divide_regex(R"(^\/)");
 const std::regex modulo_regex(R"(^%)");
@@ -56,7 +57,11 @@ const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
 const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
 const std::regex preprocessorDirective_regex(R"(^#\w+)");
 
-// Define token types as an enum class.
+// Define token types as an enum class in which each token type is represented
+// as an enumerator that has a local name scope to the enumeration and their
+// values are not implicitly converted to integers or other types.
+// Reference:
+// https://stackoverflow.com/questions/18335861/why-is-enum-class-considered-safer-to-use-than-plain-enum.
 enum class TokenType {
     Identifier,
     LongConstant,
@@ -86,7 +91,7 @@ enum class TokenType {
     Tilde,
     TwoHyphen,
     Plus,
-    Minus, // This is also used as a hyphen.
+    Minus, // This is also referred to as a hyphen.
     Multiply,
     Divide,
     Modulo,

@@ -451,8 +451,9 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
     if (auto constantExpr =
             std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
         // TODO(zzmic): This is a temporary solution.
-        return std::make_shared<IR::ConstantValue>(
-            constantExpr->getConstantInInt());
+        auto variantValue = constantExpr->getConstantInIntOrLongVariant();
+        int intValue = std::get<int>(variantValue);
+        return std::make_shared<IR::ConstantValue>(intValue);
     }
     else if (auto unaryExpr =
                  std::dynamic_pointer_cast<AST::UnaryExpression>(e)) {

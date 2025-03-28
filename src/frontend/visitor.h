@@ -3,8 +3,15 @@
  * The visitor pattern helps to separate the algorithm from the object structure
  * on which it operates. This makes it easier to add new operations to the
  * object structure (which may get more complex) without modifying the objects
- * themselves For each AST node, its interface will declare an accept method
- * that takes a visitor as an argument.
+ * themselves. For each AST node, its interface will declare an `accept` method
+ * that takes a visitor as an argument. The visitor interface will declare a
+ * `visit` method for each AST node. The visitor interface will be implemented
+ * by concrete visitors that provide the actual implementation of the visit
+ * methods. The AST nodes will be implemented to call the `accept` method of the
+ * visitor with themselves as an argument. The `accept` method of the AST nodes
+ * will call the appropriate `visit` method of the visitor. In this manner, the
+ * AST nodes can be visited by different visitors without modifying the nodes
+ * themselves.
  */
 #ifndef FRONTEND_VISITOR_H
 #define FRONTEND_VISITOR_H
@@ -76,9 +83,11 @@ class ConstantLong;
 
 class Visitor {
   public:
+    // Declare a virtual destructor for the visitor interface with the default
+    // implementation.
     virtual ~Visitor() = default;
     // Declare pure virtual functions for each AST node (`= 0`).
-    // This in turn implies that the whole visitor class is an abstract class.
+    // This, in turn, implies that the whole visitor class is an abstract class.
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
     virtual void visit(Block &block) = 0;

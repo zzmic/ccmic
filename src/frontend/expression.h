@@ -7,6 +7,7 @@
 #include "type.h"
 #include <memory>
 #include <string>
+#include <variant>
 #include <vector>
 
 namespace AST {
@@ -27,8 +28,8 @@ class ConstantExpression : public Factor {
     std::shared_ptr<Constant> getConstant() const;
     std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
-    // TODO(zzmic): This is a temporary solution.
     int getConstantInInt() const;
+    std::variant<int, long> getConstantInIntOrLongVariant() const;
 
   private:
     std::shared_ptr<Constant> constant;

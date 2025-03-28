@@ -19,7 +19,9 @@ class Parser {
 
   private:
     const std::vector<Token> &tokens;
+    // The current token being processed.
     size_t current;
+    // A map that maps token types to their precedence(s).
     std::unordered_map<TokenType, int> precedenceMap = {
         {TokenType::Assign, 1},       {TokenType::QuestionMark, 3},
         {TokenType::LogicalOr, 5},    {TokenType::LogicalAnd, 10},

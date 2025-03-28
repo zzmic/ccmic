@@ -11,14 +11,14 @@
 namespace AST {
 class Function : public AST {
   public:
-    Function(const std::string &name, std::shared_ptr<Block> body);
+    Function(const std::string &identifier, std::shared_ptr<Block> body);
     void accept(Visitor &vistor) override;
-    std::string getName() const;
+    std::string getIdentifier() const;
     std::shared_ptr<Block> getBody() const;
     void setBody(std::shared_ptr<Block> body);
 
   private:
-    std::string name;
+    std::string identifier;
     std::shared_ptr<Block> body;
 };
 } // Namespace AST
