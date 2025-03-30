@@ -85,7 +85,7 @@ const std::string &FunctionDeclaration::getIdentifier() const {
 }
 
 std::shared_ptr<std::vector<std::string>>
-FunctionDeclaration::getParameters() const {
+FunctionDeclaration::getParameterIdentifiers() const {
     return parameters;
 }
 

@@ -145,7 +145,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << "\nparameters = (";
 
-    auto &parameters = *functionDeclaration.getParameters();
+    auto &parameters = *functionDeclaration.getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         std::cout << parameter;
