@@ -113,8 +113,11 @@ class BinaryExpression : public Expression {
                      std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getLeft() const;
+    void setLeft(std::shared_ptr<Expression> left);
     std::shared_ptr<BinaryOperator> getOperator() const;
+    void setOperator(std::shared_ptr<BinaryOperator> op);
     std::shared_ptr<Expression> getRight() const;
+    void setRight(std::shared_ptr<Expression> right);
     std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
@@ -155,8 +158,11 @@ class ConditionalExpression : public Expression {
                           std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getCondition() const;
+    void setCondition(std::shared_ptr<Expression> condition);
     std::shared_ptr<Expression> getThenExpression() const;
+    void setThenExpression(std::shared_ptr<Expression> thenExpression);
     std::shared_ptr<Expression> getElseExpression() const;
+    void setElseExpression(std::shared_ptr<Expression> elseExpression);
     std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 

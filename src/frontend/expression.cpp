@@ -265,11 +265,23 @@ void BinaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::shared_ptr<Expression> BinaryExpression::getLeft() const { return left; }
 
+void BinaryExpression::setLeft(std::shared_ptr<Expression> left) {
+    this->left = left;
+}
+
 std::shared_ptr<BinaryOperator> BinaryExpression::getOperator() const {
     return op;
 }
 
+void BinaryExpression::setOperator(std::shared_ptr<BinaryOperator> op) {
+    this->op = op;
+}
+
 std::shared_ptr<Expression> BinaryExpression::getRight() const { return right; }
+
+void BinaryExpression::setRight(std::shared_ptr<Expression> right) {
+    this->right = right;
+}
 
 std::shared_ptr<Type> BinaryExpression::getExpType() const { return expType; }
 
@@ -324,12 +336,27 @@ std::shared_ptr<Expression> ConditionalExpression::getCondition() const {
     return condition;
 }
 
+void ConditionalExpression::setCondition(
+    std::shared_ptr<Expression> condition) {
+    this->condition = condition;
+}
+
 std::shared_ptr<Expression> ConditionalExpression::getThenExpression() const {
     return thenExpression;
 }
 
+void ConditionalExpression::setThenExpression(
+    std::shared_ptr<Expression> thenExpression) {
+    this->thenExpression = thenExpression;
+}
+
 std::shared_ptr<Expression> ConditionalExpression::getElseExpression() const {
     return elseExpression;
+}
+
+void ConditionalExpression::setElseExpression(
+    std::shared_ptr<Expression> elseExpression) {
+    this->elseExpression = elseExpression;
 }
 
 std::shared_ptr<Type> ConditionalExpression::getExpType() const {

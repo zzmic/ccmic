@@ -548,9 +548,15 @@ std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
 std::shared_ptr<Type>
 TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
                                 std::shared_ptr<Type> type2) {
+    if (type1 == nullptr) {
+        throw std::runtime_error("Null type1 in getCommonType");
+    }
+    else if (type2 == nullptr) {
+        return type1;
+    }
     // For now, there are only two primitive types: int and long.
     // If both types are the same, return the type.
-    if (*type1 == *type2) {
+    else if (*type1 == *type2) {
         return type1;
     }
     // Otherwise, return the larger type.
@@ -559,17 +565,23 @@ TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
     }
 }
 
-void TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
-                                 std::shared_ptr<Type> targetType) {
-    if (expression->getExpType() == targetType) {
-        return;
+std::shared_ptr<Expression>
+TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
+                            std::shared_ptr<Type> targetType) {
+    if (expression == nullptr) {
+        throw std::runtime_error("Null expression in convertTo");
     }
-    // TODO(zzmic): Verify whether the type conversion is explicit.
+    if (targetType == nullptr) {
+        throw std::runtime_error("Null target type in convertTo");
+    }
+    if (expression->getExpType() == targetType) {
+        return expression;
+    }
     // Otherwise, wrap the expression in a cast expression and annotate the
     // result with the correct type.
     auto castExpression =
         std::make_shared<CastExpression>(targetType, expression);
-    expression = castExpression;
+    return castExpression;
 }
 
 void TypeCheckingPass::typeCheckFunctionDeclaration(
@@ -934,8 +946,11 @@ void TypeCheckingPass::typeCheckExpression(
         auto leftType = binaryExpression->getLeft()->getExpType();
         auto rightType = binaryExpression->getRight()->getExpType();
         auto commonType = getCommonType(leftType, rightType);
-        convertTo(binaryExpression->getLeft(), commonType);
-        convertTo(binaryExpression->getRight(), commonType);
+        auto convertedLeft = convertTo(binaryExpression->getLeft(), commonType);
+        auto convertedRight =
+            convertTo(binaryExpression->getRight(), commonType);
+        binaryExpression->setLeft(convertedLeft);
+        binaryExpression->setRight(convertedRight);
         if (std::dynamic_pointer_cast<AddOperator>(binaryOperator) ||
             std::dynamic_pointer_cast<SubtractOperator>(binaryOperator) ||
             std::dynamic_pointer_cast<MultiplyOperator>(binaryOperator) ||
@@ -961,8 +976,12 @@ void TypeCheckingPass::typeCheckExpression(
         // Get the common type of the then and else expressions/branches.
         auto commonType = getCommonType(thenType, elseType);
         // Convert the then and else expressions to the common type.
-        convertTo(conditionalExpression->getThenExpression(), commonType);
-        convertTo(conditionalExpression->getElseExpression(), commonType);
+        auto convertedThen =
+            convertTo(conditionalExpression->getThenExpression(), commonType);
+        auto convertedElse =
+            convertTo(conditionalExpression->getElseExpression(), commonType);
+        conditionalExpression->setThenExpression(convertedThen);
+        conditionalExpression->setElseExpression(convertedElse);
         // Set the conditional expression type to the common type.
         conditionalExpression->setExpType(commonType);
     }
@@ -985,8 +1004,9 @@ void TypeCheckingPass::typeCheckStatement(
         auto returnType = std::dynamic_pointer_cast<FunctionType>(functionType);
         if (returnStatement->getExpression()) {
             typeCheckExpression(returnStatement->getExpression());
-            convertTo(returnStatement->getExpression(),
-                      returnType->getReturnType());
+            auto convertedReturn = convertTo(returnStatement->getExpression(),
+                                             returnType->getReturnType());
+            returnStatement->setExpression(convertedReturn);
         }
     }
     else if (auto expressionStatement =
