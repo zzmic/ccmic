@@ -11,6 +11,10 @@ std::shared_ptr<Expression> ReturnStatement::getExpression() const {
     return expr;
 }
 
+void ReturnStatement::setExpression(std::shared_ptr<Expression> expr) {
+    this->expr = expr;
+}
+
 ExpressionStatement::ExpressionStatement(std::shared_ptr<Expression> expr)
     : expr(expr) {}
 

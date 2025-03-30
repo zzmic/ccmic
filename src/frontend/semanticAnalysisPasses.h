@@ -160,8 +160,9 @@ class TypeCheckingPass : public SemanticAnalysisPass {
         std::shared_ptr<ConstantExpression> constantExpr);
     std::shared_ptr<Type> getCommonType(std::shared_ptr<Type> type1,
                                         std::shared_ptr<Type> type2);
-    void convertTo(std::shared_ptr<Expression> expression,
-                   std::shared_ptr<Type> targetType);
+    std::shared_ptr<Expression>
+    convertTo(std::shared_ptr<Expression> expression,
+              std::shared_ptr<Type> targetType);
     void typeCheckFunctionDeclaration(
         std::shared_ptr<FunctionDeclaration> declaration);
     void typeCheckFileScopeVariableDeclaration(

@@ -16,6 +16,7 @@ class ReturnStatement : public Statement {
     ReturnStatement(std::shared_ptr<Expression> expr);
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getExpression() const;
+    void setExpression(std::shared_ptr<Expression> expr);
 
   private:
     std::shared_ptr<Expression> expr;
