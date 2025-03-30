@@ -29,7 +29,7 @@ void PrettyPrinters::printIRFunctionDefinition(
     std::cout << std::boolalpha;
     std::cout << "[isGlobal: " << functionDefinition->isGlobal() << "]";
     std::cout << "(";
-    auto &parameters = *functionDefinition->getParameters();
+    auto &parameters = *functionDefinition->getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         std::cout << parameter;

@@ -249,7 +249,7 @@ class FunctionDefinition : public TopLevel {
           parameters(parameters), functionBody(functionBody) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
     bool isGlobal() { return global; }
-    std::shared_ptr<std::vector<std::string>> getParameters() {
+    std::shared_ptr<std::vector<std::string>> getParameterIdentifiers() {
         return parameters;
     }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>

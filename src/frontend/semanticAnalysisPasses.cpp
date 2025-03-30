@@ -444,7 +444,7 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
         MapEntry(declaration->getIdentifier(), true, true);
     auto innerIdentifierMap = copyIdentifierMap(identifierMap);
     auto resolvedParameters = std::make_shared<std::vector<std::string>>();
-    for (auto &parameter : *declaration->getParameters()) {
+    for (auto &parameter : *declaration->getParameterIdentifiers()) {
         if (parameter == "int") {
             continue;
         }
@@ -512,6 +512,39 @@ TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
     return this->symbols;
 }
 
+std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
+    std::shared_ptr<Type> varType,
+    std::shared_ptr<ConstantExpression> constantExpression) {
+    // Extract the numeric value from the AST constant.
+    auto variantValue = constantExpression->getConstantInIntOrLongVariant();
+
+    long numericValue = 0;
+    // Convert everything to 64-bit for uniform handling.
+    // `std::holds_alternative` checks the type of the variant.
+    if (std::holds_alternative<int>(variantValue)) {
+        numericValue = std::get<int>(variantValue);
+    }
+    else {
+        numericValue = std::get<long>(variantValue);
+    }
+
+    // If the declared type is int, we wrap/truncate to 32-bit.
+    if (*varType == IntType()) {
+        // Wrap `numericValue` via a cast.
+        // This does a 32-bit wrap-around if `numericValue` doesn't fit.
+        int wrappedNumericValue =
+            static_cast<int>(static_cast<unsigned long>(numericValue));
+        return std::make_shared<IntInit>(wrappedNumericValue);
+    }
+    // If the declared type is long, store the full 64-bit value.
+    else if (*varType == LongType()) {
+        return std::make_shared<LongInit>(numericValue);
+    }
+    else {
+        throw std::runtime_error("Unsupported type in static initializer");
+    }
+}
+
 std::shared_ptr<Type>
 TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
                                 std::shared_ptr<Type> type2) {
@@ -548,6 +581,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     auto hasBody = declaration->getOptBody().has_value();
     auto alreadyDefined = false;
     auto global = true;
+
     if (declaration->getOptStorageClass().has_value() &&
         std::dynamic_pointer_cast<StaticStorageClass>(
             declaration->getOptStorageClass().value())) {
@@ -574,11 +608,13 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
         }
         global = oldFunctionAttribute->isGlobal();
     }
+
     auto attribute =
         std::make_shared<FunctionAttribute>(alreadyDefined || hasBody, global);
     symbols[declaration->getIdentifier()] = {funType, attribute};
+
     if (hasBody) {
-        for (auto &parameter : *declaration->getParameters()) {
+        for (auto &parameter : *declaration->getParameterIdentifiers()) {
             symbols[parameter] = {std::make_shared<IntType>(),
                                   std::make_shared<LocalAttribute>()};
         }
@@ -591,16 +627,31 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
 
 void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     std::shared_ptr<VariableDeclaration> declaration) {
+    auto varType = declaration->getVarType();
+    if (*varType != IntType() && *varType != LongType()) {
+        throw std::runtime_error(
+            "Unsupported variable type for file-scope variables");
+    }
+
     auto initialValue = std::make_shared<InitialValue>();
+
     if (declaration->getOptInitializer().has_value() &&
         std::dynamic_pointer_cast<ConstantExpression>(
             declaration->getOptInitializer().value())) {
-        // TODO(zzmic): This is a temporary solution.
         auto constantExpression = std::dynamic_pointer_cast<ConstantExpression>(
             declaration->getOptInitializer().value());
         auto variantValue = constantExpression->getConstantInIntOrLongVariant();
-        int intValue = std::get<int>(variantValue);
-        initialValue = std::make_shared<ConstantInitial>(intValue);
+        if (std::holds_alternative<long>(variantValue)) {
+            initialValue =
+                std::make_shared<Initial>(std::get<long>(variantValue));
+        }
+        else if (std::holds_alternative<int>(variantValue)) {
+            initialValue =
+                std::make_shared<Initial>(std::get<int>(variantValue));
+        }
+        else {
+            throw std::runtime_error("Unsupported type in static initializer");
+        }
     }
     else if (!declaration->getOptInitializer().has_value()) {
         if (declaration->getOptStorageClass().has_value() &&
@@ -615,10 +666,13 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     else {
         throw std::runtime_error("Non-constant initializer!");
     }
+
+    // Determine the linkage of the variable.
     auto global = (!declaration->getOptStorageClass().has_value()) ||
                   (declaration->getOptStorageClass().has_value() &&
                    !(std::dynamic_pointer_cast<StaticStorageClass>(
                        declaration->getOptStorageClass().value())));
+
     if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
         auto oldDeclaration = symbols[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
@@ -635,9 +689,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         else if (oldStaticAttribute->isGlobal() != global) {
             throw std::runtime_error("Conflicting variable linkage");
         }
-        if (auto oldInitialValue = std::dynamic_pointer_cast<ConstantInitial>(
+        if (auto oldInitialValue = std::dynamic_pointer_cast<Initial>(
                 oldStaticAttribute->getInitialValue())) {
-            if (std::dynamic_pointer_cast<ConstantInitial>(initialValue)) {
+            if (std::dynamic_pointer_cast<Initial>(initialValue)) {
                 throw std::runtime_error(
                     "Conflicting file-scope variable definitions");
             }
@@ -645,19 +699,26 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                 initialValue = oldInitialValue;
             }
         }
-        else if (!std::dynamic_pointer_cast<ConstantInitial>(initialValue) &&
+        else if (!std::dynamic_pointer_cast<Initial>(initialValue) &&
                  std::dynamic_pointer_cast<Tentative>(
                      oldStaticAttribute->getInitialValue())) {
             initialValue = std::make_shared<Tentative>();
         }
     }
+
     auto attribute = std::make_shared<StaticAttribute>(initialValue, global);
-    symbols[declaration->getIdentifier()] =
-        std::make_pair(std::make_shared<IntType>(), attribute);
+    // Store the corresponding variable type and attribute in the symbol table.
+    symbols[declaration->getIdentifier()] = {varType, attribute};
 }
 
 void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     std::shared_ptr<VariableDeclaration> declaration) {
+    auto varType = declaration->getVarType();
+    if (*varType != IntType() && *varType != LongType()) {
+        throw std::runtime_error(
+            "Unsupported variable type for local variables");
+    }
+
     if (declaration->getOptStorageClass().has_value() &&
         std::dynamic_pointer_cast<ExternStorageClass>(
             declaration->getOptStorageClass().value())) {
@@ -676,7 +737,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             auto staticAttribute = std::make_shared<StaticAttribute>(
                 std::make_shared<NoInitializer>(), true);
             symbols[declaration->getIdentifier()] =
-                std::make_pair(std::make_shared<IntType>(), staticAttribute);
+                std::make_pair(varType, staticAttribute);
         }
     }
     else if (declaration->getOptStorageClass().has_value() &&
@@ -686,17 +747,26 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         if (declaration->getOptInitializer().has_value() &&
             std::dynamic_pointer_cast<ConstantExpression>(
                 declaration->getOptInitializer().value())) {
-            // TODO(zzmic): This is a temporary solution.
             auto constantExpression =
                 std::dynamic_pointer_cast<ConstantExpression>(
                     declaration->getOptInitializer().value());
             auto variantValue =
                 constantExpression->getConstantInIntOrLongVariant();
-            int intValue = std::get<int>(variantValue);
-            initialValue = std::make_shared<ConstantInitial>(intValue);
+            if (std::holds_alternative<long>(variantValue)) {
+                initialValue =
+                    std::make_shared<Initial>(std::get<long>(variantValue));
+            }
+            else if (std::holds_alternative<int>(variantValue)) {
+                initialValue =
+                    std::make_shared<Initial>(std::get<int>(variantValue));
+            }
+            else {
+                throw std::runtime_error(
+                    "Unsupported type in static initializer");
+            }
         }
         else if (!declaration->getOptInitializer().has_value()) {
-            initialValue = std::make_shared<ConstantInitial>(0);
+            initialValue = std::make_shared<Initial>(0);
         }
         else {
             throw std::runtime_error(
@@ -705,12 +775,12 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         auto staticAttribute =
             std::make_shared<StaticAttribute>(initialValue, false);
         symbols[declaration->getIdentifier()] =
-            std::make_pair(std::make_shared<IntType>(), staticAttribute);
+            std::make_pair(varType, staticAttribute);
     }
     else {
         auto localAttribute = std::make_shared<LocalAttribute>();
         symbols[declaration->getIdentifier()] =
-            std::make_pair(std::make_shared<IntType>(), localAttribute);
+            std::make_pair(varType, localAttribute);
         if (declaration->getOptInitializer().has_value()) {
             typeCheckExpression(declaration->getOptInitializer().value());
         }

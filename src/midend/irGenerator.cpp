@@ -34,7 +34,7 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
             // Get the identifier and the parameters of the function
             // declaration.
             auto identifier = functionDeclaration->getIdentifier();
-            auto parameters = functionDeclaration->getParameters();
+            auto parameters = functionDeclaration->getParameterIdentifiers();
             // Find the global attribute of the function declaration in the
             // symbols and set the global flag.
             bool global = false;
@@ -819,11 +819,12 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                 std::dynamic_pointer_cast<AST::StaticAttribute>(attribute)) {
             auto initialValue = staticAttribute->getInitialValue();
             auto global = staticAttribute->isGlobal();
-            if (auto constantInitial =
-                    std::dynamic_pointer_cast<AST::ConstantInitial>(
-                        initialValue)) {
+            if (auto initial =
+                    std::dynamic_pointer_cast<AST::Initial>(initialValue)) {
+                // TODO(zzmic): This is a temporary solution.
                 irDefs->emplace_back(std::make_shared<StaticVariable>(
-                    name, global, constantInitial->getValue()));
+                    name, global,
+                    std::get<int>(initial->getStaticInit()->getValue())));
             }
             else if (auto tentative = std::dynamic_pointer_cast<AST::Tentative>(
                          initialValue)) {

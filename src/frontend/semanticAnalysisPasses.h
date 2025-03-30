@@ -7,6 +7,7 @@
 #include "statement.h"
 #include "type.h"
 #include <unordered_map>
+#include <variant>
 
 namespace AST {
 class SemanticAnalysisPass {
@@ -65,6 +66,30 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
                      std::unordered_map<std::string, MapEntry> &identifierMap);
 };
 
+class StaticInit {
+  public:
+    virtual ~StaticInit() = default;
+    virtual std::variant<int, long> getValue() = 0;
+};
+
+class IntInit : public StaticInit {
+  public:
+    IntInit(int value) : value(value) {}
+    std::variant<int, long> getValue() override { return value; }
+
+  private:
+    int value;
+};
+
+class LongInit : public StaticInit {
+  public:
+    LongInit(long value) : value(value) {}
+    std::variant<int, long> getValue() override { return value; }
+
+  private:
+    long value;
+};
+
 class InitialValue {
   public:
     virtual ~InitialValue() = default;
@@ -72,13 +97,15 @@ class InitialValue {
 
 class Tentative : public InitialValue {};
 
-class ConstantInitial : public InitialValue {
+class Initial : public InitialValue {
   public:
-    ConstantInitial(int value) : value(value) {}
-    int getValue() { return value; }
+    Initial(int value) : staticInit(std::make_shared<IntInit>(value)) {}
+    Initial(long value) : staticInit(std::make_shared<LongInit>(value)) {}
+    Initial(std::shared_ptr<StaticInit> staticInit) : staticInit(staticInit) {}
+    std::shared_ptr<StaticInit> getStaticInit() { return staticInit; }
 
   private:
-    int value;
+    std::shared_ptr<StaticInit> staticInit;
 };
 
 class NoInitializer : public InitialValue {};
@@ -126,6 +153,11 @@ class TypeCheckingPass : public SemanticAnalysisPass {
         std::string,
         std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>
         symbols;
+    // Convert a compile-time constant (int or long) to a static initializer
+    // (`IntInit` or `LongInit`).
+    std::shared_ptr<StaticInit> convertStaticConstantToStaticInit(
+        std::shared_ptr<Type> varType,
+        std::shared_ptr<ConstantExpression> constantExpr);
     std::shared_ptr<Type> getCommonType(std::shared_ptr<Type> type1,
                                         std::shared_ptr<Type> type2);
     void convertTo(std::shared_ptr<Expression> expression,

@@ -65,7 +65,7 @@ class FunctionDeclaration : public Declaration {
         std::optional<std::shared_ptr<StorageClass>> optStorageClass);
     void accept(Visitor &visitor) override;
     const std::string &getIdentifier() const;
-    std::shared_ptr<std::vector<std::string>> getParameters() const;
+    std::shared_ptr<std::vector<std::string>> getParameterIdentifiers() const;
     std::shared_ptr<Type> getFunType() const;
     std::optional<std::shared_ptr<Block>> getOptBody() const;
     std::optional<std::shared_ptr<StorageClass>> getOptStorageClass() const;

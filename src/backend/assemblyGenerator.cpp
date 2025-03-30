@@ -53,7 +53,7 @@ AssemblyGenerator::generateAssyFunctionDefinition(
 
     // Generate instructions to move parameters from registers to the
     // stack.
-    auto irParameters = irFunctionDefinition->getParameters();
+    auto irParameters = irFunctionDefinition->getParameterIdentifiers();
     if (irParameters->size() > 0) {
         std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
                                                       "CX", "R8", "R9"};
