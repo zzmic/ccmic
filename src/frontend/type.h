@@ -1,6 +1,7 @@
 #ifndef FRONTEND_TYPES_H
 #define FRONTEND_TYPES_H
 
+#include "ast.h"
 #include <memory>
 #include <typeinfo>
 #include <vector>
@@ -53,20 +54,29 @@ class FunctionType : public Type {
     // Override the `isEqual` function to check if the other type is a
     // `FunctionType`.
     bool isEqual(const Type &other) const override {
-        // Dynamically cast the other type to a `FunctionType`.
-        const auto *otherFun = dynamic_cast<const FunctionType *>(&other);
-        // Return true if the `other` type is a `FunctionType` (i.e., it is not
-        // `nullptr` after casting)
-        return otherFun != nullptr
-               // the parameter types are equivalent,
-               && *parameterTypes == *otherFun->parameterTypes
-               // the return types are equivalent.
-               && *returnType == *otherFun->returnType;
+        const auto *otherFn = dynamic_cast<const FunctionType *>(&other);
+        if (otherFn == nullptr) {
+            return false;
+        }
+        // Compare parameter types by value.
+        const auto &params1 = *parameterTypes;
+        const auto &params2 = *otherFn->parameterTypes;
+        if (params1.size() != params2.size()) {
+            return false;
+        }
+        for (size_t i = 0; i < params1.size(); ++i) {
+            if (*(params1[i]) != *(params2[i])) {
+                return false;
+            }
+        }
+        // Compare return types by value.
+        return *returnType == *otherFn->returnType;
     }
-    std::shared_ptr<std::vector<std::shared_ptr<Type>>> getParameterTypes() {
+    std::shared_ptr<std::vector<std::shared_ptr<Type>>>
+    getParameterTypes() const {
         return parameterTypes;
     }
-    std::shared_ptr<Type> getReturnType() { return returnType; }
+    std::shared_ptr<Type> getReturnType() const { return returnType; }
 
   private:
     std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameterTypes;
