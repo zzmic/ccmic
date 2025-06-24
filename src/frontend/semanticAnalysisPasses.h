@@ -171,9 +171,9 @@ class TypeCheckingPass : public SemanticAnalysisPass {
         std::shared_ptr<VariableDeclaration> declaration);
     void typeCheckExpression(std::shared_ptr<Expression> expression);
     void typeCheckBlock(std::shared_ptr<Block> block,
-                        std::string enclosingFunctionIdentifier = "");
+                        std::string enclosingFunctionIdentifier);
     void typeCheckStatement(std::shared_ptr<Statement> statement,
-                            std::string enclosingFunctionIdentifier = "");
+                            std::string enclosingFunctionIdentifier);
     void typeCheckForInit(std::shared_ptr<ForInit> forInit);
 };
 

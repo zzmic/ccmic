@@ -696,7 +696,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
         auto oldDeclaration = symbols[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
-        if (*oldType != IntType()) {
+        if (*oldType != *varType) {
             throw std::runtime_error("Function redeclared as variable");
         }
         auto oldStaticAttribute =
@@ -749,7 +749,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
             auto oldDeclaration = symbols[declaration->getIdentifier()];
             auto oldType = oldDeclaration.first;
-            if (*oldType != IntType()) {
+            if (*oldType != *varType) {
                 throw std::runtime_error("Function redeclared as variable");
             }
         }
@@ -1007,6 +1007,10 @@ void TypeCheckingPass::typeCheckStatement(
         // Use the enclosing function's name to look up the enclosing function's
         // return type.
         auto functionType = symbols[enclosingFunctionIdentifier].first;
+        if (!functionType) {
+            throw std::runtime_error("Function not found in symbol table: " +
+                                     enclosingFunctionIdentifier);
+        }
         if (*functionType == IntType() || *functionType == LongType()) {
             throw std::runtime_error("Function name used as variable: " +
                                      enclosingFunctionIdentifier);
@@ -1025,17 +1029,20 @@ void TypeCheckingPass::typeCheckStatement(
     }
     else if (auto compoundStatement =
                  std::dynamic_pointer_cast<CompoundStatement>(statement)) {
-        typeCheckBlock(compoundStatement->getBlock());
+        typeCheckBlock(compoundStatement->getBlock(),
+                       enclosingFunctionIdentifier);
     }
     else if (auto whileStatement =
                  std::dynamic_pointer_cast<WhileStatement>(statement)) {
         typeCheckExpression(whileStatement->getCondition());
-        typeCheckStatement(whileStatement->getBody());
+        typeCheckStatement(whileStatement->getBody(),
+                           enclosingFunctionIdentifier);
     }
     else if (auto doWhileStatement =
                  std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
         typeCheckExpression(doWhileStatement->getCondition());
-        typeCheckStatement(doWhileStatement->getBody());
+        typeCheckStatement(doWhileStatement->getBody(),
+                           enclosingFunctionIdentifier);
     }
     else if (auto forStatement =
                  std::dynamic_pointer_cast<ForStatement>(statement)) {
@@ -1048,14 +1055,17 @@ void TypeCheckingPass::typeCheckStatement(
         if (forStatement->getOptPost().has_value()) {
             typeCheckExpression(forStatement->getOptPost().value());
         }
-        typeCheckStatement(forStatement->getBody());
+        typeCheckStatement(forStatement->getBody(),
+                           enclosingFunctionIdentifier);
     }
     else if (auto ifStatement =
                  std::dynamic_pointer_cast<IfStatement>(statement)) {
         typeCheckExpression(ifStatement->getCondition());
-        typeCheckStatement(ifStatement->getThenStatement());
+        typeCheckStatement(ifStatement->getThenStatement(),
+                           enclosingFunctionIdentifier);
         if (ifStatement->getElseOptStatement().has_value()) {
-            typeCheckStatement(ifStatement->getElseOptStatement().value());
+            typeCheckStatement(ifStatement->getElseOptStatement().value(),
+                               enclosingFunctionIdentifier);
         }
     }
 }
