@@ -445,7 +445,9 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
     auto innerIdentifierMap = copyIdentifierMap(identifierMap);
     auto resolvedParameters = std::make_shared<std::vector<std::string>>();
     for (auto &parameter : *declaration->getParameterIdentifiers()) {
-        if (parameter == "int") {
+        // Skip the built-in types `int` and `long` since they are not actual
+        // parameters.
+        if (parameter == "int" || parameter == "long") {
             continue;
         }
         resolvedParameters->emplace_back(
@@ -548,14 +550,17 @@ std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
 std::shared_ptr<Type>
 TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
                                 std::shared_ptr<Type> type2) {
+    // If `type1` is `nullptr`, throw an error.
     if (type1 == nullptr) {
         throw std::runtime_error("Null type1 in getCommonType");
     }
+    // TODO(zzmic): Check if this is correct.
+    // If `type2` is `nullptr`, return `type1`.
     else if (type2 == nullptr) {
         return type1;
     }
-    // For now, there are only two primitive types: int and long.
-    // If both types are the same, return the type.
+    // If both types are the same, return `type1` (or `type2`).
+    // For now, there are only two primitive types: `int` and `long`.
     else if (*type1 == *type2) {
         return type1;
     }
@@ -692,7 +697,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         auto oldDeclaration = symbols[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
         if (*oldType != IntType()) {
-            throw std::runtime_error("Function redclared as variable");
+            throw std::runtime_error("Function redeclared as variable");
         }
         auto oldStaticAttribute =
             std::dynamic_pointer_cast<StaticAttribute>(oldDeclaration.second);
@@ -944,6 +949,8 @@ void TypeCheckingPass::typeCheckExpression(
         auto binaryOperator = binaryExpression->getOperator();
         if (std::dynamic_pointer_cast<AndOperator>(binaryOperator) ||
             std::dynamic_pointer_cast<OrOperator>(binaryOperator)) {
+            // Logical operators should always return type `int`.
+            binaryExpression->setExpType(std::make_shared<IntType>());
             return;
         }
         auto leftType = binaryExpression->getLeft()->getExpType();
