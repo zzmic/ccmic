@@ -586,10 +586,13 @@ TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
 
 void TypeCheckingPass::typeCheckFunctionDeclaration(
     std::shared_ptr<FunctionDeclaration> declaration) {
-    // TODO(zzmic): This is a temporary solution.
-    std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameters;
-    std::shared_ptr<Type> returnType;
-    auto funType = std::make_shared<FunctionType>(parameters, returnType);
+    auto funType = declaration->getFunType();
+    auto funTypePtr = std::dynamic_pointer_cast<FunctionType>(funType);
+    if (funTypePtr == nullptr) {
+        throw std::runtime_error("Function type is not a FunctionType");
+    }
+    auto parameterTypes = funTypePtr->getParameterTypes();
+    auto returnType = funTypePtr->getReturnType();
     auto hasBody = declaration->getOptBody().has_value();
     auto alreadyDefined = false;
     auto global = true;

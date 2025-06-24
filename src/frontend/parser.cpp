@@ -128,6 +128,9 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
         // Parse a function declaration.
         expectToken(TokenType::OpenParenthesis);
         auto parameters = std::make_shared<std::vector<std::string>>();
+        auto parameterTypes =
+            std::make_shared<std::vector<std::shared_ptr<Type>>>();
+
         if (matchToken(TokenType::voidKeyword)) {
             consumeToken(TokenType::voidKeyword);
         }
@@ -135,39 +138,48 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
             parseTypeSpecifiersInParameters(parameters);
             auto parameterNameToken = consumeToken(TokenType::Identifier);
             parameters->emplace_back(parameterNameToken.value);
+            parameterTypes->emplace_back(std::make_shared<IntType>());
             // Parse additional parameters if they exist.
             while (matchToken(TokenType::Comma)) {
                 consumeToken(TokenType::Comma);
                 parseTypeSpecifiersInParameters(parameters);
                 auto parameterNameToken = consumeToken(TokenType::Identifier);
                 parameters->emplace_back(parameterNameToken.value);
+                parameterTypes->emplace_back(std::make_shared<IntType>());
             }
         }
         else if (matchToken(TokenType::longKeyword)) {
             parseTypeSpecifiersInParameters(parameters);
             auto parameterNameToken = consumeToken(TokenType::Identifier);
             parameters->emplace_back(parameterNameToken.value);
+            parameterTypes->emplace_back(std::make_shared<LongType>());
             // Parse additional parameters if they exist.
             while (matchToken(TokenType::Comma)) {
                 consumeToken(TokenType::Comma);
                 parseTypeSpecifiersInParameters(parameters);
                 auto parameterNameToken = consumeToken(TokenType::Identifier);
                 parameters->emplace_back(parameterNameToken.value);
+                parameterTypes->emplace_back(std::make_shared<LongType>());
             }
         }
         expectToken(TokenType::CloseParenthesis);
+
+        // Create a proper `FunctionType` with parameter types and return type.
+        auto functionType =
+            std::make_shared<FunctionType>(parameterTypes, type);
+
         if (matchToken(TokenType::Semicolon)) {
             consumeToken(TokenType::Semicolon);
             if (storageClass) {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
-                    std::move(type),
+                    std::move(functionType),
                     std::make_optional(std::move(storageClass)));
             }
             else {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
-                    std::move(type));
+                    std::move(functionType));
             }
         }
         else {
@@ -176,14 +188,14 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
                     std::make_optional(std::move(functionBody)),
-                    std::move(type),
+                    std::move(functionType),
                     std::make_optional(std::move(storageClass)));
             }
             else {
                 return std::make_shared<FunctionDeclaration>(
                     identifierToken.value, std::move(parameters),
                     std::make_optional(std::move(functionBody)),
-                    std::move(type));
+                    std::move(functionType));
             }
         }
     }

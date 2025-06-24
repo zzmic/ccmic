@@ -35,3 +35,4 @@
 bin/
 playground/
 valgrind-out.txt
+error.txt
