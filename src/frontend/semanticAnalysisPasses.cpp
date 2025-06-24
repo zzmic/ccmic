@@ -1,4 +1,5 @@
 #include "semanticAnalysisPasses.h"
+#include <memory>
 #include <sstream>
 
 namespace AST {
@@ -348,6 +349,13 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
         }
         return std::make_shared<FunctionCallExpression>(resolvedFunctionName,
                                                         resolvedArguments);
+    }
+    else if (auto castExpression =
+                 std::dynamic_pointer_cast<CastExpression>(expression)) {
+        auto resolvedExpression =
+            resolveExpression(castExpression->getExpression(), identifierMap);
+        return std::make_shared<CastExpression>(castExpression->getTargetType(),
+                                                std::move(resolvedExpression));
     }
     else {
         throw std::runtime_error(
