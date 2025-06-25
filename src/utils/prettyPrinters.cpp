@@ -4,9 +4,9 @@
  * Start: Functions to print the IR program onto the stdout.
  */
 void PrettyPrinters::printIRProgram(
-    std::shared_ptr<IR::Program> irProgram,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables) {
+    const std::shared_ptr<IR::Program> &irProgram,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+        &irStaticVariables) {
     auto topLevels = irProgram->getTopLevels();
 
     for (auto topLevel : *topLevels) {
@@ -25,7 +25,7 @@ void PrettyPrinters::printIRProgram(
 }
 
 void PrettyPrinters::printIRFunctionDefinition(
-    std::shared_ptr<IR::FunctionDefinition> functionDefinition) {
+    const std::shared_ptr<IR::FunctionDefinition> &functionDefinition) {
     std::cout << functionDefinition->getFunctionIdentifier();
     std::cout << std::boolalpha;
     std::cout << "[isGlobal: " << functionDefinition->isGlobal() << "]";
@@ -48,7 +48,7 @@ void PrettyPrinters::printIRFunctionDefinition(
 }
 
 void PrettyPrinters::printIRStaticVariable(
-    std::shared_ptr<IR::StaticVariable> staticVariable) {
+    const std::shared_ptr<IR::StaticVariable> &staticVariable) {
     auto staticInit = staticVariable->getStaticInit();
     std::cout << "[static] " << staticVariable->getIdentifier() << " = ";
 
@@ -67,7 +67,7 @@ void PrettyPrinters::printIRStaticVariable(
 }
 
 void PrettyPrinters::printIRInstruction(
-    std::shared_ptr<IR::Instruction> instruction) {
+    const std::shared_ptr<IR::Instruction> &instruction) {
     if (auto returnInstruction =
             std::dynamic_pointer_cast<IR::ReturnInstruction>(instruction)) {
         printIRReturnInstruction(returnInstruction);
@@ -124,7 +124,7 @@ void PrettyPrinters::printIRInstruction(
 }
 
 void PrettyPrinters::printIRReturnInstruction(
-    std::shared_ptr<IR::ReturnInstruction> returnInstruction) {
+    const std::shared_ptr<IR::ReturnInstruction> &returnInstruction) {
     std::cout << "    return ";
 
     if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
@@ -156,7 +156,7 @@ void PrettyPrinters::printIRReturnInstruction(
 }
 
 void PrettyPrinters::printIRSignExtendInstruction(
-    std::shared_ptr<IR::SignExtendInstruction> signExtendInstruction) {
+    const std::shared_ptr<IR::SignExtendInstruction> &signExtendInstruction) {
     std::cout << "    ";
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             signExtendInstruction->getDst())) {
@@ -198,7 +198,7 @@ void PrettyPrinters::printIRSignExtendInstruction(
 }
 
 void PrettyPrinters::printIRTruncateInstruction(
-    std::shared_ptr<IR::TruncateInstruction> truncateInstruction) {
+    const std::shared_ptr<IR::TruncateInstruction> &truncateInstruction) {
     std::cout << "    ";
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             truncateInstruction->getDst())) {
@@ -240,7 +240,7 @@ void PrettyPrinters::printIRTruncateInstruction(
 }
 
 void PrettyPrinters::printIRUnaryInstruction(
-    std::shared_ptr<IR::UnaryInstruction> unaryInstruction) {
+    const std::shared_ptr<IR::UnaryInstruction> &unaryInstruction) {
     std::cout << "    ";
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -301,7 +301,7 @@ void PrettyPrinters::printIRUnaryInstruction(
 }
 
 void PrettyPrinters::printIRBinaryInstruction(
-    std::shared_ptr<IR::BinaryInstruction> binaryInstruction) {
+    const std::shared_ptr<IR::BinaryInstruction> &binaryInstruction) {
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             binaryInstruction->getDst())) {
         std::cout << "    " << variableValue->getIdentifier();
@@ -420,7 +420,7 @@ void PrettyPrinters::printIRBinaryInstruction(
 }
 
 void PrettyPrinters::printIRCopyInstruction(
-    std::shared_ptr<IR::CopyInstruction> copyInstruction) {
+    const std::shared_ptr<IR::CopyInstruction> &copyInstruction) {
     std::cout << "    ";
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             copyInstruction->getDst())) {
@@ -467,12 +467,12 @@ void PrettyPrinters::printIRCopyInstruction(
 }
 
 void PrettyPrinters::printIRJumpInstruction(
-    std::shared_ptr<IR::JumpInstruction> jumpInstruction) {
+    const std::shared_ptr<IR::JumpInstruction> &jumpInstruction) {
     std::cout << "    Jump(" << jumpInstruction->getTarget() << ")\n";
 }
 
 void PrettyPrinters::printIRJumpIfZeroInstruction(
-    std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstruction) {
+    const std::shared_ptr<IR::JumpIfZeroInstruction> &jumpIfZeroInstruction) {
     std::cout << "    JumpIfZero(";
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -500,7 +500,8 @@ void PrettyPrinters::printIRJumpIfZeroInstruction(
 }
 
 void PrettyPrinters::printIRJumpIfNotZeroInstruction(
-    std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction) {
+    const std::shared_ptr<IR::JumpIfNotZeroInstruction>
+        &jumpIfNotZeroInstruction) {
     std::cout << "    JumpIfNotZero(";
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -532,12 +533,13 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
 }
 
 void PrettyPrinters::printIRLabelInstruction(
-    std::shared_ptr<IR::LabelInstruction> labelInstruction) {
+    const std::shared_ptr<IR::LabelInstruction> &labelInstruction) {
     std::cout << "    Label(" << labelInstruction->getLabel() << ")\n";
 }
 
 void PrettyPrinters::printIRFunctionCallInstruction(
-    std::shared_ptr<IR::FunctionCallInstruction> functionCallInstruction) {
+    const std::shared_ptr<IR::FunctionCallInstruction>
+        &functionCallInstruction) {
     auto dst = functionCallInstruction->getDst();
 
     if (auto variableValue =
@@ -592,9 +594,10 @@ void PrettyPrinters::printIRFunctionCallInstruction(
  */
 // Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(
-    std::shared_ptr<Assembly::Program> assemblyProgram) {
-    auto assyTopLevels = assemblyProgram->getTopLevels();
-    for (auto topLevel : *assyTopLevels) {
+    const std::shared_ptr<Assembly::Program> &assemblyProgram) {
+    auto topLevels = assemblyProgram->getTopLevels();
+
+    for (auto topLevel : *topLevels) {
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
                     topLevel)) {
@@ -616,7 +619,7 @@ void PrettyPrinters::printAssemblyProgram(
 }
 
 void PrettyPrinters::printAssyFunctionDefinition(
-    std::shared_ptr<Assembly::FunctionDefinition> functionDefinition) {
+    const std::shared_ptr<Assembly::FunctionDefinition> &functionDefinition) {
     std::string functionName = functionDefinition->getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
     auto global = functionDefinition->isGlobal();
@@ -638,7 +641,7 @@ void PrettyPrinters::printAssyFunctionDefinition(
 }
 
 void PrettyPrinters::printAssyStaticVariable(
-    std::shared_ptr<Assembly::StaticVariable> staticVariable) {
+    const std::shared_ptr<Assembly::StaticVariable> &staticVariable) {
     auto alignDirective = ".align 4";
 // If the underlying OS is macOS, use the `.balign 4` directive instead of the
 // `.align 4` directive.
@@ -672,7 +675,7 @@ void PrettyPrinters::printAssyStaticVariable(
 }
 
 void PrettyPrinters::printAssyInstruction(
-    std::shared_ptr<Assembly::Instruction> instruction) {
+    const std::shared_ptr<Assembly::Instruction> &instruction) {
     if (auto movInstruction =
             std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
         printAssyMovInstruction(movInstruction);
@@ -749,7 +752,7 @@ void PrettyPrinters::printAssyInstruction(
 }
 
 void PrettyPrinters::printAssyMovInstruction(
-    std::shared_ptr<Assembly::MovInstruction> movInstruction) {
+    const std::shared_ptr<Assembly::MovInstruction> &movInstruction) {
     auto src = movInstruction->getSrc();
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
@@ -798,23 +801,23 @@ void PrettyPrinters::printAssyRetInstruction() {
 }
 
 void PrettyPrinters::printAssyAllocateStackInstruction(
-    std::shared_ptr<Assembly::AllocateStackInstruction>
-        allocateStackInstruction) {
+    const std::shared_ptr<Assembly::AllocateStackInstruction>
+        &allocateStackInstruction) {
     std::cout << "    subq $"
               << allocateStackInstruction->getAddressGivenOffsetFromRBP()
               << ", %rsp\n";
 }
 
 void PrettyPrinters::printAssyDeallocateStackInstruction(
-    std::shared_ptr<Assembly::DeallocateStackInstruction>
-        deallocateStackInstruction) {
+    const std::shared_ptr<Assembly::DeallocateStackInstruction>
+        &deallocateStackInstruction) {
     std::cout << "    addq $"
               << deallocateStackInstruction->getAddressGivenOffsetFromRBP()
               << ", %rsp\n";
 }
 
 void PrettyPrinters::printAssyPushInstruction(
-    std::shared_ptr<Assembly::PushInstruction> pushInstruction) {
+    const std::shared_ptr<Assembly::PushInstruction> &pushInstruction) {
     auto operand = pushInstruction->getOperand();
     if (auto stackOperand =
             std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -841,7 +844,7 @@ void PrettyPrinters::printAssyPushInstruction(
 }
 
 void PrettyPrinters::printAssyCallInstruction(
-    std::shared_ptr<Assembly::CallInstruction> callInstruction) {
+    const std::shared_ptr<Assembly::CallInstruction> &callInstruction) {
     std::string functionName = callInstruction->getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
     std::cout << "    call " << functionName;
@@ -854,7 +857,7 @@ void PrettyPrinters::printAssyCallInstruction(
 }
 
 void PrettyPrinters::printAssyUnaryInstruction(
-    std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction) {
+    const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction) {
     auto unaryOperator = unaryInstruction->getUnaryOperator();
     if (auto negateOperator =
             std::dynamic_pointer_cast<Assembly::NegateOperator>(
@@ -891,7 +894,7 @@ void PrettyPrinters::printAssyUnaryInstruction(
 }
 
 void PrettyPrinters::printAssyBinaryInstruction(
-    std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction) {
+    const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction) {
     auto binaryOperator = binaryInstruction->getBinaryOperator();
     if (auto addOperator =
             std::dynamic_pointer_cast<Assembly::AddOperator>(binaryOperator)) {
@@ -949,7 +952,7 @@ void PrettyPrinters::printAssyBinaryInstruction(
 }
 
 void PrettyPrinters::printAssyCmpInstruction(
-    std::shared_ptr<Assembly::CmpInstruction> cmpInstruction) {
+    const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction) {
     std::cout << "    cmpl";
 
     auto operand1 = cmpInstruction->getOperand1();
@@ -995,7 +998,7 @@ void PrettyPrinters::printAssyCmpInstruction(
 }
 
 void PrettyPrinters::printAssyIdivInstruction(
-    std::shared_ptr<Assembly::IdivInstruction> idivInstruction) {
+    const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction) {
     std::cout << "    idivl";
 
     auto operand = idivInstruction->getOperand();
@@ -1019,13 +1022,13 @@ void PrettyPrinters::printAssyIdivInstruction(
 void PrettyPrinters::printAssyCdqInstruction() { std::cout << "    cdq\n"; }
 
 void PrettyPrinters::printAssyJmpInstruction(
-    std::shared_ptr<Assembly::JmpInstruction> jmpInstruction) {
+    const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction) {
     auto label = jmpInstruction->getLabel();
     std::cout << "    jmp .L" << label << "\n";
 }
 
 void PrettyPrinters::printAssyJmpCCInstruction(
-    std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction) {
+    const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction) {
     auto condCode = jmpCCInstruction->getCondCode();
     if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
         std::cout << "    je";
@@ -1051,7 +1054,7 @@ void PrettyPrinters::printAssyJmpCCInstruction(
 }
 
 void PrettyPrinters::printAssySetCCInstruction(
-    std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction) {
+    const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction) {
     auto condCode = setCCInstruction->getCondCode();
     if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
         std::cout << "    sete";
@@ -1091,7 +1094,7 @@ void PrettyPrinters::printAssySetCCInstruction(
 }
 
 void PrettyPrinters::printAssyLabelInstruction(
-    std::shared_ptr<Assembly::LabelInstruction> labelInstruction) {
+    const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction) {
     auto label = labelInstruction->getLabel();
     std::cout << ".L" << label << ":\n";
 }
@@ -1101,7 +1104,7 @@ void PrettyPrinters::prependUnderscoreToIdentifierIfMacOS(
 // If the underlying OS is macOS, prepend an underscore to the function name.
 // Otherwise, leave the function name as is.
 #ifdef __APPLE__
-    identifier = "_" + identifier;
+    identifier = "_" + std::move(identifier);
 #endif
 }
 /*

@@ -18,10 +18,11 @@
 #include <iostream>
 #include <sstream>
 #include <string.h>
+#include <string_view>
 
 class PipelineStagesExecutors {
   public:
-    static std::vector<Token> lexerExecutor(const std::string &sourceFile);
+    static std::vector<Token> lexerExecutor(std::string_view sourceFile);
     static std::shared_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
     static std::pair<
@@ -29,87 +30,88 @@ class PipelineStagesExecutors {
         std::unordered_map<
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>>
-    semanticAnalysisExecutor(std::shared_ptr<AST::Program> astProgram);
+    semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram);
     static std::pair<
         std::shared_ptr<IR::Program>,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
     irGeneratorExecutor(
-        std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
-        std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<AST::Type>,
-                                     std::shared_ptr<AST::IdentifierAttribute>>>
-            symbols);
-    static void irOptimizationExecutor(std::shared_ptr<IR::Program> irProgram,
-                                       bool foldConstantsPass,
-                                       bool propagateCopiesPass,
-                                       bool eliminateUnreachableCodePass,
-                                       bool eliminateDeadStoresPass);
-    static std::shared_ptr<Assembly::Program> codegenExecutor(
-        std::shared_ptr<IR::Program> irProgram,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables,
-        std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<AST::Type>,
-                                     std::shared_ptr<AST::IdentifierAttribute>>>
-            symbols);
+        const std::shared_ptr<AST::Program> &astProgram,
+        int variableResolutionCounter,
+        const std::unordered_map<
+            std::string, std::pair<std::shared_ptr<AST::Type>,
+                                   std::shared_ptr<AST::IdentifierAttribute>>>
+            &symbols);
     static void
-    codeEmissionExecutor(std::shared_ptr<Assembly::Program> assemblyProgram,
-                         const std::string &assemblyFile);
+    irOptimizationExecutor(const std::shared_ptr<IR::Program> &irProgram,
+                           bool foldConstantsPass, bool propagateCopiesPass,
+                           bool eliminateUnreachableCodePass,
+                           bool eliminateDeadStoresPass);
+    static std::shared_ptr<Assembly::Program> codegenExecutor(
+        const std::shared_ptr<IR::Program> &irProgram,
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+            &irStaticVariables,
+        const std::unordered_map<
+            std::string, std::pair<std::shared_ptr<AST::Type>,
+                                   std::shared_ptr<AST::IdentifierAttribute>>>
+            &symbols);
+    static void codeEmissionExecutor(
+        const std::shared_ptr<Assembly::Program> &assemblyProgram,
+        std::string_view assemblyFile);
 
   private:
     // Auxiliary functions for emitting the assembly code (to the assembly
     // file).
     static void emitAssyFunctionDefinition(
-        std::shared_ptr<Assembly::FunctionDefinition> functionDefinition,
+        const std::shared_ptr<Assembly::FunctionDefinition> &functionDefinition,
         std::ofstream &assemblyFileStream);
     static void emitAssyStaticVariable(
-        std::shared_ptr<Assembly::StaticVariable> staticVariable,
+        const std::shared_ptr<Assembly::StaticVariable> &staticVariable,
         std::ofstream &assemblyFileStream);
-    static void
-    emitAssyInstruction(std::shared_ptr<Assembly::Instruction> instruction,
-                        std::ofstream &assemblyFileStream);
+    static void emitAssyInstruction(
+        const std::shared_ptr<Assembly::Instruction> &instruction,
+        std::ofstream &assemblyFileStream);
     static void emitAssyMovInstruction(
-        std::shared_ptr<Assembly::MovInstruction> movInstruction,
+        const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyRetInstruction(std::ofstream &assemblyFileStream);
     static void emitAssyAllocateStackInstruction(
-        std::shared_ptr<Assembly::AllocateStackInstruction>
-            allocateStackInstruction,
+        const std::shared_ptr<Assembly::AllocateStackInstruction>
+            &allocateStackInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyDeallocateStackInstruction(
-        std::shared_ptr<Assembly::DeallocateStackInstruction>
-            deallocateStackInstruction,
+        const std::shared_ptr<Assembly::DeallocateStackInstruction>
+            &deallocateStackInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyPushInstruction(
-        std::shared_ptr<Assembly::PushInstruction> pushInstruction,
+        const std::shared_ptr<Assembly::PushInstruction> &pushInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyCallInstruction(
-        std::shared_ptr<Assembly::CallInstruction> callInstruction,
+        const std::shared_ptr<Assembly::CallInstruction> &callInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyUnaryInstruction(
-        std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction,
+        const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyBinaryInstruction(
-        std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction,
+        const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyCmpInstruction(
-        std::shared_ptr<Assembly::CmpInstruction> cmpInstruction,
+        const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyIdivInstruction(
-        std::shared_ptr<Assembly::IdivInstruction> idivInstruction,
+        const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyCdqInstruction(std::ofstream &assemblyFileStream);
     static void emitAssyJmpInstruction(
-        std::shared_ptr<Assembly::JmpInstruction> jmpInstruction,
+        const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyJmpCCInstruction(
-        std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction,
+        const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssySetCCInstruction(
-        std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction,
+        const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyLabelInstruction(
-        std::shared_ptr<Assembly::LabelInstruction> labelInstruction,
+        const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction,
         std::ofstream &assemblyFileStream);
     static void prependUnderscoreToIdentifierIfMacOS(
         [[maybe_unused]] std::string &identifier);

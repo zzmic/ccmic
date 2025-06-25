@@ -1,9 +1,9 @@
 #include "pipelineStagesExecutors.h"
 
 std::vector<Token>
-PipelineStagesExecutors::lexerExecutor(const std::string &sourceFile) {
+PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
     // Instantiate an input file stream to read the source file.
-    std::ifstream sourceFileInputStream(sourceFile);
+    std::ifstream sourceFileInputStream(std::string{sourceFile});
     if (sourceFileInputStream.fail()) {
         std::stringstream msg;
         msg << "Unable to open source file: " << sourceFile;
@@ -16,13 +16,14 @@ PipelineStagesExecutors::lexerExecutor(const std::string &sourceFile) {
     // The second iterator is the (default-constructed) end-of-stream iterator.
     // The string range-constructor reads characters from the input stream until
     // the end-of-stream iterator is reached.
-    std::string input((std::istreambuf_iterator<char>(sourceFileInputStream)),
-                      std::istreambuf_iterator<char>());
+    auto input =
+        std::string((std::istreambuf_iterator<char>(sourceFileInputStream)),
+                    std::istreambuf_iterator<char>());
     sourceFileInputStream.close();
 
     std::vector<Token> tokens;
     try {
-        tokens = lexer(input);
+        tokens = lexer(std::move(input));
         printTokens(tokens);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
@@ -59,11 +60,11 @@ std::pair<
              std::string, std::pair<std::shared_ptr<AST::Type>,
                                     std::shared_ptr<AST::IdentifierAttribute>>>>
 PipelineStagesExecutors::semanticAnalysisExecutor(
-    std::shared_ptr<AST::Program> astProgram) {
+    const std::shared_ptr<AST::Program> &astProgram) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
     AST::TypeCheckingPass typeCheckingPass;
     AST::LoopLabelingPass loopLabelingPass;
-    int variableResolutionCounter = 0;
+    auto variableResolutionCounter = 0;
     std::unordered_map<std::string,
                        std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
@@ -114,11 +115,12 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
 std::pair<std::shared_ptr<IR::Program>,
           std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
-    std::shared_ptr<AST::Program> astProgram, int variableResolutionCounter,
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols) {
+    const std::shared_ptr<AST::Program> &astProgram,
+    int variableResolutionCounter,
+    const std::unordered_map<
+        std::string, std::pair<std::shared_ptr<AST::Type>,
+                               std::shared_ptr<AST::IdentifierAttribute>>>
+        &symbols) {
     std::cout << "\n";
 
     std::pair<std::shared_ptr<IR::Program>,
@@ -137,7 +139,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
 
 // Function to perform optimization passes on the IR program.
 void PipelineStagesExecutors::irOptimizationExecutor(
-    std::shared_ptr<IR::Program> irProgram, bool foldConstantsPass,
+    const std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
     bool propagateCopiesPass, bool eliminateUnreachableCodePass,
     bool eliminateDeadStoresPass) {
     auto topLevels = irProgram->getTopLevels();
@@ -156,13 +158,13 @@ void PipelineStagesExecutors::irOptimizationExecutor(
 // Function to generate (but not yet emit) the assembly program from the AST
 // program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
-    std::shared_ptr<IR::Program> irProgram,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables,
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols) {
+    const std::shared_ptr<IR::Program> &irProgram,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+        &irStaticVariables,
+    const std::unordered_map<
+        std::string, std::pair<std::shared_ptr<AST::Type>,
+                               std::shared_ptr<AST::IdentifierAttribute>>>
+        &symbols) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Instantiate an assembly generator object and generate the assembly.
@@ -196,12 +198,12 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
 
 // Function to emit the generated assembly code to the assembly file.
 void PipelineStagesExecutors::codeEmissionExecutor(
-    std::shared_ptr<Assembly::Program> assemblyProgram,
-    const std::string &assemblyFile) {
-    std::ofstream assemblyFileStream(assemblyFile);
+    const std::shared_ptr<Assembly::Program> &assemblyProgram,
+    std::string_view assemblyFile) {
+    std::ofstream assemblyFileStream(std::string{assemblyFile});
     if (!assemblyFileStream.is_open()) {
         std::stringstream msg;
-        msg << "Error: Unable to open output file " << assemblyFile << "\n";
+        msg << "Error: Unable to open output file " << assemblyFile;
         throw std::runtime_error(msg.str());
     }
 
@@ -230,9 +232,9 @@ void PipelineStagesExecutors::codeEmissionExecutor(
 }
 
 void PipelineStagesExecutors::emitAssyFunctionDefinition(
-    std::shared_ptr<Assembly::FunctionDefinition> functionDefinition,
+    const std::shared_ptr<Assembly::FunctionDefinition> &functionDefinition,
     std::ofstream &assemblyFileStream) {
-    std::string functionName = functionDefinition->getFunctionIdentifier();
+    auto functionName = functionDefinition->getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
     auto global = functionDefinition->isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
@@ -253,7 +255,7 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
 }
 
 void PipelineStagesExecutors::emitAssyStaticVariable(
-    std::shared_ptr<Assembly::StaticVariable> staticVariable,
+    const std::shared_ptr<Assembly::StaticVariable> &staticVariable,
     std::ofstream &assemblyFileStream) {
     auto alignDirective = ".align 4";
 // If the underlying OS is macOS, use the `.balign 4` directive instead of the
@@ -288,7 +290,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
 }
 
 void PipelineStagesExecutors::emitAssyInstruction(
-    std::shared_ptr<Assembly::Instruction> instruction,
+    const std::shared_ptr<Assembly::Instruction> &instruction,
     std::ofstream &assemblyFileStream) {
     if (auto movInstruction =
             std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
@@ -368,7 +370,7 @@ void PipelineStagesExecutors::emitAssyInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyMovInstruction(
-    std::shared_ptr<Assembly::MovInstruction> movInstruction,
+    const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
     std::ofstream &assemblyFileStream) {
     auto src = movInstruction->getSrc();
     if (auto srcReg =
@@ -420,8 +422,8 @@ void PipelineStagesExecutors::emitAssyRetInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyAllocateStackInstruction(
-    std::shared_ptr<Assembly::AllocateStackInstruction>
-        allocateStackInstruction,
+    const std::shared_ptr<Assembly::AllocateStackInstruction>
+        &allocateStackInstruction,
     std::ofstream &assemblyFileStream) {
     assemblyFileStream
         << "    subq $"
@@ -430,8 +432,8 @@ void PipelineStagesExecutors::emitAssyAllocateStackInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyDeallocateStackInstruction(
-    std::shared_ptr<Assembly::DeallocateStackInstruction>
-        deallocateStackInstruction,
+    const std::shared_ptr<Assembly::DeallocateStackInstruction>
+        &deallocateStackInstruction,
     std::ofstream &assemblyFileStream) {
     assemblyFileStream
         << "    addq $"
@@ -440,39 +442,38 @@ void PipelineStagesExecutors::emitAssyDeallocateStackInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyPushInstruction(
-    std::shared_ptr<Assembly::PushInstruction> pushInstruction,
+    const std::shared_ptr<Assembly::PushInstruction> &pushInstruction,
     std::ofstream &assemblyFileStream) {
     auto operand = pushInstruction->getOperand();
     if (auto stackOperand =
             std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
-        assemblyFileStream << "    pushq" << " " << stackOperand->getOffset()
-                           << "(" << stackOperand->getReservedRegisterInStr()
-                           << ")\n";
+        assemblyFileStream << "    pushq " << stackOperand->getOffset() << "("
+                           << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto regOperand =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand)) {
-        assemblyFileStream << "    pushq" << " "
+        assemblyFileStream << "    pushq "
                            << regOperand->getRegisterInBytesInStr(8) << "\n";
     }
     else if (auto immOperand =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                      operand)) {
-        assemblyFileStream << "    pushq" << " $" << immOperand->getImmediate()
+        assemblyFileStream << "    pushq $" << immOperand->getImmediate()
                            << "\n";
     }
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
-        assemblyFileStream << "    pushq" << " " << identifier << "(%rip)\n";
+        assemblyFileStream << "    pushq " << identifier << "(%rip)\n";
     }
 }
 
 void PipelineStagesExecutors::emitAssyCallInstruction(
-    std::shared_ptr<Assembly::CallInstruction> callInstruction,
+    const std::shared_ptr<Assembly::CallInstruction> &callInstruction,
     std::ofstream &assemblyFileStream) {
-    std::string functionName = callInstruction->getFunctionIdentifier();
+    auto functionName = callInstruction->getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
     assemblyFileStream << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
@@ -484,7 +485,7 @@ void PipelineStagesExecutors::emitAssyCallInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyUnaryInstruction(
-    std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction,
+    const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction,
     std::ofstream &assemblyFileStream) {
     auto unaryOperator = unaryInstruction->getUnaryOperator();
     if (auto negateOperator =
@@ -523,7 +524,7 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyBinaryInstruction(
-    std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction,
+    const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction,
     std::ofstream &assemblyFileStream) {
     auto binaryOperator = binaryInstruction->getBinaryOperator();
     if (auto addOperator =
@@ -585,7 +586,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyCmpInstruction(
-    std::shared_ptr<Assembly::CmpInstruction> cmpInstruction,
+    const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction,
     std::ofstream &assemblyFileStream) {
     assemblyFileStream << "    cmpl";
 
@@ -634,7 +635,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyIdivInstruction(
-    std::shared_ptr<Assembly::IdivInstruction> idivInstruction,
+    const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction,
     std::ofstream &assemblyFileStream) {
     assemblyFileStream << "    idivl";
 
@@ -663,14 +664,14 @@ void PipelineStagesExecutors::emitAssyCdqInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyJmpInstruction(
-    std::shared_ptr<Assembly::JmpInstruction> jmpInstruction,
+    const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction,
     std::ofstream &assemblyFileStream) {
     auto label = jmpInstruction->getLabel();
     assemblyFileStream << "    jmp .L" << label << "\n";
 }
 
 void PipelineStagesExecutors::emitAssyJmpCCInstruction(
-    std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction,
+    const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction,
     std::ofstream &assemblyFileStream) {
     auto condCode = jmpCCInstruction->getCondCode();
     if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
@@ -697,7 +698,7 @@ void PipelineStagesExecutors::emitAssyJmpCCInstruction(
 }
 
 void PipelineStagesExecutors::emitAssySetCCInstruction(
-    std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction,
+    const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction,
     std::ofstream &assemblyFileStream) {
     auto condCode = setCCInstruction->getCondCode();
     if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
@@ -739,7 +740,7 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyLabelInstruction(
-    std::shared_ptr<Assembly::LabelInstruction> labelInstruction,
+    const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction,
     std::ofstream &assemblyFileStream) {
     auto label = labelInstruction->getLabel();
     assemblyFileStream << ".L" << label << ":\n";
@@ -750,6 +751,6 @@ void PipelineStagesExecutors::prependUnderscoreToIdentifierIfMacOS(
 // If the underlying OS is macOS, prepend an underscore to the function name.
 // Otherwise, leave the function name as is.
 #ifdef __APPLE__
-    identifier = "_" + identifier;
+    identifier = "_" + std::move(identifier);
 #endif
 }

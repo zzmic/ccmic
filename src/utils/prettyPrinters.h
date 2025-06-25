@@ -8,80 +8,85 @@
 class PrettyPrinters {
   public:
     static void printIRProgram(
-        std::shared_ptr<IR::Program> irProgram,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables);
-    static void
-    printAssemblyProgram(std::shared_ptr<Assembly::Program> assemblyProgram);
+        const std::shared_ptr<IR::Program> &irProgram,
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+            &irStaticVariables);
+    static void printAssemblyProgram(
+        const std::shared_ptr<Assembly::Program> &assemblyProgram);
 
   private:
     /* Auxiliary functions for printing the IR program. */
     static void printIRFunctionDefinition(
-        std::shared_ptr<IR::FunctionDefinition> functionDefinition);
+        const std::shared_ptr<IR::FunctionDefinition> &functionDefinition);
+    static void printIRStaticVariable(
+        const std::shared_ptr<IR::StaticVariable> &staticVariable);
     static void
-    printIRStaticVariable(std::shared_ptr<IR::StaticVariable> staticVariable);
-    static void
-    printIRInstruction(std::shared_ptr<IR::Instruction> instruction);
+    printIRInstruction(const std::shared_ptr<IR::Instruction> &instruction);
     static void printIRReturnInstruction(
-        std::shared_ptr<IR::ReturnInstruction> returnInstruction);
+        const std::shared_ptr<IR::ReturnInstruction> &returnInstruction);
     static void printIRSignExtendInstruction(
-        std::shared_ptr<IR::SignExtendInstruction> signExtendInstruction);
+        const std::shared_ptr<IR::SignExtendInstruction>
+            &signExtendInstruction);
     static void printIRTruncateInstruction(
-        std::shared_ptr<IR::TruncateInstruction> truncateInstruction);
+        const std::shared_ptr<IR::TruncateInstruction> &truncateInstruction);
     static void printIRUnaryInstruction(
-        std::shared_ptr<IR::UnaryInstruction> unaryInstruction);
+        const std::shared_ptr<IR::UnaryInstruction> &unaryInstruction);
     static void printIRBinaryInstruction(
-        std::shared_ptr<IR::BinaryInstruction> binaryInstruction);
+        const std::shared_ptr<IR::BinaryInstruction> &binaryInstruction);
     static void printIRCopyInstruction(
-        std::shared_ptr<IR::CopyInstruction> copyInstruction);
+        const std::shared_ptr<IR::CopyInstruction> &copyInstruction);
     static void printIRJumpInstruction(
-        std::shared_ptr<IR::JumpInstruction> jumpInstruction);
+        const std::shared_ptr<IR::JumpInstruction> &jumpInstruction);
     static void printIRJumpIfZeroInstruction(
-        std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstruction);
+        const std::shared_ptr<IR::JumpIfZeroInstruction>
+            &jumpIfZeroInstruction);
     static void printIRJumpIfNotZeroInstruction(
-        std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstruction);
+        const std::shared_ptr<IR::JumpIfNotZeroInstruction>
+            &jumpIfNotZeroInstruction);
     static void printIRLabelInstruction(
-        std::shared_ptr<IR::LabelInstruction> labelInstruction);
+        const std::shared_ptr<IR::LabelInstruction> &labelInstruction);
     static void printIRFunctionCallInstruction(
-        std::shared_ptr<IR::FunctionCallInstruction> functionCallInstruction);
+        const std::shared_ptr<IR::FunctionCallInstruction>
+            &functionCallInstruction);
 
     /* Auxiliary functions for printing the assembly program. */
     static void printAssyFunctionDefinition(
-        std::shared_ptr<Assembly::FunctionDefinition> functionDefinition);
+        const std::shared_ptr<Assembly::FunctionDefinition>
+            &functionDefinition);
     static void printAssyStaticVariable(
-        std::shared_ptr<Assembly::StaticVariable> staticVariable);
-    static void
-    printAssyInstruction(std::shared_ptr<Assembly::Instruction> instruction);
+        const std::shared_ptr<Assembly::StaticVariable> &staticVariable);
+    static void printAssyInstruction(
+        const std::shared_ptr<Assembly::Instruction> &instruction);
     static void printAssyMovInstruction(
-        std::shared_ptr<Assembly::MovInstruction> movInstruction);
+        const std::shared_ptr<Assembly::MovInstruction> &movInstruction);
     static void printAssyRetInstruction();
     static void printAssyAllocateStackInstruction(
-        std::shared_ptr<Assembly::AllocateStackInstruction>
-            allocateStackInstruction);
+        const std::shared_ptr<Assembly::AllocateStackInstruction>
+            &allocateStackInstruction);
     static void printAssyDeallocateStackInstruction(
-        std::shared_ptr<Assembly::DeallocateStackInstruction>
-            deallocateStackInstruction);
+        const std::shared_ptr<Assembly::DeallocateStackInstruction>
+            &deallocateStackInstruction);
     static void printAssyPushInstruction(
-        std::shared_ptr<Assembly::PushInstruction> pushInstruction);
+        const std::shared_ptr<Assembly::PushInstruction> &pushInstruction);
     static void printAssyCallInstruction(
-        std::shared_ptr<Assembly::CallInstruction> callInstruction);
+        const std::shared_ptr<Assembly::CallInstruction> &callInstruction);
     static void printAssyUnaryInstruction(
-        std::shared_ptr<Assembly::UnaryInstruction> unaryInstruction);
+        const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction);
     static void printAssyBinaryInstruction(
-        std::shared_ptr<Assembly::BinaryInstruction> binaryInstruction);
+        const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction);
     static void printAssyCmpInstruction(
-        std::shared_ptr<Assembly::CmpInstruction> cmpInstruction);
+        const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction);
     static void printAssyIdivInstruction(
-        std::shared_ptr<Assembly::IdivInstruction> idivInstruction);
+        const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction);
     static void printAssyCdqInstruction();
     static void printAssyJmpInstruction(
-        std::shared_ptr<Assembly::JmpInstruction> jmpInstruction);
+        const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction);
     static void printAssyJmpCCInstruction(
-        std::shared_ptr<Assembly::JmpCCInstruction> jmpCCInstruction);
+        const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction);
     static void printAssySetCCInstruction(
-        std::shared_ptr<Assembly::SetCCInstruction> setCCInstruction);
+        const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction);
     static void printAssyLabelInstruction(
-        std::shared_ptr<Assembly::LabelInstruction> labelInstruction);
+        const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction);
     static void prependUnderscoreToIdentifierIfMacOS(
         [[maybe_unused]] std::string &identifier);
 };
