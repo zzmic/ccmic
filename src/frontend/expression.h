@@ -13,6 +13,7 @@
 namespace AST {
 class Expression : public AST {
   public:
+    constexpr Expression() = default;
     virtual std::shared_ptr<Type> getExpType() const = 0;
     virtual void setExpType(std::shared_ptr<Type> expType) = 0;
 };

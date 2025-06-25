@@ -9,10 +9,7 @@
 #include <optional>
 
 namespace AST {
-class Declaration : public AST {
-  public:
-    virtual ~Declaration() = default;
-};
+class Declaration : public AST {};
 
 class VariableDeclaration : public Declaration {
   public:

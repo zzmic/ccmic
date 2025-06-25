@@ -9,7 +9,7 @@
 namespace AST {
 class Type : public AST {
   public:
-    virtual ~Type() = default;
+    constexpr Type() = default;
     // Virtual function to check if two types are equal.
     virtual bool isEqual(const Type &other) const {
         return typeid(*this) == typeid(other);
@@ -26,6 +26,7 @@ class Type : public AST {
 
 class IntType : public Type {
   public:
+    constexpr IntType() = default;
     void accept(Visitor &visitor) override { visitor.visit(*this); }
     // Override the `isEqual` function to check if the other type is an
     // `IntType`.
@@ -36,6 +37,7 @@ class IntType : public Type {
 
 class LongType : public Type {
   public:
+    constexpr LongType() = default;
     void accept(Visitor &visitor) override { visitor.visit(*this); }
     // Override the `isEqual` function to check if the other type is a
     // `LongType`.

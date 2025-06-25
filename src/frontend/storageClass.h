@@ -4,15 +4,20 @@
 #include "ast.h"
 
 namespace AST {
-class StorageClass : public AST {};
+class StorageClass : public AST {
+  public:
+    constexpr StorageClass() = default;
+};
 
 class StaticStorageClass : public StorageClass {
   public:
+    constexpr StaticStorageClass() = default;
     void accept(Visitor &visitor) override;
 };
 
 class ExternStorageClass : public StorageClass {
   public:
+    constexpr ExternStorageClass() = default;
     void accept(Visitor &visitor) override;
 };
 } // Namespace AST

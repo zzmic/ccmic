@@ -2,14 +2,19 @@
 #define FRONTEND_STATEMENT_H
 
 #include "ast.h"
-#include "block.h"
 #include "expression.h"
 #include "forInit.h"
 #include <memory>
 #include <optional>
 
 namespace AST {
-class Statement : public AST {};
+// Forward declaration.
+class Block;
+
+class Statement : public AST {
+  public:
+    constexpr Statement() = default;
+};
 
 class ReturnStatement : public Statement {
   public:
@@ -62,7 +67,7 @@ class CompoundStatement : public Statement {
 
 class BreakStatement : public Statement {
   public:
-    BreakStatement();
+    BreakStatement() : label("") {}
     void accept(Visitor &visitor) override;
     std::string getLabel() const;
     void setLabel(const std::string &label);
@@ -73,7 +78,7 @@ class BreakStatement : public Statement {
 
 class ContinueStatement : public Statement {
   public:
-    ContinueStatement();
+    ContinueStatement() : label("") {}
     void accept(Visitor &visitor) override;
     std::string getLabel() const;
     void setLabel(const std::string &label);
@@ -138,7 +143,7 @@ class ForStatement : public Statement {
 
 class NullStatement : public Statement {
   public:
-    NullStatement() = default;
+    constexpr NullStatement() = default;
     void accept(Visitor &visitor) override;
 };
 } // Namespace AST

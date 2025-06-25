@@ -22,8 +22,8 @@ class MapEntry {
         : newName(newName), fromCurrentScope(fromCurrentScope),
           hasLinkage(hasLinkage) {}
     std::string getNewName() { return newName; }
-    bool fromCurrentScopeOrNot() { return fromCurrentScope; }
-    bool hasLinkageOrNot() { return hasLinkage; }
+    constexpr bool fromCurrentScopeOrNot() { return fromCurrentScope; }
+    constexpr bool hasLinkageOrNot() { return hasLinkage; }
 
   private:
     std::string newName;
@@ -74,7 +74,7 @@ class StaticInit {
 
 class IntInit : public StaticInit {
   public:
-    IntInit(int value) : value(value) {}
+    constexpr IntInit(int value) : value(value) {}
     std::variant<int, long> getValue() override { return value; }
 
   private:
@@ -83,7 +83,7 @@ class IntInit : public StaticInit {
 
 class LongInit : public StaticInit {
   public:
-    LongInit(long value) : value(value) {}
+    constexpr LongInit(long value) : value(value) {}
     std::variant<int, long> getValue() override { return value; }
 
   private:
@@ -117,10 +117,10 @@ class IdentifierAttribute {
 
 class FunctionAttribute : public IdentifierAttribute {
   public:
-    FunctionAttribute(bool defined, bool global)
+    constexpr FunctionAttribute(bool defined, bool global)
         : defined(defined), global(global) {}
-    bool isDefined() { return defined; }
-    bool isGlobal() { return global; }
+    constexpr bool isDefined() { return defined; }
+    constexpr bool isGlobal() { return global; }
 
   private:
     bool defined;
@@ -132,7 +132,7 @@ class StaticAttribute : public IdentifierAttribute {
     StaticAttribute(std::shared_ptr<InitialValue> initialValue, bool global)
         : initialValue(initialValue), global(global) {}
     std::shared_ptr<InitialValue> getInitialValue() { return initialValue; }
-    bool isGlobal() { return global; }
+    constexpr bool isGlobal() { return global; }
 
   private:
     std::shared_ptr<InitialValue> initialValue;

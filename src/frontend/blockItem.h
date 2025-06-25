@@ -6,7 +6,10 @@
 #include "statement.h"
 
 namespace AST {
-class BlockItem : public AST {};
+class BlockItem : public AST {
+  public:
+    constexpr BlockItem() = default;
+};
 
 class SBlockItem : public BlockItem {
   public:

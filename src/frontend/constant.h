@@ -8,9 +8,9 @@ class Constant : public AST {};
 
 class ConstantInt : public Constant {
   public:
-    ConstantInt(int value);
+    constexpr ConstantInt(int value) : value(value) {}
     void accept(Visitor &visitor) override;
-    int getValue() const;
+    constexpr int getValue() const { return value; }
 
   private:
     int value;
@@ -18,9 +18,9 @@ class ConstantInt : public Constant {
 
 class ConstantLong : public Constant {
   public:
-    ConstantLong(long value);
+    constexpr ConstantLong(long value) : value(value) {}
     void accept(Visitor &visitor) override;
-    long getValue() const;
+    constexpr long getValue() const { return value; }
 
   private:
     long value;

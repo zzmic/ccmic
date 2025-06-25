@@ -1,4 +1,5 @@
 #include "statement.h"
+#include "block.h"
 #include "visitor.h"
 
 namespace AST {
@@ -57,15 +58,11 @@ void CompoundStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::shared_ptr<Block> CompoundStatement::getBlock() const { return block; }
 
-BreakStatement::BreakStatement() : label("") {}
-
 void BreakStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::string BreakStatement::getLabel() const { return label; }
 
 void BreakStatement::setLabel(const std::string &label) { this->label = label; }
-
-ContinueStatement::ContinueStatement() : label("") {}
 
 void ContinueStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 

@@ -6,7 +6,10 @@
 #include "expression.h"
 
 namespace AST {
-class ForInit : public AST {};
+class ForInit : public AST {
+  public:
+    constexpr ForInit() = default;
+};
 
 class InitDecl : public ForInit {
   public:
@@ -20,7 +23,7 @@ class InitDecl : public ForInit {
 
 class InitExpr : public ForInit {
   public:
-    InitExpr() = default;
+    constexpr InitExpr() = default;
     InitExpr(std::optional<std::shared_ptr<Expression>> expr);
     void accept(Visitor &visitor) override;
     std::optional<std::shared_ptr<Expression>> getExpression() const;
