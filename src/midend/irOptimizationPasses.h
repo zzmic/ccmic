@@ -15,10 +15,10 @@ namespace IR {
 class IROptimizer {
   public:
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-    irOptimize(
-        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
-        bool foldConstantsPass, bool propagateCopiesPass,
-        bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
+    irOptimize(const std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
+                   &functionBody,
+               bool foldConstantsPass, bool propagateCopiesPass,
+               bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
 };
 
 class OptimizationPass {
@@ -29,8 +29,9 @@ class OptimizationPass {
 class ConstantFoldingPass : public OptimizationPass {
   public:
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-    foldConstants(std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-                      functionBody);
+    foldConstants(
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            &functionBody);
 };
 
 // TODO(zzmic): CFGs are temporarily of type
@@ -39,33 +40,37 @@ class CFG {
   public:
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
     makeControlFlowGraph(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            functionBody);
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            &functionBody);
 
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
     cfgToInstructions(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg);
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            &cfg);
 };
 
 class UnreachableCodeEliminationPass : public OptimizationPass {
   public:
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
     eliminateUnreachableCode(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg);
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            &cfg);
 };
 
 class CopyPropagationPass : public OptimizationPass {
   public:
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
     propagateCopies(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg);
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            &cfg);
 };
 
 class DeadStoreEliminationPass : public OptimizationPass {
   public:
     static std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
     eliminateDeadStores(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg);
+        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            &cfg);
 };
 } // namespace IR
 

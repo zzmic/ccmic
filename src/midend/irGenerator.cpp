@@ -3,15 +3,15 @@
 namespace IR {
 IRGenerator::IRGenerator(
     int variableResolutionCounter,
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols)
+    const std::unordered_map<
+        std::string, std::pair<std::shared_ptr<AST::Type>,
+                               std::shared_ptr<AST::IdentifierAttribute>>>
+        &symbols)
     : irTemporariesCounter(variableResolutionCounter), symbols(symbols) {}
 
 std::pair<std::shared_ptr<IR::Program>,
           std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
-IRGenerator::generateIR(std::shared_ptr<AST::Program> astProgram) {
+IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
     // Initialize the vector of IR top-levels (top-level elements).
     auto topLevels =
         std::make_shared<std::vector<std::shared_ptr<IR::TopLevel>>>();
@@ -102,9 +102,9 @@ IRGenerator::generateIR(std::shared_ptr<AST::Program> astProgram) {
 }
 
 void IRGenerator::generateIRBlock(
-    std::shared_ptr<AST::Block> astBlock,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::Block> &astBlock,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Get the block items from the block.
     auto blockItems = astBlock->getBlockItems();
 
@@ -154,9 +154,9 @@ void IRGenerator::generateIRBlock(
 }
 
 void IRGenerator::generateIRFunctionDefinition(
-    std::shared_ptr<AST::FunctionDeclaration> astFunctionDeclaration,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::FunctionDeclaration> &astFunctionDeclaration,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Get the body of the function.
     auto optBody = astFunctionDeclaration->getOptBody();
     if (optBody.has_value()) {
@@ -168,9 +168,9 @@ void IRGenerator::generateIRFunctionDefinition(
 }
 
 void IRGenerator::generateIRVariableDefinition(
-    std::shared_ptr<AST::VariableDeclaration> astVariableDeclaration,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::VariableDeclaration> &astVariableDeclaration,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     auto identifier = astVariableDeclaration->getIdentifier();
     auto initializer = astVariableDeclaration->getOptInitializer();
     // If the declaration has an initializer, ...
@@ -191,9 +191,9 @@ void IRGenerator::generateIRVariableDefinition(
 }
 
 void IRGenerator::generateIRStatement(
-    std::shared_ptr<AST::Statement> astStatement,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::Statement> &astStatement,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     if (auto returnStmt =
             std::dynamic_pointer_cast<AST::ReturnStatement>(astStatement)) {
         generateIRReturnStatement(returnStmt, instructions);
@@ -246,9 +246,9 @@ void IRGenerator::generateIRStatement(
 }
 
 void IRGenerator::generateIRReturnStatement(
-    std::shared_ptr<AST::ReturnStatement> returnStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::ReturnStatement> &returnStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Get the expression from the return statement.
     auto exp = returnStmt->getExpression();
 
@@ -262,9 +262,9 @@ void IRGenerator::generateIRReturnStatement(
 }
 
 void IRGenerator::generateIRExpressionStatement(
-    std::shared_ptr<AST::ExpressionStatement> expressionStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::ExpressionStatement> &expressionStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Get the expression from the expression statement.
     auto exp = expressionStmt->getExpression();
 
@@ -275,9 +275,9 @@ void IRGenerator::generateIRExpressionStatement(
 }
 
 void IRGenerator::generateIRIfStatement(
-    std::shared_ptr<AST::IfStatement> ifStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::IfStatement> &ifStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Get the condition from the if-statement.
     auto condition = ifStmt->getCondition();
     // Process the condition and generate the corresponding IR instructions.
@@ -324,27 +324,27 @@ void IRGenerator::generateIRIfStatement(
 }
 
 void IRGenerator::generateIRBreakStatement(
-    std::shared_ptr<AST::BreakStatement> breakStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::BreakStatement> &breakStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a jump instruction with the extended break label.
     auto breakLabel = generateIRBreakLoopLabel(breakStmt->getLabel());
     generateIRJumpInstruction(breakLabel, instructions);
 }
 
 void IRGenerator::generateIRContinueStatement(
-    std::shared_ptr<AST::ContinueStatement> continueStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::ContinueStatement> &continueStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a jump instruction with the extended continue label.
     auto continueLabel = generateIRContinueLoopLabel(continueStmt->getLabel());
     generateIRJumpInstruction(continueLabel, instructions);
 }
 
 void IRGenerator::generateIRDoWhileStatement(
-    std::shared_ptr<AST::DoWhileStatement> doWhileStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::DoWhileStatement> &doWhileStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a new start label.
     auto startLabel = generateIRStartLabel();
     // Generate a label instruction with the start label.
@@ -370,9 +370,9 @@ void IRGenerator::generateIRDoWhileStatement(
 }
 
 void IRGenerator::generateIRWhileStatement(
-    std::shared_ptr<AST::WhileStatement> whileStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::WhileStatement> &whileStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a new continue label (based on the label of the while).
     auto continueLabel = generateIRContinueLoopLabel(whileStmt->getLabel());
     // Generate a label instruction with the continue label.
@@ -395,9 +395,9 @@ void IRGenerator::generateIRWhileStatement(
 }
 
 void IRGenerator::generateIRForStatement(
-    std::shared_ptr<AST::ForStatement> forStmt,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::ForStatement> &forStmt,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate instructions for the for-init of the for-statement.
     auto forInit = forStmt->getForInit();
     if (auto initExpr = std::dynamic_pointer_cast<AST::InitExpr>(forInit)) {
@@ -449,9 +449,9 @@ void IRGenerator::generateIRForStatement(
 }
 
 std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
-    std::shared_ptr<AST::Expression> e,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::Expression> &e,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     if (auto constantExpr =
             std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
         auto variantValue = constantExpr->getConstantInIntOrLongVariant();
@@ -563,9 +563,9 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
 }
 
 std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
-    std::shared_ptr<AST::UnaryExpression> unaryExpr,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::UnaryExpression> &unaryExpr,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Recursively generate the expression in the unary expression.
     auto src = generateIRInstruction(unaryExpr->getExpression(), instructions);
 
@@ -590,25 +590,17 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
 }
 
 std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
-    std::shared_ptr<AST::BinaryExpression> binaryExpr,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Recursively generate the left and right expressions in the binary
     // expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
     auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
 
-    // Create a temporary variable (in string) to store the result of
-    // the binary operation.
-    auto tmpName = generateIRTemporary();
-
-    // Add the temporary variable to the symbols table with the appropriate type
-    // and local attribute.
-    symbols[tmpName] = std::make_pair(binaryExpr->getExpType(),
-                                      std::make_shared<AST::LocalAttribute>());
-
-    // Create a variable value for the temporary variable.
-    auto dst = std::make_shared<IR::VariableValue>(tmpName);
+    // Create a temporary variable to store the result/destination of the
+    // binary operation.
+    auto dst = generateIRVariable(binaryExpr);
 
     // Convert the binary operator in the binary expression to a IR
     // binary operator.
@@ -626,9 +618,9 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
 
 std::shared_ptr<IR::VariableValue>
 IRGenerator::generateIRInstructionWithLogicalAnd(
-    std::shared_ptr<AST::BinaryExpression> binaryExpr,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Recursively generate the left expression in the binary expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
 
@@ -673,9 +665,9 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
 
 std::shared_ptr<IR::VariableValue>
 IRGenerator::generateIRInstructionWithLogicalOr(
-    std::shared_ptr<AST::BinaryExpression> binaryExpr,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Recursively generate the left expression in the binary expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
 
@@ -720,9 +712,10 @@ IRGenerator::generateIRInstructionWithLogicalOr(
 }
 
 void IRGenerator::generateIRCopyInstruction(
-    std::shared_ptr<IR::Value> src, std::shared_ptr<IR::Value> dst,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<IR::Value> &src,
+    const std::shared_ptr<IR::Value> &dst,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a copy instruction with the source value and the
     // destination value.
     instructions->emplace_back(std::make_shared<IR::CopyInstruction>(src, dst));
@@ -730,16 +723,16 @@ void IRGenerator::generateIRCopyInstruction(
 
 void IRGenerator::generateIRJumpInstruction(
     std::string_view target,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a jump instruction with the target label.
     instructions->emplace_back(std::make_shared<IR::JumpInstruction>(target));
 }
 
 void IRGenerator::generateIRJumpIfZeroInstruction(
-    std::shared_ptr<IR::Value> condition, std::string_view target,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<IR::Value> &condition, std::string_view target,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a jump if zero instruction with the condition value and
     // the target label.
     instructions->emplace_back(
@@ -747,9 +740,9 @@ void IRGenerator::generateIRJumpIfZeroInstruction(
 }
 
 void IRGenerator::generateIRJumpIfNotZeroInstruction(
-    std::shared_ptr<IR::Value> condition, std::string_view target,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<IR::Value> &condition, std::string_view target,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a jump if not zero instruction with the condition value
     // and the target label.
     instructions->emplace_back(
@@ -758,8 +751,8 @@ void IRGenerator::generateIRJumpIfNotZeroInstruction(
 
 void IRGenerator::generateIRLabelInstruction(
     std::string_view identifier,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Generate a label instruction with the label identifier.
     instructions->emplace_back(
         std::make_shared<IR::LabelInstruction>(identifier));
@@ -768,9 +761,9 @@ void IRGenerator::generateIRLabelInstruction(
 std::shared_ptr<IR::VariableValue>
 IRGenerator::generateIRFunctionCallInstruction(
     std::string_view functionIdentifier,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> arguments,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> &arguments,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Create a temporary variable (in string) to store the result of
     // the function call.
     auto tmpName = generateIRTemporary();
@@ -785,9 +778,9 @@ IRGenerator::generateIRFunctionCallInstruction(
 }
 
 std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
-    std::shared_ptr<AST::CastExpression> castExpr,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        instructions) {
+    const std::shared_ptr<AST::CastExpression> &castExpr,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &instructions) {
     // Recursively generate the expression in the cast expression.
     auto result =
         generateIRInstruction(castExpr->getExpression(), instructions);
@@ -960,7 +953,7 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
 }
 
 std::shared_ptr<IR::UnaryOperator>
-IRGenerator::convertUnop(std::shared_ptr<AST::UnaryOperator> op) {
+IRGenerator::convertUnop(const std::shared_ptr<AST::UnaryOperator> &op) {
     if (std::dynamic_pointer_cast<AST::NegateOperator>(op)) {
         return std::make_shared<IR::NegateOperator>();
     }
@@ -978,7 +971,7 @@ IRGenerator::convertUnop(std::shared_ptr<AST::UnaryOperator> op) {
 // operators in the IR (and should NOT be converted to binary operators in
 // the IR).
 std::shared_ptr<IR::BinaryOperator>
-IRGenerator::convertBinop(std::shared_ptr<AST::BinaryOperator> op) {
+IRGenerator::convertBinop(const std::shared_ptr<AST::BinaryOperator> &op) {
     if (std::dynamic_pointer_cast<AST::AddOperator>(op)) {
         return std::make_shared<IR::AddOperator>();
     }
@@ -1014,5 +1007,20 @@ IRGenerator::convertBinop(std::shared_ptr<AST::BinaryOperator> op) {
     }
     throw std::runtime_error("Unsupported binary operator while converting "
                              "binary operator to IR binary operator");
+}
+
+std::shared_ptr<IR::VariableValue> IRGenerator::generateIRVariable(
+    const std::shared_ptr<AST::BinaryExpression> &binaryExpr) {
+    // Create a temporary variable (in string) to store the result of
+    // the binary operation.
+    auto tmpName = generateIRTemporary();
+
+    // Add the temporary variable to the symbols table with the appropriate type
+    // and local attribute.
+    symbols[tmpName] = std::make_pair(binaryExpr->getExpType(),
+                                      std::make_shared<AST::LocalAttribute>());
+
+    // Create a variable value for the temporary variable and return it.
+    return std::make_shared<IR::VariableValue>(tmpName);
 }
 } // namespace IR

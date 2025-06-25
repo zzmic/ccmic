@@ -5,18 +5,19 @@ namespace IR {
 // Helper function to perform optimization passes on the IR function definition.
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 IROptimizer::irOptimize(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> functionBody,
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &functionBody,
     bool foldConstantsPass, bool propagateCopiesPass,
     bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {
-    // Preemptively return the (original) function body if it is empty.
     if (functionBody->empty()) {
         return functionBody;
     }
+    auto currentFunctionBody = functionBody;
     while (true) {
-        auto postConstantFoldingFunctionBody = functionBody;
+        auto postConstantFoldingFunctionBody = currentFunctionBody;
         if (foldConstantsPass) {
             postConstantFoldingFunctionBody =
-                IR::ConstantFoldingPass::foldConstants(functionBody);
+                IR::ConstantFoldingPass::foldConstants(currentFunctionBody);
         }
         auto cfg =
             IR::CFG::makeControlFlowGraph(postConstantFoldingFunctionBody);
@@ -31,18 +32,18 @@ IROptimizer::irOptimize(
             cfg = IR::DeadStoreEliminationPass::eliminateDeadStores(cfg);
         }
         auto optimizedFunctionBody = IR::CFG::cfgToInstructions(cfg);
-        if (optimizedFunctionBody == functionBody ||
+        if (optimizedFunctionBody == currentFunctionBody ||
             optimizedFunctionBody->empty()) {
             return optimizedFunctionBody;
         }
-        functionBody = optimizedFunctionBody;
+        currentFunctionBody = optimizedFunctionBody;
     }
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 ConstantFoldingPass::foldConstants(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        functionBody) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &functionBody) {
     auto postConstantFoldingFunctionBody = functionBody;
     for (auto it = postConstantFoldingFunctionBody->begin();
          it != postConstantFoldingFunctionBody->end();) {
@@ -108,7 +109,7 @@ ConstantFoldingPass::foldConstants(
                     unaryInstruction->getDst());
                 *it = std::move(copyInstruction);
             }
-            it++;
+            ++it;
         }
         // Handle binary instructions with two constant source operands.
         else if (auto binaryInstruction =
@@ -162,7 +163,7 @@ ConstantFoldingPass::foldConstants(
                             (value1 < 0 &&
                              value2 <
                                  std::numeric_limits<int>::min() - value1)) {
-                            it++;
+                            ++it;
                             continue;
                         }
 
@@ -199,7 +200,7 @@ ConstantFoldingPass::foldConstants(
                             (value1 < 0 &&
                              value2 >
                                  std::numeric_limits<int>::max() - value1)) {
-                            it++;
+                            ++it;
                             continue;
                         }
                         constantResult = value1 - value2;
@@ -239,7 +240,7 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 * value2;
                         if (value1 != 0 && constantResult / value1 != value2) {
-                            it++;
+                            ++it;
                             continue;
                         }
                     }
@@ -277,7 +278,7 @@ ConstantFoldingPass::foldConstants(
                         }
 
                         if (value2 == 0) {
-                            it++;
+                            ++it;
                             continue;
                         }
                         constantResult = value1 / value2;
@@ -316,7 +317,7 @@ ConstantFoldingPass::foldConstants(
                         }
 
                         if (value2 == 0) {
-                            it++;
+                            ++it;
                             continue;
                         }
                         constantResult = value1 % value2;
@@ -544,7 +545,7 @@ ConstantFoldingPass::foldConstants(
                     *it = std::move(copyInstruction);
                 }
             }
-            it++;
+            ++it;
         }
         // Handle `JumpIfZero` instructions.
         else if (auto jumpIfZeroInstruction =
@@ -571,14 +572,14 @@ ConstantFoldingPass::foldConstants(
                 if (conditionValue == 0) {
                     *it = std::make_shared<IR::JumpInstruction>(
                         jumpIfZeroInstruction->getTarget());
-                    it++;
+                    ++it;
                 }
                 else {
                     it = postConstantFoldingFunctionBody->erase(it);
                 }
             }
             else {
-                it++;
+                ++it;
             }
         }
         // Handle `JumpIfNotZero` instructions.
@@ -606,18 +607,18 @@ ConstantFoldingPass::foldConstants(
                 if (conditionValue != 0) {
                     *it = std::make_shared<IR::JumpInstruction>(
                         jumpIfNotZeroInstruction->getTarget());
-                    it++;
+                    ++it;
                 }
                 else {
                     it = postConstantFoldingFunctionBody->erase(it);
                 }
             }
             else {
-                it++;
+                ++it;
             }
         }
         else {
-            it++;
+            ++it;
         }
     }
     return postConstantFoldingFunctionBody;
@@ -625,32 +626,32 @@ ConstantFoldingPass::foldConstants(
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 CFG::makeControlFlowGraph(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        functionBody) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        &functionBody) {
     return functionBody;
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 CFG::cfgToInstructions(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
     return cfg;
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 UnreachableCodeEliminationPass::eliminateUnreachableCode(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
     return cfg;
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 CopyPropagationPass::propagateCopies(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
     return cfg;
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
 DeadStoreEliminationPass::eliminateDeadStores(
-    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> cfg) {
+    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
     return cfg;
 }
 } // namespace IR
