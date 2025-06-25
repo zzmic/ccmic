@@ -2,25 +2,25 @@
 #include "visitor.h"
 
 namespace AST {
-VariableDeclaration::VariableDeclaration(const std::string &identifier,
+VariableDeclaration::VariableDeclaration(std::string_view identifier,
                                          std::shared_ptr<Type> varType)
     : identifier(identifier), varType(varType) {}
 
 VariableDeclaration::VariableDeclaration(
-    const std::string &identifier,
+    std::string_view identifier,
     std::optional<std::shared_ptr<Expression>> optInitializer,
     std::shared_ptr<Type> varType)
     : identifier(identifier), optInitializer(optInitializer), varType(varType) {
 }
 
 VariableDeclaration::VariableDeclaration(
-    const std::string &identifier, std::shared_ptr<Type> varType,
+    std::string_view identifier, std::shared_ptr<Type> varType,
     std::optional<std::shared_ptr<StorageClass>> optStorageClass)
     : identifier(identifier), varType(varType),
       optStorageClass(optStorageClass) {}
 
 VariableDeclaration::VariableDeclaration(
-    const std::string &identifier,
+    std::string_view identifier,
     std::optional<std::shared_ptr<Expression>> optInitializer,
     std::shared_ptr<Type> varType,
     std::optional<std::shared_ptr<StorageClass>> optStorageClass)
@@ -48,13 +48,13 @@ VariableDeclaration::getOptStorageClass() const {
 }
 
 FunctionDeclaration::FunctionDeclaration(
-    const std::string &identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::string>> parameters,
     std::shared_ptr<Type> funType)
     : identifier(identifier), parameters(parameters), funType(funType) {}
 
 FunctionDeclaration::FunctionDeclaration(
-    const std::string &identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::string>> parameters,
     std::optional<std::shared_ptr<Block>> optBody,
     std::shared_ptr<Type> funType)
@@ -62,7 +62,7 @@ FunctionDeclaration::FunctionDeclaration(
       funType(funType) {}
 
 FunctionDeclaration::FunctionDeclaration(
-    const std::string &identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::string>> parameters,
     std::shared_ptr<Type> funType,
     std::optional<std::shared_ptr<StorageClass>> optStorageClass)
@@ -70,7 +70,7 @@ FunctionDeclaration::FunctionDeclaration(
       optStorageClass(optStorageClass) {}
 
 FunctionDeclaration::FunctionDeclaration(
-    const std::string &identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::string>> parameters,
     std::optional<std::shared_ptr<Block>> optBody,
     std::shared_ptr<Type> funType,
@@ -84,7 +84,7 @@ const std::string &FunctionDeclaration::getIdentifier() const {
     return identifier;
 }
 
-std::shared_ptr<std::vector<std::string>>
+const std::shared_ptr<std::vector<std::string>> &
 FunctionDeclaration::getParameterIdentifiers() const {
     return parameters;
 }

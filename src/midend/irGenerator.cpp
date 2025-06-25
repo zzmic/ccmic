@@ -729,7 +729,7 @@ void IRGenerator::generateIRCopyInstruction(
 }
 
 void IRGenerator::generateIRJumpInstruction(
-    std::string target,
+    std::string_view target,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Generate a jump instruction with the target label.
@@ -737,7 +737,7 @@ void IRGenerator::generateIRJumpInstruction(
 }
 
 void IRGenerator::generateIRJumpIfZeroInstruction(
-    std::shared_ptr<IR::Value> condition, std::string target,
+    std::shared_ptr<IR::Value> condition, std::string_view target,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Generate a jump if zero instruction with the condition value and
@@ -747,7 +747,7 @@ void IRGenerator::generateIRJumpIfZeroInstruction(
 }
 
 void IRGenerator::generateIRJumpIfNotZeroInstruction(
-    std::shared_ptr<IR::Value> condition, std::string target,
+    std::shared_ptr<IR::Value> condition, std::string_view target,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Generate a jump if not zero instruction with the condition value
@@ -757,7 +757,7 @@ void IRGenerator::generateIRJumpIfNotZeroInstruction(
 }
 
 void IRGenerator::generateIRLabelInstruction(
-    std::string identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
     // Generate a label instruction with the label identifier.
@@ -767,7 +767,7 @@ void IRGenerator::generateIRLabelInstruction(
 
 std::shared_ptr<IR::VariableValue>
 IRGenerator::generateIRFunctionCallInstruction(
-    std::string functionIdentifier,
+    std::string_view functionIdentifier,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> arguments,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
@@ -878,13 +878,13 @@ std::string IRGenerator::generateIRE2Label() {
 }
 
 std::string IRGenerator::generateIRContinueLoopLabel(
-    const std::string &loopLabelingLabel) const {
-    return "continue_" + loopLabelingLabel;
+    std::string_view loopLabelingLabel) const {
+    return "continue_" + std::string(loopLabelingLabel);
 }
 
 std::string IRGenerator::generateIRBreakLoopLabel(
-    const std::string &loopLabelingLabel) const {
-    return "break_" + loopLabelingLabel;
+    std::string_view loopLabelingLabel) const {
+    return "break_" + std::string(loopLabelingLabel);
 }
 
 std::string IRGenerator::generateIRStartLabel() const {

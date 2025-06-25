@@ -9,6 +9,7 @@
 #include "../frontend/statement.h"
 #include "ir.h"
 #include <optional>
+#include <string_view>
 #include <unordered_map>
 
 namespace IR {
@@ -103,23 +104,23 @@ class IRGenerator {
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     void generateIRJumpInstruction(
-        std::string target,
+        std::string_view target,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     void generateIRJumpIfZeroInstruction(
-        std::shared_ptr<IR::Value> condition, std::string target,
+        std::shared_ptr<IR::Value> condition, std::string_view target,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     void generateIRJumpIfNotZeroInstruction(
-        std::shared_ptr<IR::Value> condition, std::string target,
+        std::shared_ptr<IR::Value> condition, std::string_view target,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     void generateIRLabelInstruction(
-        std::string identifier,
+        std::string_view identifier,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
     std::shared_ptr<IR::VariableValue> generateIRFunctionCallInstruction(
-        std::string functionIdentifier,
+        std::string_view functionIdentifier,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> args,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
@@ -135,9 +136,9 @@ class IRGenerator {
     std::string generateIRElseLabel();
     std::string generateIRE2Label();
     std::string
-    generateIRContinueLoopLabel(const std::string &loopLabelingLabel) const;
+    generateIRContinueLoopLabel(std::string_view loopLabelingLabel) const;
     std::string
-    generateIRBreakLoopLabel(const std::string &loopLabelingLabel) const;
+    generateIRBreakLoopLabel(std::string_view loopLabelingLabel) const;
     std::string generateIRStartLabel() const;
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
     convertSymbolsToIRStaticVariables();

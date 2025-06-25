@@ -38,7 +38,7 @@ class Parser {
     void expectToken(TokenType type);
     std::shared_ptr<Declaration> parseDeclaration();
     void parseTypeSpecifiersInParameters(
-        std::shared_ptr<std::vector<std::string>> &parameters);
+        const std::shared_ptr<std::vector<std::string>> &parameters);
     std::shared_ptr<BlockItem> parseBlockItem();
     std::shared_ptr<Block> parseBlock();
     std::shared_ptr<ForInit> parseForInit();
@@ -48,9 +48,11 @@ class Parser {
     std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);
     std::shared_ptr<Expression> parseConditionalMiddle();
     std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
-    parseTypeAndStorageClass(std::vector<std::string> &specifierList);
-    std::shared_ptr<Type> parseType(std::vector<std::string> &specifierList);
-    std::shared_ptr<StorageClass> parseStorageClass(std::string &specifier);
+    parseTypeAndStorageClass(const std::vector<std::string> &specifierList);
+    std::shared_ptr<Type>
+    parseType(const std::vector<std::string> &specifierList);
+    std::shared_ptr<StorageClass>
+    parseStorageClass(const std::string &specifier);
     int getPrecedence(const Token &token);
 };
 } // Namespace AST

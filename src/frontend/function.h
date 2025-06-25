@@ -6,14 +6,15 @@
 #include "statement.h"
 #include <memory>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace AST {
 class Function : public AST {
   public:
-    Function(const std::string &identifier, std::shared_ptr<Block> body);
+    Function(std::string_view identifier, std::shared_ptr<Block> body);
     void accept(Visitor &vistor) override;
-    std::string getIdentifier() const;
+    const std::string &getIdentifier() const;
     std::shared_ptr<Block> getBody() const;
     void setBody(std::shared_ptr<Block> body);
 

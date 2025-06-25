@@ -7,23 +7,24 @@
 #include "type.h"
 #include <memory>
 #include <optional>
+#include <string_view>
 
 namespace AST {
 class Declaration : public AST {};
 
 class VariableDeclaration : public Declaration {
   public:
-    VariableDeclaration(const std::string &identifier,
+    VariableDeclaration(std::string_view identifier,
                         std::shared_ptr<Type> varType);
     VariableDeclaration(
-        const std::string &identifier,
+        std::string_view identifier,
         std::optional<std::shared_ptr<Expression>> optInitializer,
         std::shared_ptr<Type> varType);
     VariableDeclaration(
-        const std::string &identifier, std::shared_ptr<Type> varType,
+        std::string_view identifier, std::shared_ptr<Type> varType,
         std::optional<std::shared_ptr<StorageClass>> optStorageClass);
     VariableDeclaration(
-        const std::string &identifier,
+        std::string_view identifier,
         std::optional<std::shared_ptr<Expression>> optInitializer,
         std::shared_ptr<Type> varType,
         std::optional<std::shared_ptr<StorageClass>> optStorageClass);
@@ -42,27 +43,28 @@ class VariableDeclaration : public Declaration {
 
 class FunctionDeclaration : public Declaration {
   public:
-    FunctionDeclaration(const std::string &identifier,
+    FunctionDeclaration(std::string_view identifier,
                         std::shared_ptr<std::vector<std::string>> parameters,
                         std::shared_ptr<Type> funType);
-    FunctionDeclaration(const std::string &identifier,
+    FunctionDeclaration(std::string_view identifier,
                         std::shared_ptr<std::vector<std::string>> parameters,
                         std::optional<std::shared_ptr<Block>> optBody,
                         std::shared_ptr<Type> funType);
     FunctionDeclaration(
-        const std::string &identifier,
+        std::string_view identifier,
         std::shared_ptr<std::vector<std::string>> parameters,
         std::shared_ptr<Type> funType,
         std::optional<std::shared_ptr<StorageClass>> optStorageClass);
     FunctionDeclaration(
-        const std::string &identifier,
+        std::string_view identifier,
         std::shared_ptr<std::vector<std::string>> parameters,
         std::optional<std::shared_ptr<Block>> optBody,
         std::shared_ptr<Type> funType,
         std::optional<std::shared_ptr<StorageClass>> optStorageClass);
     void accept(Visitor &visitor) override;
     const std::string &getIdentifier() const;
-    std::shared_ptr<std::vector<std::string>> getParameterIdentifiers() const;
+    const std::shared_ptr<std::vector<std::string>> &
+    getParameterIdentifiers() const;
     std::shared_ptr<Type> getFunType() const;
     std::optional<std::shared_ptr<Block>> getOptBody() const;
     std::optional<std::shared_ptr<StorageClass>> getOptStorageClass() const;

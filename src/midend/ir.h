@@ -7,6 +7,7 @@
 #include <set>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <variant>
 #include <vector>
 
@@ -75,9 +76,9 @@ class VariableValue : public Value {
     std::string identifier;
 
   public:
-    VariableValue(std::string identifier) : identifier(identifier) {}
-    std::string getIdentifier() const { return identifier; }
-    void setIdentifier(std::string identifier) {
+    VariableValue(std::string_view identifier) : identifier(identifier) {}
+    const std::string &getIdentifier() const { return identifier; }
+    void setIdentifier(std::string_view identifier) {
         this->identifier = identifier;
     }
 };
@@ -190,9 +191,9 @@ class JumpInstruction : public Instruction {
     std::string target;
 
   public:
-    JumpInstruction(std::string target) : target(target) {}
-    std::string getTarget() const { return target; }
-    void setTarget(std::string target) { this->target = target; }
+    JumpInstruction(std::string_view target) : target(target) {}
+    const std::string &getTarget() const { return target; }
+    void setTarget(std::string_view target) { this->target = target; }
 };
 
 class JumpIfZeroInstruction : public Instruction {
@@ -201,14 +202,15 @@ class JumpIfZeroInstruction : public Instruction {
     std::string target;
 
   public:
-    JumpIfZeroInstruction(std::shared_ptr<Value> condition, std::string target)
+    JumpIfZeroInstruction(std::shared_ptr<Value> condition,
+                          std::string_view target)
         : condition(condition), target(target) {}
     std::shared_ptr<Value> getCondition() const { return condition; }
-    std::string getTarget() const { return target; }
+    const std::string &getTarget() const { return target; }
     void setCondition(std::shared_ptr<Value> condition) {
         this->condition = condition;
     }
-    void setTarget(std::string target) { this->target = target; }
+    void setTarget(std::string_view target) { this->target = target; }
 };
 
 class JumpIfNotZeroInstruction : public Instruction {
@@ -218,14 +220,14 @@ class JumpIfNotZeroInstruction : public Instruction {
 
   public:
     JumpIfNotZeroInstruction(std::shared_ptr<Value> condition,
-                             std::string target)
+                             std::string_view target)
         : condition(condition), target(target) {}
     std::shared_ptr<Value> getCondition() const { return condition; }
-    std::string getTarget() const { return target; }
+    const std::string &getTarget() const { return target; }
     void setCondition(std::shared_ptr<Value> condition) {
         this->condition = condition;
     }
-    void setTarget(std::string target) { this->target = target; }
+    void setTarget(std::string_view target) { this->target = target; }
 };
 
 class LabelInstruction : public Instruction {
@@ -233,9 +235,9 @@ class LabelInstruction : public Instruction {
     std::string label;
 
   public:
-    LabelInstruction(std::string label) : label(label) {}
-    std::string getLabel() const { return label; }
-    void setLabel(std::string label) { this->label = label; }
+    LabelInstruction(std::string_view label) : label(label) {}
+    const std::string &getLabel() const { return label; }
+    void setLabel(std::string_view label) { this->label = label; }
 };
 
 class FunctionCallInstruction : public Instruction {
@@ -246,16 +248,19 @@ class FunctionCallInstruction : public Instruction {
 
   public:
     FunctionCallInstruction(
-        std::string functionIdentifier,
+        std::string_view functionIdentifier,
         std::shared_ptr<std::vector<std::shared_ptr<Value>>> args,
         std::shared_ptr<Value> dst)
         : functionIdentifier(functionIdentifier), args(args), dst(dst) {}
-    std::string getFunctionIdentifier() const { return functionIdentifier; }
-    std::shared_ptr<std::vector<std::shared_ptr<Value>>> getArgs() const {
+    const std::string &getFunctionIdentifier() const {
+        return functionIdentifier;
+    }
+    const std::shared_ptr<std::vector<std::shared_ptr<Value>>> &
+    getArgs() const {
         return args;
     }
     std::shared_ptr<Value> getDst() const { return dst; }
-    void setFunctionIdentifier(std::string functionIdentifier) {
+    void setFunctionIdentifier(std::string_view functionIdentifier) {
         this->functionIdentifier = functionIdentifier;
     }
     void setArgs(std::shared_ptr<std::vector<std::shared_ptr<Value>>> args) {
@@ -278,17 +283,20 @@ class FunctionDefinition : public TopLevel {
 
   public:
     FunctionDefinition(
-        std::string functionIdentifier, bool global,
+        std::string_view functionIdentifier, bool global,
         std::shared_ptr<std::vector<std::string>> parameters,
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody)
         : functionIdentifier(functionIdentifier), global(global),
           parameters(parameters), functionBody(functionBody) {}
-    std::string getFunctionIdentifier() const { return functionIdentifier; }
+    const std::string &getFunctionIdentifier() const {
+        return functionIdentifier;
+    }
     bool isGlobal() const { return global; }
-    std::shared_ptr<std::vector<std::string>> getParameterIdentifiers() const {
+    const std::shared_ptr<std::vector<std::string>> &
+    getParameterIdentifiers() const {
         return parameters;
     }
-    std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
+    const std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> &
     getFunctionBody() const {
         return functionBody;
     }
@@ -307,12 +315,12 @@ class StaticVariable : public TopLevel {
     std::shared_ptr<AST::StaticInit> staticInit;
 
   public:
-    StaticVariable(std::string identifier, bool global,
+    StaticVariable(std::string_view identifier, bool global,
                    std::shared_ptr<AST::Type> type,
                    std::shared_ptr<AST::StaticInit> staticInit)
         : identifier(identifier), global(global), type(type),
           staticInit(staticInit) {}
-    std::string getIdentifier() const { return identifier; }
+    const std::string &getIdentifier() const { return identifier; }
     bool isGlobal() const { return global; }
     std::shared_ptr<AST::Type> getType() const { return type; }
     std::shared_ptr<AST::StaticInit> getStaticInit() const {
@@ -327,7 +335,7 @@ class Program {
   public:
     Program(std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels)
         : topLevels(topLevels) {}
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>>
+    const std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> &
     getTopLevels() const {
         return topLevels;
     }

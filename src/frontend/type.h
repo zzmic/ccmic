@@ -74,7 +74,7 @@ class FunctionType : public Type {
         // Compare return types by value.
         return *returnType == *otherFn->returnType;
     }
-    std::shared_ptr<std::vector<std::shared_ptr<Type>>>
+    const std::shared_ptr<std::vector<std::shared_ptr<Type>>> &
     getParameterTypes() const {
         return parameterTypes;
     }

@@ -4,6 +4,7 @@
 #include <iostream>
 #include <regex>
 #include <string>
+#include <string_view>
 #include <vector>
 
 // Regular expressions for different token types.
@@ -117,8 +118,8 @@ struct Token {
     std::string value;
 };
 
-Token matchToken(const std::string &input);
-std::vector<Token> lexer(const std::string &input);
+Token matchToken(std::string_view input);
+std::vector<Token> lexer(std::string_view input);
 void printTokens(const std::vector<Token> &tokens);
 std::string tokenTypeToString(TokenType type);
 

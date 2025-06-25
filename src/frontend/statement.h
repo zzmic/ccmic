@@ -6,6 +6,7 @@
 #include "forInit.h"
 #include <memory>
 #include <optional>
+#include <string_view>
 
 namespace AST {
 // Forward declaration.
@@ -69,8 +70,8 @@ class BreakStatement : public Statement {
   public:
     BreakStatement() : label("") {}
     void accept(Visitor &visitor) override;
-    std::string getLabel() const;
-    void setLabel(const std::string &label);
+    const std::string &getLabel() const;
+    void setLabel(std::string_view label);
 
   private:
     std::string label;
@@ -80,8 +81,8 @@ class ContinueStatement : public Statement {
   public:
     ContinueStatement() : label("") {}
     void accept(Visitor &visitor) override;
-    std::string getLabel() const;
-    void setLabel(const std::string &label);
+    const std::string &getLabel() const;
+    void setLabel(std::string_view label);
 
   private:
     std::string label;
@@ -94,8 +95,8 @@ class WhileStatement : public Statement {
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getCondition() const;
     std::shared_ptr<Statement> getBody() const;
-    std::string getLabel() const;
-    void setLabel(const std::string &label);
+    const std::string &getLabel() const;
+    void setLabel(std::string_view label);
 
   private:
     std::shared_ptr<Expression> condition;
@@ -110,8 +111,8 @@ class DoWhileStatement : public Statement {
     void accept(Visitor &visitor) override;
     std::shared_ptr<Expression> getCondition() const;
     std::shared_ptr<Statement> getBody() const;
-    std::string getLabel() const;
-    void setLabel(const std::string &label);
+    const std::string &getLabel() const;
+    void setLabel(std::string_view label);
 
   private:
     std::shared_ptr<Expression> condition;
@@ -130,8 +131,8 @@ class ForStatement : public Statement {
     std::optional<std::shared_ptr<Expression>> getOptCondition() const;
     std::optional<std::shared_ptr<Expression>> getOptPost() const;
     std::shared_ptr<Statement> getBody() const;
-    std::string getLabel() const;
-    void setLabel(const std::string &label);
+    const std::string &getLabel() const;
+    void setLabel(std::string_view label);
 
   private:
     std::shared_ptr<ForInit> forInit;

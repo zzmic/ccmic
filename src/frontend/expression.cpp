@@ -40,16 +40,18 @@ ConstantExpression::getConstantInIntOrLongVariant() const {
     }
 }
 
-VariableExpression::VariableExpression(const std::string &identifier)
+VariableExpression::VariableExpression(std::string_view identifier)
     : identifier(identifier) {}
 
-VariableExpression::VariableExpression(const std::string &identifier,
+VariableExpression::VariableExpression(std::string_view identifier,
                                        std::shared_ptr<Type> expType)
     : identifier(identifier), expType(expType) {}
 
 void VariableExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::string VariableExpression::getIdentifier() const { return identifier; }
+const std::string &VariableExpression::getIdentifier() const {
+    return identifier;
+}
 
 std::shared_ptr<Type> VariableExpression::getExpType() const { return expType; }
 
@@ -82,7 +84,7 @@ void CastExpression::setExpType(std::shared_ptr<Type> expType) {
     this->expType = expType;
 }
 
-UnaryExpression::UnaryExpression(const std::string &opInStr,
+UnaryExpression::UnaryExpression(std::string_view opInStr,
                                  std::shared_ptr<Expression> expr) {
     if (opInStr == "-") {
         op = std::make_shared<NegateOperator>();
@@ -104,7 +106,7 @@ UnaryExpression::UnaryExpression(const std::string &opInStr,
     this->expr = std::static_pointer_cast<Factor>(expr);
 }
 
-UnaryExpression::UnaryExpression(const std::string &opInStr,
+UnaryExpression::UnaryExpression(std::string_view opInStr,
                                  std::shared_ptr<Expression> expr,
                                  std::shared_ptr<Type> expType)
     : expType(expType) {
@@ -152,7 +154,7 @@ void UnaryExpression::setExpType(std::shared_ptr<Type> expType) {
 }
 
 BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
-                                   const std::string &opInStr,
+                                   std::string_view opInStr,
                                    std::shared_ptr<Expression> right)
     : left(left), right(right) {
     if (opInStr == "+") {
@@ -201,7 +203,7 @@ BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
 }
 
 BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
-                                   const std::string &opInStr,
+                                   std::string_view opInStr,
                                    std::shared_ptr<Expression> right,
                                    std::shared_ptr<Type> expType)
     : left(left), right(right), expType(expType) {
@@ -368,21 +370,23 @@ void ConditionalExpression::setExpType(std::shared_ptr<Type> expType) {
 }
 
 FunctionCallExpression::FunctionCallExpression(
-    const std::string &identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments)
     : identifier(identifier), arguments(arguments) {}
 
 FunctionCallExpression::FunctionCallExpression(
-    const std::string &identifier,
+    std::string_view identifier,
     std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments,
     std::shared_ptr<Type> expType)
     : identifier(identifier), arguments(arguments), expType(expType) {}
 
 void FunctionCallExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::string FunctionCallExpression::getIdentifier() const { return identifier; }
+const std::string &FunctionCallExpression::getIdentifier() const {
+    return identifier;
+}
 
-std::shared_ptr<std::vector<std::shared_ptr<Expression>>>
+const std::shared_ptr<std::vector<std::shared_ptr<Expression>>> &
 FunctionCallExpression::getArguments() const {
     return arguments;
 }

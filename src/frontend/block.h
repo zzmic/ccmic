@@ -9,7 +9,7 @@ class Block : public AST {
   public:
     Block(std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>>
+    const std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> &
     getBlockItems() const;
     void addBlockItem(std::shared_ptr<BlockItem> blockItem);
     void setBlockItems(

@@ -8,7 +8,7 @@ Program::Program(
 
 void Program::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+const std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> &
 Program::getDeclarations() const {
     return declarations;
 }

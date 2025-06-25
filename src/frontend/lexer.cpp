@@ -4,7 +4,10 @@
 // Function to match an input token against the regular expressions for the
 // different token types and return the token struct, containing the token type
 // and the token value (in string).
-Token matchToken(const std::string &input) {
+Token matchToken(std::string_view input) {
+    // Convert string_view to string for regex operations
+    std::string inputStr(input);
+
     // Instantiate the `match_results` class template for matches on string
     // objects.
     std::smatch tokenMatch;
@@ -15,113 +18,113 @@ Token matchToken(const std::string &input) {
     // Raise up the precedence of token-matching `singleLineComment_regex` and
     // `multiLineComment_regex` to resolve the conflict with the other token
     // matchings (e.g., `multiply_regex`).
-    if (std::regex_search(input, tokenMatch, preprocessorDirective_regex))
+    if (std::regex_search(inputStr, tokenMatch, preprocessorDirective_regex))
         return {TokenType::PreprocessorDirective, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, stringLiteral_regex))
+    else if (std::regex_search(inputStr, tokenMatch, stringLiteral_regex))
         return {TokenType::StringLiteral, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, singleLineComment_regex))
+    else if (std::regex_search(inputStr, tokenMatch, singleLineComment_regex))
         return {TokenType::SingleLineComment, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, multiLineComment_regex))
+    else if (std::regex_search(inputStr, tokenMatch, multiLineComment_regex))
         return {TokenType::MultiLineComment, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, LongConstant_regex))
+    else if (std::regex_search(inputStr, tokenMatch, LongConstant_regex))
         return {TokenType::LongConstant, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, intConstant_regex))
+    else if (std::regex_search(inputStr, tokenMatch, intConstant_regex))
         return {TokenType::IntConstant, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, intKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, intKeyword_regex))
         return {TokenType::intKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, longKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, longKeyword_regex))
         return {TokenType::longKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, voidKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, voidKeyword_regex))
         return {TokenType::voidKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, returnKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, returnKeyword_regex))
         return {TokenType::returnKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, ifKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, ifKeyword_regex))
         return {TokenType::ifKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, elseKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, elseKeyword_regex))
         return {TokenType::elseKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, doKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, doKeyword_regex))
         return {TokenType::doKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, whileKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, whileKeyword_regex))
         return {TokenType::whileKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, forKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, forKeyword_regex))
         return {TokenType::forKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, breakKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, breakKeyword_regex))
         return {TokenType::breakKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, continueKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, continueKeyword_regex))
         return {TokenType::continueKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, staticKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, staticKeyword_regex))
         return {TokenType::staticKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, externKeyword_regex))
+    else if (std::regex_search(inputStr, tokenMatch, externKeyword_regex))
         return {TokenType::externKeyword, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, comma_regex))
+    else if (std::regex_search(inputStr, tokenMatch, comma_regex))
         return {TokenType::Comma, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, questionMark_regex))
+    else if (std::regex_search(inputStr, tokenMatch, questionMark_regex))
         return {TokenType::QuestionMark, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, colon_regex))
+    else if (std::regex_search(inputStr, tokenMatch, colon_regex))
         return {TokenType::Colon, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, openParenthesis_regex))
+    else if (std::regex_search(inputStr, tokenMatch, openParenthesis_regex))
         return {TokenType::OpenParenthesis, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, closeParenthesis_regex))
+    else if (std::regex_search(inputStr, tokenMatch, closeParenthesis_regex))
         return {TokenType::CloseParenthesis, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, openBrace_regex))
+    else if (std::regex_search(inputStr, tokenMatch, openBrace_regex))
         return {TokenType::OpenBrace, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, closeBrace_regex))
+    else if (std::regex_search(inputStr, tokenMatch, closeBrace_regex))
         return {TokenType::CloseBrace, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, semicolon_regex))
+    else if (std::regex_search(inputStr, tokenMatch, semicolon_regex))
         return {TokenType::Semicolon, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, tilde_regex))
+    else if (std::regex_search(inputStr, tokenMatch, tilde_regex))
         return {TokenType::Tilde, tokenMatch.str()};
     // Enforce the precedence of token-matching `twoHyphen_regex` over
     // `minus_regex` to avoid the conflict with the token matching of
     // `minus_regex`.
-    else if (std::regex_search(input, tokenMatch, twoHyphen_regex))
+    else if (std::regex_search(inputStr, tokenMatch, twoHyphen_regex))
         return {TokenType::TwoHyphen, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, plus_regex))
+    else if (std::regex_search(inputStr, tokenMatch, plus_regex))
         return {TokenType::Plus, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, minus_regex))
+    else if (std::regex_search(inputStr, tokenMatch, minus_regex))
         return {TokenType::Minus, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, multiply_regex))
+    else if (std::regex_search(inputStr, tokenMatch, multiply_regex))
         return {TokenType::Multiply, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, divide_regex))
+    else if (std::regex_search(inputStr, tokenMatch, divide_regex))
         return {TokenType::Divide, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, modulo_regex))
+    else if (std::regex_search(inputStr, tokenMatch, modulo_regex))
         return {TokenType::Modulo, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, equal_regex))
+    else if (std::regex_search(inputStr, tokenMatch, equal_regex))
         return {TokenType::Equal, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, notEqual_regex))
+    else if (std::regex_search(inputStr, tokenMatch, notEqual_regex))
         return {TokenType::NotEqual, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, lessThanOrEqual_regex))
+    else if (std::regex_search(inputStr, tokenMatch, lessThanOrEqual_regex))
         return {TokenType::LessThanOrEqual, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, greaterThanOrEqual_regex))
+    else if (std::regex_search(inputStr, tokenMatch, greaterThanOrEqual_regex))
         return {TokenType::GreaterThanOrEqual, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, lessThan_regex))
+    else if (std::regex_search(inputStr, tokenMatch, lessThan_regex))
         return {TokenType::LessThan, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, greaterThan_regex))
+    else if (std::regex_search(inputStr, tokenMatch, greaterThan_regex))
         return {TokenType::GreaterThan, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, logicalNot_regex))
+    else if (std::regex_search(inputStr, tokenMatch, logicalNot_regex))
         return {TokenType::LogicalNot, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, logicalAnd_regex))
+    else if (std::regex_search(inputStr, tokenMatch, logicalAnd_regex))
         return {TokenType::LogicalAnd, tokenMatch.str()};
-    else if (std::regex_search(input, tokenMatch, logicalOr_regex))
+    else if (std::regex_search(inputStr, tokenMatch, logicalOr_regex))
         return {TokenType::LogicalOr, tokenMatch.str()};
     // Lower down the precedence of token-matching `assign_regex` to avoid the
     // conflict with the token matching of `equal_regex`.
-    else if (std::regex_search(input, tokenMatch, assign_regex))
+    else if (std::regex_search(inputStr, tokenMatch, assign_regex))
         return {TokenType::Assign, tokenMatch.str()};
     // Lower down the precedence of token-matching `identifier_regex`
     // to avoid the conflict with the other token matchings (e.g.,
     // `intKeyword_regex`)
-    else if (std::regex_search(input, tokenMatch, identifier_regex))
+    else if (std::regex_search(inputStr, tokenMatch, identifier_regex))
         return {TokenType::Identifier, tokenMatch.str()};
     // If no match is found, return an "invalid" token.
     else
-        return {TokenType::Invalid, input};
+        return {TokenType::Invalid, std::string(input)};
 }
 
 // Function to tokenize the input string and return a vector of tokens.
-std::vector<Token> lexer(const std::string &input) {
+std::vector<Token> lexer(std::string_view input) {
     std::vector<Token> tokens;
-    std::string remainingInput = input;
+    std::string remainingInput(input);
 
     // Process the input string until it is empty.
     while (!remainingInput.empty()) {

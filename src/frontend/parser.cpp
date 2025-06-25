@@ -231,7 +231,7 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
 }
 
 void Parser::parseTypeSpecifiersInParameters(
-    std::shared_ptr<std::vector<std::string>> &parameters) {
+    const std::shared_ptr<std::vector<std::string>> &parameters) {
     while (matchToken(TokenType::intKeyword) ||
            matchToken(TokenType::longKeyword)) {
         if (matchToken(TokenType::intKeyword)) {
@@ -566,7 +566,8 @@ std::shared_ptr<Expression> Parser::parseConditionalMiddle() {
 }
 
 std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
-Parser::parseTypeAndStorageClass(std::vector<std::string> &specifierList) {
+Parser::parseTypeAndStorageClass(
+    const std::vector<std::string> &specifierList) {
     std::vector<std::string> types;
     std::vector<std::string> storageClasses;
     for (const auto &specifier : specifierList) {
@@ -592,7 +593,7 @@ Parser::parseTypeAndStorageClass(std::vector<std::string> &specifierList) {
 }
 
 std::shared_ptr<Type>
-Parser::parseType(std::vector<std::string> &specifierList) {
+Parser::parseType(const std::vector<std::string> &specifierList) {
     if (specifierList.size() == 1 && specifierList[0] == "int") {
         return std::make_shared<IntType>();
     }
@@ -616,7 +617,7 @@ Parser::parseType(std::vector<std::string> &specifierList) {
 }
 
 std::shared_ptr<StorageClass>
-Parser::parseStorageClass(std::string &specifier) {
+Parser::parseStorageClass(const std::string &specifier) {
     if (specifier == "static") {
         return std::make_shared<StaticStorageClass>();
     }
