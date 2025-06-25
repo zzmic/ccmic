@@ -24,6 +24,10 @@ class PrettyPrinters {
     printIRInstruction(std::shared_ptr<IR::Instruction> instruction);
     static void printIRReturnInstruction(
         std::shared_ptr<IR::ReturnInstruction> returnInstruction);
+    static void printIRSignExtendInstruction(
+        std::shared_ptr<IR::SignExtendInstruction> signExtendInstruction);
+    static void printIRTruncateInstruction(
+        std::shared_ptr<IR::TruncateInstruction> truncateInstruction);
     static void printIRUnaryInstruction(
         std::shared_ptr<IR::UnaryInstruction> unaryInstruction);
     static void printIRBinaryInstruction(

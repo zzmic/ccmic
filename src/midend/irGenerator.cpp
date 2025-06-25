@@ -46,12 +46,14 @@ IRGenerator::generateIR(std::shared_ptr<AST::Program> astProgram) {
                 }
                 else {
                     throw std::runtime_error(
-                        "Function attribute not found in symbols");
+                        "Function attribute not found in symbols while "
+                        "generating IR instructions for function definition");
                 }
             }
             else {
                 throw std::runtime_error(
-                    "Function declaration not found in symbols");
+                    "Function declaration not found in symbols while "
+                    "generating IR instructions for function definition");
             }
             // Generate IR instructions for the body of the function.
             generateIRBlock(optBody.value(), instructions);
@@ -238,7 +240,8 @@ void IRGenerator::generateIRStatement(
         // If the statement is a null statement, do nothing.
     }
     else {
-        throw std::runtime_error("Unsupported statement type");
+        throw std::runtime_error("Unsupported statement type while generating "
+                                 "IR instructions for statement");
     }
 }
 
@@ -463,7 +466,9 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
                     std::get<long>(variantValue)));
         }
         else {
-            throw std::runtime_error("Unsupported constant type");
+            throw std::runtime_error(
+                "Unsupported constant type while generating IR instructions "
+                "for expression");
         }
     }
     else if (auto unaryExpr =
@@ -513,7 +518,9 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             return variableValue;
         }
         else {
-            throw std::runtime_error("Unsupported lvalue type in assignment");
+            throw std::runtime_error(
+                "Unsupported lvalue type in assignment while generating IR "
+                "instructions for expression");
         }
     }
     else if (auto conditionalExpr =
@@ -547,7 +554,12 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             functionIdentifier, args, instructions);
         return resultValue;
     }
-    throw std::runtime_error("Unsupported expression type");
+    else if (auto castExpr =
+                 std::dynamic_pointer_cast<AST::CastExpression>(e)) {
+        return generateIRCastInstruction(castExpr, instructions);
+    }
+    throw std::runtime_error("Unsupported expression type while generating IR "
+                             "instructions for expression");
 }
 
 std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
@@ -581,20 +593,27 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
     std::shared_ptr<AST::BinaryExpression> binaryExpr,
     std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
         instructions) {
-    // Convert the binary operator in the binary expression to a IR
-    // binary operator.
-    auto IROp = convertBinop(binaryExpr->getOperator());
-
-    // Create a temporary variable (in string) to store the result of
-    // the binary operation.
-    auto tmpName = generateIRTemporary();
-    // Create a variable value for the temporary variable.
-    auto dst = std::make_shared<IR::VariableValue>(tmpName);
-
     // Recursively generate the left and right expressions in the binary
     // expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
     auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
+
+    // Create a temporary variable (in string) to store the result of
+    // the binary operation.
+    auto tmpName = generateIRTemporary();
+
+    // Add the temporary variable to the symbols table with the appropriate type
+    // and local attribute.
+    symbols[tmpName] = std::make_pair(binaryExpr->getExpType(),
+                                      std::make_shared<AST::LocalAttribute>());
+
+    // Create a variable value for the temporary variable.
+    auto dst = std::make_shared<IR::VariableValue>(tmpName);
+
+    // Convert the binary operator in the binary expression to a IR
+    // binary operator.
+    auto IROp = convertBinop(binaryExpr->getOperator());
+
     // Generate a binary instruction with the IR binary operator, the
     // left-hand side value, the right-hand side value, and the
     // destination value.
@@ -883,7 +902,8 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                 }
                 else {
                     throw std::runtime_error(
-                        "Unsupported static initializer type");
+                        "Unsupported static initializer type while converting "
+                        "symbols to IR static variables");
                 }
             }
             else if (auto tentative = std::dynamic_pointer_cast<AST::Tentative>(
@@ -898,7 +918,9 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                         std::make_shared<AST::LongInit>(0L)));
                 }
                 else {
-                    throw std::runtime_error("Unsupported tentative type");
+                    throw std::runtime_error(
+                        "Unsupported tentative type while converting symbols "
+                        "to IR static variables");
                 }
             }
             else if (std::dynamic_pointer_cast<AST::NoInitializer>(
@@ -906,7 +928,9 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                 continue;
             }
             else {
-                throw std::runtime_error("Unsupported initial value type");
+                throw std::runtime_error(
+                    "Unsupported initial value type while converting symbols "
+                    "to IR static variables");
             }
         }
         else {
@@ -927,7 +951,8 @@ IRGenerator::convertUnop(std::shared_ptr<AST::UnaryOperator> op) {
     else if (std::dynamic_pointer_cast<AST::NotOperator>(op)) {
         return std::make_shared<IR::NotOperator>();
     }
-    throw std::runtime_error("Unsupported unary operator");
+    throw std::runtime_error("Unsupported unary operator while converting "
+                             "unary operator to IR unary operator");
 }
 
 // Note: The logical-and and logical-or operators in the AST are NOT binary
@@ -968,6 +993,7 @@ IRGenerator::convertBinop(std::shared_ptr<AST::BinaryOperator> op) {
     else if (std::dynamic_pointer_cast<AST::GreaterThanOrEqualOperator>(op)) {
         return std::make_shared<IR::GreaterThanOrEqualOperator>();
     }
-    throw std::runtime_error("Unsupported binary operator");
+    throw std::runtime_error("Unsupported binary operator while converting "
+                             "binary operator to IR binary operator");
 }
 } // namespace IR

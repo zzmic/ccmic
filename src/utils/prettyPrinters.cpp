@@ -102,6 +102,16 @@ void PrettyPrinters::printIRInstruction(
                      instruction)) {
         printIRFunctionCallInstruction(functionCallInstruction);
     }
+    else if (auto signExtendInstruction =
+                 std::dynamic_pointer_cast<IR::SignExtendInstruction>(
+                     instruction)) {
+        printIRSignExtendInstruction(signExtendInstruction);
+    }
+    else if (auto truncateInstruction =
+                 std::dynamic_pointer_cast<IR::TruncateInstruction>(
+                     instruction)) {
+        printIRTruncateInstruction(truncateInstruction);
+    }
     else {
         throw std::runtime_error("Unknown instruction type in IR program");
     }
@@ -137,6 +147,16 @@ void PrettyPrinters::printIRReturnInstruction(
     }
 
     std::cout << "\n";
+}
+
+void PrettyPrinters::printIRSignExtendInstruction(
+    std::shared_ptr<IR::SignExtendInstruction> signExtendInstruction) {
+    // TODO(zzmic): Implement this.
+}
+
+void PrettyPrinters::printIRTruncateInstruction(
+    std::shared_ptr<IR::TruncateInstruction> truncateInstruction) {
+    // TODO(zzmic): Implement this.
 }
 
 void PrettyPrinters::printIRUnaryInstruction(
