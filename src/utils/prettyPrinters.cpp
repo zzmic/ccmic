@@ -1,5 +1,4 @@
 #include "prettyPrinters.h"
-#include <iomanip>
 
 /*
  * Start: Functions to print the IR program onto the stdout.
@@ -46,8 +45,19 @@ void PrettyPrinters::printIRFunctionDefinition(
 
 void PrettyPrinters::printIRStaticVariable(
     std::shared_ptr<IR::StaticVariable> staticVariable) {
-    std::cout << "[static] " << staticVariable->getIdentifier() << " = "
-              << staticVariable->getInitialValue() << "\n";
+    auto staticInit = staticVariable->getStaticInit();
+    std::cout << "[static] " << staticVariable->getIdentifier() << " = ";
+
+    if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        std::cout << std::get<int>(intInit->getValue());
+    }
+    else if (auto longInit =
+                 std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+        std::cout << std::get<long>(longInit->getValue());
+    }
+    else {
+        throw std::runtime_error("Unknown static variable initializer type");
+    }
 }
 
 void PrettyPrinters::printIRInstruction(
@@ -92,6 +102,9 @@ void PrettyPrinters::printIRInstruction(
                      instruction)) {
         printIRFunctionCallInstruction(functionCallInstruction);
     }
+    else {
+        throw std::runtime_error("Unknown instruction type in IR program");
+    }
 }
 
 void PrettyPrinters::printIRReturnInstruction(
@@ -100,11 +113,27 @@ void PrettyPrinters::printIRReturnInstruction(
 
     if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
             returnInstruction->getReturnValue())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in return instruction");
+        }
     }
     else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
                  returnInstruction->getReturnValue())) {
         std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown return value type in return instruction");
     }
 
     std::cout << "\n";
@@ -117,6 +146,10 @@ void PrettyPrinters::printIRUnaryInstruction(
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             unaryInstruction->getDst())) {
         std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown destination value type in unary instruction");
     }
 
     if (auto complementOperator =
@@ -133,6 +166,9 @@ void PrettyPrinters::printIRUnaryInstruction(
                  unaryInstruction->getUnaryOperator())) {
         std::cout << " = !";
     }
+    else {
+        throw std::runtime_error("Unknown unary operator in instruction");
+    }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             unaryInstruction->getSrc())) {
@@ -140,7 +176,25 @@ void PrettyPrinters::printIRUnaryInstruction(
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
                  unaryInstruction->getSrc())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+            std::cout << "\n";
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+            std::cout << "\n";
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in unary instruction");
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown source value type in unary instruction");
     }
 
     std::cout << "\n";
@@ -161,7 +215,23 @@ void PrettyPrinters::printIRBinaryInstruction(
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
                  binaryInstruction->getSrc1())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in binary instruction");
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown source value type in binary instruction");
     }
 
     if (auto binaryOperator = std::dynamic_pointer_cast<IR::AddOperator>(
@@ -217,6 +287,9 @@ void PrettyPrinters::printIRBinaryInstruction(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " >= ";
     }
+    else {
+        throw std::runtime_error("Unknown binary operator in instruction");
+    }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
             binaryInstruction->getSrc2())) {
@@ -224,7 +297,23 @@ void PrettyPrinters::printIRBinaryInstruction(
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
                  binaryInstruction->getSrc2())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in binary instruction");
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown source value type in binary instruction");
     }
 
     std::cout << "\n";
@@ -242,13 +331,28 @@ void PrettyPrinters::printIRCopyInstruction(
 
     if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
             copyInstruction->getSrc())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in copy instruction");
+        }
     }
     else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
                  copyInstruction->getSrc())) {
         std::cout << variableValue->getIdentifier();
     }
-
+    else {
+        throw std::runtime_error(
+            "Unknown source value type in copy instruction");
+    }
     std::cout << "\n";
 }
 
@@ -267,7 +371,19 @@ void PrettyPrinters::printIRJumpIfZeroInstruction(
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
                  jumpIfZeroInstruction->getCondition())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in jump if zero instruction");
+        }
     }
 
     std::cout << ", " << jumpIfZeroInstruction->getTarget() << ")\n";
@@ -283,7 +399,23 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
     }
     else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
                  jumpIfNotZeroInstruction->getCondition())) {
-        std::cout << constantValue->getValue();
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in jump if not zero instruction");
+        }
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown condition value type in jump if not zero instruction");
     }
 
     std::cout << ", " << jumpIfNotZeroInstruction->getTarget() << ")\n";
@@ -301,9 +433,14 @@ void PrettyPrinters::printIRFunctionCallInstruction(
             std::dynamic_pointer_cast<IR::VariableValue>(dst)) {
         std::cout << "    " << variableValue->getIdentifier() << " = ";
     }
+    else {
+        throw std::runtime_error(
+            "Unknown destination value type in function call instruction");
+    }
 
     auto functionIdentifier = functionCallInstruction->getFunctionIdentifier();
     std::cout << functionIdentifier << "(";
+
     auto &args = *functionCallInstruction->getArgs();
     for (auto it = args.begin(); it != args.end(); it++) {
         auto &arg = *it;
@@ -313,13 +450,26 @@ void PrettyPrinters::printIRFunctionCallInstruction(
         }
         else if (auto constantValue =
                      std::dynamic_pointer_cast<IR::ConstantValue>(arg)) {
-            std::cout << constantValue->getValue();
+            if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                    constantValue->getASTConstant())) {
+                std::cout << constantInt->getValue();
+            }
+            else if (auto constantLong =
+                         std::dynamic_pointer_cast<AST::ConstantLong>(
+                             constantValue->getASTConstant())) {
+                std::cout << constantLong->getValue();
+            }
+            else {
+                throw std::runtime_error(
+                    "Unknown constant type in function call argument");
+            }
         }
         bool isLast = (std::next(it) == args.end());
         if (!isLast) {
             std::cout << ", ";
         }
     }
+
     std::cout << ")\n";
 }
 /*

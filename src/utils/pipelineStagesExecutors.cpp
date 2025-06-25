@@ -126,7 +126,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
         irProgramAndIRStaticVariables;
     try {
         IR::IRGenerator irGenerator(variableResolutionCounter, symbols);
-        irProgramAndIRStaticVariables = irGenerator.generate(astProgram);
+        irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "IR generation error: " << e.what();
@@ -168,7 +168,7 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         // Instantiate an assembly generator object and generate the assembly.
         Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables,
                                                       symbols);
-        assemblyProgram = assemblyGenerator.generate(irProgram);
+        assemblyProgram = assemblyGenerator.generateIR(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and associate the stack
         // size with each top-level element.

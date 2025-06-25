@@ -18,7 +18,7 @@ class AssemblyGenerator {
                                      std::shared_ptr<AST::IdentifierAttribute>>>
             symbols);
     std::shared_ptr<Assembly::Program>
-    generate(std::shared_ptr<IR::Program> irProgram);
+    generateIR(std::shared_ptr<IR::Program> irProgram);
 
   private:
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>

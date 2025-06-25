@@ -11,7 +11,7 @@ IRGenerator::IRGenerator(
 
 std::pair<std::shared_ptr<IR::Program>,
           std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
-IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
+IRGenerator::generateIR(std::shared_ptr<AST::Program> astProgram) {
     // Initialize the vector of IR top-levels (top-level elements).
     auto topLevels =
         std::make_shared<std::vector<std::shared_ptr<IR::TopLevel>>>();
@@ -67,7 +67,8 @@ IRGenerator::generate(std::shared_ptr<AST::Program> astProgram) {
                     functionDefinition->getFunctionBody()->back())) {
                 functionDefinition->getFunctionBody()->emplace_back(
                     std::make_shared<IR::ReturnInstruction>(
-                        std::make_shared<IR::ConstantValue>(0)));
+                        std::make_shared<IR::ConstantValue>(
+                            std::make_shared<AST::ConstantInt>(0))));
             }
             // Add the IR function definition to the vector of IR top-levels.
             topLevels->emplace_back(std::move(functionDefinition));
@@ -450,10 +451,20 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         instructions) {
     if (auto constantExpr =
             std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
-        // TODO(zzmic): This is a temporary solution.
         auto variantValue = constantExpr->getConstantInIntOrLongVariant();
-        int intValue = std::get<int>(variantValue);
-        return std::make_shared<IR::ConstantValue>(intValue);
+        if (std::holds_alternative<int>(variantValue)) {
+            return std::make_shared<IR::ConstantValue>(
+                std::make_shared<AST::ConstantInt>(
+                    std::get<int>(variantValue)));
+        }
+        else if (std::holds_alternative<long>(variantValue)) {
+            return std::make_shared<IR::ConstantValue>(
+                std::make_shared<AST::ConstantLong>(
+                    std::get<long>(variantValue)));
+        }
+        else {
+            throw std::runtime_error("Unsupported constant type");
+        }
     }
     else if (auto unaryExpr =
                  std::dynamic_pointer_cast<AST::UnaryExpression>(e)) {
@@ -536,9 +547,7 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             functionIdentifier, args, instructions);
         return resultValue;
     }
-    else {
-        throw std::runtime_error("Unsupported assignment type");
-    }
+    throw std::runtime_error("Unsupported expression type");
 }
 
 std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
@@ -620,8 +629,9 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     // label.
     auto resultLabel = generateIRResultLabel();
     auto dst = std::make_shared<IR::VariableValue>(resultLabel);
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
-                              instructions);
+    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
+                                  std::make_shared<AST::ConstantInt>(1)),
+                              dst, instructions);
 
     // Generate a jump instruction with a new end label.
     auto endLabel = generateIREndLabel();
@@ -631,8 +641,9 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     generateIRLabelInstruction(falseLabel, instructions);
 
     // Generate a copy instruction with 0 being copied to the result.
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
-                              instructions);
+    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
+                                  std::make_shared<AST::ConstantInt>(0)),
+                              dst, instructions);
 
     // Generate a label instruction with the same (new) end label.
     generateIRLabelInstruction(endLabel, instructions);
@@ -666,8 +677,9 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     // label.
     auto resultLabel = generateIRResultLabel();
     auto dst = std::make_shared<IR::VariableValue>(resultLabel);
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(0), dst,
-                              instructions);
+    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
+                                  std::make_shared<AST::ConstantInt>(0)),
+                              dst, instructions);
 
     // Generate a jump instruction with a new end label.
     auto endLabel = generateIREndLabel();
@@ -677,8 +689,9 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     generateIRLabelInstruction(trueLabel, instructions);
 
     // Generate a copy instruction with 1 being copied to the result.
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(1), dst,
-                              instructions);
+    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
+                                  std::make_shared<AST::ConstantInt>(1)),
+                              dst, instructions);
 
     // Generate a label instruction with the same (new) end label.
     generateIRLabelInstruction(endLabel, instructions);
@@ -752,6 +765,40 @@ IRGenerator::generateIRFunctionCallInstruction(
     return dst;
 }
 
+std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
+    std::shared_ptr<AST::CastExpression> castExpr,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+        instructions) {
+    // Recursively generate the expression in the cast expression.
+    auto result =
+        generateIRInstruction(castExpr->getExpression(), instructions);
+    // If the target type is the same as the expression type, return the
+    // result as a `VariableValue`.
+    if (*castExpr->getTargetType() == *castExpr->getExpType()) {
+        return std::dynamic_pointer_cast<IR::VariableValue>(result);
+    }
+    // Create a temporary variable (in string) to store the result of
+    // the cast operation.
+    auto dstName = generateIRTemporary();
+    // Create a new entry in the symbol table for the casted variable.
+    symbols[dstName] = std::make_pair(castExpr->getTargetType(),
+                                      std::make_shared<AST::LocalAttribute>());
+    // Create a variable value for the temporary variable.
+    auto dst = std::make_shared<IR::VariableValue>(dstName);
+    // If the target type is a long type, generate a sign extend instruction.
+    // Otherwise, generate a truncate instruction.
+    if (std::dynamic_pointer_cast<AST::LongType>(castExpr->getTargetType())) {
+        instructions->emplace_back(
+            std::make_shared<IR::SignExtendInstruction>(result, dst));
+    }
+    else {
+        instructions->emplace_back(
+            std::make_shared<IR::TruncateInstruction>(result, dst));
+    }
+    // Return the destination value.
+    return dst;
+}
+
 std::string IRGenerator::generateIRTemporary() {
     // Return the string representation of the temporary variable name.
     return "tmp." + std::to_string(irTemporariesCounter++);
@@ -821,15 +868,38 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
             auto global = staticAttribute->isGlobal();
             if (auto initial =
                     std::dynamic_pointer_cast<AST::Initial>(initialValue)) {
-                // TODO(zzmic): This is a temporary solution.
-                irDefs->emplace_back(std::make_shared<StaticVariable>(
-                    name, global,
-                    std::get<int>(initial->getStaticInit()->getValue())));
+                auto valueVariant = initial->getStaticInit()->getValue();
+                if (std::holds_alternative<int>(valueVariant)) {
+                    irDefs->emplace_back(std::make_shared<StaticVariable>(
+                        name, global, type,
+                        std::make_shared<AST::IntInit>(
+                            std::get<int>(valueVariant))));
+                }
+                else if (std::holds_alternative<long>(valueVariant)) {
+                    irDefs->emplace_back(std::make_shared<StaticVariable>(
+                        name, global, type,
+                        std::make_shared<AST::LongInit>(
+                            std::get<long>(valueVariant))));
+                }
+                else {
+                    throw std::runtime_error(
+                        "Unsupported static initializer type");
+                }
             }
             else if (auto tentative = std::dynamic_pointer_cast<AST::Tentative>(
                          initialValue)) {
-                irDefs->emplace_back(
-                    std::make_shared<StaticVariable>(name, global, 0));
+                if (std::dynamic_pointer_cast<AST::IntType>(type)) {
+                    irDefs->emplace_back(std::make_shared<StaticVariable>(
+                        name, global, type, std::make_shared<AST::IntInit>(0)));
+                }
+                else if (std::dynamic_pointer_cast<AST::LongType>(type)) {
+                    irDefs->emplace_back(std::make_shared<StaticVariable>(
+                        name, global, type,
+                        std::make_shared<AST::LongInit>(0L)));
+                }
+                else {
+                    throw std::runtime_error("Unsupported tentative type");
+                }
             }
             else if (std::dynamic_pointer_cast<AST::NoInitializer>(
                          initialValue)) {

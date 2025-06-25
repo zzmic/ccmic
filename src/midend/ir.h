@@ -1,6 +1,8 @@
 #ifndef MIDEND_IR_H
 #define MIDEND_IR_H
 
+#include "../frontend/semanticAnalysisPasses.h"
+#include "../frontend/type.h"
 #include <memory>
 #include <set>
 #include <stdexcept>
@@ -55,12 +57,17 @@ class Value {
 
 class ConstantValue : public Value {
   private:
-    int value;
+    std::shared_ptr<AST::Constant> astConstant;
 
   public:
-    ConstantValue(int value) : value(value) {}
-    int getValue() { return value; }
-    void setValue(int value) { this->value = value; }
+    ConstantValue(std::shared_ptr<AST::Constant> astConstant)
+        : astConstant(astConstant) {}
+    std::shared_ptr<AST::Constant> getASTConstant() const {
+        return astConstant;
+    }
+    void setASTConstant(std::shared_ptr<AST::Constant> astConstant) {
+        this->astConstant = astConstant;
+    }
 };
 
 class VariableValue : public Value {
@@ -91,6 +98,33 @@ class ReturnInstruction : public Instruction {
     void setReturnValue(std::shared_ptr<Value> returnValue) {
         this->returnValue = returnValue;
     }
+};
+
+class SignExtendInstruction : public Instruction {
+  private:
+    std::shared_ptr<Value> src, dst;
+
+  public:
+    SignExtendInstruction(std::shared_ptr<Value> src,
+                          std::shared_ptr<Value> dst)
+        : src(src), dst(dst) {}
+    std::shared_ptr<Value> getSrc() { return src; }
+    std::shared_ptr<Value> getDst() { return dst; }
+    void setSrc(std::shared_ptr<Value> src) { this->src = src; }
+    void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
+};
+
+class TruncateInstruction : public Instruction {
+  private:
+    std::shared_ptr<Value> src, dst;
+
+  public:
+    TruncateInstruction(std::shared_ptr<Value> src, std::shared_ptr<Value> dst)
+        : src(src), dst(dst) {}
+    std::shared_ptr<Value> getSrc() { return src; }
+    std::shared_ptr<Value> getDst() { return dst; }
+    void setSrc(std::shared_ptr<Value> src) { this->src = src; }
+    void setDst(std::shared_ptr<Value> dst) { this->dst = dst; }
 };
 
 class UnaryInstruction : public Instruction {
@@ -267,14 +301,19 @@ class StaticVariable : public TopLevel {
   private:
     std::string identifier;
     bool global;
-    int initialValue;
+    std::shared_ptr<AST::Type> type;
+    std::shared_ptr<AST::StaticInit> staticInit;
 
   public:
-    StaticVariable(std::string identifier, bool global, int initialValue)
-        : identifier(identifier), global(global), initialValue(initialValue) {}
+    StaticVariable(std::string identifier, bool global,
+                   std::shared_ptr<AST::Type> type,
+                   std::shared_ptr<AST::StaticInit> staticInit)
+        : identifier(identifier), global(global), type(type),
+          staticInit(staticInit) {}
     std::string getIdentifier() { return identifier; }
     bool isGlobal() { return global; }
-    int getInitialValue() { return initialValue; }
+    std::shared_ptr<AST::Type> getType() { return type; }
+    std::shared_ptr<AST::StaticInit> getStaticInit() { return staticInit; }
 };
 
 class Program {

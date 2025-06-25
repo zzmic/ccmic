@@ -6,9 +6,7 @@
 #include "../frontend/expression.h"
 #include "../frontend/function.h"
 #include "../frontend/program.h"
-#include "../frontend/semanticAnalysisPasses.h"
 #include "../frontend/statement.h"
-#include "../frontend/type.h"
 #include "ir.h"
 #include <optional>
 #include <unordered_map>
@@ -24,7 +22,7 @@ class IRGenerator {
             symbols);
     std::pair<std::shared_ptr<IR::Program>,
               std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
-    generate(std::shared_ptr<AST::Program> astProgram);
+    generateIR(std::shared_ptr<AST::Program> astProgram);
 
   private:
     int irTemporariesCounter = 0;
@@ -125,6 +123,11 @@ class IRGenerator {
         std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> args,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
+    std::shared_ptr<IR::VariableValue> generateIRCastInstruction(
+        std::shared_ptr<AST::CastExpression> castExpr,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+            instructions);
+
     std::string generateIRTemporary();
     std::string generateIRFalseLabel();
     std::string generateIRTrueLabel();

@@ -12,7 +12,7 @@ AssemblyGenerator::AssemblyGenerator(
     : irStaticVariables(irStaticVariables), symbols(symbols) {}
 
 std::shared_ptr<Assembly::Program>
-AssemblyGenerator::generate(std::shared_ptr<IR::Program> irProgram) {
+AssemblyGenerator::generateIR(std::shared_ptr<IR::Program> irProgram) {
     auto irTopLevels = irProgram->getTopLevels();
     auto assyTopLevels =
         std::make_shared<std::vector<std::shared_ptr<TopLevel>>>();
@@ -105,8 +105,24 @@ AssemblyGenerator::generateAssyStaticVariable(
     std::shared_ptr<IR::StaticVariable> irStaticVariable) {
     auto identifier = irStaticVariable->getIdentifier();
     auto global = irStaticVariable->isGlobal();
-    auto initialValue = irStaticVariable->getInitialValue();
-    return std::make_shared<StaticVariable>(identifier, global, initialValue);
+
+    // TODO(zzmic): This is a temporary solution to convert the IR static
+    // variable to the assembly static variable. `Assembly::StaticVariable`
+    // needs to be updated to support more types of static initializers.
+    // Currently, it only supports constant integers.
+    if (auto constInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+            irStaticVariable->getStaticInit())) {
+        return std::make_shared<StaticVariable>(identifier, global,
+                                                constInt->getValue());
+    }
+    else if (auto constLong = std::dynamic_pointer_cast<AST::ConstantLong>(
+                 irStaticVariable->getStaticInit())) {
+        return std::make_shared<StaticVariable>(identifier, global,
+                                                constLong->getValue());
+    }
+    else {
+        throw std::runtime_error("Unsupported static initializer type");
+    }
 }
 
 void AssemblyGenerator::generateAssyInstruction(
@@ -503,8 +519,19 @@ std::shared_ptr<Assembly::Operand>
 AssemblyGenerator::convertValue(std::shared_ptr<IR::Value> irValue) {
     if (auto constantVal =
             std::dynamic_pointer_cast<IR::ConstantValue>(irValue)) {
-        return std::make_shared<Assembly::ImmediateOperand>(
-            constantVal->getValue());
+        if (auto constInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantVal->getASTConstant())) {
+            return std::make_shared<Assembly::ImmediateOperand>(
+                constInt->getValue());
+        }
+        else if (auto constLong = std::dynamic_pointer_cast<AST::ConstantLong>(
+                     constantVal->getASTConstant())) {
+            return std::make_shared<Assembly::ImmediateOperand>(
+                constLong->getValue());
+        }
+        else {
+            throw std::runtime_error("Unsupported constant type");
+        }
     }
     else if (auto varVal =
                  std::dynamic_pointer_cast<IR::VariableValue>(irValue)) {
