@@ -18,7 +18,7 @@ IRGenerator::generateIR(std::shared_ptr<AST::Program> astProgram) {
 
     // Generate IR instructions for each AST top-level element.
     auto astDeclarations = astProgram->getDeclarations();
-    for (auto &astDeclaration : *astDeclarations) {
+    for (const auto &astDeclaration : *astDeclarations) {
         if (auto functionDeclaration =
                 std::dynamic_pointer_cast<AST::FunctionDeclaration>(
                     astDeclaration)) {
@@ -109,7 +109,7 @@ void IRGenerator::generateIRBlock(
     auto blockItems = astBlock->getBlockItems();
 
     // Generate IR instructions for each block item.
-    for (auto &blockItem : *blockItems) {
+    for (const auto &blockItem : *blockItems) {
         // If the block item is a `DBlockItem` (i.e., a declaration), ...
         if (auto dBlockItem =
                 std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
@@ -877,17 +877,17 @@ std::string IRGenerator::generateIRE2Label() {
     return "e2" + std::to_string(counter++);
 }
 
-std::string
-IRGenerator::generateIRContinueLoopLabel(std::string loopLabelingLabel) {
+std::string IRGenerator::generateIRContinueLoopLabel(
+    const std::string &loopLabelingLabel) const {
     return "continue_" + loopLabelingLabel;
 }
 
-std::string
-IRGenerator::generateIRBreakLoopLabel(std::string loopLabelingLabel) {
+std::string IRGenerator::generateIRBreakLoopLabel(
+    const std::string &loopLabelingLabel) const {
     return "break_" + loopLabelingLabel;
 }
 
-std::string IRGenerator::generateIRStartLabel() {
+std::string IRGenerator::generateIRStartLabel() const {
     static int counter = 0;
     return "start" + std::to_string(counter++);
 }
@@ -896,7 +896,7 @@ std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
 IRGenerator::convertSymbolsToIRStaticVariables() {
     auto irDefs =
         std::make_shared<std::vector<std::shared_ptr<IR::StaticVariable>>>();
-    for (auto &symbol : symbols) {
+    for (const auto &symbol : symbols) {
         auto name = symbol.first;
         auto type = symbol.second.first;
         auto attribute = symbol.second.second;

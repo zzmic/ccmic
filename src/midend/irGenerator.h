@@ -127,7 +127,6 @@ class IRGenerator {
         std::shared_ptr<AST::CastExpression> castExpr,
         std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             instructions);
-
     std::string generateIRTemporary();
     std::string generateIRFalseLabel();
     std::string generateIRTrueLabel();
@@ -135,9 +134,11 @@ class IRGenerator {
     std::string generateIREndLabel();
     std::string generateIRElseLabel();
     std::string generateIRE2Label();
-    std::string generateIRContinueLoopLabel(std::string loopLabelingLabel);
-    std::string generateIRBreakLoopLabel(std::string loopLabelingLabel);
-    std::string generateIRStartLabel();
+    std::string
+    generateIRContinueLoopLabel(const std::string &loopLabelingLabel) const;
+    std::string
+    generateIRBreakLoopLabel(const std::string &loopLabelingLabel) const;
+    std::string generateIRStartLabel() const;
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
     convertSymbolsToIRStaticVariables();
     std::shared_ptr<IR::UnaryOperator>
