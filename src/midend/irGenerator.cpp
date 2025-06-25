@@ -794,7 +794,26 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
     // If the target type is the same as the expression type, return the
     // result as a `VariableValue`.
     if (*castExpr->getTargetType() == *castExpr->getExpType()) {
-        return std::dynamic_pointer_cast<IR::VariableValue>(result);
+        if (auto variableValue =
+                std::dynamic_pointer_cast<IR::VariableValue>(result)) {
+            return variableValue;
+        }
+        // TODO(zzmic): Check if this is correct.
+        else if (auto constantValue =
+                     std::dynamic_pointer_cast<IR::ConstantValue>(result)) {
+            auto dstName = generateIRTemporary();
+            symbols[dstName] =
+                std::make_pair(castExpr->getTargetType(),
+                               std::make_shared<AST::LocalAttribute>());
+            auto dst = std::make_shared<IR::VariableValue>(dstName);
+            instructions->emplace_back(
+                std::make_shared<IR::CopyInstruction>(std::move(result), dst));
+            return dst;
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown result value type in cast instruction");
+        }
     }
     // Create a temporary variable (in string) to store the result of
     // the cast operation.

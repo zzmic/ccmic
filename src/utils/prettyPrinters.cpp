@@ -8,6 +8,7 @@ void PrettyPrinters::printIRProgram(
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
         irStaticVariables) {
     auto topLevels = irProgram->getTopLevels();
+
     for (auto topLevel : *topLevels) {
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
@@ -17,6 +18,7 @@ void PrettyPrinters::printIRProgram(
             throw std::runtime_error("Unsupported top-level element");
         }
     }
+
     for (auto irStaticVariable : *irStaticVariables) {
         printIRStaticVariable(irStaticVariable);
     }
@@ -28,6 +30,7 @@ void PrettyPrinters::printIRFunctionDefinition(
     std::cout << std::boolalpha;
     std::cout << "[isGlobal: " << functionDefinition->isGlobal() << "]";
     std::cout << "(";
+
     auto &parameters = *functionDefinition->getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
@@ -37,6 +40,7 @@ void PrettyPrinters::printIRFunctionDefinition(
             std::cout << ", ";
         }
     }
+
     std::cout << "):\n";
     for (auto instruction : *functionDefinition->getFunctionBody()) {
         printIRInstruction(instruction);
@@ -58,6 +62,8 @@ void PrettyPrinters::printIRStaticVariable(
     else {
         throw std::runtime_error("Unknown static variable initializer type");
     }
+
+    std::cout << "\n";
 }
 
 void PrettyPrinters::printIRInstruction(
@@ -151,12 +157,86 @@ void PrettyPrinters::printIRReturnInstruction(
 
 void PrettyPrinters::printIRSignExtendInstruction(
     std::shared_ptr<IR::SignExtendInstruction> signExtendInstruction) {
-    // TODO(zzmic): Implement this.
+    std::cout << "    ";
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            signExtendInstruction->getDst())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown destination value type in sign extend instruction");
+    }
+
+    std::cout << " = sign_extend(";
+
+    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+            signExtendInstruction->getSrc())) {
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in sign extend instruction");
+        }
+    }
+    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+                 signExtendInstruction->getSrc())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown source value type in sign extend instruction");
+    }
+
+    std::cout << ")\n";
 }
 
 void PrettyPrinters::printIRTruncateInstruction(
     std::shared_ptr<IR::TruncateInstruction> truncateInstruction) {
-    // TODO(zzmic): Implement this.
+    std::cout << "    ";
+    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+            truncateInstruction->getDst())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown destination value type in truncate instruction");
+    }
+
+    std::cout << " = truncate(";
+
+    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
+            truncateInstruction->getSrc())) {
+        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong =
+                     std::dynamic_pointer_cast<AST::ConstantLong>(
+                         constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else {
+            throw std::runtime_error(
+                "Unknown constant type in truncate instruction");
+        }
+    }
+    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
+                 truncateInstruction->getSrc())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::runtime_error(
+            "Unknown source value type in truncate instruction");
+    }
+
+    std::cout << ")\n";
 }
 
 void PrettyPrinters::printIRUnaryInstruction(
@@ -346,11 +426,20 @@ void PrettyPrinters::printIRCopyInstruction(
             copyInstruction->getDst())) {
         std::cout << variableValue->getIdentifier();
     }
+    else {
+        throw std::runtime_error(
+            "Unknown/unsupported destination value type in copy instruction");
+    }
 
     std::cout << " = ";
 
-    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-            copyInstruction->getSrc())) {
+    auto src = copyInstruction->getSrc();
+    if (src == nullptr) {
+        throw std::runtime_error("Source value is null in copy instruction");
+    }
+
+    if (auto constantValue =
+            std::dynamic_pointer_cast<IR::ConstantValue>(src)) {
         if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
@@ -365,14 +454,15 @@ void PrettyPrinters::printIRCopyInstruction(
                 "Unknown constant type in copy instruction");
         }
     }
-    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-                 copyInstruction->getSrc())) {
+    else if (auto variableValue =
+                 std::dynamic_pointer_cast<IR::VariableValue>(src)) {
         std::cout << variableValue->getIdentifier();
     }
     else {
         throw std::runtime_error(
             "Unknown source value type in copy instruction");
     }
+
     std::cout << "\n";
 }
 
@@ -449,6 +539,7 @@ void PrettyPrinters::printIRLabelInstruction(
 void PrettyPrinters::printIRFunctionCallInstruction(
     std::shared_ptr<IR::FunctionCallInstruction> functionCallInstruction) {
     auto dst = functionCallInstruction->getDst();
+
     if (auto variableValue =
             std::dynamic_pointer_cast<IR::VariableValue>(dst)) {
         std::cout << "    " << variableValue->getIdentifier() << " = ";
