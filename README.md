@@ -1,39 +1,65 @@
 ## ccmic
 
 ## Overview
-This project is a _work-in-progress_ implementation of a C compiler (that supports a subset of the C programming language) written in C++. The general design of the compiler is based on the book [_Writing a C Compiler_](https://nostarch.com/writing-c-compiler) by Nora Sandler. The implementation is tested against [the book's companion test suite (by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git).
+This project is a _work-in-progress_ implementation of a C compiler (that supports a subset of the C programming language) written in C++. The general design of the compiler is based on the book [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). The implementation is tested against [the book's companion test suite (maintained by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git).
 
-The compiler is capable of processing C programs and generating corresponding assembly code, which includes the end-to-end transformation of high-level C source code into low-level assembly instructions suitable for x86-64 architecture. Key compiler phases, including lexical analysis (lexing) with regex-based token processing, syntactic analysis (parsing) with recursive descent parsing and precedence climbing for AST construction, semantic analysis with comprehensive type checking, intermediate representation (IR) generation, and (x86-64) assembly code generation and emission, are implemented. The [Visitor design pattern](https://en.wikipedia.org/wiki/Visitor_pattern) is leveraged to traverse and manipulate the abstract syntax tree (AST) within the compiler.
+The compiler transforms C source code into x86-64 assembly through a multi-stage pipeline:
 
-## Features
+1. **Lexical Analysis**: Regex-based tokenization of C source.
+2. **Parsing**: Recursive descent parsing with precedence climbing for AST construction.
+   - The [Visitor design pattern](https://en.wikipedia.org/wiki/Visitor_pattern) is used for AST traversal and manipulation.
+3. **Semantic Analysis**: Type checking, symbol resolution, and loop labeling.
+4. **IR Generation**: AST lowering to custom intermediate representation.
+5. **Code Generation**: IR-to-assembly translation with stack allocation and fixup passes.
+6. **Assembly Emission**: Final x86-64 assembly output.
+
+## Supported Language Features
+
 ### Expressions
-- **Unary operations**: Supports for unary operators (`-`, `~`, `!`).
-- **Binary operations**: Handles arithmetic, bitwise, assignment operators, and logical and relational operators (`+`, `-`, `*`, `/`, `%`, `&`, `|`, `=`, `&&`, `||`, `<`, `>`, `<=`, `>=`, `==`, `!=`).
+- **Unary operations**: `-`, `~`, `!`.
+- **Binary operations**: Arithmetic (`+`, `-`, `*`, `/`, `%`), bitwise (`&`, `|`), assignment (`=`), logical (`&&`, `||`), relational (`<`, `>`, `<=`, `>=`, `==`, `!=`).
 
 ### Statements
-- **Local variables**: Supports declarations and usage of variables within functions and scopes.
-- **If-statements and conditional expressions**: Supports control flow using `if`, `else`, and conditional (ternary) expressions (`? :`).
-- **Compound statements**: Allows nesting multiple blocks using `{}`.
-- **Loops**: Supports `for`, `while`, and `do-while` loops (with `break` and `continue` statements).
+- **Local variables**: Declarations and usage within functions and scopes.
+- **Control flow**: `if`/`else` statements and conditional expressions (`? :`).
+- **Compound statements**: Nested blocks using `{}`.
+- **Loops**: `for`, `while`, and `do-while` loops with `break` and `continue`.
 
 ### Functions
-- **Function definitions**: Allows defining functions with parameters and a return type.
-- **Function calls**: Supports calling user-defined and standard library functions.
+- **Function definitions**: Parameters and return types.
+- **Function calls**: User-defined and standard library functions.
 
 ### File Scope and Storage Classes
-- **File-scope variable declarations**: Handles global variables and their initialization.
-- **Storage-class specifiers**: Supports `static` and `extern` specifiers for controlling variable visibility and linkage.
+- **Global variables**: File-scope declarations and initialization.
+- **Storage specifiers**: `static` and `extern` for visibility and linkage control.
 
-## Building the Compiler
-To build the compiler, run the following command in the root directory of the repository:
+## Project Structure
+The codebase is organized into modular components:
+- **src/frontend/**: Lexer, parser, AST, and semantic analysis.
+- **src/midend/**: IR generation (and optimization passes to be implemented).
+- **src/backend/**: Assembly generation, stack allocation, and fixup passes.
+- **src/utils/**: Pipeline orchestration and pretty-printers for debugging.
 
+## Building and Usage
+
+### Building the Compiler
 ```
 # arch -x86_64 zsh # Run this command if one is running macOS on ARM and is using zsh.
 make
 ```
 
-## Usage
-To compile a C source file, use the following command in the root directory of the repository:
+### Compiling C Programs
 ```
-bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o] [--fold-constants] <sourceFile>
+bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o] <sourceFile>
 ```
+
+### Command-Line Flags
+- **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), `--codegen` (code generation).
+- **Output options**: `-S`/`-s` (assembly emission), `-c` (object file emission).
+- **Optimizations** (to be implemented): `--fold-constants`, `--propagate-copies`, `--eliminate-unreachable-code`, `--eliminate-dead-stores`, `--optimize`.
+
+## Development and Extensibility
+- **Adding language features**: Extend frontend classes and corresponding IR representations in `src/frontend/` and `src/midend/`.
+- **Adding optimizations**: Implement new passes in `src/midend/` following the existing `OptimizationPass` pattern.
+- **Debugging**: Use built-in pretty-printers for IR and assembly inspection in `src/utils/`.
+- **Testing**: Run against the companion test suite linked above.
