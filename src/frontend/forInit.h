@@ -13,9 +13,10 @@ class ForInit : public AST {
 
 class InitDecl : public ForInit {
   public:
-    InitDecl(std::shared_ptr<VariableDeclaration> decl);
+    explicit InitDecl(std::shared_ptr<VariableDeclaration> decl);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<VariableDeclaration> getVariableDeclaration() const;
+    [[nodiscard]] std::shared_ptr<VariableDeclaration>
+    getVariableDeclaration() const;
 
   private:
     std::shared_ptr<VariableDeclaration> decl;
@@ -24,9 +25,10 @@ class InitDecl : public ForInit {
 class InitExpr : public ForInit {
   public:
     constexpr InitExpr() = default;
-    InitExpr(std::optional<std::shared_ptr<Expression>> expr);
+    explicit InitExpr(std::optional<std::shared_ptr<Expression>> expr);
     void accept(Visitor &visitor) override;
-    std::optional<std::shared_ptr<Expression>> getExpression() const;
+    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
+    getExpression() const;
 
   private:
     std::optional<std::shared_ptr<Expression>> expr;

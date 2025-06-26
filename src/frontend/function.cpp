@@ -11,5 +11,5 @@ const std::string &Function::getIdentifier() const { return identifier; }
 
 std::shared_ptr<Block> Function::getBody() const { return body; }
 
-void Function::setBody(std::shared_ptr<Block> body) { this->body = body; }
+void Function::setBody(std::shared_ptr<Block> newBody) { this->body = newBody; }
 } // Namespace AST

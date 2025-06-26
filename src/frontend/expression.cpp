@@ -19,8 +19,8 @@ std::shared_ptr<Constant> ConstantExpression::getConstant() const {
 
 std::shared_ptr<Type> ConstantExpression::getExpType() const { return expType; }
 
-void ConstantExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void ConstantExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 std::variant<int, long>
@@ -54,8 +54,8 @@ const std::string &VariableExpression::getIdentifier() const {
 
 std::shared_ptr<Type> VariableExpression::getExpType() const { return expType; }
 
-void VariableExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void VariableExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 CastExpression::CastExpression(std::shared_ptr<Type> targetType,
@@ -79,8 +79,8 @@ std::shared_ptr<Expression> CastExpression::getExpression() const {
 
 std::shared_ptr<Type> CastExpression::getExpType() const { return expType; }
 
-void CastExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void CastExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 UnaryExpression::UnaryExpression(std::string_view opInStr,
@@ -150,8 +150,8 @@ std::shared_ptr<Factor> UnaryExpression::getExpression() const { return expr; }
 
 std::shared_ptr<Type> UnaryExpression::getExpType() const { return expType; }
 
-void UnaryExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void UnaryExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
@@ -268,28 +268,28 @@ void BinaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 std::shared_ptr<Expression> BinaryExpression::getLeft() const { return left; }
 
-void BinaryExpression::setLeft(std::shared_ptr<Expression> left) {
-    this->left = left;
+void BinaryExpression::setLeft(std::shared_ptr<Expression> newLeft) {
+    this->left = newLeft;
 }
 
 std::shared_ptr<BinaryOperator> BinaryExpression::getOperator() const {
     return op;
 }
 
-void BinaryExpression::setOperator(std::shared_ptr<BinaryOperator> op) {
-    this->op = op;
+void BinaryExpression::setOperator(std::shared_ptr<BinaryOperator> newOp) {
+    this->op = newOp;
 }
 
 std::shared_ptr<Expression> BinaryExpression::getRight() const { return right; }
 
-void BinaryExpression::setRight(std::shared_ptr<Expression> right) {
-    this->right = right;
+void BinaryExpression::setRight(std::shared_ptr<Expression> newRight) {
+    this->right = newRight;
 }
 
 std::shared_ptr<Type> BinaryExpression::getExpType() const { return expType; }
 
-void BinaryExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void BinaryExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 AssignmentExpression::AssignmentExpression(std::shared_ptr<Expression> left,
@@ -315,8 +315,8 @@ std::shared_ptr<Type> AssignmentExpression::getExpType() const {
     return expType;
 }
 
-void AssignmentExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void AssignmentExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 ConditionalExpression::ConditionalExpression(
@@ -340,8 +340,8 @@ std::shared_ptr<Expression> ConditionalExpression::getCondition() const {
 }
 
 void ConditionalExpression::setCondition(
-    std::shared_ptr<Expression> condition) {
-    this->condition = condition;
+    std::shared_ptr<Expression> newCondition) {
+    this->condition = newCondition;
 }
 
 std::shared_ptr<Expression> ConditionalExpression::getThenExpression() const {
@@ -349,8 +349,8 @@ std::shared_ptr<Expression> ConditionalExpression::getThenExpression() const {
 }
 
 void ConditionalExpression::setThenExpression(
-    std::shared_ptr<Expression> thenExpression) {
-    this->thenExpression = thenExpression;
+    std::shared_ptr<Expression> newThenExpression) {
+    this->thenExpression = newThenExpression;
 }
 
 std::shared_ptr<Expression> ConditionalExpression::getElseExpression() const {
@@ -358,16 +358,16 @@ std::shared_ptr<Expression> ConditionalExpression::getElseExpression() const {
 }
 
 void ConditionalExpression::setElseExpression(
-    std::shared_ptr<Expression> elseExpression) {
-    this->elseExpression = elseExpression;
+    std::shared_ptr<Expression> newElseExpression) {
+    this->elseExpression = newElseExpression;
 }
 
 std::shared_ptr<Type> ConditionalExpression::getExpType() const {
     return expType;
 }
 
-void ConditionalExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void ConditionalExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 
 FunctionCallExpression::FunctionCallExpression(
@@ -393,15 +393,15 @@ FunctionCallExpression::getArguments() const {
 }
 
 void FunctionCallExpression::setArguments(
-    std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments) {
-    this->arguments = arguments;
+    std::shared_ptr<std::vector<std::shared_ptr<Expression>>> newArguments) {
+    this->arguments = newArguments;
 }
 
 std::shared_ptr<Type> FunctionCallExpression::getExpType() const {
     return expType;
 }
 
-void FunctionCallExpression::setExpType(std::shared_ptr<Type> expType) {
-    this->expType = expType;
+void FunctionCallExpression::setExpType(std::shared_ptr<Type> newExpType) {
+    this->expType = newExpType;
 }
 } // Namespace AST

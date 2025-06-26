@@ -23,7 +23,7 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
             for (auto instruction : *functionDefinition->getFunctionBody()) {
                 replacePseudoWithStack(instruction, pseudoToStackMap, offset);
             }
-            functionDefinition->setStackSize(-offset);
+            functionDefinition->setStackSize(static_cast<size_t>(-offset));
         }
     }
 

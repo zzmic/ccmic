@@ -116,9 +116,12 @@ Token matchToken(std::string_view input) {
     // `intKeyword_regex`)
     else if (std::regex_search(inputStr, tokenMatch, identifier_regex))
         return {TokenType::Identifier, tokenMatch.str()};
-    // If no match is found, return an "invalid" token.
-    else
-        return {TokenType::Invalid, std::string(input)};
+    else {
+        // If no token matches, throw an error.
+        std::stringstream msg;
+        msg << "Unknown token: " << inputStr;
+        throw std::invalid_argument(msg.str());
+    }
 }
 
 // Function to tokenize the input string and return a vector of tokens.

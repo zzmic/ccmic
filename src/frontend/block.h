@@ -7,9 +7,11 @@
 namespace AST {
 class Block : public AST {
   public:
-    Block(std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
+    explicit Block(
+        std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
     void accept(Visitor &visitor) override;
-    const std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> &
+    [[nodiscard]] const std::shared_ptr<
+        std::vector<std::shared_ptr<BlockItem>>> &
     getBlockItems() const;
     void addBlockItem(std::shared_ptr<BlockItem> blockItem);
     void setBlockItems(

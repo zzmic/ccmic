@@ -23,15 +23,15 @@ class Factor : public Expression {};
 
 class ConstantExpression : public Factor {
   public:
-    ConstantExpression(std::shared_ptr<Constant> constant);
-    ConstantExpression(std::shared_ptr<Constant> constant,
-                       std::shared_ptr<Type> expType);
+    explicit ConstantExpression(std::shared_ptr<Constant> constant);
+    explicit ConstantExpression(std::shared_ptr<Constant> constant,
+                                std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Constant> getConstant() const;
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<Constant> getConstant() const;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
-    int getConstantInInt() const;
-    std::variant<int, long> getConstantInIntOrLongVariant() const;
+    [[nodiscard]] int getConstantInInt() const;
+    [[nodiscard]] std::variant<int, long> getConstantInIntOrLongVariant() const;
 
   private:
     std::shared_ptr<Constant> constant;
@@ -41,12 +41,12 @@ class ConstantExpression : public Factor {
 
 class VariableExpression : public Factor {
   public:
-    VariableExpression(std::string_view identifier);
-    VariableExpression(std::string_view identifier,
-                       std::shared_ptr<Type> expType);
+    explicit VariableExpression(std::string_view identifier);
+    explicit VariableExpression(std::string_view identifier,
+                                std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    const std::string &getIdentifier() const;
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] const std::string &getIdentifier() const;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:
@@ -56,15 +56,15 @@ class VariableExpression : public Factor {
 
 class CastExpression : public Factor {
   public:
-    CastExpression(std::shared_ptr<Type> targetType,
-                   std::shared_ptr<Expression> expr);
-    CastExpression(std::shared_ptr<Type> targetType,
-                   std::shared_ptr<Expression> expr,
-                   std::shared_ptr<Type> expType);
+    explicit CastExpression(std::shared_ptr<Type> targetType,
+                            std::shared_ptr<Expression> expr);
+    explicit CastExpression(std::shared_ptr<Type> targetType,
+                            std::shared_ptr<Expression> expr,
+                            std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Type> getTargetType() const;
-    std::shared_ptr<Expression> getExpression() const;
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<Type> getTargetType() const;
+    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:
@@ -75,18 +75,20 @@ class CastExpression : public Factor {
 
 class UnaryExpression : public Factor {
   public:
-    UnaryExpression(std::string_view opInStr, std::shared_ptr<Expression> expr);
-    UnaryExpression(std::string_view opInStr, std::shared_ptr<Expression> expr,
-                    std::shared_ptr<Type> expType);
-    UnaryExpression(std::shared_ptr<UnaryOperator> op,
-                    std::shared_ptr<Factor> expr);
-    UnaryExpression(std::shared_ptr<UnaryOperator> op,
-                    std::shared_ptr<Factor> expr,
-                    std::shared_ptr<Type> expType);
+    explicit UnaryExpression(std::string_view opInStr,
+                             std::shared_ptr<Expression> expr);
+    explicit UnaryExpression(std::string_view opInStr,
+                             std::shared_ptr<Expression> expr,
+                             std::shared_ptr<Type> expType);
+    explicit UnaryExpression(std::shared_ptr<UnaryOperator> op,
+                             std::shared_ptr<Factor> expr);
+    explicit UnaryExpression(std::shared_ptr<UnaryOperator> op,
+                             std::shared_ptr<Factor> expr,
+                             std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<UnaryOperator> getOperator() const;
-    std::shared_ptr<Factor> getExpression() const;
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<UnaryOperator> getOperator() const;
+    [[nodiscard]] std::shared_ptr<Factor> getExpression() const;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:
@@ -97,26 +99,28 @@ class UnaryExpression : public Factor {
 
 class BinaryExpression : public Expression {
   public:
-    BinaryExpression(std::shared_ptr<Expression> left, std::string_view opInStr,
-                     std::shared_ptr<Expression> right);
-    BinaryExpression(std::shared_ptr<Expression> left, std::string_view opInStr,
-                     std::shared_ptr<Expression> right,
-                     std::shared_ptr<Type> expType);
-    BinaryExpression(std::shared_ptr<Expression> left,
-                     std::shared_ptr<BinaryOperator> op,
-                     std::shared_ptr<Expression> right);
-    BinaryExpression(std::shared_ptr<Expression> left,
-                     std::shared_ptr<BinaryOperator> op,
-                     std::shared_ptr<Expression> right,
-                     std::shared_ptr<Type> expType);
+    explicit BinaryExpression(std::shared_ptr<Expression> left,
+                              std::string_view opInStr,
+                              std::shared_ptr<Expression> right);
+    explicit BinaryExpression(std::shared_ptr<Expression> left,
+                              std::string_view opInStr,
+                              std::shared_ptr<Expression> right,
+                              std::shared_ptr<Type> expType);
+    explicit BinaryExpression(std::shared_ptr<Expression> left,
+                              std::shared_ptr<BinaryOperator> op,
+                              std::shared_ptr<Expression> right);
+    explicit BinaryExpression(std::shared_ptr<Expression> left,
+                              std::shared_ptr<BinaryOperator> op,
+                              std::shared_ptr<Expression> right,
+                              std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getLeft() const;
+    [[nodiscard]] std::shared_ptr<Expression> getLeft() const;
     void setLeft(std::shared_ptr<Expression> left);
-    std::shared_ptr<BinaryOperator> getOperator() const;
+    [[nodiscard]] std::shared_ptr<BinaryOperator> getOperator() const;
     void setOperator(std::shared_ptr<BinaryOperator> op);
-    std::shared_ptr<Expression> getRight() const;
+    [[nodiscard]] std::shared_ptr<Expression> getRight() const;
     void setRight(std::shared_ptr<Expression> right);
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:
@@ -128,15 +132,15 @@ class BinaryExpression : public Expression {
 
 class AssignmentExpression : public Expression {
   public:
-    AssignmentExpression(std::shared_ptr<Expression> left,
-                         std::shared_ptr<Expression> right);
-    AssignmentExpression(std::shared_ptr<Expression> left,
-                         std::shared_ptr<Expression> right,
-                         std::shared_ptr<Type> expType);
+    explicit AssignmentExpression(std::shared_ptr<Expression> left,
+                                  std::shared_ptr<Expression> right);
+    explicit AssignmentExpression(std::shared_ptr<Expression> left,
+                                  std::shared_ptr<Expression> right,
+                                  std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getLeft() const;
-    std::shared_ptr<Expression> getRight() const;
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<Expression> getLeft() const;
+    [[nodiscard]] std::shared_ptr<Expression> getRight() const;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:
@@ -147,21 +151,21 @@ class AssignmentExpression : public Expression {
 
 class ConditionalExpression : public Expression {
   public:
-    ConditionalExpression(std::shared_ptr<Expression> condition,
-                          std::shared_ptr<Expression> thenExpression,
-                          std::shared_ptr<Expression> elseExpression);
-    ConditionalExpression(std::shared_ptr<Expression> condition,
-                          std::shared_ptr<Expression> thenExpression,
-                          std::shared_ptr<Expression> elseExpression,
-                          std::shared_ptr<Type> expType);
+    explicit ConditionalExpression(std::shared_ptr<Expression> condition,
+                                   std::shared_ptr<Expression> thenExpression,
+                                   std::shared_ptr<Expression> elseExpression);
+    explicit ConditionalExpression(std::shared_ptr<Expression> condition,
+                                   std::shared_ptr<Expression> thenExpression,
+                                   std::shared_ptr<Expression> elseExpression,
+                                   std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
     void setCondition(std::shared_ptr<Expression> condition);
-    std::shared_ptr<Expression> getThenExpression() const;
+    [[nodiscard]] std::shared_ptr<Expression> getThenExpression() const;
     void setThenExpression(std::shared_ptr<Expression> thenExpression);
-    std::shared_ptr<Expression> getElseExpression() const;
+    [[nodiscard]] std::shared_ptr<Expression> getElseExpression() const;
     void setElseExpression(std::shared_ptr<Expression> elseExpression);
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:
@@ -173,20 +177,21 @@ class ConditionalExpression : public Expression {
 
 class FunctionCallExpression : public Expression {
   public:
-    FunctionCallExpression(
+    explicit FunctionCallExpression(
         std::string_view identifier,
         std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments);
-    FunctionCallExpression(
+    explicit FunctionCallExpression(
         std::string_view identifier,
         std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments,
         std::shared_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    const std::string &getIdentifier() const;
-    const std::shared_ptr<std::vector<std::shared_ptr<Expression>>> &
+    [[nodiscard]] const std::string &getIdentifier() const;
+    [[nodiscard]] const std::shared_ptr<
+        std::vector<std::shared_ptr<Expression>>> &
     getArguments() const;
     void setArguments(
         std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments);
-    std::shared_ptr<Type> getExpType() const override;
+    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
   private:

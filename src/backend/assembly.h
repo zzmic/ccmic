@@ -251,8 +251,8 @@ class MovInstruction : public Instruction {
         : src(src), dst(dst) {}
     std::shared_ptr<Operand> getSrc() { return src; }
     std::shared_ptr<Operand> getDst() { return dst; }
-    void setSrc(std::shared_ptr<Operand> src) { this->src = src; }
-    void setDst(std::shared_ptr<Operand> dst) { this->dst = dst; }
+    void setSrc(std::shared_ptr<Operand> newSrc) { this->src = newSrc; }
+    void setDst(std::shared_ptr<Operand> newDst) { this->dst = newDst; }
 };
 
 class UnaryInstruction : public Instruction {
@@ -266,11 +266,11 @@ class UnaryInstruction : public Instruction {
         : unaryOperator(unaryOperator), operand(operand) {}
     std::shared_ptr<UnaryOperator> getUnaryOperator() { return unaryOperator; }
     std::shared_ptr<Operand> getOperand() { return operand; }
-    void setUnaryOperator(std::shared_ptr<UnaryOperator> unaryOperator) {
-        this->unaryOperator = unaryOperator;
+    void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator) {
+        this->unaryOperator = newUnaryOperator;
     }
-    void setOperand(std::shared_ptr<Operand> operand) {
-        this->operand = operand;
+    void setOperand(std::shared_ptr<Operand> newOperand) {
+        this->operand = newOperand;
     }
 };
 
@@ -290,14 +290,14 @@ class BinaryInstruction : public Instruction {
     }
     std::shared_ptr<Operand> getOperand1() { return operand1; }
     std::shared_ptr<Operand> getOperand2() { return operand2; }
-    void setBinaryOperator(std::shared_ptr<BinaryOperator> binaryOperator) {
-        this->binaryOperator = binaryOperator;
+    void setBinaryOperator(std::shared_ptr<BinaryOperator> newBinaryOperator) {
+        this->binaryOperator = newBinaryOperator;
     }
-    void setOperand1(std::shared_ptr<Operand> operand1) {
-        this->operand1 = operand1;
+    void setOperand1(std::shared_ptr<Operand> newOperand1) {
+        this->operand1 = newOperand1;
     }
-    void setOperand2(std::shared_ptr<Operand> operand2) {
-        this->operand2 = operand2;
+    void setOperand2(std::shared_ptr<Operand> newOperand2) {
+        this->operand2 = newOperand2;
     }
 };
 
@@ -311,11 +311,11 @@ class CmpInstruction : public Instruction {
         : operand1(operand1), operand2(operand2) {}
     std::shared_ptr<Operand> getOperand1() { return operand1; }
     std::shared_ptr<Operand> getOperand2() { return operand2; }
-    void setOperand1(std::shared_ptr<Operand> operand1) {
-        this->operand1 = operand1;
+    void setOperand1(std::shared_ptr<Operand> newOperand1) {
+        this->operand1 = newOperand1;
     }
-    void setOperand2(std::shared_ptr<Operand> operand2) {
-        this->operand2 = operand2;
+    void setOperand2(std::shared_ptr<Operand> newOperand2) {
+        this->operand2 = newOperand2;
     }
 };
 
@@ -326,8 +326,8 @@ class IdivInstruction : public Instruction {
   public:
     IdivInstruction(std::shared_ptr<Operand> operand) : operand(operand) {}
     std::shared_ptr<Operand> getOperand() { return operand; }
-    void setOperand(std::shared_ptr<Operand> operand) {
-        this->operand = operand;
+    void setOperand(std::shared_ptr<Operand> newOperand) {
+        this->operand = newOperand;
     }
 };
 
@@ -340,7 +340,7 @@ class JmpInstruction : public Instruction {
   public:
     JmpInstruction(std::string label) : label(label) {}
     std::string getLabel() { return label; }
-    void setLabel(std::string label) { this->label = label; }
+    void setLabel(std::string newLabel) { this->label = newLabel; }
 };
 
 class JmpCCInstruction : public Instruction {
@@ -353,10 +353,10 @@ class JmpCCInstruction : public Instruction {
         : condCode(condCode), label(label) {}
     std::shared_ptr<CondCode> getCondCode() { return condCode; }
     std::string getLabel() { return label; }
-    void setCondCode(std::shared_ptr<CondCode> condCode) {
-        this->condCode = condCode;
+    void setCondCode(std::shared_ptr<CondCode> newCondCode) {
+        this->condCode = newCondCode;
     }
-    void setLabel(std::string label) { this->label = label; }
+    void setLabel(std::string newLabel) { this->label = newLabel; }
 };
 
 class SetCCInstruction : public Instruction {
@@ -370,11 +370,11 @@ class SetCCInstruction : public Instruction {
         : condCode(condCode), operand(operand) {}
     std::shared_ptr<CondCode> getCondCode() { return condCode; }
     std::shared_ptr<Operand> getOperand() { return operand; }
-    void setCondCode(std::shared_ptr<CondCode> condCode) {
-        this->condCode = condCode;
+    void setCondCode(std::shared_ptr<CondCode> newCondCode) {
+        this->condCode = newCondCode;
     }
-    void setOperand(std::shared_ptr<Operand> operand) {
-        this->operand = operand;
+    void setOperand(std::shared_ptr<Operand> newOperand) {
+        this->operand = newOperand;
     }
 };
 
@@ -385,7 +385,7 @@ class LabelInstruction : public Instruction {
   public:
     LabelInstruction(std::string label) : label(label) {}
     std::string getLabel() { return label; }
-    void setLabel(std::string label) { this->label = label; }
+    void setLabel(std::string newLabel) { this->label = newLabel; }
 };
 
 class AllocateStackInstruction : public Instruction {
@@ -415,8 +415,8 @@ class PushInstruction : public Instruction {
   public:
     PushInstruction(std::shared_ptr<Operand> operand) : operand(operand) {}
     std::shared_ptr<Operand> getOperand() { return operand; }
-    void setOperand(std::shared_ptr<Operand> operand) {
-        this->operand = operand;
+    void setOperand(std::shared_ptr<Operand> newOperand) {
+        this->operand = newOperand;
     }
 };
 
@@ -459,11 +459,11 @@ class FunctionDefinition : public TopLevel {
     }
     void
     setFunctionBody(std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-                        functionBody) {
-        this->functionBody = functionBody;
+                        newFunctionBody) {
+        this->functionBody = newFunctionBody;
     }
     size_t getStackSize() { return stackSize; }
-    void setStackSize(size_t stackSize) { this->stackSize = stackSize; }
+    void setStackSize(size_t newStackSize) { this->stackSize = newStackSize; }
 };
 
 class StaticVariable : public TopLevel {
@@ -491,8 +491,8 @@ class Program {
         return topLevels;
     }
     void setTopLevels(
-        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels) {
-        this->topLevels = topLevels;
+        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> newTopLevels) {
+        this->topLevels = newTopLevels;
     }
 };
 } // namespace Assembly

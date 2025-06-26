@@ -338,51 +338,52 @@ void PrettyPrinters::printIRBinaryInstruction(
             binaryInstruction->getBinaryOperator())) {
         std::cout << " + ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator1 =
                  std::dynamic_pointer_cast<IR::SubtractOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " - ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator2 =
                  std::dynamic_pointer_cast<IR::MultiplyOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " * ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator3 =
                  std::dynamic_pointer_cast<IR::DivideOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " / ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator4 =
                  std::dynamic_pointer_cast<IR::RemainderOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " % ";
     }
-    else if (auto binaryOperator = std::dynamic_pointer_cast<IR::EqualOperator>(
-                 binaryInstruction->getBinaryOperator())) {
+    else if (auto binaryOperator5 =
+                 std::dynamic_pointer_cast<IR::EqualOperator>(
+                     binaryInstruction->getBinaryOperator())) {
         std::cout << " == ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator6 =
                  std::dynamic_pointer_cast<IR::NotEqualOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " != ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator7 =
                  std::dynamic_pointer_cast<IR::LessThanOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " < ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator8 =
                  std::dynamic_pointer_cast<IR::LessThanOrEqualOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " <= ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator9 =
                  std::dynamic_pointer_cast<IR::GreaterThanOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " > ";
     }
-    else if (auto binaryOperator =
+    else if (auto binaryOperator10 =
                  std::dynamic_pointer_cast<IR::GreaterThanOrEqualOperator>(
                      binaryInstruction->getBinaryOperator())) {
         std::cout << " >= ";

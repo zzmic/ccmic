@@ -19,9 +19,9 @@ class Statement : public AST {
 
 class ReturnStatement : public Statement {
   public:
-    ReturnStatement(std::shared_ptr<Expression> expr);
+    explicit ReturnStatement(std::shared_ptr<Expression> expr);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getExpression() const;
+    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
     void setExpression(std::shared_ptr<Expression> expr);
 
   private:
@@ -30,9 +30,9 @@ class ReturnStatement : public Statement {
 
 class ExpressionStatement : public Statement {
   public:
-    ExpressionStatement(std::shared_ptr<Expression> expr);
+    explicit ExpressionStatement(std::shared_ptr<Expression> expr);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getExpression() const;
+    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
 
   private:
     std::shared_ptr<Expression> expr;
@@ -40,15 +40,17 @@ class ExpressionStatement : public Statement {
 
 class IfStatement : public Statement {
   public:
-    IfStatement(std::shared_ptr<Expression> condition,
-                std::shared_ptr<Statement> thenStatement,
-                std::optional<std::shared_ptr<Statement>> elseOptStatement);
-    IfStatement(std::shared_ptr<Expression> condition,
-                std::shared_ptr<Statement> thenStatement);
+    explicit IfStatement(
+        std::shared_ptr<Expression> condition,
+        std::shared_ptr<Statement> thenStatement,
+        std::optional<std::shared_ptr<Statement>> elseOptStatement);
+    explicit IfStatement(std::shared_ptr<Expression> condition,
+                         std::shared_ptr<Statement> thenStatement);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getCondition() const;
-    std::shared_ptr<Statement> getThenStatement() const;
-    std::optional<std::shared_ptr<Statement>> getElseOptStatement() const;
+    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] std::shared_ptr<Statement> getThenStatement() const;
+    [[nodiscard]] std::optional<std::shared_ptr<Statement>>
+    getElseOptStatement() const;
 
   private:
     std::shared_ptr<Expression> condition;
@@ -58,9 +60,9 @@ class IfStatement : public Statement {
 
 class CompoundStatement : public Statement {
   public:
-    CompoundStatement(std::shared_ptr<Block> block);
+    explicit CompoundStatement(std::shared_ptr<Block> block);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Block> getBlock() const;
+    [[nodiscard]] std::shared_ptr<Block> getBlock() const;
 
   private:
     std::shared_ptr<Block> block;
@@ -70,7 +72,7 @@ class BreakStatement : public Statement {
   public:
     BreakStatement() : label("") {}
     void accept(Visitor &visitor) override;
-    const std::string &getLabel() const;
+    [[nodiscard]] const std::string &getLabel() const;
     void setLabel(std::string_view label);
 
   private:
@@ -81,7 +83,7 @@ class ContinueStatement : public Statement {
   public:
     ContinueStatement() : label("") {}
     void accept(Visitor &visitor) override;
-    const std::string &getLabel() const;
+    [[nodiscard]] const std::string &getLabel() const;
     void setLabel(std::string_view label);
 
   private:
@@ -90,12 +92,12 @@ class ContinueStatement : public Statement {
 
 class WhileStatement : public Statement {
   public:
-    WhileStatement(std::shared_ptr<Expression> condition,
-                   std::shared_ptr<Statement> body);
+    explicit WhileStatement(std::shared_ptr<Expression> condition,
+                            std::shared_ptr<Statement> body);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getCondition() const;
-    std::shared_ptr<Statement> getBody() const;
-    const std::string &getLabel() const;
+    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
+    [[nodiscard]] const std::string &getLabel() const;
     void setLabel(std::string_view label);
 
   private:
@@ -106,12 +108,12 @@ class WhileStatement : public Statement {
 
 class DoWhileStatement : public Statement {
   public:
-    DoWhileStatement(std::shared_ptr<Expression> condition,
-                     std::shared_ptr<Statement> body);
+    explicit DoWhileStatement(std::shared_ptr<Expression> condition,
+                              std::shared_ptr<Statement> body);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Expression> getCondition() const;
-    std::shared_ptr<Statement> getBody() const;
-    const std::string &getLabel() const;
+    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
+    [[nodiscard]] const std::string &getLabel() const;
     void setLabel(std::string_view label);
 
   private:
@@ -122,16 +124,17 @@ class DoWhileStatement : public Statement {
 
 class ForStatement : public Statement {
   public:
-    ForStatement(std::shared_ptr<ForInit> forInit,
-                 std::optional<std::shared_ptr<Expression>> condition,
-                 std::optional<std::shared_ptr<Expression>> post,
-                 std::shared_ptr<Statement> body);
+    explicit ForStatement(std::shared_ptr<ForInit> forInit,
+                          std::optional<std::shared_ptr<Expression>> condition,
+                          std::optional<std::shared_ptr<Expression>> post,
+                          std::shared_ptr<Statement> body);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<ForInit> getForInit() const;
-    std::optional<std::shared_ptr<Expression>> getOptCondition() const;
-    std::optional<std::shared_ptr<Expression>> getOptPost() const;
-    std::shared_ptr<Statement> getBody() const;
-    const std::string &getLabel() const;
+    [[nodiscard]] std::shared_ptr<ForInit> getForInit() const;
+    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
+    getOptCondition() const;
+    [[nodiscard]] std::optional<std::shared_ptr<Expression>> getOptPost() const;
+    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
+    [[nodiscard]] const std::string &getLabel() const;
     void setLabel(std::string_view label);
 
   private:

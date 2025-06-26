@@ -170,7 +170,7 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         // Instantiate an assembly generator object and generate the assembly.
         Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables,
                                                       symbols);
-        assemblyProgram = assemblyGenerator.generateIR(irProgram);
+        assemblyProgram = assemblyGenerator.generateAssembly(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and associate the stack
         // size with each top-level element.

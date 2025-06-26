@@ -103,21 +103,21 @@ FunctionDeclaration::getOptStorageClass() const {
 }
 
 void FunctionDeclaration::setParameters(
-    std::shared_ptr<std::vector<std::string>> parameters) {
-    this->parameters = parameters;
+    std::shared_ptr<std::vector<std::string>> newParameters) {
+    this->parameters = newParameters;
 }
 
 void FunctionDeclaration::setOptBody(
-    std::optional<std::shared_ptr<Block>> optBody) {
-    this->optBody = optBody;
+    std::optional<std::shared_ptr<Block>> newOptBody) {
+    this->optBody = newOptBody;
 }
 
-void FunctionDeclaration::setFunType(std::shared_ptr<Type> funType) {
-    this->funType = funType;
+void FunctionDeclaration::setFunType(std::shared_ptr<Type> newFunType) {
+    this->funType = newFunType;
 }
 
 void FunctionDeclaration::setOptStorageClass(
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass) {
-    this->optStorageClass = optStorageClass;
+    std::optional<std::shared_ptr<StorageClass>> newOptStorageClass) {
+    this->optStorageClass = newOptStorageClass;
 }
 } // Namespace AST

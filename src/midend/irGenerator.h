@@ -15,14 +15,15 @@
 namespace IR {
 class IRGenerator {
   public:
-    IRGenerator(
+    explicit IRGenerator(
         int variableResolutionCounter,
         const std::unordered_map<
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>
             &symbols);
-    std::pair<std::shared_ptr<IR::Program>,
-              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+    [[nodiscard]] std::pair<
+        std::shared_ptr<IR::Program>,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
     generateIR(const std::shared_ptr<AST::Program> &astProgram);
 
   private:
@@ -79,23 +80,26 @@ class IRGenerator {
         const std::shared_ptr<AST::ForStatement> &forStmt,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::Value> generateIRInstruction(
+    [[nodiscard]] std::shared_ptr<IR::Value> generateIRInstruction(
         const std::shared_ptr<AST::Expression> &e,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::VariableValue> generateIRUnaryInstruction(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue> generateIRUnaryInstruction(
         const std::shared_ptr<AST::UnaryExpression> &unaryExpr,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::VariableValue> generateIRBinaryInstruction(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue>
+    generateIRBinaryInstruction(
         const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::VariableValue> generateIRInstructionWithLogicalAnd(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue>
+    generateIRInstructionWithLogicalAnd(
         const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::VariableValue> generateIRInstructionWithLogicalOr(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue>
+    generateIRInstructionWithLogicalOr(
         const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
@@ -120,34 +124,36 @@ class IRGenerator {
         std::string_view identifier,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::VariableValue> generateIRFunctionCallInstruction(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue>
+    generateIRFunctionCallInstruction(
         std::string_view functionIdentifier,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> &args,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::shared_ptr<IR::VariableValue> generateIRCastInstruction(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue> generateIRCastInstruction(
         const std::shared_ptr<AST::CastExpression> &castExpr,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
             &instructions);
-    std::string generateIRTemporary();
-    std::string generateIRFalseLabel();
-    std::string generateIRTrueLabel();
-    std::string generateIRResultLabel();
-    std::string generateIREndLabel();
-    std::string generateIRElseLabel();
-    std::string generateIRE2Label();
-    std::string
+    [[nodiscard]] std::string generateIRTemporary();
+    [[nodiscard]] std::string generateIRFalseLabel();
+    [[nodiscard]] std::string generateIRTrueLabel();
+    [[nodiscard]] std::string generateIRResultLabel();
+    [[nodiscard]] std::string generateIREndLabel();
+    [[nodiscard]] std::string generateIRElseLabel();
+    [[nodiscard]] std::string generateIRE2Label();
+    [[nodiscard]] std::string
     generateIRContinueLoopLabel(std::string_view loopLabelingLabel) const;
-    std::string
+    [[nodiscard]] std::string
     generateIRBreakLoopLabel(std::string_view loopLabelingLabel) const;
-    std::string generateIRStartLabel() const;
-    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+    [[nodiscard]] std::string generateIRStartLabel() const;
+    [[nodiscard]] std::shared_ptr<
+        std::vector<std::shared_ptr<IR::StaticVariable>>>
     convertSymbolsToIRStaticVariables();
-    std::shared_ptr<IR::UnaryOperator>
+    [[nodiscard]] std::shared_ptr<IR::UnaryOperator>
     convertUnop(const std::shared_ptr<AST::UnaryOperator> &op);
-    std::shared_ptr<IR::BinaryOperator>
+    [[nodiscard]] std::shared_ptr<IR::BinaryOperator>
     convertBinop(const std::shared_ptr<AST::BinaryOperator> &op);
-    std::shared_ptr<IR::VariableValue> generateIRVariable(
+    [[nodiscard]] std::shared_ptr<IR::VariableValue> generateIRVariable(
         const std::shared_ptr<AST::BinaryExpression> &binaryExpr);
 };
 } // namespace IR

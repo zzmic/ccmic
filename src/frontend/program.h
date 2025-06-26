@@ -8,10 +8,11 @@
 namespace AST {
 class Program : public AST {
   public:
-    Program(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
-                declarations);
+    explicit Program(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+                         declarations);
     void accept(Visitor &visitor) override;
-    const std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> &
+    [[nodiscard]] const std::shared_ptr<
+        std::vector<std::shared_ptr<Declaration>>> &
     getDeclarations() const;
     void
     setDeclarations(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>

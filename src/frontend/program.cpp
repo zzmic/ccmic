@@ -14,7 +14,8 @@ Program::getDeclarations() const {
 }
 
 void Program::setDeclarations(
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations) {
-    this->declarations = declarations;
+    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+        newDeclarations) {
+    this->declarations = newDeclarations;
 }
 } // Namespace AST

@@ -13,9 +13,9 @@ class BlockItem : public AST {
 
 class SBlockItem : public BlockItem {
   public:
-    SBlockItem(std::shared_ptr<Statement> statement);
+    explicit SBlockItem(std::shared_ptr<Statement> statement);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Statement> getStatement() const;
+    [[nodiscard]] std::shared_ptr<Statement> getStatement() const;
     void setStatement(std::shared_ptr<Statement> statement);
 
   private:
@@ -24,9 +24,9 @@ class SBlockItem : public BlockItem {
 
 class DBlockItem : public BlockItem {
   public:
-    DBlockItem(std::shared_ptr<Declaration> declaration);
+    explicit DBlockItem(std::shared_ptr<Declaration> declaration);
     void accept(Visitor &visitor) override;
-    std::shared_ptr<Declaration> getDeclaration() const;
+    [[nodiscard]] std::shared_ptr<Declaration> getDeclaration() const;
     void setDeclaration(std::shared_ptr<Declaration> declaration);
 
   private:

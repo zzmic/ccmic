@@ -1,5 +1,4 @@
 #include "parser.h"
-#include <cmath>
 #include <sstream>
 
 namespace AST {
@@ -136,29 +135,29 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
         }
         else if (matchToken(TokenType::intKeyword)) {
             parseTypeSpecifiersInParameters(parameters);
-            auto parameterNameToken = consumeToken(TokenType::Identifier);
-            parameters->emplace_back(parameterNameToken.value);
+            auto parameterNameToken1 = consumeToken(TokenType::Identifier);
+            parameters->emplace_back(parameterNameToken1.value);
             parameterTypes->emplace_back(std::make_shared<IntType>());
             // Parse additional parameters if they exist.
             while (matchToken(TokenType::Comma)) {
                 consumeToken(TokenType::Comma);
                 parseTypeSpecifiersInParameters(parameters);
-                auto parameterNameToken = consumeToken(TokenType::Identifier);
-                parameters->emplace_back(parameterNameToken.value);
+                auto parameterNameToken2 = consumeToken(TokenType::Identifier);
+                parameters->emplace_back(parameterNameToken2.value);
                 parameterTypes->emplace_back(std::make_shared<IntType>());
             }
         }
         else if (matchToken(TokenType::longKeyword)) {
             parseTypeSpecifiersInParameters(parameters);
-            auto parameterNameToken = consumeToken(TokenType::Identifier);
-            parameters->emplace_back(parameterNameToken.value);
+            auto parameterNameToken3 = consumeToken(TokenType::Identifier);
+            parameters->emplace_back(parameterNameToken3.value);
             parameterTypes->emplace_back(std::make_shared<LongType>());
             // Parse additional parameters if they exist.
             while (matchToken(TokenType::Comma)) {
                 consumeToken(TokenType::Comma);
                 parseTypeSpecifiersInParameters(parameters);
-                auto parameterNameToken = consumeToken(TokenType::Identifier);
-                parameters->emplace_back(parameterNameToken.value);
+                auto parameterNameToken4 = consumeToken(TokenType::Identifier);
+                parameters->emplace_back(parameterNameToken4.value);
                 parameterTypes->emplace_back(std::make_shared<LongType>());
             }
         }
@@ -480,12 +479,14 @@ std::shared_ptr<Expression> Parser::parseFactor() {
 
 std::shared_ptr<Constant> Parser::parseConstant() {
     auto constantValue = std::stoll(tokens[current].value);
-    if (constantValue > pow(2, 63) - 1) {
+    // pow(2, 63) - 1 = 9223372036854775807LL.
+    if (constantValue > 9223372036854775807LL) {
         throw std::invalid_argument(
             "Constant is too large to represent as an int or long");
     }
     else if (tokens[current].type == TokenType::IntConstant) {
-        if (constantValue <= pow(2, 31) - 1) {
+        // pow(2, 31) - 1 = 2147483647LL.
+        if (constantValue <= 2147483647LL) {
             consumeToken(TokenType::IntConstant);
             return std::make_shared<ConstantInt>(constantValue);
         }

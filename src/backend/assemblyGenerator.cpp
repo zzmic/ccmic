@@ -12,7 +12,7 @@ AssemblyGenerator::AssemblyGenerator(
     : irStaticVariables(irStaticVariables), symbols(symbols) {}
 
 std::shared_ptr<Assembly::Program>
-AssemblyGenerator::generateIR(std::shared_ptr<IR::Program> irProgram) {
+AssemblyGenerator::generateAssembly(std::shared_ptr<IR::Program> irProgram) {
     auto irTopLevels = irProgram->getTopLevels();
     auto assyTopLevels =
         std::make_shared<std::vector<std::shared_ptr<TopLevel>>>();
@@ -21,8 +21,8 @@ AssemblyGenerator::generateIR(std::shared_ptr<IR::Program> irProgram) {
     for (auto irTopLevel : *irTopLevels) {
         if (auto irFunctionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(irTopLevel)) {
-            auto instructions =
-                std::make_shared<std::vector<std::shared_ptr<Instruction>>>();
+            auto instructions = std::make_shared<
+                std::vector<std::shared_ptr<Assembly::Instruction>>>();
             auto assyFunctionDefinition = generateAssyFunctionDefinition(
                 irFunctionDefinition, instructions);
             assyTopLevels->emplace_back(assyFunctionDefinition);
@@ -57,7 +57,7 @@ AssemblyGenerator::generateAssyFunctionDefinition(
     if (irParameters->size() > 0) {
         std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
                                                       "CX", "R8", "R9"};
-        int registerIndex = 0;
+        size_t registerIndex = 0;
         for (size_t i = 0; i < irParameters->size(); ++i) {
             auto irParam = irParameters->at(i);
             auto irParamOperand =
@@ -461,7 +461,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     }
 
     // Pass the arguments in registers.
-    int registerIndex = 0;
+    size_t registerIndex = 0;
     for (auto irRegisterArg : *irRegisterArgs) {
         auto registerOperand = std::make_shared<Assembly::RegisterOperand>(
             argRegistersInStr[registerIndex]);
@@ -502,7 +502,8 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
         functionCallInstr->getFunctionIdentifier()));
 
     // Adjust the stack pointer (after the function call).
-    auto bytesToPop = 8 * irStackArgs->size() + stackPadding;
+    auto bytesToPop =
+        8 * irStackArgs->size() + static_cast<size_t>(stackPadding);
     if (bytesToPop != 0) {
         instructions->emplace_back(
             std::make_shared<Assembly::DeallocateStackInstruction>(bytesToPop));

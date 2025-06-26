@@ -17,7 +17,7 @@ void Block::addBlockItem(std::shared_ptr<BlockItem> blockItem) {
 }
 
 void Block::setBlockItems(
-    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems) {
-    this->blockItems = blockItems;
+    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> newBlockItems) {
+    this->blockItems = newBlockItems;
 }
 } // namespace AST

@@ -487,13 +487,14 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         }
         // If the binary operator in the AST binary expression is a
         // logical-or operator, ...
-        else if (auto astBinaryOperator =
+        else if (auto astBinaryOperator1 =
                      std::dynamic_pointer_cast<AST::OrOperator>(
                          binaryExpr->getOperator())) {
             return generateIRInstructionWithLogicalOr(binaryExpr, instructions);
         }
         // Otherwise (i.e., if the binary operator in the AST binary
-        // expression can be converted to a binary operator in the IR), ...
+        // expression contains neither a logical-and nor a logical-or
+        // operator), ...
         else {
             return generateIRBinaryInstruction(binaryExpr, instructions);
         }
@@ -505,12 +506,12 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
     }
     else if (auto assignmentExpr =
                  std::dynamic_pointer_cast<AST::AssignmentExpression>(e)) {
-        if (auto variableExpr =
+        if (auto variableExpr1 =
                 std::dynamic_pointer_cast<AST::VariableExpression>(
                     assignmentExpr->getLeft())) {
             std::shared_ptr<IR::VariableValue> variableValue =
                 std::make_shared<IR::VariableValue>(
-                    variableExpr->getIdentifier());
+                    variableExpr1->getIdentifier());
             auto result =
                 generateIRInstruction(assignmentExpr->getRight(), instructions);
             instructions->emplace_back(std::make_shared<IR::CopyInstruction>(

@@ -22,16 +22,17 @@
 
 class PipelineStagesExecutors {
   public:
-    static std::vector<Token> lexerExecutor(std::string_view sourceFile);
-    static std::shared_ptr<AST::Program>
+    [[nodiscard]] static std::vector<Token>
+    lexerExecutor(std::string_view sourceFile);
+    [[nodiscard]] static std::shared_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
-    static std::pair<
+    [[nodiscard]] static std::pair<
         int,
         std::unordered_map<
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>>
     semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram);
-    static std::pair<
+    [[nodiscard]] static std::pair<
         std::shared_ptr<IR::Program>,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
     irGeneratorExecutor(
@@ -46,7 +47,7 @@ class PipelineStagesExecutors {
                            bool foldConstantsPass, bool propagateCopiesPass,
                            bool eliminateUnreachableCodePass,
                            bool eliminateDeadStoresPass);
-    static std::shared_ptr<Assembly::Program> codegenExecutor(
+    [[nodiscard]] static std::shared_ptr<Assembly::Program> codegenExecutor(
         const std::shared_ptr<IR::Program> &irProgram,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
             &irStaticVariables,

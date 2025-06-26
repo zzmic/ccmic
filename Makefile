@@ -1,6 +1,6 @@
 # Compiler and flags.
 CXX = clang++
-CXXFLAGS = -Wall -Wextra -std=c++20
+CXXFLAGS = -Wall -Wextra -Wpedantic -Werror -Wconversion -Wshadow -Wnull-dereference -std=c++23
 
 # Directories.
 SRC_DIR = src

@@ -10,7 +10,7 @@ class ConstantInt : public Constant {
   public:
     constexpr ConstantInt(int value) : value(value) {}
     void accept(Visitor &visitor) override;
-    constexpr int getValue() const { return value; }
+    [[nodiscard]] constexpr int getValue() const { return value; }
 
   private:
     int value;
@@ -20,7 +20,7 @@ class ConstantLong : public Constant {
   public:
     constexpr ConstantLong(long value) : value(value) {}
     void accept(Visitor &visitor) override;
-    constexpr long getValue() const { return value; }
+    [[nodiscard]] constexpr long getValue() const { return value; }
 
   private:
     long value;

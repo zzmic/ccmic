@@ -12,8 +12,8 @@ std::shared_ptr<Expression> ReturnStatement::getExpression() const {
     return expr;
 }
 
-void ReturnStatement::setExpression(std::shared_ptr<Expression> expr) {
-    this->expr = expr;
+void ReturnStatement::setExpression(std::shared_ptr<Expression> newExpr) {
+    this->expr = newExpr;
 }
 
 ExpressionStatement::ExpressionStatement(std::shared_ptr<Expression> expr)
@@ -62,14 +62,16 @@ void BreakStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 const std::string &BreakStatement::getLabel() const { return label; }
 
-void BreakStatement::setLabel(std::string_view label) { this->label = label; }
+void BreakStatement::setLabel(std::string_view newLabel) {
+    this->label = newLabel;
+}
 
 void ContinueStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 const std::string &ContinueStatement::getLabel() const { return label; }
 
-void ContinueStatement::setLabel(std::string_view label) {
-    this->label = label;
+void ContinueStatement::setLabel(std::string_view newLabel) {
+    this->label = newLabel;
 }
 
 WhileStatement::WhileStatement(std::shared_ptr<Expression> condition,
@@ -86,7 +88,9 @@ std::shared_ptr<Statement> WhileStatement::getBody() const { return body; }
 
 const std::string &WhileStatement::getLabel() const { return label; }
 
-void WhileStatement::setLabel(std::string_view label) { this->label = label; }
+void WhileStatement::setLabel(std::string_view newLabel) {
+    this->label = newLabel;
+}
 
 DoWhileStatement::DoWhileStatement(std::shared_ptr<Expression> condition,
                                    std::shared_ptr<Statement> body)
@@ -102,7 +106,9 @@ std::shared_ptr<Statement> DoWhileStatement::getBody() const { return body; }
 
 const std::string &DoWhileStatement::getLabel() const { return label; }
 
-void DoWhileStatement::setLabel(std::string_view label) { this->label = label; }
+void DoWhileStatement::setLabel(std::string_view newLabel) {
+    this->label = newLabel;
+}
 
 ForStatement::ForStatement(std::shared_ptr<ForInit> forInit,
                            std::optional<std::shared_ptr<Expression>> condition,
@@ -127,7 +133,9 @@ std::shared_ptr<Statement> ForStatement::getBody() const { return body; }
 
 const std::string &ForStatement::getLabel() const { return label; }
 
-void ForStatement::setLabel(std::string_view label) { this->label = label; }
+void ForStatement::setLabel(std::string_view newLabel) {
+    this->label = newLabel;
+}
 
 void NullStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 } // Namespace AST
