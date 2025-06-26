@@ -35,7 +35,7 @@ Token Parser::consumeToken(TokenType type) {
     msg << "Expect token of type " << tokenTypeToString(type) << " but found "
         << tokens[current].value;
     msg << " of type " << tokenTypeToString(tokens[current].type);
-    throw std::runtime_error(msg.str());
+    throw std::invalid_argument(msg.str());
 }
 
 void Parser::expectToken(TokenType type) {
@@ -46,7 +46,7 @@ void Parser::expectToken(TokenType type) {
         msg << "Expect token of type " << tokenTypeToString(type)
             << " but found " << tokens[current].value;
         msg << " of type " << tokenTypeToString(tokens[current].type);
-        throw std::runtime_error(msg.str());
+        throw std::invalid_argument(msg.str());
     }
     consumeToken(type);
 }
@@ -256,7 +256,7 @@ std::shared_ptr<ForInit> Parser::parseForInit() {
                 std::static_pointer_cast<VariableDeclaration>(declaration));
         }
         else {
-            throw std::runtime_error(
+            throw std::invalid_argument(
                 "Function declarations aren't permitted in for-loop headers");
         }
         return std::make_shared<InitDecl>(
@@ -381,7 +381,7 @@ std::shared_ptr<Statement> Parser::parseStatement() {
     std::stringstream msg;
     msg << "Malformed statement: unexpected token: " << tokens[current].value;
     msg << " of type " << tokenTypeToString(tokens[current].type);
-    throw std::runtime_error(msg.str());
+    throw std::invalid_argument(msg.str());
 }
 
 std::shared_ptr<Expression> Parser::parseFactor() {
@@ -466,7 +466,7 @@ std::shared_ptr<Expression> Parser::parseFactor() {
             return innerExpr;
         }
         else {
-            throw std::runtime_error(
+            throw std::invalid_argument(
                 "Malformed factor: missing closing parenthesis.");
         }
     }
@@ -474,14 +474,14 @@ std::shared_ptr<Expression> Parser::parseFactor() {
         std::stringstream msg;
         msg << "Malformed factor: unexpected token: " << tokens[current].value;
         msg << " of type " << tokenTypeToString(tokens[current].type);
-        throw std::runtime_error(msg.str());
+        throw std::invalid_argument(msg.str());
     }
 }
 
 std::shared_ptr<Constant> Parser::parseConstant() {
     auto constantValue = std::stoll(tokens[current].value);
     if (constantValue > pow(2, 63) - 1) {
-        throw std::runtime_error(
+        throw std::invalid_argument(
             "Constant is too large to represent as an int or long");
     }
     else if (tokens[current].type == TokenType::IntConstant) {
@@ -545,7 +545,7 @@ std::shared_ptr<Expression> Parser::parseExpression(int minPrecedence) {
                 msg << "Malformed expression: binary operator "
                     << binOpToken.value
                     << " is not followed by a valid operand.";
-                throw std::runtime_error(msg.str());
+                throw std::invalid_argument(msg.str());
             }
             std::shared_ptr<Expression> right =
                 parseExpression(getPrecedence(binOpToken) + 1);
@@ -581,7 +581,7 @@ Parser::parseTypeAndStorageClass(
     auto type = parseType(types);
     std::shared_ptr<StorageClass> storageClass;
     if (storageClasses.size() > 1) {
-        throw std::runtime_error("Invalid storage class (specifier)");
+        throw std::invalid_argument("Invalid storage class (specifier)");
     }
     if (storageClasses.size() == 1) {
         storageClass = parseStorageClass(storageClasses[0]);
@@ -612,7 +612,7 @@ Parser::parseType(const std::vector<std::string> &specifierList) {
         for (const auto &specifier : specifierList) {
             msg << specifier << " ";
         }
-        throw std::runtime_error(msg.str());
+        throw std::invalid_argument(msg.str());
     }
 }
 
@@ -625,7 +625,7 @@ Parser::parseStorageClass(const std::string &specifier) {
         return std::make_shared<ExternStorageClass>();
     }
     else {
-        throw std::runtime_error("Invalid storage class (specifier)");
+        throw std::invalid_argument("Invalid storage class (specifier)");
     }
 }
 

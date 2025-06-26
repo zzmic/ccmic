@@ -105,18 +105,18 @@ int main(int argc, char *argv[]) {
     if (dotIndex == static_cast<size_t>(-1)) {
         std::stringstream msg;
         msg << "Source file must have an extension.";
-        throw std::runtime_error(msg.str());
+        throw std::invalid_argument(msg.str());
     }
     if (dotIndex == 0 ||
         dotIndex == static_cast<size_t>(sourceFile.size() - 1)) {
         std::stringstream msg;
         msg << "Source file must have a name before and after the extension.";
-        throw std::runtime_error(msg.str());
+        throw std::invalid_argument(msg.str());
     }
     if (sourceFile[dotIndex + 1] != 'c') {
         std::stringstream msg;
         msg << "Source file must have a '.c' extension.";
-        throw std::runtime_error(msg.str());
+        throw std::invalid_argument(msg.str());
     }
     std::string programName = sourceFile.substr(0, sourceFile.rfind('.'));
     // Construct the preprocessed file name by appending the ".i" extension.

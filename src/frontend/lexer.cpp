@@ -144,7 +144,7 @@ std::vector<Token> lexer(std::string_view input) {
         if (token.type == TokenType::Invalid) {
             std::stringstream msg;
             msg << "Invalid token found: " << token.value;
-            throw std::runtime_error(msg.str());
+            throw std::invalid_argument(msg.str());
         }
 
         // Skip preprocessor directives and their corresponding tokens (e.g.,

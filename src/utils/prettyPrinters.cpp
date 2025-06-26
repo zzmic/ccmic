@@ -15,7 +15,7 @@ void PrettyPrinters::printIRProgram(
             printIRFunctionDefinition(functionDefinition);
         }
         else {
-            throw std::runtime_error("Unsupported top-level element");
+            throw std::logic_error("Unsupported top-level element");
         }
     }
 
@@ -60,7 +60,7 @@ void PrettyPrinters::printIRStaticVariable(
         std::cout << std::get<long>(longInit->getValue());
     }
     else {
-        throw std::runtime_error("Unknown static variable initializer type");
+        throw std::logic_error("Unknown static variable initializer type");
     }
 
     std::cout << "\n";
@@ -119,7 +119,7 @@ void PrettyPrinters::printIRInstruction(
         printIRTruncateInstruction(truncateInstruction);
     }
     else {
-        throw std::runtime_error("Unknown instruction type in IR program");
+        throw std::logic_error("Unknown instruction type in IR program");
     }
 }
 
@@ -139,7 +139,7 @@ void PrettyPrinters::printIRReturnInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unknown constant type in return instruction");
         }
     }
@@ -148,7 +148,7 @@ void PrettyPrinters::printIRReturnInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown return value type in return instruction");
     }
 
@@ -163,7 +163,7 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown destination value type in sign extend instruction");
     }
 
@@ -181,7 +181,7 @@ void PrettyPrinters::printIRSignExtendInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unknown constant type in sign extend instruction");
         }
     }
@@ -190,7 +190,7 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown source value type in sign extend instruction");
     }
 
@@ -205,7 +205,7 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown destination value type in truncate instruction");
     }
 
@@ -223,7 +223,7 @@ void PrettyPrinters::printIRTruncateInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unknown constant type in truncate instruction");
         }
     }
@@ -232,7 +232,7 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown source value type in truncate instruction");
     }
 
@@ -248,7 +248,7 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown destination value type in unary instruction");
     }
 
@@ -267,7 +267,7 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << " = !";
     }
     else {
-        throw std::runtime_error("Unknown unary operator in instruction");
+        throw std::logic_error("Unknown unary operator in instruction");
     }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -288,12 +288,12 @@ void PrettyPrinters::printIRUnaryInstruction(
             std::cout << "\n";
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unknown constant type in unary instruction");
         }
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown source value type in unary instruction");
     }
 
@@ -325,12 +325,12 @@ void PrettyPrinters::printIRBinaryInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unknown constant type in binary instruction");
         }
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown source value type in binary instruction");
     }
 
@@ -388,7 +388,7 @@ void PrettyPrinters::printIRBinaryInstruction(
         std::cout << " >= ";
     }
     else {
-        throw std::runtime_error("Unknown binary operator in instruction");
+        throw std::logic_error("Unknown binary operator in instruction");
     }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -407,12 +407,12 @@ void PrettyPrinters::printIRBinaryInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unknown constant type in binary instruction");
         }
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown source value type in binary instruction");
     }
 
@@ -427,7 +427,7 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unknown/unsupported destination value type in copy instruction");
     }
 
@@ -435,7 +435,7 @@ void PrettyPrinters::printIRCopyInstruction(
 
     auto src = copyInstruction->getSrc();
     if (src == nullptr) {
-        throw std::runtime_error("Source value is null in copy instruction");
+        throw std::logic_error("Source value is null in copy instruction");
     }
 
     if (auto constantValue =
@@ -450,8 +450,7 @@ void PrettyPrinters::printIRCopyInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::runtime_error(
-                "Unknown constant type in copy instruction");
+            throw std::logic_error("Unknown constant type in copy instruction");
         }
     }
     else if (auto variableValue =
@@ -459,8 +458,7 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::runtime_error(
-            "Unknown source value type in copy instruction");
+        throw std::logic_error("Unknown source value type in copy instruction");
     }
 
     std::cout << "\n";

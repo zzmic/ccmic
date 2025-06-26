@@ -7,7 +7,7 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
     if (sourceFileInputStream.fail()) {
         std::stringstream msg;
         msg << "Unable to open source file: " << sourceFile;
-        throw std::runtime_error(msg.str());
+        throw std::ios_base::failure(msg.str());
     }
 
     // Read the entire source file into a string.
@@ -204,7 +204,7 @@ void PipelineStagesExecutors::codeEmissionExecutor(
     if (!assemblyFileStream.is_open()) {
         std::stringstream msg;
         msg << "Error: Unable to open output file " << assemblyFile;
-        throw std::runtime_error(msg.str());
+        throw std::ios_base::failure(msg.str());
     }
 
     auto assyTopLevels = assemblyProgram->getTopLevels();

@@ -7,7 +7,6 @@
 #include "function.h"
 #include "program.h"
 #include "statement.h"
-#include <limits>
 
 namespace AST {
 void PrintVisitor::visit(Program &program) {
@@ -28,7 +27,7 @@ void PrintVisitor::visit(Program &program) {
         }
     }
     else {
-        throw std::runtime_error("Null declarations in program");
+        throw std::logic_error("Null declarations in program");
     }
 
     std::cout << ")\n";
@@ -42,7 +41,7 @@ void PrintVisitor::visit(Function &function) {
         std::cout << function.getIdentifier();
     }
     else {
-        throw std::runtime_error("Null name in function");
+        throw std::logic_error("Null name in function");
     }
 
     std::cout << "\",\n";
@@ -56,7 +55,7 @@ void PrintVisitor::visit(Function &function) {
         }
     }
     else {
-        throw std::runtime_error("Null body in function");
+        throw std::logic_error("Null body in function");
     }
 
     std::cout << "\n)";
@@ -79,7 +78,7 @@ void PrintVisitor::visit(SBlockItem &sBlockItem) {
         sBlockItem.getStatement()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null statement in statement block item");
+        throw std::logic_error("Null statement in statement block item");
     }
 
     std::cout << "\n)";
@@ -92,7 +91,7 @@ void PrintVisitor::visit(DBlockItem &dBlockItem) {
         dBlockItem.getDeclaration()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null declaration in declaration block item");
+        throw std::logic_error("Null declaration in declaration block item");
     }
 
     std::cout << "\n)";
@@ -107,7 +106,7 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         std::cout << declaration.getIdentifier();
     }
     else {
-        throw std::runtime_error("Null identifier in declaration");
+        throw std::logic_error("Null identifier in declaration");
     }
 
     if (declaration.getOptInitializer().has_value()) {
@@ -120,7 +119,7 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         declaration.getVarType()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null type in declaration");
+        throw std::logic_error("Null type in declaration");
     }
 
     if (declaration.getOptStorageClass().has_value()) {
@@ -140,7 +139,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
         std::cout << functionDeclaration.getIdentifier();
     }
     else {
-        throw std::runtime_error("Null identifier in function declaration");
+        throw std::logic_error("Null identifier in function declaration");
     }
 
     std::cout << "\nparameters = (";
@@ -166,7 +165,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
         functionDeclaration.getFunType()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null function type in function declaration");
+        throw std::logic_error("Null function type in function declaration");
     }
 
     if (functionDeclaration.getOptStorageClass().has_value()) {
@@ -226,7 +225,7 @@ void PrintVisitor::visit(InitDecl &initDecl) {
         initDecl.getVariableDeclaration()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null declaration in init declaration");
+        throw std::logic_error("Null declaration in init declaration");
     }
 
     std::cout << "\n)";
@@ -249,7 +248,7 @@ void PrintVisitor::visit(ReturnStatement &returnStatement) {
         returnStatement.getExpression()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null expression in return statement");
+        throw std::logic_error("Null expression in return statement");
     }
 
     std::cout << ")";
@@ -262,7 +261,7 @@ void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
         expressionStatement.getExpression()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null expression in expression statement");
+        throw std::logic_error("Null expression in expression statement");
     }
 
     std::cout << "\n)";
@@ -277,7 +276,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
         ifStatement.getCondition()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null condition in if-statement");
+        throw std::logic_error("Null condition in if-statement");
     }
 
     std::cout << "\nthen = ";
@@ -286,7 +285,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
         ifStatement.getThenStatement()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null then-statement in if-statement");
+        throw std::logic_error("Null then-statement in if-statement");
     }
 
     if (ifStatement.getElseOptStatement().has_value()) {
@@ -304,7 +303,7 @@ void PrintVisitor::visit(CompoundStatement &compoundStatement) {
         compoundStatement.getBlock()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null block in compound statement");
+        throw std::logic_error("Null block in compound statement");
     }
 
     std::cout << "\n)";
@@ -328,7 +327,7 @@ void PrintVisitor::visit(WhileStatement &whileStatement) {
         whileStatement.getCondition()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null condition in while-statement");
+        throw std::logic_error("Null condition in while-statement");
     }
 
     std::cout << "\nbody = ";
@@ -337,7 +336,7 @@ void PrintVisitor::visit(WhileStatement &whileStatement) {
         whileStatement.getBody()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null body in while-statement");
+        throw std::logic_error("Null body in while-statement");
     }
 
     std::cout << "\n)";
@@ -353,7 +352,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
         doWhileStatement.getCondition()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null condition in do-while-statement");
+        throw std::logic_error("Null condition in do-while-statement");
     }
 
     std::cout << "\nbody = ";
@@ -362,7 +361,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
         doWhileStatement.getBody()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null body in do-while-statement");
+        throw std::logic_error("Null body in do-while-statement");
     }
 
     std::cout << "\n)";
@@ -377,7 +376,7 @@ void PrintVisitor::visit(ForStatement &forStatement) {
         forStatement.getForInit()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null init in for-statement");
+        throw std::logic_error("Null init in for-statement");
     }
 
     if (forStatement.getOptCondition().has_value()) {
@@ -400,7 +399,7 @@ void PrintVisitor::visit(ForStatement &forStatement) {
         forStatement.getBody()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null body in for-statement");
+        throw std::logic_error("Null body in for-statement");
     }
 
     std::cout << "\n)";
@@ -423,8 +422,7 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
         std::cout << longConst->getValue();
     }
     else {
-        throw std::runtime_error(
-            "Unknown constant type in constant expression");
+        throw std::logic_error("Unknown constant type in constant expression");
     }
 
     std::cout << ")";
@@ -437,7 +435,7 @@ void PrintVisitor::visit(VariableExpression &variableExpression) {
         std::cout << variableExpression.getIdentifier();
     }
     else {
-        throw std::runtime_error("Null identifier in variable expression");
+        throw std::logic_error("Null identifier in variable expression");
     }
 
     std::cout << ")";
@@ -452,7 +450,7 @@ void PrintVisitor::visit(CastExpression &castExpression) {
         castExpression.getTargetType()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null target type in cast expression");
+        throw std::logic_error("Null target type in cast expression");
     }
 
     std::cout << "\nexpression = ";
@@ -461,7 +459,7 @@ void PrintVisitor::visit(CastExpression &castExpression) {
         castExpression.getExpression()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null expression in cast expression");
+        throw std::logic_error("Null expression in cast expression");
     }
 
     std::cout << "\n)";
@@ -474,7 +472,7 @@ void PrintVisitor::visit(UnaryExpression &unaryExpression) {
         unaryExpression.getOperator()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null operator in unary expression");
+        throw std::logic_error("Null operator in unary expression");
     }
 
     std::cout << "\n";
@@ -483,7 +481,7 @@ void PrintVisitor::visit(UnaryExpression &unaryExpression) {
         unaryExpression.getExpression()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null expression in unary expression");
+        throw std::logic_error("Null expression in unary expression");
     }
 
     std::cout << "\n)";
@@ -496,7 +494,7 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
         binaryExpression.getLeft()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null left operand in binary expression");
+        throw std::logic_error("Null left operand in binary expression");
     }
 
     std::cout << "\n";
@@ -505,7 +503,7 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
         binaryExpression.getOperator()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null operator in binary expression");
+        throw std::logic_error("Null operator in binary expression");
     }
 
     std::cout << "\n";
@@ -514,7 +512,7 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
         binaryExpression.getRight()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null right operand in binary expression");
+        throw std::logic_error("Null right operand in binary expression");
     }
 
     std::cout << "\n)";
@@ -527,7 +525,7 @@ void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
         assignmentExpression.getLeft()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null left operand in assignment expression");
+        throw std::logic_error("Null left operand in assignment expression");
     }
 
     std::cout << "\n";
@@ -536,7 +534,7 @@ void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
         assignmentExpression.getRight()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null right operand in assignment expression");
+        throw std::logic_error("Null right operand in assignment expression");
     }
 
     std::cout << "\n)";
@@ -551,7 +549,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
         conditionalExpression.getCondition()->accept(*this);
     }
     else {
-        throw std::runtime_error("Null condition in conditional expression");
+        throw std::logic_error("Null condition in conditional expression");
     }
 
     std::cout << "\ntrue = ";
@@ -560,7 +558,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
         conditionalExpression.getThenExpression()->accept(*this);
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Null true expression in conditional expression");
     }
 
@@ -570,7 +568,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
         conditionalExpression.getElseExpression()->accept(*this);
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Null false expression in conditional expression");
     }
 
@@ -586,7 +584,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
         std::cout << functionCallExpression.getIdentifier();
     }
     else {
-        throw std::runtime_error("Null function in function call expression");
+        throw std::logic_error("Null function in function call expression");
     }
 
     std::cout << "\nargs = ";

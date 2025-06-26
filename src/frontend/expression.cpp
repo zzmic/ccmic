@@ -35,8 +35,7 @@ ConstantExpression::getConstantInIntOrLongVariant() const {
         return longConstant->getValue();
     }
     else {
-        throw std::runtime_error(
-            "Unknown constant type in constant expression");
+        throw std::logic_error("Unknown constant type in constant expression");
     }
 }
 
@@ -96,10 +95,11 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
         op = std::make_shared<NotOperator>();
     }
     else {
-        throw std::runtime_error("Invalid unary operator in unary expression");
+        throw std::invalid_argument(
+            "Invalid unary operator in unary expression");
     }
     if (!expr) {
-        throw std::runtime_error("Null expression in unary expression");
+        throw std::logic_error("Null expression in unary expression");
     }
     // Static-cast the expression to a factor, obeying the grammar `<unop>
     // <factor>`.
@@ -120,10 +120,11 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
         op = std::make_shared<NotOperator>();
     }
     else {
-        throw std::runtime_error("Invalid unary operator in unary expression");
+        throw std::invalid_argument(
+            "Invalid unary operator in unary expression");
     }
     if (!expr) {
-        throw std::runtime_error("Null expression in unary expression");
+        throw std::logic_error("Null expression in unary expression");
     }
     // Static-cast the expression to a factor, obeying the grammar `<unop>
     // <factor>`.
@@ -197,7 +198,7 @@ BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
         op = std::make_shared<GreaterThanOrEqualOperator>();
     }
     else {
-        throw std::runtime_error(
+        throw std::invalid_argument(
             "Invalid binary operator in binary expression");
     }
 }
@@ -247,7 +248,7 @@ BinaryExpression::BinaryExpression(std::shared_ptr<Expression> left,
         op = std::make_shared<GreaterThanOrEqualOperator>();
     }
     else {
-        throw std::runtime_error(
+        throw std::invalid_argument(
             "Invalid binary operator in binary expression");
     }
 }

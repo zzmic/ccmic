@@ -43,22 +43,22 @@ class Operand {
   public:
     virtual ~Operand() = default;
     virtual int getImmediate() const {
-        throw std::runtime_error("Operand is not an immediate");
+        throw std::logic_error("Operand is not an immediate");
     };
     virtual std::shared_ptr<Register> getRegister() const {
-        throw std::runtime_error("Operand is not a register");
+        throw std::logic_error("Operand is not a register");
     };
     virtual std::shared_ptr<ReservedRegister> getReservedRegister() const {
-        throw std::runtime_error("Operand is not a reserved register");
+        throw std::logic_error("Operand is not a reserved register");
     };
     virtual std::string getPseudoRegister() const {
-        throw std::runtime_error("Operand is not a pseudo register");
+        throw std::logic_error("Operand is not a pseudo register");
     };
     virtual int getOffset() const {
-        throw std::runtime_error("Operand is not a stack (operand)");
+        throw std::logic_error("Operand is not a stack (operand)");
     };
     virtual std::string getIdentifier() const {
-        throw std::runtime_error("Operand is not a data (operand)");
+        throw std::logic_error("Operand is not a data (operand)");
     };
 };
 
@@ -137,20 +137,20 @@ class RegisterOperand : public Operand {
             reg = std::make_shared<R11>();
         }
         else {
-            throw std::runtime_error("Unsupported register");
+            throw std::logic_error("Unsupported register");
         }
     }
     std::shared_ptr<Register> getRegister() const override { return reg; }
     std::string getRegisterInBytesInStr(int size) const {
         auto sizeIt = regMappings.find(size);
         if (sizeIt == regMappings.end()) {
-            throw std::runtime_error("Unsupported register size");
+            throw std::logic_error("Unsupported register size");
         }
         const auto &sizeMappings = sizeIt->second;
         auto &r = *reg.get();
         auto regIt = sizeMappings.find(typeid(r));
         if (regIt == sizeMappings.end()) {
-            throw std::runtime_error("Unsupported register");
+            throw std::logic_error("Unsupported register");
         }
         return regIt->second;
     }
@@ -185,7 +185,7 @@ class StackOperand : public Operand {
             return "%rbp";
         }
         else {
-            throw std::runtime_error("Unsupported reserved register");
+            throw std::logic_error("Unsupported reserved register");
         }
     }
 };

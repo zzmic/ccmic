@@ -33,7 +33,7 @@ int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
             resolvedDeclarations->emplace_back(resolvedVariableDeclaration);
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unsupported declaration type for identifier resolution");
         }
     }
@@ -72,7 +72,7 @@ IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
         return declaration;
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unsupported declaration type for file-scope variable resolution");
     }
 }
@@ -92,7 +92,7 @@ IdentifierResolutionPass::resolveLocalVariableDeclaration(
                 std::stringstream msg;
                 msg << "Conflicting local variable declaration: "
                     << declaration->getIdentifier();
-                throw std::runtime_error(msg.str());
+                throw std::logic_error(msg.str());
             }
         }
     }
@@ -240,7 +240,7 @@ std::shared_ptr<Statement> IdentifierResolutionPass::resolveStatement(
         return nullStatement;
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unsupported statement type for identifier resolution");
     }
 }
@@ -252,7 +252,7 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
             std::dynamic_pointer_cast<AssignmentExpression>(expression)) {
         if (!(std::dynamic_pointer_cast<VariableExpression>(
                 assignmentExpression->getLeft()))) {
-            throw std::runtime_error("Invalid lvalue in assignment expression");
+            throw std::logic_error("Invalid lvalue in assignment expression");
         }
         auto resolvedLeft =
             resolveExpression(assignmentExpression->getLeft(), identifierMap);
@@ -271,7 +271,7 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
         if (identifierMap.find(identifier) == identifierMap.end()) {
             std::stringstream msg;
             msg << "Undeclared variable: " << identifier;
-            throw std::runtime_error(msg.str());
+            throw std::logic_error(msg.str());
         }
         return std::make_shared<VariableExpression>(
             identifierMap[identifier].getNewName());
@@ -337,7 +337,7 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
             std::stringstream msg;
             msg << "Undeclared function: "
                 << functionCallExpression->getIdentifier();
-            throw std::runtime_error(msg.str());
+            throw std::logic_error(msg.str());
         }
         auto resolvedFunctionName =
             identifierMap[functionCallExpression->getIdentifier()].getNewName();
@@ -358,7 +358,7 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
                                                 std::move(resolvedExpression));
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unsupported expression type for identifier resolution");
     }
 }
@@ -387,7 +387,7 @@ std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
                 dBlockItem->setDeclaration(resolvedDeclaration);
             }
             else {
-                throw std::runtime_error(
+                throw std::logic_error(
                     "Unsupported declaration type for identifier resolution");
             }
         }
@@ -398,7 +398,7 @@ std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
             sBlockItem->setStatement(resolvedStatement);
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unsupported block item typen for identifier resolution");
         }
     }
@@ -428,7 +428,7 @@ std::shared_ptr<ForInit> IdentifierResolutionPass::resolveForInit(
         return std::make_shared<InitDecl>(std::move(resolvedDecl));
     }
     else {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unsupported for-init type for identifier resolution");
     }
 }
@@ -445,7 +445,7 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
             std::stringstream msg;
             msg << "Duplicate function declaration: "
                 << declaration->getIdentifier();
-            throw std::runtime_error(msg.str());
+            throw std::logic_error(msg.str());
         }
     }
     identifierMap[declaration->getIdentifier()] =
@@ -480,7 +480,7 @@ std::string IdentifierResolutionPass::resolveParameter(
         if (previousEntry.fromCurrentScopeOrNot()) {
             std::stringstream msg;
             msg << "Duplicate parameter declaration: " << parameter;
-            throw std::runtime_error(msg.str());
+            throw std::logic_error(msg.str());
         }
     }
     auto uniqueVariableName = generateUniqueVariableName(parameter);
@@ -514,7 +514,7 @@ TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
             typeCheckFileScopeVariableDeclaration(variableDeclaration);
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unsupported declaration type for type checking at top level");
         }
     }
@@ -551,7 +551,7 @@ std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
         return std::make_shared<LongInit>(numericValue);
     }
     else {
-        throw std::runtime_error("Unsupported type in static initializer");
+        throw std::logic_error("Unsupported type in static initializer");
     }
 }
 
@@ -560,7 +560,7 @@ TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
                                 std::shared_ptr<Type> type2) {
     // If `type1` is `nullptr`, throw an error.
     if (type1 == nullptr) {
-        throw std::runtime_error("Null type1 in getCommonType");
+        throw std::logic_error("Null type1 in getCommonType");
     }
     // TODO(zzmic): Check if this is correct.
     // If `type2` is `nullptr`, return `type1`.
@@ -582,10 +582,10 @@ std::shared_ptr<Expression>
 TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
                             std::shared_ptr<Type> targetType) {
     if (expression == nullptr) {
-        throw std::runtime_error("Null expression in convertTo");
+        throw std::logic_error("Null expression in convertTo");
     }
     if (targetType == nullptr) {
-        throw std::runtime_error("Null target type in convertTo");
+        throw std::logic_error("Null target type in convertTo");
     }
     if (expression->getExpType() == targetType) {
         return expression;
@@ -602,7 +602,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     auto funType = declaration->getFunType();
     auto funTypePtr = std::dynamic_pointer_cast<FunctionType>(funType);
     if (funTypePtr == nullptr) {
-        throw std::runtime_error("Function type is not a FunctionType");
+        throw std::logic_error("Function type is not a FunctionType");
     }
     auto parameterTypes = funTypePtr->getParameterTypes();
     auto returnType = funTypePtr->getReturnType();
@@ -619,19 +619,19 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
         auto oldDeclaration = symbols[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
         if (*oldType != *funType) {
-            throw std::runtime_error("Incompatible function declarations");
+            throw std::logic_error("Incompatible function declarations");
         }
         auto oldFunctionAttribute =
             std::dynamic_pointer_cast<FunctionAttribute>(oldDeclaration.second);
         alreadyDefined = oldFunctionAttribute->isDefined();
         if (alreadyDefined && hasBody) {
-            throw std::runtime_error("Function redefinition");
+            throw std::logic_error("Function redefinition");
         }
         if (oldFunctionAttribute->isGlobal() &&
             declaration->getOptStorageClass().has_value() &&
             std::dynamic_pointer_cast<StaticStorageClass>(
                 declaration->getOptStorageClass().value())) {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Static function declaration follows non-static");
         }
         global = oldFunctionAttribute->isGlobal();
@@ -657,7 +657,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     std::shared_ptr<VariableDeclaration> declaration) {
     auto varType = declaration->getVarType();
     if (*varType != IntType() && *varType != LongType()) {
-        throw std::runtime_error(
+        throw std::logic_error(
             "Unsupported variable type for file-scope variables");
     }
 
@@ -678,7 +678,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                 std::make_shared<Initial>(std::get<int>(variantValue));
         }
         else {
-            throw std::runtime_error("Unsupported type in static initializer");
+            throw std::logic_error("Unsupported type in static initializer");
         }
     }
     else if (!declaration->getOptInitializer().has_value()) {
@@ -692,7 +692,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         }
     }
     else {
-        throw std::runtime_error("Non-constant initializer!");
+        throw std::logic_error("Non-constant initializer!");
     }
 
     // Determine the linkage of the variable.
@@ -705,7 +705,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         auto oldDeclaration = symbols[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
         if (*oldType != *varType) {
-            throw std::runtime_error("Function redeclared as variable");
+            throw std::logic_error("Function redeclared as variable");
         }
         auto oldStaticAttribute =
             std::dynamic_pointer_cast<StaticAttribute>(oldDeclaration.second);
@@ -715,12 +715,12 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
             global = oldStaticAttribute->isGlobal();
         }
         else if (oldStaticAttribute->isGlobal() != global) {
-            throw std::runtime_error("Conflicting variable linkage");
+            throw std::logic_error("Conflicting variable linkage");
         }
         if (auto oldInitialValue = std::dynamic_pointer_cast<Initial>(
                 oldStaticAttribute->getInitialValue())) {
             if (std::dynamic_pointer_cast<Initial>(initialValue)) {
-                throw std::runtime_error(
+                throw std::logic_error(
                     "Conflicting file-scope variable definitions");
             }
             else {
@@ -743,22 +743,21 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     std::shared_ptr<VariableDeclaration> declaration) {
     auto varType = declaration->getVarType();
     if (*varType != IntType() && *varType != LongType()) {
-        throw std::runtime_error(
-            "Unsupported variable type for local variables");
+        throw std::logic_error("Unsupported variable type for local variables");
     }
 
     if (declaration->getOptStorageClass().has_value() &&
         std::dynamic_pointer_cast<ExternStorageClass>(
             declaration->getOptStorageClass().value())) {
         if (declaration->getOptInitializer().has_value()) {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Initializer on local extern variable declaration");
         }
         if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
             auto oldDeclaration = symbols[declaration->getIdentifier()];
             auto oldType = oldDeclaration.first;
             if (*oldType != *varType) {
-                throw std::runtime_error("Function redeclared as variable");
+                throw std::logic_error("Function redeclared as variable");
             }
         }
         else {
@@ -789,7 +788,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                     std::make_shared<Initial>(std::get<int>(variantValue));
             }
             else {
-                throw std::runtime_error(
+                throw std::logic_error(
                     "Unsupported type in static initializer");
             }
         }
@@ -797,7 +796,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             initialValue = std::make_shared<Initial>(0);
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Non-constant initializer on local static variable");
         }
         auto staticAttribute =
@@ -829,20 +828,20 @@ void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block,
                          std::dynamic_pointer_cast<FunctionDeclaration>(
                              dBlockItem->getDeclaration())) {
                 if (functionDeclaration->getOptBody().has_value()) {
-                    throw std::runtime_error(
+                    throw std::logic_error(
                         "Nested function definitions are not permitted");
                 }
                 if (functionDeclaration->getOptStorageClass().has_value() &&
                     std::dynamic_pointer_cast<StaticStorageClass>(
                         functionDeclaration->getOptStorageClass().value())) {
-                    throw std::runtime_error(
+                    throw std::logic_error(
                         "Static storage class on block-scope function "
                         "declaration");
                 }
                 typeCheckFunctionDeclaration(functionDeclaration);
             }
             else {
-                throw std::runtime_error(
+                throw std::logic_error(
                     "Unsupported declaration type for type-checking");
             }
         }
@@ -854,7 +853,7 @@ void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block,
                                enclosingFunctionIdentifier);
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unsupported block item type for type-checking");
         }
     }
@@ -866,15 +865,15 @@ void TypeCheckingPass::typeCheckExpression(
             std::dynamic_pointer_cast<FunctionCallExpression>(expression)) {
         auto fType = symbols[functionCallExpression->getIdentifier()].first;
         if (*fType == IntType() || *fType == LongType()) {
-            throw std::runtime_error("Function name used as variable: " +
-                                     functionCallExpression->getIdentifier());
+            throw std::logic_error("Function name used as variable: " +
+                                   functionCallExpression->getIdentifier());
         }
         else {
             auto functionType = std::dynamic_pointer_cast<FunctionType>(fType);
             auto parameterTypes = functionType->getParameterTypes();
             auto arguments = functionCallExpression->getArguments();
             if (parameterTypes->size() != arguments->size()) {
-                throw std::runtime_error(
+                throw std::logic_error(
                     "Function called with a wrong number of arguments");
             }
             auto convertedArguments =
@@ -907,7 +906,7 @@ void TypeCheckingPass::typeCheckExpression(
             constantExpression->setExpType(std::make_shared<LongType>());
         }
         else {
-            throw std::runtime_error("Unsupported constant type");
+            throw std::logic_error("Unsupported constant type");
         }
     }
     else if (auto variableExpression =
@@ -918,7 +917,7 @@ void TypeCheckingPass::typeCheckExpression(
             std::stringstream msg;
             msg << "Function name used as variable: "
                 << variableExpression->getIdentifier();
-            throw std::runtime_error(msg.str());
+            throw std::logic_error(msg.str());
         }
         // Otherwise, set the expression type to the variable type.
         variableExpression->setExpType(variableType);
@@ -1016,12 +1015,12 @@ void TypeCheckingPass::typeCheckStatement(
         // return type.
         auto functionType = symbols[enclosingFunctionIdentifier].first;
         if (!functionType) {
-            throw std::runtime_error("Function not found in symbol table: " +
-                                     enclosingFunctionIdentifier);
+            throw std::logic_error("Function not found in symbol table: " +
+                                   enclosingFunctionIdentifier);
         }
         if (*functionType == IntType() || *functionType == LongType()) {
-            throw std::runtime_error("Function name used as variable: " +
-                                     enclosingFunctionIdentifier);
+            throw std::logic_error("Function name used as variable: " +
+                                   enclosingFunctionIdentifier);
         }
         auto returnType = std::dynamic_pointer_cast<FunctionType>(functionType);
         if (returnStatement->getExpression()) {
@@ -1088,12 +1087,12 @@ void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
         if (initDecl->getVariableDeclaration()
                 ->getOptStorageClass()
                 .has_value()) {
-            throw std::runtime_error("Storage class in for-init declaration");
+            throw std::logic_error("Storage class in for-init declaration");
         }
         typeCheckLocalVariableDeclaration(initDecl->getVariableDeclaration());
     }
     else {
-        throw std::runtime_error("Unsupported for-init type for type-checking");
+        throw std::logic_error("Unsupported for-init type for type-checking");
     }
 }
 /*
@@ -1161,14 +1160,14 @@ LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
     if (auto breakStatement =
             std::dynamic_pointer_cast<BreakStatement>(statement)) {
         if (label == "") {
-            throw std::runtime_error("Break statement outside of loop");
+            throw std::logic_error("Break statement outside of loop");
         }
         return annotateStatement(std::move(breakStatement), label);
     }
     else if (auto continueStatement =
                  std::dynamic_pointer_cast<ContinueStatement>(statement)) {
         if (label == "") {
-            throw std::runtime_error("Continue statement outside of loop");
+            throw std::logic_error("Continue statement outside of loop");
         }
         return annotateStatement(std::move(continueStatement), label);
     }
@@ -1244,7 +1243,7 @@ LoopLabelingPass::labelBlock(std::shared_ptr<Block> block, std::string label) {
             newBlockItems->emplace_back(std::move(labeledSBlockItem));
         }
         else {
-            throw std::runtime_error(
+            throw std::logic_error(
                 "Unsupported block item type for loop labeling");
         }
     }

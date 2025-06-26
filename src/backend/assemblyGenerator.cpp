@@ -28,7 +28,7 @@ AssemblyGenerator::generateIR(std::shared_ptr<IR::Program> irProgram) {
             assyTopLevels->emplace_back(assyFunctionDefinition);
         }
         else {
-            throw std::runtime_error("Unsupported top-level element");
+            throw std::logic_error("Unsupported top-level element");
         }
     }
 
@@ -121,7 +121,7 @@ AssemblyGenerator::generateAssyStaticVariable(
                                                 constLong->getValue());
     }
     else {
-        throw std::runtime_error("Unsupported static initializer type");
+        throw std::logic_error("Unsupported static initializer type");
     }
 }
 
@@ -530,7 +530,7 @@ AssemblyGenerator::convertValue(std::shared_ptr<IR::Value> irValue) {
                 constLong->getValue());
         }
         else {
-            throw std::runtime_error("Unsupported constant type");
+            throw std::logic_error("Unsupported constant type");
         }
     }
     else if (auto varVal =
@@ -539,7 +539,7 @@ AssemblyGenerator::convertValue(std::shared_ptr<IR::Value> irValue) {
             varVal->getIdentifier());
     }
     else {
-        throw std::runtime_error("Unsupported IR value type");
+        throw std::logic_error("Unsupported IR value type");
     }
 }
 } // namespace Assembly
