@@ -1,6 +1,6 @@
 # Compiler and flags.
 CXX = clang++
-CXXFLAGS = -Wall -Wextra -Wpedantic -Werror -Wconversion -Wshadow -Wnull-dereference -std=c++23
+CXXFLAGS = -Wall -Wextra -Wpedantic -Werror -Wconversion -Wshadow -Wnull-dereference -std=c++23 -stdlib=libc++
 
 # Directories.
 SRC_DIR = src
@@ -45,7 +45,7 @@ $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
 
 # Link the object files to create the executable.
 $(EXECUTABLE): $(OBJECTS)
-	$(CXX) $(OBJECTS) -o $@
+	$(CXX) $(OBJECTS) -o $@ -stdlib=libc++
 
 # Format the source files and the header files.
 format:

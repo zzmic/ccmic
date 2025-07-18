@@ -5,19 +5,24 @@
 namespace Assembly {
 void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
     std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> &topLevels) {
-    std::unordered_map<std::string, int> pseudoToStackMap;
-
     // Replace pseudo registers with stack operands in each instruction and
     // associate the stack size with each function.
     for (auto topLevel : *topLevels) {
-        auto offset = -4;
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
                     topLevel)) {
+            // Reset offset and clear map for each function.
+            this->offset = -4;
+            this->pseudoToStackMap.clear();
+
+            // Replace pseudo registers with stack operands in each instruction.
             for (auto instruction : *functionDefinition->getFunctionBody()) {
-                replacePseudoWithStack(instruction, pseudoToStackMap, offset);
+                replacePseudoWithStack(instruction);
             }
-            functionDefinition->setStackSize(static_cast<size_t>(-offset));
+
+            // Set the stack size for the function.
+            functionDefinition->setStackSize(
+                static_cast<size_t>(-this->offset));
         }
     }
 
@@ -32,75 +37,144 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
     }
 }
 
+std::shared_ptr<Assembly::Operand>
+PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
+    if (!operand) {
+        throw std::logic_error("Setting null operand in replaceOperand");
+    }
+
+    if (auto pseudoReg =
+            std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                operand)) {
+        const std::string &pseudoRegister = pseudoReg->getPseudoRegister();
+        if (this->pseudoToStackMap.find(pseudoRegister) ==
+            this->pseudoToStackMap.end()) {
+            // If a pseudoregister is not in `pseudoToStackMap`, look it up in
+            // the backend symbol table.
+            if (backendSymbolTable.find(pseudoRegister) !=
+                backendSymbolTable.end()) {
+                auto backendEntry = backendSymbolTable[pseudoRegister];
+                // If it has a static storage duration, map it to a data operand
+                // by the same name.
+                if (auto objEntry =
+                        std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
+                    if (objEntry->isStaticStorage()) {
+                        return std::make_shared<Assembly::DataOperand>(
+                            pseudoRegister);
+                    }
+                }
+            }
+            // Otherwise, assign it a new slot on the stack based on its type.
+            // Look up the type in the backend symbol table to determine the
+            // allocation size.
+            int allocationSize =
+                8; // Default to 8 bytes for temporary variables
+            if (backendSymbolTable.find(pseudoRegister) !=
+                backendSymbolTable.end()) {
+                auto backendEntry = backendSymbolTable[pseudoRegister];
+                if (auto objEntry =
+                        std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
+                    auto assemblyType = objEntry->getAssemblyType();
+                    if (std::dynamic_pointer_cast<Quadword>(assemblyType)) {
+                        allocationSize = 8; // 8 bytes for `Quadword`.
+                    }
+                    else {
+                        allocationSize = 4; // 4 bytes for `Longword`.
+                    }
+                }
+            }
+
+            // For `Quadword` types, ensure 8-byte alignment (as required by the
+            // System V ABI).
+            if (allocationSize == 8) {
+                // Round down to the next multiple of 8.
+                this->offset = (this->offset / 8) * 8;
+            }
+
+            // Update the `pseudoToStackMap` with the new offset.
+            this->pseudoToStackMap[pseudoRegister] = this->offset;
+            // Update the offset to the next available stack slot.
+            this->offset -= allocationSize;
+        }
+
+        // Replace the pseudo register with a stack operand.
+        return std::make_shared<Assembly::StackOperand>(
+            this->pseudoToStackMap[pseudoRegister],
+            std::make_shared<Assembly::BP>());
+    }
+
+    // If not a PseudoRegisterOperand, return as is
+    return operand;
+}
+
 void PseudoToStackPass::replacePseudoWithStack(
-    std::shared_ptr<Assembly::Instruction> &instruction,
-    std::unordered_map<std::string, int> &pseudoToStackMap, int &offset) {
+    std::shared_ptr<Assembly::Instruction> &instruction) {
     if (auto movInstruction =
             std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
         auto src = movInstruction->getSrc();
         auto dst = movInstruction->getDst();
-        replaceOperand(src, pseudoToStackMap, offset);
-        replaceOperand(dst, pseudoToStackMap, offset);
-        movInstruction->setSrc(src);
-        movInstruction->setDst(dst);
+        auto newSrc = replaceOperand(src);
+        auto newDst = replaceOperand(dst);
+        movInstruction->setSrc(newSrc);
+        movInstruction->setDst(newDst);
     }
     else if (auto movsxInstruction =
                  std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
                      instruction)) {
         auto src = movsxInstruction->getSrc();
         auto dst = movsxInstruction->getDst();
-        replaceOperand(src, pseudoToStackMap, offset);
-        replaceOperand(dst, pseudoToStackMap, offset);
-        movsxInstruction->setSrc(src);
-        movsxInstruction->setDst(dst);
+        auto newSrc = replaceOperand(src);
+        auto newDst = replaceOperand(dst);
+        movsxInstruction->setSrc(newSrc);
+        movsxInstruction->setDst(newDst);
     }
     else if (auto unaryInstruction =
                  std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
                      instruction)) {
         auto operand = unaryInstruction->getOperand();
-        replaceOperand(operand, pseudoToStackMap, offset);
-        unaryInstruction->setOperand(operand);
+        auto newOperand = replaceOperand(operand);
+        unaryInstruction->setOperand(newOperand);
     }
     else if (auto binaryInstruction =
                  std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
                      instruction)) {
         auto operand1 = binaryInstruction->getOperand1();
         auto operand2 = binaryInstruction->getOperand2();
-        replaceOperand(operand1, pseudoToStackMap, offset);
-        replaceOperand(operand2, pseudoToStackMap, offset);
-        binaryInstruction->setOperand1(operand1);
-        binaryInstruction->setOperand2(operand2);
+        auto newOperand1 = replaceOperand(operand1);
+        auto newOperand2 = replaceOperand(operand2);
+        binaryInstruction->setOperand1(newOperand1);
+        binaryInstruction->setOperand2(newOperand2);
     }
     else if (auto cmpInstruction =
                  std::dynamic_pointer_cast<Assembly::CmpInstruction>(
                      instruction)) {
         auto operand1 = cmpInstruction->getOperand1();
         auto operand2 = cmpInstruction->getOperand2();
-        replaceOperand(operand1, pseudoToStackMap, offset);
-        replaceOperand(operand2, pseudoToStackMap, offset);
-        cmpInstruction->setOperand1(operand1);
-        cmpInstruction->setOperand2(operand2);
+        auto newOperand1 = replaceOperand(operand1);
+        auto newOperand2 = replaceOperand(operand2);
+        cmpInstruction->setOperand1(newOperand1);
+        cmpInstruction->setOperand2(newOperand2);
     }
     else if (auto idivInstruction =
                  std::dynamic_pointer_cast<Assembly::IdivInstruction>(
                      instruction)) {
         auto operand = idivInstruction->getOperand();
-        replaceOperand(operand, pseudoToStackMap, offset);
-        idivInstruction->setOperand(operand);
+        auto newOperand = replaceOperand(operand);
+        idivInstruction->setOperand(newOperand);
     }
     else if (auto setCCInstruction =
                  std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
                      instruction)) {
         auto operand = setCCInstruction->getOperand();
-        replaceOperand(operand, pseudoToStackMap, offset);
-        setCCInstruction->setOperand(operand);
+        auto newOperand = replaceOperand(operand);
+        setCCInstruction->setOperand(newOperand);
     }
     else if (auto pushInstruction =
                  std::dynamic_pointer_cast<Assembly::PushInstruction>(
                      instruction)) {
         auto operand = pushInstruction->getOperand();
-        replaceOperand(operand, pseudoToStackMap, offset);
-        pushInstruction->setOperand(operand);
+        auto newOperand = replaceOperand(operand);
+        pushInstruction->setOperand(newOperand);
     }
     else if (auto retInstruction =
                  std::dynamic_pointer_cast<Assembly::RetInstruction>(
@@ -135,67 +209,6 @@ void PseudoToStackPass::replacePseudoWithStack(
     else {
         throw std::logic_error("Unsupported instruction type while replacing "
                                "pseudo registers with stack operands");
-    }
-}
-
-void PseudoToStackPass::replaceOperand(
-    std::shared_ptr<Assembly::Operand> &operand,
-    std::unordered_map<std::string, int> &pseudoToStackMap, int &offset) {
-    // If the operand is a pseudo register, replace it with a stack operand.
-    if (auto pseudoOperand =
-            std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
-                operand)) {
-        const std::string &pseudoRegister = pseudoOperand->getPseudoRegister();
-        if (pseudoToStackMap.find(pseudoRegister) == pseudoToStackMap.end()) {
-            // If a pseudoregister is not in `pseudoToStackMap`, look it up in
-            // the backend symbol table.
-            if (backendSymbolTable.find(pseudoRegister) !=
-                backendSymbolTable.end()) {
-                auto backendEntry = backendSymbolTable[pseudoRegister];
-                // If it has a static storage duration, map it to a data operand
-                // by the same name.
-                if (auto objEntry =
-                        std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
-                    if (objEntry->isStaticStorage()) {
-                        operand = std::make_shared<Assembly::DataOperand>(
-                            pseudoRegister);
-                        return;
-                    }
-                }
-            }
-            // Otherwise, assign it a new slot on the stack based on its type.
-            // Look up the type in the backend symbol table to determine the
-            // allocation size.
-            int allocationSize = 4; // Default to 4 bytes (`Longword`).
-            if (backendSymbolTable.find(pseudoRegister) !=
-                backendSymbolTable.end()) {
-                auto backendEntry = backendSymbolTable[pseudoRegister];
-                if (auto objEntry =
-                        std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
-                    auto assemblyType = objEntry->getAssemblyType();
-                    if (std::dynamic_pointer_cast<Quadword>(assemblyType)) {
-                        allocationSize = 8; // 8 bytes for `Quadword`.
-                    }
-                    // `Longword` remains 4 bytes.
-                }
-            }
-
-            // For `Quadword` types, ensure 8-byte alignment (as required by the
-            // System V ABI).
-            if (allocationSize == 8) {
-                // Round down to the next multiple of 8.
-                offset = (offset / 8) * 8;
-            }
-
-            // Update the `pseudoToStackMap` with the new offset.
-            pseudoToStackMap[pseudoRegister] = offset;
-            // Update the offset to the next available stack slot.
-            offset -= allocationSize;
-        }
-
-        // Replace the pseudo register with a stack operand.
-        operand = std::make_shared<Assembly::StackOperand>(
-            pseudoToStackMap[pseudoRegister], std::make_shared<Assembly::BP>());
     }
 }
 

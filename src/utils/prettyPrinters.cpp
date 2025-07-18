@@ -1,4 +1,6 @@
 #include "prettyPrinters.h"
+#include <iostream>
+#include <sstream>
 #include <stdexcept>
 
 /*
@@ -16,7 +18,8 @@ void PrettyPrinters::printIRProgram(
             printIRFunctionDefinition(functionDefinition);
         }
         else {
-            throw std::logic_error("Unsupported top-level element");
+            throw std::logic_error(
+                "Unsupported top-level element while printing IR program");
         }
     }
 
@@ -61,7 +64,8 @@ void PrettyPrinters::printIRStaticVariable(
         std::cout << std::get<long>(longInit->getValue());
     }
     else {
-        throw std::logic_error("Unknown static variable initializer type");
+        throw std::logic_error("Unknown static variable initializer type while "
+                               "printing IR static variable");
     }
 
     std::cout << "\n";
@@ -120,7 +124,8 @@ void PrettyPrinters::printIRInstruction(
         printIRTruncateInstruction(truncateInstruction);
     }
     else {
-        throw std::logic_error("Unknown instruction type in IR program");
+        throw std::logic_error(
+            "Unknown instruction type while printing IR instruction");
     }
 }
 
@@ -141,7 +146,7 @@ void PrettyPrinters::printIRReturnInstruction(
         }
         else {
             throw std::logic_error(
-                "Unknown constant type in return instruction");
+                "Unknown constant type while printing IR return instruction");
         }
     }
     else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -150,7 +155,7 @@ void PrettyPrinters::printIRReturnInstruction(
     }
     else {
         throw std::logic_error(
-            "Unknown return value type in return instruction");
+            "Unknown return value type while printing IR return instruction");
     }
 
     std::cout << "\n";
@@ -164,8 +169,8 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown destination value type in sign extend instruction");
+        throw std::logic_error("Unknown destination value type while printing "
+                               "IR sign extend instruction");
     }
 
     std::cout << " = sign_extend(";
@@ -182,8 +187,8 @@ void PrettyPrinters::printIRSignExtendInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::logic_error(
-                "Unknown constant type in sign extend instruction");
+            throw std::logic_error("Unknown constant type while printing IR "
+                                   "sign extend instruction");
         }
     }
     else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -191,8 +196,8 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown source value type in sign extend instruction");
+        throw std::logic_error("Unknown source value type while printing IR "
+                               "sign extend instruction");
     }
 
     std::cout << ")\n";
@@ -206,8 +211,8 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown destination value type in truncate instruction");
+        throw std::logic_error("Unknown destination value type while printing "
+                               "IR truncate instruction");
     }
 
     std::cout << " = truncate(";
@@ -225,7 +230,7 @@ void PrettyPrinters::printIRTruncateInstruction(
         }
         else {
             throw std::logic_error(
-                "Unknown constant type in truncate instruction");
+                "Unknown constant type while printing IR truncate instruction");
         }
     }
     else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -234,7 +239,7 @@ void PrettyPrinters::printIRTruncateInstruction(
     }
     else {
         throw std::logic_error(
-            "Unknown source value type in truncate instruction");
+            "Unknown source value type while printing IR truncate instruction");
     }
 
     std::cout << ")\n";
@@ -249,8 +254,8 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown destination value type in unary instruction");
+        throw std::logic_error("Unknown destination value type while printing "
+                               "IR unary instruction");
     }
 
     if (auto complementOperator =
@@ -268,7 +273,8 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << " = !";
     }
     else {
-        throw std::logic_error("Unknown unary operator in instruction");
+        throw std::logic_error(
+            "Unknown unary operator while printing IR unary instruction");
     }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -290,12 +296,12 @@ void PrettyPrinters::printIRUnaryInstruction(
         }
         else {
             throw std::logic_error(
-                "Unknown constant type in unary instruction");
+                "Unknown constant type while printing IR unary instruction");
         }
     }
     else {
         throw std::logic_error(
-            "Unknown source value type in unary instruction");
+            "Unknown source value type while printing IR unary instruction");
     }
 
     std::cout << "\n";
@@ -327,12 +333,12 @@ void PrettyPrinters::printIRBinaryInstruction(
         }
         else {
             throw std::logic_error(
-                "Unknown constant type in binary instruction");
+                "Unknown constant type while printing IR binary instruction");
         }
     }
     else {
         throw std::logic_error(
-            "Unknown source value type in binary instruction");
+            "Unknown source value type while printing IR binary instruction");
     }
 
     if (auto binaryOperator = std::dynamic_pointer_cast<IR::AddOperator>(
@@ -390,7 +396,8 @@ void PrettyPrinters::printIRBinaryInstruction(
         std::cout << " >= ";
     }
     else {
-        throw std::logic_error("Unknown binary operator in instruction");
+        throw std::logic_error(
+            "Unknown binary operator while printing IR binary instruction");
     }
 
     if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
@@ -410,12 +417,12 @@ void PrettyPrinters::printIRBinaryInstruction(
         }
         else {
             throw std::logic_error(
-                "Unknown constant type in binary instruction");
+                "Unknown constant type while printing IR binary instruction");
         }
     }
     else {
         throw std::logic_error(
-            "Unknown source value type in binary instruction");
+            "Unknown source value type while printing IR binary instruction");
     }
 
     std::cout << "\n";
@@ -429,15 +436,16 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown/unsupported destination value type in copy instruction");
+        throw std::logic_error("Unknown/unsupported destination value type "
+                               "while printing IR copy instruction");
     }
 
     std::cout << " = ";
 
     auto src = copyInstruction->getSrc();
     if (src == nullptr) {
-        throw std::logic_error("Source value is null in copy instruction");
+        throw std::logic_error(
+            "Source value is null while printing IR copy instruction");
     }
 
     if (auto constantValue =
@@ -452,7 +460,8 @@ void PrettyPrinters::printIRCopyInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::logic_error("Unknown constant type in copy instruction");
+            throw std::logic_error(
+                "Unknown constant type while printing IR copy instruction");
         }
     }
     else if (auto variableValue =
@@ -460,7 +469,8 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unknown source value type in copy instruction");
+        throw std::logic_error(
+            "Unknown source value type while printing IR copy instruction");
     }
 
     std::cout << "\n";
@@ -491,8 +501,8 @@ void PrettyPrinters::printIRJumpIfZeroInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::logic_error(
-                "Unknown constant type in jump if zero instruction");
+            throw std::logic_error("Unknown constant type while printing IR "
+                                   "jump if zero instruction");
         }
     }
 
@@ -520,13 +530,13 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
             std::cout << constantLong->getValue();
         }
         else {
-            throw std::logic_error(
-                "Unknown constant type in jump if not zero instruction");
+            throw std::logic_error("Unknown constant type while printing IR "
+                                   "jump if not zero instruction");
         }
     }
     else {
-        throw std::logic_error(
-            "Unknown condition value type in jump if not zero instruction");
+        throw std::logic_error("Unknown condition value type while printing IR "
+                               "jump if not zero instruction");
     }
 
     std::cout << ", " << jumpIfNotZeroInstruction->getTarget() << ")\n";
@@ -547,8 +557,8 @@ void PrettyPrinters::printIRFunctionCallInstruction(
         std::cout << "    " << variableValue->getIdentifier() << " = ";
     }
     else {
-        throw std::logic_error(
-            "Unknown destination value type in function call instruction");
+        throw std::logic_error("Unknown destination value type while printing "
+                               "IR function call instruction");
     }
 
     auto functionIdentifier = functionCallInstruction->getFunctionIdentifier();
@@ -573,8 +583,8 @@ void PrettyPrinters::printIRFunctionCallInstruction(
                 std::cout << constantLong->getValue();
             }
             else {
-                throw std::logic_error(
-                    "Unknown constant type in function call argument");
+                throw std::logic_error("Unknown constant type while printing "
+                                       "IR function call argument");
             }
         }
         bool isLast = (std::next(it) == args.end());
@@ -670,7 +680,8 @@ void PrettyPrinters::printAssyStaticVariable(
         initialValue = static_cast<int>(std::get<long>(longInit->getValue()));
     }
     else {
-        throw std::logic_error("Unknown static init type");
+        throw std::logic_error(
+            "Unknown static init type while printing IR static variable");
     }
 
     std::cout << "\n";
@@ -787,6 +798,10 @@ void PrettyPrinters::printAssyInstruction(
                      instruction)) {
         printAssyLabelInstruction(labelInstruction);
     }
+    else {
+        throw std::logic_error(
+            "Invalid instruction type while printing assembly instruction");
+    }
 }
 
 void PrettyPrinters::printAssyMovInstruction(
@@ -799,92 +814,126 @@ void PrettyPrinters::printAssyMovInstruction(
         instructionName = "movl";
         registerSize = 4;
     }
-    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (auto quadword =
+                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
         instructionName = "movq";
         registerSize = 8;
     }
     else {
-        throw std::logic_error("Invalid type");
+        throw std::logic_error(
+            "Invalid type while printing assembly mov instruction");
     }
 
     auto src = movInstruction->getSrc();
+    std::string srcStr;
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        std::cout << "    " << instructionName << " " << srcReg->getRegisterInBytesInStr(registerSize);
+        srcStr = srcReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        std::cout << "    " << instructionName << " $" << srcImm->getImmediate();
+        srcStr = "$" + std::to_string(srcImm->getImmediate());
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
-        std::cout << "    " << instructionName << " " << srcStack->getOffset() << "("
-                  << srcStack->getReservedRegisterInStr() << ")";
+        srcStr = std::to_string(srcStack->getOffset()) + "(" +
+                 srcStack->getReservedRegisterInStr() + ")";
     }
     else if (auto srcData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
-        std::cout << "    " << instructionName << " " << identifier << "(%rip)";
+        srcStr = identifier + "(%rip)";
+    }
+    else {
+        throw std::logic_error(
+            "Invalid source type while printing assembly mov instruction");
     }
 
     auto dst = movInstruction->getDst();
+    std::string dstStr;
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        std::cout << ", " << dstReg->getRegisterInBytesInStr(registerSize) << "\n";
+        dstStr = dstReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
-        std::cout << ", " << dstStack->getOffset() << "("
-                  << dstStack->getReservedRegisterInStr() << ")\n";
+        dstStr = std::to_string(dstStack->getOffset()) + "(" +
+                 dstStack->getReservedRegisterInStr() + ")";
     }
     else if (auto dstData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
         auto identifier = dstData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
-        std::cout << ", " << identifier << "(%rip)\n";
+        dstStr = identifier + "(%rip)";
     }
+    else {
+        throw std::logic_error(
+            "Invalid destination type while printing assembly mov instruction");
+    }
+
+    std::cout << "    " << instructionName << " " << srcStr << ", " << dstStr
+              << "\n";
 }
 
 void PrettyPrinters::printAssyMovsxInstruction(
     const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction) {
     auto src = movsxInstruction->getSrc();
+    std::string srcStr;
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        std::cout << "    movslq " << srcReg->getRegisterInBytesInStr(4);
+        srcStr = srcReg->getRegisterInBytesInStr(4);
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        std::cout << "    movslq $" << srcImm->getImmediate();
+        srcStr = "$" + std::to_string(srcImm->getImmediate());
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
-        std::cout << "    movslq " << srcStack->getOffset() << "("
-                  << srcStack->getReservedRegisterInStr() << ")";
+        srcStr = std::to_string(srcStack->getOffset()) + "(" +
+                 srcStack->getReservedRegisterInStr() + ")";
     }
     else if (auto srcData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
-        std::cout << "    movslq " << identifier << "(%rip)";
+        srcStr = identifier + "(%rip)";
+    }
+    else {
+        std::stringstream msg;
+        msg << "Invalid source type while printing assembly movsx instruction";
+        if (src == nullptr) {
+            msg << ": Source operand is nullptr";
+        }
+        else {
+            msg << ": Source operand is not nullptr but unknown type";
+        }
+        throw std::logic_error(msg.str());
     }
 
     auto dst = movsxInstruction->getDst();
+    std::string dstStr;
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        std::cout << ", " << dstReg->getRegisterInBytesInStr(8) << "\n";
+        dstStr = dstReg->getRegisterInBytesInStr(8);
     }
     else if (auto dstStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
-        std::cout << ", " << dstStack->getOffset() << "("
-                  << dstStack->getReservedRegisterInStr() << ")\n";
+        dstStr = std::to_string(dstStack->getOffset()) + "(" +
+                 dstStack->getReservedRegisterInStr() + ")";
     }
     else if (auto dstData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
         auto identifier = dstData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
-        std::cout << ", " << identifier << "(%rip)\n";
+        dstStr = identifier + "(%rip)";
     }
+    else {
+        throw std::logic_error("Invalid destination type while printing "
+                               "assembly movsx instruction");
+    }
+
+    std::cout << "    movslq " << srcStr << ", " << dstStr << "\n";
 }
 
 void PrettyPrinters::printAssyRetInstruction(
@@ -921,6 +970,10 @@ void PrettyPrinters::printAssyPushInstruction(
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << "    pushq" << " " << identifier << "(%rip)\n";
+    }
+    else {
+        throw std::logic_error(
+            "Invalid operand type while printing assembly push instruction");
     }
 }
 
@@ -959,7 +1012,8 @@ void PrettyPrinters::printAssyUnaryInstruction(
         instructionName = "not";
     }
     else {
-        throw std::logic_error("Invalid unary operator");
+        throw std::logic_error(
+            "Invalid unary operator while printing assembly unary instruction");
     }
 
     std::string typeSuffix;
@@ -968,12 +1022,14 @@ void PrettyPrinters::printAssyUnaryInstruction(
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (auto quadword =
+                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
     else {
-        throw std::logic_error("Invalid type");
+        throw std::logic_error(
+            "Invalid type while printing assembly unary instruction");
     }
 
     std::cout << "    " << instructionName << typeSuffix;
@@ -981,7 +1037,8 @@ void PrettyPrinters::printAssyUnaryInstruction(
     auto operand = unaryInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        std::cout << " " << regOperand->getRegisterInBytesInStr(registerSize) << "\n";
+        std::cout << " " << regOperand->getRegisterInBytesInStr(registerSize)
+                  << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -993,6 +1050,10 @@ void PrettyPrinters::printAssyUnaryInstruction(
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
+    }
+    else {
+        throw std::logic_error(
+            "Invalid operand type while printing assembly unary instruction");
     }
 }
 
@@ -1017,7 +1078,8 @@ void PrettyPrinters::printAssyBinaryInstruction(
         instructionName = "imul";
     }
     else {
-        throw std::logic_error("Invalid binary operator");
+        throw std::logic_error("Invalid binary operator while printing "
+                               "assembly binary instruction");
     }
 
     std::string typeSuffix;
@@ -1026,12 +1088,14 @@ void PrettyPrinters::printAssyBinaryInstruction(
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (auto quadword =
+                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
     else {
-        throw std::logic_error("Invalid type");
+        throw std::logic_error(
+            "Invalid type while printing assembly binary instruction");
     }
 
     std::cout << "    " << instructionName << typeSuffix;
@@ -1044,7 +1108,8 @@ void PrettyPrinters::printAssyBinaryInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        std::cout << " " << operand1Reg->getRegisterInBytesInStr(registerSize) << ",";
+        std::cout << " " << operand1Reg->getRegisterInBytesInStr(registerSize)
+                  << ",";
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -1061,7 +1126,8 @@ void PrettyPrinters::printAssyBinaryInstruction(
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        std::cout << " " << operand2Reg->getRegisterInBytesInStr(registerSize) << "\n";
+        std::cout << " " << operand2Reg->getRegisterInBytesInStr(registerSize)
+                  << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -1073,6 +1139,10 @@ void PrettyPrinters::printAssyBinaryInstruction(
         auto identifier = operand2Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
+    }
+    else {
+        throw std::logic_error(
+            "Invalid operand type while printing assembly binary instruction");
     }
 }
 
@@ -1086,12 +1156,14 @@ void PrettyPrinters::printAssyCmpInstruction(
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (auto quadword =
+                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
     else {
-        throw std::logic_error("Invalid type");
+        throw std::logic_error(
+            "Invalid type while printing assembly cmp instruction");
     }
 
     std::cout << "    cmp" << typeSuffix;
@@ -1123,7 +1195,8 @@ void PrettyPrinters::printAssyCmpInstruction(
     auto operand2 = cmpInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        std::cout << " " << operand2Reg->getRegisterInBytesInStr(registerSize) << "\n";
+        std::cout << " " << operand2Reg->getRegisterInBytesInStr(registerSize)
+                  << "\n";
     }
     else if (auto operand2Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
@@ -1148,12 +1221,14 @@ void PrettyPrinters::printAssyIdivInstruction(
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (auto quadword =
+                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
     else {
-        throw std::logic_error("Invalid type");
+        throw std::logic_error(
+            "Invalid type while printing assembly idiv instruction");
     }
 
     std::cout << "    idiv" << typeSuffix;
@@ -1161,7 +1236,8 @@ void PrettyPrinters::printAssyIdivInstruction(
     auto operand = idivInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        std::cout << " " << regOperand->getRegisterInBytesInStr(registerSize) << "\n";
+        std::cout << " " << regOperand->getRegisterInBytesInStr(registerSize)
+                  << "\n";
     }
     else if (auto stackOperand =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
@@ -1174,6 +1250,10 @@ void PrettyPrinters::printAssyIdivInstruction(
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
     }
+    else {
+        throw std::logic_error(
+            "Invalid operand type while printing assembly idiv instruction");
+    }
 }
 
 void PrettyPrinters::printAssyCdqInstruction(
@@ -1183,11 +1263,13 @@ void PrettyPrinters::printAssyCdqInstruction(
     if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
         std::cout << "    cdq\n";
     }
-    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (auto quadword =
+                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
         std::cout << "    cqo\n";
     }
     else {
-        throw std::logic_error("Invalid type");
+        throw std::logic_error(
+            "Invalid type while printing assembly cdq instruction");
     }
 }
 
@@ -1219,7 +1301,8 @@ void PrettyPrinters::printAssyJmpCCInstruction(
         std::cout << "    jle";
     }
     else {
-        throw std::logic_error("Invalid conditional code");
+        throw std::logic_error("Invalid conditional code while printing "
+                               "assembly jmpcc instruction");
     }
 
     auto label = jmpCCInstruction->getLabel();
@@ -1248,7 +1331,8 @@ void PrettyPrinters::printAssySetCCInstruction(
         std::cout << "    setle";
     }
     else {
-        throw std::logic_error("Invalid conditional code");
+        throw std::logic_error("Invalid conditional code while printing "
+                               "assembly setcc instruction");
     }
 
     auto operand = setCCInstruction->getOperand();
@@ -1266,9 +1350,10 @@ void PrettyPrinters::printAssySetCCInstruction(
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
-   }
+    }
     else {
-        throw std::logic_error("Invalid operand type");
+        throw std::logic_error(
+            "Invalid operand type while printing assembly setcc instruction");
     }
 }
 

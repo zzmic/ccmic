@@ -374,11 +374,10 @@ FixupPass::rewriteInvalidMovsx(
             std::make_shared<Assembly::R11>());
 
         auto newMov1 = std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::Longword>(), std::move(src),
-            std::move(r10d));
+            std::make_shared<Assembly::Longword>(), std::move(src), r10d);
 
-        auto newMovsx = std::make_shared<Assembly::MovsxInstruction>(
-            std::move(r10d), std::move(r11d));
+        auto newMovsx =
+            std::make_shared<Assembly::MovsxInstruction>(r10d, r11d);
 
         auto newMov2 = std::make_shared<Assembly::MovInstruction>(
             std::make_shared<Assembly::Quadword>(), std::move(r11d),
@@ -393,11 +392,9 @@ FixupPass::rewriteInvalidMovsx(
             std::make_shared<Assembly::R10>());
 
         auto newMov = std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::Longword>(), std::move(src),
-            std::move(r10d));
+            std::make_shared<Assembly::Longword>(), std::move(src), r10d);
 
-        auto newMovsx =
-            std::make_shared<Assembly::MovsxInstruction>(std::move(r10d), dst);
+        auto newMovsx = std::make_shared<Assembly::MovsxInstruction>(r10d, dst);
 
         *it = std::move(newMov);
         it = instructions->insert(it + 1, std::move(newMovsx));

@@ -115,7 +115,11 @@ class RegisterOperand : public Operand {
                          {typeid(BP), "%rbp"}}}};
 
   public:
-    explicit RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {}
+    explicit RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {
+        if (!reg) {
+            throw std::logic_error("Creating RegisterOperand with null reg");
+        }
+    }
     explicit RegisterOperand(std::string regInStr) {
         if (regInStr == "AX") {
             reg = std::make_shared<AX>();
@@ -148,21 +152,25 @@ class RegisterOperand : public Operand {
             reg = std::make_shared<SP>();
         }
         else {
-            throw std::logic_error("Unsupported register: " + regInStr);
+            throw std::logic_error("Unsupported register while creating "
+                                   "RegisterOperand: " +
+                                   regInStr);
         }
     }
     std::shared_ptr<Register> getRegister() const override { return reg; }
     std::string getRegisterInBytesInStr(int size) const {
         auto sizeIt = regMappings.find(size);
         if (sizeIt == regMappings.end()) {
-            throw std::logic_error("Unsupported register size: " +
+            throw std::logic_error("Unsupported register size while getting "
+                                   "register in bytes in string: " +
                                    std::to_string(size));
         }
         const auto &sizeMappings = sizeIt->second;
         auto &r = *reg.get();
         auto regIt = sizeMappings.find(typeid(r));
         if (regIt == sizeMappings.end()) {
-            throw std::logic_error("Unsupported register type: " +
+            throw std::logic_error("Unsupported register type while getting "
+                                   "register in bytes in string: " +
                                    std::string(typeid(r).name()));
         }
         return regIt->second;
@@ -187,7 +195,12 @@ class StackOperand : public Operand {
   public:
     explicit StackOperand(int offset,
                           std::shared_ptr<ReservedRegister> reservedReg)
-        : offset(offset), reservedReg(reservedReg) {}
+        : offset(offset), reservedReg(reservedReg) {
+        if (!reservedReg) {
+            throw std::logic_error(
+                "Creating StackOperand with null reservedReg");
+        }
+    }
     int getOffset() const override { return offset; }
     std::shared_ptr<ReservedRegister> getReservedRegister() const override {
         return reservedReg;
@@ -203,7 +216,10 @@ class StackOperand : public Operand {
             return "%rbp";
         }
         else {
-            throw std::logic_error("Unsupported reserved register");
+            auto reg = reservedReg.get();
+            throw std::logic_error("Unsupported reserved register while "
+                                   "getting reserved register in string: " +
+                                   std::string(typeid(*reg).name()));
         }
     }
 };
@@ -278,15 +294,40 @@ class MovInstruction : public Instruction {
     explicit MovInstruction(std::shared_ptr<AssemblyType> type,
                             std::shared_ptr<Operand> src,
                             std::shared_ptr<Operand> dst)
-        : type(type), src(src), dst(dst) {}
+        : type(type), src(src), dst(dst) {
+        if (!type) {
+            throw std::logic_error("Creating MovInstruction with null type");
+        }
+        if (!src) {
+            throw std::logic_error("Creating MovInstruction with null src");
+        }
+        if (!dst) {
+            throw std::logic_error("Creating MovInstruction with null dst");
+        }
+    }
     std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getSrc() { return src; }
     std::shared_ptr<Operand> getDst() { return dst; }
     void setType(std::shared_ptr<AssemblyType> newType) {
+        if (!newType) {
+            throw std::logic_error("Setting null type in MovInstruction");
+        }
         this->type = newType;
     }
-    void setSrc(std::shared_ptr<Operand> newSrc) { this->src = newSrc; }
-    void setDst(std::shared_ptr<Operand> newDst) { this->dst = newDst; }
+    void setSrc(std::shared_ptr<Operand> newSrc) {
+        if (!newSrc) {
+            throw std::logic_error(
+                "Setting null source operand in MovInstruction");
+        }
+        this->src = newSrc;
+    }
+    void setDst(std::shared_ptr<Operand> newDst) {
+        if (!newDst) {
+            throw std::logic_error(
+                "Setting null destination operand in MovInstruction");
+        }
+        this->dst = newDst;
+    }
 };
 
 class MovsxInstruction : public Instruction {
@@ -296,11 +337,30 @@ class MovsxInstruction : public Instruction {
   public:
     explicit MovsxInstruction(std::shared_ptr<Operand> src,
                               std::shared_ptr<Operand> dst)
-        : src(src), dst(dst) {}
+        : src(src), dst(dst) {
+        if (!src) {
+            throw std::logic_error("Creating MovsxInstruction with null src");
+        }
+        if (!dst) {
+            throw std::logic_error("Creating MovsxInstruction with null dst");
+        }
+    }
     std::shared_ptr<Operand> getSrc() { return src; }
     std::shared_ptr<Operand> getDst() { return dst; }
-    void setSrc(std::shared_ptr<Operand> newSrc) { this->src = newSrc; }
-    void setDst(std::shared_ptr<Operand> newDst) { this->dst = newDst; }
+    void setSrc(std::shared_ptr<Operand> newSrc) {
+        if (!newSrc) {
+            throw std::logic_error(
+                "Setting null source operand in MovsxInstruction");
+        }
+        this->src = newSrc;
+    }
+    void setDst(std::shared_ptr<Operand> newDst) {
+        if (!newDst) {
+            throw std::logic_error(
+                "Setting null destination operand in MovsxInstruction");
+        }
+        this->dst = newDst;
+    }
 };
 
 class UnaryInstruction : public Instruction {
@@ -313,17 +373,39 @@ class UnaryInstruction : public Instruction {
     explicit UnaryInstruction(std::shared_ptr<UnaryOperator> unaryOperator,
                               std::shared_ptr<AssemblyType> type,
                               std::shared_ptr<Operand> operand)
-        : unaryOperator(unaryOperator), type(type), operand(operand) {}
+        : unaryOperator(unaryOperator), type(type), operand(operand) {
+        if (!unaryOperator) {
+            throw std::logic_error(
+                "Creating UnaryInstruction with null unaryOperator");
+        }
+        if (!type) {
+            throw std::logic_error("Creating UnaryInstruction with null type");
+        }
+        if (!operand) {
+            throw std::logic_error(
+                "Creating UnaryInstruction with null operand");
+        }
+    }
     std::shared_ptr<UnaryOperator> getUnaryOperator() { return unaryOperator; }
     std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand() { return operand; }
     void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator) {
+        if (!newUnaryOperator) {
+            throw std::logic_error(
+                "Setting null unary operator in UnaryInstruction");
+        }
         this->unaryOperator = newUnaryOperator;
     }
     void setType(std::shared_ptr<AssemblyType> newType) {
+        if (!newType) {
+            throw std::logic_error("Setting null type in UnaryInstruction");
+        }
         this->type = newType;
     }
     void setOperand(std::shared_ptr<Operand> newOperand) {
+        if (!newOperand) {
+            throw std::logic_error("Setting null operand in UnaryInstruction");
+        }
         this->operand = newOperand;
     }
 };
@@ -340,7 +422,23 @@ class BinaryInstruction : public Instruction {
                                std::shared_ptr<Operand> operand1,
                                std::shared_ptr<Operand> operand2)
         : binaryOperator(binaryOperator), type(type), operand1(operand1),
-          operand2(operand2) {}
+          operand2(operand2) {
+        if (!binaryOperator) {
+            throw std::logic_error(
+                "Creating BinaryInstruction with null binaryOperator");
+        }
+        if (!type) {
+            throw std::logic_error("Creating BinaryInstruction with null type");
+        }
+        if (!operand1) {
+            throw std::logic_error(
+                "Creating BinaryInstruction with null operand1");
+        }
+        if (!operand2) {
+            throw std::logic_error(
+                "Creating BinaryInstruction with null operand2");
+        }
+    }
     std::shared_ptr<BinaryOperator> getBinaryOperator() {
         return binaryOperator;
     }
@@ -348,15 +446,30 @@ class BinaryInstruction : public Instruction {
     std::shared_ptr<Operand> getOperand1() { return operand1; }
     std::shared_ptr<Operand> getOperand2() { return operand2; }
     void setBinaryOperator(std::shared_ptr<BinaryOperator> newBinaryOperator) {
+        if (!newBinaryOperator) {
+            throw std::logic_error(
+                "Setting null binary operator in BinaryInstruction");
+        }
         this->binaryOperator = newBinaryOperator;
     }
     void setType(std::shared_ptr<AssemblyType> newType) {
+        if (!newType) {
+            throw std::logic_error("Setting null type in BinaryInstruction");
+        }
         this->type = newType;
     }
     void setOperand1(std::shared_ptr<Operand> newOperand1) {
+        if (!newOperand1) {
+            throw std::logic_error(
+                "Setting null operand1 in BinaryInstruction");
+        }
         this->operand1 = newOperand1;
     }
     void setOperand2(std::shared_ptr<Operand> newOperand2) {
+        if (!newOperand2) {
+            throw std::logic_error(
+                "Setting null operand2 in BinaryInstruction");
+        }
         this->operand2 = newOperand2;
     }
 };
@@ -370,17 +483,38 @@ class CmpInstruction : public Instruction {
     explicit CmpInstruction(std::shared_ptr<AssemblyType> type,
                             std::shared_ptr<Operand> operand1,
                             std::shared_ptr<Operand> operand2)
-        : type(type), operand1(operand1), operand2(operand2) {}
+        : type(type), operand1(operand1), operand2(operand2) {
+        if (!type) {
+            throw std::logic_error("Creating CmpInstruction with null type");
+        }
+        if (!operand1) {
+            throw std::logic_error(
+                "Creating CmpInstruction with null operand1");
+        }
+        if (!operand2) {
+            throw std::logic_error(
+                "Creating CmpInstruction with null operand2");
+        }
+    }
     std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand1() { return operand1; }
     std::shared_ptr<Operand> getOperand2() { return operand2; }
     void setType(std::shared_ptr<AssemblyType> newType) {
+        if (!newType) {
+            throw std::logic_error("Setting null type in CmpInstruction");
+        }
         this->type = newType;
     }
     void setOperand1(std::shared_ptr<Operand> newOperand1) {
+        if (!newOperand1) {
+            throw std::logic_error("Setting null operand1 in CmpInstruction");
+        }
         this->operand1 = newOperand1;
     }
     void setOperand2(std::shared_ptr<Operand> newOperand2) {
+        if (!newOperand2) {
+            throw std::logic_error("Setting null operand2 in CmpInstruction");
+        }
         this->operand2 = newOperand2;
     }
 };
@@ -393,13 +527,27 @@ class IdivInstruction : public Instruction {
   public:
     explicit IdivInstruction(std::shared_ptr<AssemblyType> type,
                              std::shared_ptr<Operand> operand)
-        : type(type), operand(operand) {}
+        : type(type), operand(operand) {
+        if (!type) {
+            throw std::logic_error("Creating IdivInstruction with null type");
+        }
+        if (!operand) {
+            throw std::logic_error(
+                "Creating IdivInstruction with null operand");
+        }
+    }
     std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand() { return operand; }
     void setType(std::shared_ptr<AssemblyType> newType) {
+        if (!newType) {
+            throw std::logic_error("Setting null type in IdivInstruction");
+        }
         this->type = newType;
     }
     void setOperand(std::shared_ptr<Operand> newOperand) {
+        if (!newOperand) {
+            throw std::logic_error("Setting null operand in IdivInstruction");
+        }
         this->operand = newOperand;
     }
 };
@@ -412,6 +560,9 @@ class CdqInstruction : public Instruction {
     explicit CdqInstruction(std::shared_ptr<AssemblyType> type) : type(type) {}
     std::shared_ptr<AssemblyType> getType() { return type; }
     void setType(std::shared_ptr<AssemblyType> newType) {
+        if (!newType) {
+            throw std::logic_error("Setting null type in CdqInstruction");
+        }
         this->type = newType;
     }
 };
@@ -434,10 +585,19 @@ class JmpCCInstruction : public Instruction {
   public:
     explicit JmpCCInstruction(std::shared_ptr<CondCode> condCode,
                               std::string label)
-        : condCode(condCode), label(label) {}
+        : condCode(condCode), label(label) {
+        if (!condCode) {
+            throw std::logic_error(
+                "Creating JmpCCInstruction with null condCode");
+        }
+    }
     std::shared_ptr<CondCode> getCondCode() { return condCode; }
     std::string getLabel() { return label; }
     void setCondCode(std::shared_ptr<CondCode> newCondCode) {
+        if (!newCondCode) {
+            throw std::logic_error(
+                "Setting null condition code in JmpCCInstruction");
+        }
         this->condCode = newCondCode;
     }
     void setLabel(std::string newLabel) { this->label = newLabel; }
@@ -451,13 +611,29 @@ class SetCCInstruction : public Instruction {
   public:
     explicit SetCCInstruction(std::shared_ptr<CondCode> condCode,
                               std::shared_ptr<Operand> operand)
-        : condCode(condCode), operand(operand) {}
+        : condCode(condCode), operand(operand) {
+        if (!condCode) {
+            throw std::logic_error(
+                "Creating SetCCInstruction with null condCode");
+        }
+        if (!operand) {
+            throw std::logic_error(
+                "Creating SetCCInstruction with null operand");
+        }
+    }
     std::shared_ptr<CondCode> getCondCode() { return condCode; }
     std::shared_ptr<Operand> getOperand() { return operand; }
     void setCondCode(std::shared_ptr<CondCode> newCondCode) {
+        if (!newCondCode) {
+            throw std::logic_error(
+                "Setting null condition code in SetCCInstruction");
+        }
         this->condCode = newCondCode;
     }
     void setOperand(std::shared_ptr<Operand> newOperand) {
+        if (!newOperand) {
+            throw std::logic_error("Setting null operand in SetCCInstruction");
+        }
         this->operand = newOperand;
     }
 };
@@ -478,9 +654,17 @@ class PushInstruction : public Instruction {
 
   public:
     explicit PushInstruction(std::shared_ptr<Operand> operand)
-        : operand(operand) {}
+        : operand(operand) {
+        if (!operand) {
+            throw std::logic_error(
+                "Creating PushInstruction with null operand");
+        }
+    }
     std::shared_ptr<Operand> getOperand() { return operand; }
     void setOperand(std::shared_ptr<Operand> newOperand) {
+        if (!newOperand) {
+            throw std::logic_error("Setting null operand in PushInstruction");
+        }
         this->operand = newOperand;
     }
 };
@@ -515,7 +699,12 @@ class FunctionDefinition : public TopLevel {
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
         size_t stackSize)
         : functionIdentifier(functionIdentifier), global(global),
-          functionBody(functionBody), stackSize(stackSize) {}
+          functionBody(functionBody), stackSize(stackSize) {
+        if (!functionBody) {
+            throw std::logic_error(
+                "Creating FunctionDefinition with null functionBody");
+        }
+    }
     std::string getFunctionIdentifier() { return functionIdentifier; }
     bool isGlobal() { return global; }
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
@@ -525,6 +714,10 @@ class FunctionDefinition : public TopLevel {
     void
     setFunctionBody(std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
                         newFunctionBody) {
+        if (!newFunctionBody) {
+            throw std::logic_error(
+                "Setting null function body in FunctionDefinition");
+        }
         this->functionBody = newFunctionBody;
     }
     size_t getStackSize() { return stackSize; }
@@ -542,13 +735,22 @@ class StaticVariable : public TopLevel {
     explicit StaticVariable(std::string identifier, bool global, int alignment,
                             std::shared_ptr<AST::StaticInit> staticInit)
         : identifier(identifier), global(global), alignment(alignment),
-          staticInit(staticInit) {}
+          staticInit(staticInit) {
+        if (!staticInit) {
+            throw std::logic_error(
+                "Creating StaticVariable with null staticInit");
+        }
+    }
     std::string getIdentifier() { return identifier; }
     bool isGlobal() { return global; }
     int getAlignment() { return alignment; }
     void setAlignment(int newAlignment) { this->alignment = newAlignment; }
     std::shared_ptr<AST::StaticInit> getStaticInit() { return staticInit; }
     void setStaticInit(std::shared_ptr<AST::StaticInit> newStaticInit) {
+        if (!newStaticInit) {
+            throw std::logic_error(
+                "Setting null static init in StaticVariable");
+        }
         this->staticInit = newStaticInit;
     }
 };
@@ -566,6 +768,9 @@ class Program {
     }
     void setTopLevels(
         std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> newTopLevels) {
+        if (!newTopLevels) {
+            throw std::logic_error("Setting null top levels in Program");
+        }
         this->topLevels = newTopLevels;
     }
 };
