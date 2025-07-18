@@ -71,6 +71,67 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
             // Generate IR instructions for the function body.
             generateIRBlock(optBody.value(), instructions);
 
+            // Check if the function has any return statements.
+            bool hasReturnStatement = false;
+            for (const auto &instruction : *instructions) {
+                if (std::dynamic_pointer_cast<IR::ReturnInstruction>(
+                        instruction)) {
+                    hasReturnStatement = true;
+                    break;
+                }
+            }
+
+            // Check if the function needs an implicit return at the end, which
+            // happens when there are return statements but not all code paths
+            // return.
+            bool needsImplicitReturn = false;
+            if (hasReturnStatement) {
+                // Check if the last instruction is a return statement.
+                if (instructions->empty() ||
+                    !std::dynamic_pointer_cast<IR::ReturnInstruction>(
+                        instructions->back())) {
+                    needsImplicitReturn = true;
+                }
+            }
+            else {
+                // No return statements at all, definitely need implicit return.
+                needsImplicitReturn = true;
+            }
+
+            // If the function needs an implicit return, add it.
+            if (needsImplicitReturn) {
+                // Get the function's return type from the symbol table.
+                auto functionType = frontendSymbolTable[identifier].first;
+                auto functionTypePtr =
+                    std::dynamic_pointer_cast<AST::FunctionType>(functionType);
+                if (functionTypePtr) {
+                    auto returnType = functionTypePtr->getReturnType();
+
+                    // Create a constant value based on the return type.
+                    std::shared_ptr<IR::Value> returnValue;
+                    if (std::dynamic_pointer_cast<AST::IntType>(returnType)) {
+                        returnValue = std::make_shared<IR::ConstantValue>(
+                            std::make_shared<AST::ConstantInt>(0));
+                    }
+                    else if (std::dynamic_pointer_cast<AST::LongType>(
+                                 returnType)) {
+                        returnValue = std::make_shared<IR::ConstantValue>(
+                            std::make_shared<AST::ConstantLong>(0L));
+                    }
+                    else {
+                        // For void functions, we don't need to return anything,
+                        // but we still need a return instruction for proper
+                        // function termination.
+                        returnValue = std::make_shared<IR::ConstantValue>(
+                            std::make_shared<AST::ConstantInt>(0));
+                    }
+
+                    // Add the implicit return instruction.
+                    instructions->emplace_back(
+                        std::make_shared<IR::ReturnInstruction>(returnValue));
+                }
+            }
+
             // Create a new IR function definition with the function identifier,
             // the global flag, the parameters, and the instructions.
             auto irFunctionDefinition =
