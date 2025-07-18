@@ -266,21 +266,24 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
 void PipelineStagesExecutors::emitAssyStaticVariable(
     const std::shared_ptr<Assembly::StaticVariable> &staticVariable,
     std::ofstream &assemblyFileStream) {
-    auto alignDirective = ".align 4";
+    auto alignment = staticVariable->getAlignment();
+    auto alignmentInStr = std::to_string(alignment);
+    auto alignDirective = ".align " + alignmentInStr;
 // If the underlying OS is macOS, use the `.balign 4` directive instead of the
 // `.align 4` directive.
 #ifdef __APPLE__
-    alignDirective = ".balign 4";
+    alignDirective = ".balign " + alignmentInStr;
 #endif
+
     auto variableIdentifier = staticVariable->getIdentifier();
     prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
+
     auto global = staticVariable->isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
     if (!global) {
         globalDirective = "";
     }
 
-    // Extract the initial value from the static initializer.
     int initialValue = 0;
     auto staticInit = staticVariable->getStaticInit();
     if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
@@ -290,6 +293,9 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
                  std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
         initialValue = static_cast<int>(std::get<long>(longInit->getValue()));
     }
+    else {
+        throw std::logic_error("Unknown static init type");
+    }
 
     assemblyFileStream << "\n";
     if (initialValue != 0) {
@@ -297,14 +303,42 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         assemblyFileStream << "    .data\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
-        assemblyFileStream << "    .long " << initialValue << "\n";
+        if (auto intInit =
+                std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+            if (std::get<int>(intInit->getValue()) == 0) {
+                assemblyFileStream << "    .zero 4\n";
+            }
+            else {
+                assemblyFileStream << "    .long "
+                                   << std::get<int>(intInit->getValue())
+                                   << "\n";
+            }
+        }
+        else if (auto longInit =
+                     std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+            if (std::get<long>(longInit->getValue()) == 0) {
+                assemblyFileStream << "    .zero 8\n";
+            }
+            else {
+                assemblyFileStream << "    .quad "
+                                   << std::get<long>(longInit->getValue())
+                                   << "\n";
+            }
+        }
     }
     else if (initialValue == 0) {
         assemblyFileStream << globalDirective;
         assemblyFileStream << "    .bss\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
-        assemblyFileStream << "    .zero 4\n";
+        if (auto intInit =
+                std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+            assemblyFileStream << "    .zero 4\n";
+        }
+        else if (auto longInit =
+                     std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+            assemblyFileStream << "    .zero 8\n";
+        }
     }
 }
 
@@ -350,6 +384,11 @@ void PipelineStagesExecutors::emitAssyInstruction(
                      instruction)) {
         emitAssyIdivInstruction(idivInstruction, assemblyFileStream);
     }
+    else if (auto movsxInstruction =
+                 std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
+                     instruction)) {
+        emitAssyMovsxInstruction(movsxInstruction, assemblyFileStream);
+    }
     else if (auto cdqInstruction =
                  std::dynamic_pointer_cast<Assembly::CdqInstruction>(
                      instruction)) {
@@ -380,31 +419,91 @@ void PipelineStagesExecutors::emitAssyInstruction(
 void PipelineStagesExecutors::emitAssyMovInstruction(
     const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
     std::ofstream &assemblyFileStream) {
+    auto type = movInstruction->getType();
+
+    std::string instructionName;
+    int registerSize;
+    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+        instructionName = "movl";
+        registerSize = 4;
+    }
+    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        instructionName = "movq";
+        registerSize = 8;
+    }
+    else {
+        throw std::logic_error("Invalid type");
+    }
+
     auto src = movInstruction->getSrc();
     if (auto srcReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
-        assemblyFileStream << "    movl " << srcReg->getRegisterInBytesInStr(4);
+        assemblyFileStream << "    " << instructionName << " " << srcReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        assemblyFileStream << "    movl $" << srcImm->getImmediate();
+        assemblyFileStream << "    " << instructionName << " $" << srcImm->getImmediate();
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
-        assemblyFileStream << "    movl " << srcStack->getOffset() << "("
+        assemblyFileStream << "    " << instructionName << " " << srcStack->getOffset() << "("
                            << srcStack->getReservedRegisterInStr() << ")";
     }
     else if (auto srcData =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
-        assemblyFileStream << "    movl " << identifier << "(%rip)";
+        assemblyFileStream << "    " << instructionName << " " << identifier << "(%rip)";
     }
 
     auto dst = movInstruction->getDst();
     if (auto dstReg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
-        assemblyFileStream << ", " << dstReg->getRegisterInBytesInStr(4)
+        assemblyFileStream << ", " << dstReg->getRegisterInBytesInStr(registerSize)
+                           << "\n";
+    }
+    else if (auto dstStack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
+        assemblyFileStream << ", " << dstStack->getOffset() << "("
+                           << dstStack->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dstData =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+        auto identifier = dstData->getIdentifier();
+        prependUnderscoreToIdentifierIfMacOS(identifier);
+        assemblyFileStream << ", " << identifier << "(%rip)\n";
+    }
+}
+
+void PipelineStagesExecutors::emitAssyMovsxInstruction(
+    const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction,
+    std::ofstream &assemblyFileStream) {
+    auto src = movsxInstruction->getSrc();
+    if (auto srcReg =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
+        assemblyFileStream << "    movslq "
+                           << srcReg->getRegisterInBytesInStr(4);
+    }
+    else if (auto srcImm =
+                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+        assemblyFileStream << "    movslq $" << srcImm->getImmediate();
+    }
+    else if (auto srcStack =
+                 std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
+        assemblyFileStream << "    movslq " << srcStack->getOffset() << "("
+                           << srcStack->getReservedRegisterInStr() << ")";
+    }
+    else if (auto srcData =
+                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+        auto identifier = srcData->getIdentifier();
+        prependUnderscoreToIdentifierIfMacOS(identifier);
+        assemblyFileStream << "    movslq " << identifier << "(%rip)";
+    }
+
+    auto dst = movsxInstruction->getDst();
+    if (auto dstReg =
+            std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
+        assemblyFileStream << ", " << dstReg->getRegisterInBytesInStr(8)
                            << "\n";
     }
     else if (auto dstStack =
@@ -476,26 +575,48 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction,
     std::ofstream &assemblyFileStream) {
     auto unaryOperator = unaryInstruction->getUnaryOperator();
+    auto type = unaryInstruction->getType();
+
+    std::string instructionName;
     if (auto negateOperator =
             std::dynamic_pointer_cast<Assembly::NegateOperator>(
                 unaryOperator)) {
-        assemblyFileStream << "    negl";
+        instructionName = "neg";
     }
     else if (auto complementOperator =
                  std::dynamic_pointer_cast<Assembly::ComplementOperator>(
                      unaryOperator)) {
-        assemblyFileStream << "    notl";
+        instructionName = "not";
     }
     else if (auto notOperator =
                  std::dynamic_pointer_cast<Assembly::NotOperator>(
                      unaryOperator)) {
-        assemblyFileStream << "    notl";
+        instructionName = "not";
     }
+    else {
+        throw std::logic_error("Invalid unary operator");
+    }
+
+    std::string typeSuffix;
+    int registerSize;
+    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+        typeSuffix = "l";
+        registerSize = 4;
+    }
+    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        typeSuffix = "q";
+        registerSize = 8;
+    }
+    else {
+        throw std::logic_error("Invalid type");
+    }
+
+    assemblyFileStream << "    " << instructionName << typeSuffix;
 
     auto operand = unaryInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(4)
+        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto stackOperand =
@@ -515,20 +636,42 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction,
     std::ofstream &assemblyFileStream) {
     auto binaryOperator = binaryInstruction->getBinaryOperator();
+    auto type = binaryInstruction->getType();
+
+    std::string instructionName;
     if (auto addOperator =
             std::dynamic_pointer_cast<Assembly::AddOperator>(binaryOperator)) {
-        assemblyFileStream << "    addl";
+        instructionName = "add";
     }
     else if (auto subtractOperator =
                  std::dynamic_pointer_cast<Assembly::SubtractOperator>(
                      binaryOperator)) {
-        assemblyFileStream << "    subl";
+        instructionName = "sub";
     }
     else if (auto multiplyOperator =
                  std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
                      binaryOperator)) {
-        assemblyFileStream << "    imull";
+        instructionName = "imul";
     }
+    else {
+        throw std::logic_error("Invalid binary operator");
+    }
+
+    std::string typeSuffix;
+    int registerSize;
+    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+        typeSuffix = "l";
+        registerSize = 4;
+    }
+    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        typeSuffix = "q";
+        registerSize = 8;
+    }
+    else {
+        throw std::logic_error("Invalid type");
+    }
+
+    assemblyFileStream << "    " << instructionName << typeSuffix;
 
     auto operand1 = binaryInstruction->getOperand1();
     if (auto operand1Imm =
@@ -538,7 +681,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        assemblyFileStream << " " << operand1Reg->getRegisterInBytesInStr(4)
+        assemblyFileStream << " " << operand1Reg->getRegisterInBytesInStr(registerSize)
                            << ",";
     }
     else if (auto operand1Stack =
@@ -556,7 +699,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     auto operand2 = binaryInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        assemblyFileStream << " " << operand2Reg->getRegisterInBytesInStr(4)
+        assemblyFileStream << " " << operand2Reg->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto operand2Stack =
@@ -576,7 +719,23 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
 void PipelineStagesExecutors::emitAssyCmpInstruction(
     const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction,
     std::ofstream &assemblyFileStream) {
-    assemblyFileStream << "    cmpl";
+    auto type = cmpInstruction->getType();
+
+    std::string typeSuffix;
+    int registerSize;
+    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+        typeSuffix = "l";
+        registerSize = 4;
+    }
+    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        typeSuffix = "q";
+        registerSize = 8;
+    }
+    else {
+        throw std::logic_error("Invalid type");
+    }
+
+    assemblyFileStream << "    cmp" << typeSuffix;
 
     auto operand1 = cmpInstruction->getOperand1();
     if (auto operand1Imm =
@@ -586,7 +745,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
                      operand1)) {
-        assemblyFileStream << " " << operand1Reg->getRegisterInBytesInStr(4);
+        assemblyFileStream << " " << operand1Reg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto operand1Stack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
@@ -605,7 +764,7 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     auto operand2 = cmpInstruction->getOperand2();
     if (auto operand2Reg =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
-        assemblyFileStream << " " << operand2Reg->getRegisterInBytesInStr(4)
+        assemblyFileStream << " " << operand2Reg->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto operand2Stack =
@@ -625,12 +784,28 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
 void PipelineStagesExecutors::emitAssyIdivInstruction(
     const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction,
     std::ofstream &assemblyFileStream) {
-    assemblyFileStream << "    idivl";
+    auto type = idivInstruction->getType();
+
+    std::string typeSuffix;
+    int registerSize;
+    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+        typeSuffix = "l";
+        registerSize = 4;
+    }
+    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        typeSuffix = "q";
+        registerSize = 8;
+    }
+    else {
+        throw std::logic_error("Invalid type");
+    }
+
+    assemblyFileStream << "    idiv" << typeSuffix;
 
     auto operand = idivInstruction->getOperand();
     if (auto regOperand =
             std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
-        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(4)
+        assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto stackOperand =
@@ -647,10 +822,19 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyCdqInstruction(
-    [[maybe_unused]] const std::shared_ptr<Assembly::CdqInstruction>
-        &cdqInstruction,
+    const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction,
     std::ofstream &assemblyFileStream) {
-    assemblyFileStream << "    cdq\n";
+    auto type = cdqInstruction->getType();
+
+    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+        assemblyFileStream << "    cdq\n";
+    }
+    else if (auto quadword = std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        assemblyFileStream << "    cqo\n";
+    }
+    else {
+        throw std::logic_error("Invalid type");
+    }
 }
 
 void PipelineStagesExecutors::emitAssyJmpInstruction(
@@ -682,6 +866,9 @@ void PipelineStagesExecutors::emitAssyJmpCCInstruction(
     else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
         assemblyFileStream << "    jle";
     }
+    else {
+        throw std::logic_error("Invalid conditional code");
+    }
 
     auto label = jmpCCInstruction->getLabel();
     assemblyFileStream << " .L" << label << "\n";
@@ -709,6 +896,9 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
         assemblyFileStream << "    setle";
     }
+    else {
+        throw std::logic_error("Invalid conditional code");
+    }
 
     auto operand = setCCInstruction->getOperand();
     if (auto regOperand =
@@ -726,6 +916,9 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
+    }
+    else {
+        throw std::logic_error("Invalid operand type");
     }
 }
 

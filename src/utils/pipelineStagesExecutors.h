@@ -77,6 +77,9 @@ class PipelineStagesExecutors {
     static void emitAssyMovInstruction(
         const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
         std::ofstream &assemblyFileStream);
+    static void emitAssyMovsxInstruction(
+        const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction,
+        std::ofstream &assemblyFileStream);
     static void emitAssyRetInstruction(std::ofstream &assemblyFileStream);
     static void emitAssyPushInstruction(
         const std::shared_ptr<Assembly::PushInstruction> &pushInstruction,

@@ -59,6 +59,8 @@ class PrettyPrinters {
         const std::shared_ptr<Assembly::Instruction> &instruction);
     static void printAssyMovInstruction(
         const std::shared_ptr<Assembly::MovInstruction> &movInstruction);
+    static void printAssyMovsxInstruction(
+        const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction);
     static void printAssyRetInstruction(
         const std::shared_ptr<Assembly::RetInstruction> &retInstruction);
     static void printAssyPushInstruction(
@@ -73,7 +75,8 @@ class PrettyPrinters {
         const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction);
     static void printAssyIdivInstruction(
         const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction);
-    static void printAssyCdqInstruction();
+    static void printAssyCdqInstruction(
+        const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction);
     static void printAssyJmpInstruction(
         const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction);
     static void printAssyJmpCCInstruction(

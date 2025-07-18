@@ -102,7 +102,7 @@ ConstantFoldingPass::foldConstants(
                     }
                 }
                 else {
-                    throw std::runtime_error("Unsupported unary operator");
+                    throw std::logic_error("Unsupported unary operator");
                 }
                 auto copyInstruction = std::make_shared<IR::CopyInstruction>(
                     std::make_shared<IR::ConstantValue>(astConstant),
@@ -140,8 +140,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -153,8 +152,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         if ((value1 > 0 &&
@@ -220,8 +218,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -234,8 +231,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 * value2;
@@ -259,8 +255,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -273,8 +268,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         if (value2 == 0) {
@@ -298,8 +292,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -312,8 +305,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         if (value2 == 0) {
@@ -337,8 +329,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -351,8 +342,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 == value2;
@@ -372,8 +362,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -386,8 +375,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 != value2;
@@ -407,8 +395,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -421,8 +408,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 < value2;
@@ -441,8 +427,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -455,8 +440,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 <= value2;
@@ -476,8 +460,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -490,8 +473,7 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 > value2;
@@ -512,8 +494,7 @@ ConstantFoldingPass::foldConstants(
                             value1 = static_cast<int>(constLong1->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -526,14 +507,13 @@ ConstantFoldingPass::foldConstants(
                             value2 = static_cast<int>(constLong2->getValue());
                         }
                         else {
-                            throw std::runtime_error(
-                                "Unsupported constant type");
+                            throw std::logic_error("Unsupported constant type");
                         }
 
                         constantResult = value1 >= value2;
                     }
                     else {
-                        throw std::runtime_error("Unsupported binary operator");
+                        throw std::logic_error("Unsupported binary operator");
                     }
 
                     auto copyInstruction =
@@ -566,7 +546,7 @@ ConstantFoldingPass::foldConstants(
                     conditionValue = static_cast<int>(constLong->getValue());
                 }
                 else {
-                    throw std::runtime_error("Unsupported constant type");
+                    throw std::logic_error("Unsupported constant type");
                 }
 
                 if (conditionValue == 0) {
@@ -601,7 +581,7 @@ ConstantFoldingPass::foldConstants(
                     conditionValue = static_cast<int>(constLong->getValue());
                 }
                 else {
-                    throw std::runtime_error("Unsupported constant type");
+                    throw std::logic_error("Unsupported constant type");
                 }
 
                 if (conditionValue != 0) {
