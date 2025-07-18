@@ -654,7 +654,18 @@ void PrettyPrinters::printAssyStaticVariable(
     if (!global) {
         globalDirective = "";
     }
-    auto initialValue = staticVariable->getInitialValue();
+    auto staticInit = staticVariable->getStaticInit();
+    long initialValue;
+    if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        initialValue = std::get<int>(intInit->getValue());
+    }
+    else if (auto longInit =
+                 std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+        initialValue = std::get<long>(longInit->getValue());
+    }
+    else {
+        throw std::runtime_error("Unknown static init type");
+    }
 
     std::cout << "\n";
     if (initialValue != 0) {
@@ -682,16 +693,7 @@ void PrettyPrinters::printAssyInstruction(
     else if (auto retInstruction =
                  std::dynamic_pointer_cast<Assembly::RetInstruction>(
                      instruction)) {
-        printAssyRetInstruction();
-    }
-    else if (auto allocateStackInstruction =
-                 std::dynamic_pointer_cast<Assembly::AllocateStackInstruction>(
-                     instruction)) {
-        printAssyAllocateStackInstruction(allocateStackInstruction);
-    }
-    else if (auto deallocateStackInstruction = std::dynamic_pointer_cast<
-                 Assembly::DeallocateStackInstruction>(instruction)) {
-        printAssyDeallocateStackInstruction(deallocateStackInstruction);
+        printAssyRetInstruction(retInstruction);
     }
     else if (auto pushInstruction =
                  std::dynamic_pointer_cast<Assembly::PushInstruction>(
@@ -791,28 +793,14 @@ void PrettyPrinters::printAssyMovInstruction(
     }
 }
 
-void PrettyPrinters::printAssyRetInstruction() {
+void PrettyPrinters::printAssyRetInstruction(
+    [[maybe_unused]] const std::shared_ptr<Assembly::RetInstruction>
+        &retInstruction) {
     // Print the function epilogue before printing the return
     // instruction.
     std::cout << "    movq %rbp, %rsp\n";
     std::cout << "    popq %rbp\n";
     std::cout << "    ret\n";
-}
-
-void PrettyPrinters::printAssyAllocateStackInstruction(
-    const std::shared_ptr<Assembly::AllocateStackInstruction>
-        &allocateStackInstruction) {
-    std::cout << "    subq $"
-              << allocateStackInstruction->getAddressGivenOffsetFromRBP()
-              << ", %rsp\n";
-}
-
-void PrettyPrinters::printAssyDeallocateStackInstruction(
-    const std::shared_ptr<Assembly::DeallocateStackInstruction>
-        &deallocateStackInstruction) {
-    std::cout << "    addq $"
-              << deallocateStackInstruction->getAddressGivenOffsetFromRBP()
-              << ", %rsp\n";
 }
 
 void PrettyPrinters::printAssyPushInstruction(

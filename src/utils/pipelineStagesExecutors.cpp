@@ -68,7 +68,7 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
     std::unordered_map<std::string,
                        std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols;
+        frontendSymbolTable;
 
     try {
         // Perform the identifier-resolution pass.
@@ -81,7 +81,7 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
     }
     try {
         // Perform the type-checking pass.
-        symbols = typeCheckingPass.typeCheckProgram(astProgram);
+        frontendSymbolTable = typeCheckingPass.typeCheckProgram(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Type-checking error: " << e.what();
@@ -108,33 +108,42 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
 
     // Return the variable resolution counter and the symbol table
     // altogether.
-    return {variableResolutionCounter, symbols};
+    return {variableResolutionCounter, frontendSymbolTable};
 }
 
 // Function to generate the IR from the AST program.
-std::pair<std::shared_ptr<IR::Program>,
-          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+std::tuple<
+    std::shared_ptr<IR::Program>,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<AST::Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
     const std::shared_ptr<AST::Program> &astProgram,
     int variableResolutionCounter,
     const std::unordered_map<
         std::string, std::pair<std::shared_ptr<AST::Type>,
                                std::shared_ptr<AST::IdentifierAttribute>>>
-        &symbols) {
+        &frontendSymbolTable) {
     std::cout << "\n";
-
-    std::pair<std::shared_ptr<IR::Program>,
-              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
-        irProgramAndIRStaticVariables;
+    std::tuple<
+        std::shared_ptr<IR::Program>,
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
+        std::unordered_map<
+            std::string, std::pair<std::shared_ptr<AST::Type>,
+                                   std::shared_ptr<AST::IdentifierAttribute>>>>
+        irProgramAndIRStaticVariablesAndSymbolTable;
     try {
-        IR::IRGenerator irGenerator(variableResolutionCounter, symbols);
-        irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
+        IR::IRGenerator irGenerator(variableResolutionCounter,
+                                    frontendSymbolTable);
+        irProgramAndIRStaticVariablesAndSymbolTable =
+            irGenerator.generateIR(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "IR generation error: " << e.what();
         throw std::runtime_error(msg.str());
     }
-    return irProgramAndIRStaticVariables;
+    return irProgramAndIRStaticVariablesAndSymbolTable;
 }
 
 // Function to perform optimization passes on the IR program.
@@ -164,17 +173,17 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     const std::unordered_map<
         std::string, std::pair<std::shared_ptr<AST::Type>,
                                std::shared_ptr<AST::IdentifierAttribute>>>
-        &symbols) {
+        &frontendSymbolTable) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Instantiate an assembly generator object and generate the assembly.
         Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables,
-                                                      symbols);
+                                                      frontendSymbolTable);
         assemblyProgram = assemblyGenerator.generateAssembly(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and associate the stack
         // size with each top-level element.
-        Assembly::PseudoToStackPass pseudoToStackPass(symbols);
+        Assembly::PseudoToStackPass pseudoToStackPass;
         auto topLevels = assemblyProgram->getTopLevels();
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
             topLevels);
@@ -270,7 +279,17 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     if (!global) {
         globalDirective = "";
     }
-    auto initialValue = staticVariable->getInitialValue();
+
+    // Extract the initial value from the static initializer.
+    int initialValue = 0;
+    auto staticInit = staticVariable->getStaticInit();
+    if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        initialValue = std::get<int>(intInit->getValue());
+    }
+    else if (auto longInit =
+                 std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+        initialValue = static_cast<int>(std::get<long>(longInit->getValue()));
+    }
 
     assemblyFileStream << "\n";
     if (initialValue != 0) {
@@ -300,17 +319,6 @@ void PipelineStagesExecutors::emitAssyInstruction(
                  std::dynamic_pointer_cast<Assembly::RetInstruction>(
                      instruction)) {
         emitAssyRetInstruction(assemblyFileStream);
-    }
-    else if (auto allocateStackInstruction =
-                 std::dynamic_pointer_cast<Assembly::AllocateStackInstruction>(
-                     instruction)) {
-        emitAssyAllocateStackInstruction(allocateStackInstruction,
-                                         assemblyFileStream);
-    }
-    else if (auto deallocateStackInstruction = std::dynamic_pointer_cast<
-                 Assembly::DeallocateStackInstruction>(instruction)) {
-        emitAssyDeallocateStackInstruction(deallocateStackInstruction,
-                                           assemblyFileStream);
     }
     else if (auto pushInstruction =
                  std::dynamic_pointer_cast<Assembly::PushInstruction>(
@@ -345,7 +353,7 @@ void PipelineStagesExecutors::emitAssyInstruction(
     else if (auto cdqInstruction =
                  std::dynamic_pointer_cast<Assembly::CdqInstruction>(
                      instruction)) {
-        emitAssyCdqInstruction(assemblyFileStream);
+        emitAssyCdqInstruction(cdqInstruction, assemblyFileStream);
     }
     else if (auto jmpInstruction =
                  std::dynamic_pointer_cast<Assembly::JmpInstruction>(
@@ -419,26 +427,6 @@ void PipelineStagesExecutors::emitAssyRetInstruction(
     assemblyFileStream << "    movq %rbp, %rsp\n";
     assemblyFileStream << "    popq %rbp\n";
     assemblyFileStream << "    ret\n";
-}
-
-void PipelineStagesExecutors::emitAssyAllocateStackInstruction(
-    const std::shared_ptr<Assembly::AllocateStackInstruction>
-        &allocateStackInstruction,
-    std::ofstream &assemblyFileStream) {
-    assemblyFileStream
-        << "    subq $"
-        << allocateStackInstruction->getAddressGivenOffsetFromRBP()
-        << ", %rsp\n";
-}
-
-void PipelineStagesExecutors::emitAssyDeallocateStackInstruction(
-    const std::shared_ptr<Assembly::DeallocateStackInstruction>
-        &deallocateStackInstruction,
-    std::ofstream &assemblyFileStream) {
-    assemblyFileStream
-        << "    addq $"
-        << deallocateStackInstruction->getAddressGivenOffsetFromRBP()
-        << ", %rsp\n";
 }
 
 void PipelineStagesExecutors::emitAssyPushInstruction(
@@ -659,6 +647,8 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyCdqInstruction(
+    [[maybe_unused]] const std::shared_ptr<Assembly::CdqInstruction>
+        &cdqInstruction,
     std::ofstream &assemblyFileStream) {
     assemblyFileStream << "    cdq\n";
 }

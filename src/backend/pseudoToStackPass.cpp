@@ -1,14 +1,8 @@
 #include "pseudoToStackPass.h"
+#include "backendSymbolTable.h"
 #include <cassert>
 
 namespace Assembly {
-PseudoToStackPass::PseudoToStackPass(
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols)
-    : symbols(symbols) {}
-
 void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
     std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> &topLevels) {
     std::unordered_map<std::string, int> pseudoToStackMap;
@@ -49,6 +43,16 @@ void PseudoToStackPass::replacePseudoWithStack(
         replaceOperand(dst, pseudoToStackMap, offset);
         movInstruction->setSrc(src);
         movInstruction->setDst(dst);
+    }
+    else if (auto movsxInstruction =
+                 std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
+                     instruction)) {
+        auto src = movsxInstruction->getSrc();
+        auto dst = movsxInstruction->getDst();
+        replaceOperand(src, pseudoToStackMap, offset);
+        replaceOperand(dst, pseudoToStackMap, offset);
+        movsxInstruction->setSrc(src);
+        movsxInstruction->setDst(dst);
     }
     else if (auto unaryInstruction =
                  std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
@@ -98,6 +102,40 @@ void PseudoToStackPass::replacePseudoWithStack(
         replaceOperand(operand, pseudoToStackMap, offset);
         pushInstruction->setOperand(operand);
     }
+    else if (auto retInstruction =
+                 std::dynamic_pointer_cast<Assembly::RetInstruction>(
+                     instruction)) {
+        (void)retInstruction;
+    }
+    else if (auto callInstruction =
+                 std::dynamic_pointer_cast<Assembly::CallInstruction>(
+                     instruction)) {
+        (void)callInstruction;
+    }
+    else if (auto cdqInstruction =
+                 std::dynamic_pointer_cast<Assembly::CdqInstruction>(
+                     instruction)) {
+        (void)cdqInstruction;
+    }
+    else if (auto jmpInstruction =
+                 std::dynamic_pointer_cast<Assembly::JmpInstruction>(
+                     instruction)) {
+        (void)jmpInstruction;
+    }
+    else if (auto jmpCCInstruction =
+                 std::dynamic_pointer_cast<Assembly::JmpCCInstruction>(
+                     instruction)) {
+        (void)jmpCCInstruction;
+    }
+    else if (auto labelInstruction =
+                 std::dynamic_pointer_cast<Assembly::LabelInstruction>(
+                     instruction)) {
+        (void)labelInstruction;
+    }
+    else {
+        throw std::logic_error("Unsupported instruction type while replacing "
+                               "pseudo registers with stack operands");
+    }
 }
 
 void PseudoToStackPass::replaceOperand(
@@ -110,25 +148,52 @@ void PseudoToStackPass::replaceOperand(
         const std::string &pseudoRegister = pseudoOperand->getPseudoRegister();
         if (pseudoToStackMap.find(pseudoRegister) == pseudoToStackMap.end()) {
             // If a pseudoregister is not in `pseudoToStackMap`, look it up in
-            // the symbol table (first).
-            if (symbols.find(pseudoRegister) != symbols.end()) {
-                auto type = symbols[pseudoRegister].first;
-                auto identifierAttribute = symbols[pseudoRegister].second;
+            // the backend symbol table.
+            if (backendSymbolTable.find(pseudoRegister) !=
+                backendSymbolTable.end()) {
+                auto backendEntry = backendSymbolTable[pseudoRegister];
                 // If it has a static storage duration, map it to a data operand
                 // by the same name.
-                if (std::dynamic_pointer_cast<AST::StaticAttribute>(
-                        identifierAttribute)) {
-                    operand =
-                        std::make_shared<Assembly::DataOperand>(pseudoRegister);
-                    return;
+                if (auto objEntry =
+                        std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
+                    if (objEntry->isStaticStorage()) {
+                        operand = std::make_shared<Assembly::DataOperand>(
+                            pseudoRegister);
+                        return;
+                    }
                 }
             }
-            // Otherwise, assign it a new slot on the stack, as usual.
-            // (Besides, if it is not in the symbol table, it is an IR
-            // temporary.)
+            // Otherwise, assign it a new slot on the stack based on its type.
+            // Look up the type in the backend symbol table to determine the
+            // allocation size.
+            int allocationSize = 4; // Default to 4 bytes (`Longword`).
+            if (backendSymbolTable.find(pseudoRegister) !=
+                backendSymbolTable.end()) {
+                auto backendEntry = backendSymbolTable[pseudoRegister];
+                if (auto objEntry =
+                        std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
+                    auto assemblyType = objEntry->getAssemblyType();
+                    if (std::dynamic_pointer_cast<Quadword>(assemblyType)) {
+                        allocationSize = 8; // 8 bytes for `Quadword`.
+                    }
+                    // `Longword` remains 4 bytes.
+                }
+            }
+
+            // For `Quadword` types, ensure 8-byte alignment (as required by the
+            // System V ABI).
+            if (allocationSize == 8) {
+                // Round down to the next multiple of 8.
+                offset = (offset / 8) * 8;
+            }
+
+            // Update the `pseudoToStackMap` with the new offset.
             pseudoToStackMap[pseudoRegister] = offset;
-            offset -= 4;
+            // Update the offset to the next available stack slot.
+            offset -= allocationSize;
         }
+
+        // Replace the pseudo register with a stack operand.
         operand = std::make_shared<Assembly::StackOperand>(
             pseudoToStackMap[pseudoRegister], std::make_shared<Assembly::BP>());
     }
@@ -143,6 +208,14 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movInstruction->getSrc()));
             assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
                 movInstruction->getDst()));
+        }
+        else if (auto movsxInstruction =
+                     std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
+                         instruction)) {
+            assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                movsxInstruction->getSrc()));
+            assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
+                movsxInstruction->getDst()));
         }
         else if (auto unaryInstruction =
                      std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
@@ -183,6 +256,47 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                          instruction)) {
             assert(!std::dynamic_pointer_cast<Assembly::PseudoRegisterOperand>(
                 pushInstruction->getOperand()));
+        }
+        else if (auto retInstruction =
+                     std::dynamic_pointer_cast<Assembly::RetInstruction>(
+                         instruction)) {
+            // RetInstruction doesn't have operands to check
+            (void)retInstruction; // Suppress unused variable warning
+        }
+        else if (auto callInstruction =
+                     std::dynamic_pointer_cast<Assembly::CallInstruction>(
+                         instruction)) {
+            // CallInstruction doesn't have operands to check
+            (void)callInstruction; // Suppress unused variable warning
+        }
+        else if (auto cdqInstruction =
+                     std::dynamic_pointer_cast<Assembly::CdqInstruction>(
+                         instruction)) {
+            // CdqInstruction doesn't have operands to check
+            (void)cdqInstruction; // Suppress unused variable warning
+        }
+        else if (auto jmpInstruction =
+                     std::dynamic_pointer_cast<Assembly::JmpInstruction>(
+                         instruction)) {
+            // JmpInstruction doesn't have operands to check
+            (void)jmpInstruction; // Suppress unused variable warning
+        }
+        else if (auto jmpCCInstruction =
+                     std::dynamic_pointer_cast<Assembly::JmpCCInstruction>(
+                         instruction)) {
+            // JmpCCInstruction doesn't have operands to check
+            (void)jmpCCInstruction; // Suppress unused variable warning
+        }
+        else if (auto labelInstruction =
+                     std::dynamic_pointer_cast<Assembly::LabelInstruction>(
+                         instruction)) {
+            // LabelInstruction doesn't have operands to check
+            (void)labelInstruction; // Suppress unused variable warning
+        }
+        else {
+            throw std::logic_error("Unsupported instruction type while "
+                                   "checking whether pseudo registers have "
+                                   "been replaced in function definition");
         }
     }
 }

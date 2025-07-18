@@ -10,13 +10,13 @@
 namespace Assembly {
 class AssemblyGenerator {
   public:
-    AssemblyGenerator(
+    explicit AssemblyGenerator(
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
             irStaticVariables,
         std::unordered_map<std::string,
                            std::pair<std::shared_ptr<AST::Type>,
                                      std::shared_ptr<AST::IdentifierAttribute>>>
-            symbols);
+            frontendSymbolTable);
     std::shared_ptr<Assembly::Program>
     generateAssembly(std::shared_ptr<IR::Program> irProgram);
 
@@ -26,48 +26,56 @@ class AssemblyGenerator {
     std::unordered_map<std::string,
                        std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols;
+        frontendSymbolTable;
     std::shared_ptr<Assembly::FunctionDefinition>
-    generateAssyFunctionDefinition(
+    convertIRFunctionDefinitionToAssy(
         std::shared_ptr<IR::FunctionDefinition> irFunctionDefinition,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    std::shared_ptr<Assembly::StaticVariable> generateAssyStaticVariable(
+    std::shared_ptr<Assembly::StaticVariable> convertIRStaticVariableToAssy(
         std::shared_ptr<IR::StaticVariable> irStaticVariable);
-    void generateAssyInstruction(
+    void convertIRInstructionToAssy(
         std::shared_ptr<IR::Instruction> irInstruction,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyReturnInstruction(
+    void convertIRReturnInstructionToAssy(
         std::shared_ptr<IR::ReturnInstruction> returnInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyUnaryInstruction(
+    void convertIRUnaryInstructionToAssy(
         std::shared_ptr<IR::UnaryInstruction> unaryInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyBinaryInstruction(
+    void convertIRBinaryInstructionToAssy(
         std::shared_ptr<IR::BinaryInstruction> binaryInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyLabelInstruction(
+    void convertIRLabelInstructionToAssy(
         std::shared_ptr<IR::LabelInstruction> labelInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyJumpInstruction(
+    void convertIRJumpInstructionToAssy(
         std::shared_ptr<IR::JumpInstruction> jumpInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyJumpIfZeroInstruction(
+    void convertIRJumpIfZeroInstructionToAssy(
         std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyJumpIfNotZeroInstruction(
+    void convertIRJumpIfNotZeroInstructionToAssy(
         std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
-    void generateAssyCopyInstruction(
+    void convertIRCopyInstructionToAssy(
         std::shared_ptr<IR::CopyInstruction> copyInstr,
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions);
+    void convertIRSignExtendInstructionToAssy(
+        std::shared_ptr<IR::SignExtendInstruction> signExtendInstr,
+        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+            instructions);
+    void convertIRTruncateInstructionToAssy(
+        std::shared_ptr<IR::TruncateInstruction> truncateInstr,
         std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
             instructions);
     void convertIRFunctionCallInstructionToAssy(
@@ -76,6 +84,12 @@ class AssemblyGenerator {
             instructions);
     std::shared_ptr<Assembly::Operand>
     convertValue(std::shared_ptr<IR::Value> value);
+    std::shared_ptr<Assembly::AssemblyType>
+    determineAssemblyType(std::shared_ptr<IR::Value> value);
+
+  public:
+    static std::shared_ptr<Assembly::AssemblyType>
+    convertASTTypeToAssemblyType(std::shared_ptr<AST::Type> astType);
 };
 } // namespace Assembly
 

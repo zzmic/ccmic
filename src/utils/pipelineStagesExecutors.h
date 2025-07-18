@@ -32,16 +32,19 @@ class PipelineStagesExecutors {
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>>
     semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram);
-    [[nodiscard]] static std::pair<
+    [[nodiscard]] static std::tuple<
         std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
+        std::unordered_map<
+            std::string, std::pair<std::shared_ptr<AST::Type>,
+                                   std::shared_ptr<AST::IdentifierAttribute>>>>
     irGeneratorExecutor(
         const std::shared_ptr<AST::Program> &astProgram,
         int variableResolutionCounter,
         const std::unordered_map<
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>
-            &symbols);
+            &frontendSymbolTable);
     static void
     irOptimizationExecutor(const std::shared_ptr<IR::Program> &irProgram,
                            bool foldConstantsPass, bool propagateCopiesPass,
@@ -54,7 +57,7 @@ class PipelineStagesExecutors {
         const std::unordered_map<
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>
-            &symbols);
+            &frontendSymbolTable);
     static void codeEmissionExecutor(
         const std::shared_ptr<Assembly::Program> &assemblyProgram,
         std::string_view assemblyFile);
@@ -75,14 +78,6 @@ class PipelineStagesExecutors {
         const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
         std::ofstream &assemblyFileStream);
     static void emitAssyRetInstruction(std::ofstream &assemblyFileStream);
-    static void emitAssyAllocateStackInstruction(
-        const std::shared_ptr<Assembly::AllocateStackInstruction>
-            &allocateStackInstruction,
-        std::ofstream &assemblyFileStream);
-    static void emitAssyDeallocateStackInstruction(
-        const std::shared_ptr<Assembly::DeallocateStackInstruction>
-            &deallocateStackInstruction,
-        std::ofstream &assemblyFileStream);
     static void emitAssyPushInstruction(
         const std::shared_ptr<Assembly::PushInstruction> &pushInstruction,
         std::ofstream &assemblyFileStream);
@@ -101,7 +96,9 @@ class PipelineStagesExecutors {
     static void emitAssyIdivInstruction(
         const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction,
         std::ofstream &assemblyFileStream);
-    static void emitAssyCdqInstruction(std::ofstream &assemblyFileStream);
+    static void emitAssyCdqInstruction(
+        const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction,
+        std::ofstream &assemblyFileStream);
     static void emitAssyJmpInstruction(
         const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction,
         std::ofstream &assemblyFileStream);

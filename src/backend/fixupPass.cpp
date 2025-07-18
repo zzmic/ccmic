@@ -11,14 +11,26 @@ void FixupPass::fixup(
     }
 }
 
+// Function to insert an allocate-stack instruction at the beginning of a
+// function.
+// Rewrite: `FunctionDefinition(instructions)` ->
+// `FunctionDefinition(instructions)` + `AllocateStack(stackSize)`.
 void FixupPass::insertAllocateStackInstruction(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
         instructions,
     int stackSize) {
     instructions->insert(instructions->begin(),
-                         std::make_shared<AllocateStackInstruction>(stackSize));
+                         std::make_shared<BinaryInstruction>(
+                             std::make_shared<SubtractOperator>(),
+                             std::make_shared<Quadword>(),
+                             std::make_shared<ImmediateOperand>(stackSize),
+                             std::make_shared<Assembly::RegisterOperand>(
+                                 std::make_shared<Assembly::SP>())));
 }
 
+// Function to rewrite a function definition.
+// Rewrite: `FunctionDefinition(instructions)` ->
+// `FunctionDefinition(instructions)` + `AllocateStack(stackSize)`.
 void FixupPass::rewriteFunctionDefinition(
     std::shared_ptr<FunctionDefinition> functionDefinition) {
     auto instructions = functionDefinition->getFunctionBody();
@@ -36,12 +48,29 @@ void FixupPass::rewriteFunctionDefinition(
         if (auto movInstr =
                 std::dynamic_pointer_cast<Assembly::MovInstruction>(*it)) {
             // If the mov instruction is invalid, rewrite it.
-            // Replace the invalid mov instruction with two valid ones using
+            // Replace the invalid `mov` instruction with two valid ones using
             // R10.
             // Replace the iterator with the new iterator returned by
             // `rewriteInvalidMov`.
             if (isInvalidMov(movInstr)) {
                 it = rewriteInvalidMov(instructions, it, movInstr);
+            }
+            // Check for large immediate values in mov instructions.
+            else if (isInvalidLargeImmediateMov(movInstr)) {
+                it =
+                    rewriteInvalidLargeImmediateMov(instructions, it, movInstr);
+            }
+            // Check for 8-byte immediate values in movl instructions.
+            else if (isInvalidLongwordImmediateMov(movInstr)) {
+                it = rewriteInvalidLongwordImmediateMov(instructions, it,
+                                                        movInstr);
+            }
+        }
+        else if (auto movsxInstr =
+                     std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
+                         *it)) {
+            if (isInvalidMovsx(movsxInstr)) {
+                it = rewriteInvalidMovsx(instructions, it, movsxInstr);
             }
         }
         else if (auto binInstr =
@@ -49,6 +78,11 @@ void FixupPass::rewriteFunctionDefinition(
                          *it)) {
             if (isInvalidBinary(binInstr)) {
                 it = rewriteInvalidBinary(instructions, it, binInstr);
+            }
+            // Check for large immediate values in binary instructions.
+            else if (isInvalidLargeImmediateBinary(binInstr)) {
+                it = rewriteInvalidLargeImmediateBinary(instructions, it,
+                                                        binInstr);
             }
         }
         else if (auto idivInstr =
@@ -63,10 +97,25 @@ void FixupPass::rewriteFunctionDefinition(
             if (isInvalidCmp(cmpInstr)) {
                 it = rewriteInvalidCmp(instructions, it, cmpInstr);
             }
+            // Check for large immediate values in cmp instructions.
+            else if (isInvalidLargeImmediateCmp(cmpInstr)) {
+                it =
+                    rewriteInvalidLargeImmediateCmp(instructions, it, cmpInstr);
+            }
+        }
+        else if (auto pushInstr =
+                     std::dynamic_pointer_cast<Assembly::PushInstruction>(
+                         *it)) {
+            // Check for large immediate values in push instructions.
+            if (isInvalidLargeImmediatePush(pushInstr)) {
+                it = rewriteInvalidLargeImmediatePush(instructions, it,
+                                                      pushInstr);
+            }
         }
     }
 }
 
+// Function to check if a mov instruction is invalid.
 bool FixupPass::isInvalidMov(
     std::shared_ptr<Assembly::MovInstruction> movInstr) {
     // Stack operands and data operands are memory addresses (memory-address
@@ -81,6 +130,65 @@ bool FixupPass::isInvalidMov(
                 movInstr->getDst()) != nullptr);
 }
 
+// Function to check if a mov instruction has a large immediate value.
+bool FixupPass::isInvalidLargeImmediateMov(
+    std::shared_ptr<Assembly::MovInstruction> movInstr) {
+    // Check if it's a quadword mov with large immediate to memory.
+    auto quadwordType =
+        std::dynamic_pointer_cast<Assembly::Quadword>(movInstr->getType());
+    if (!quadwordType)
+        return false;
+
+    auto immediateSrc = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        movInstr->getSrc());
+    if (!immediateSrc)
+        return false;
+
+    auto memoryDst =
+        std::dynamic_pointer_cast<Assembly::StackOperand>(movInstr->getDst()) ||
+        std::dynamic_pointer_cast<Assembly::DataOperand>(movInstr->getDst());
+    if (!memoryDst)
+        return false;
+
+    // Check if immediate value is outside 32-bit signed range.
+    int value = immediateSrc->getImmediate();
+    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+}
+
+// Function to check if a mov instruction has a longword immediate value.
+bool FixupPass::isInvalidLongwordImmediateMov(
+    std::shared_ptr<Assembly::MovInstruction> movInstr) {
+    // Check if it's a longword mov with 8-byte immediate value.
+    auto longwordType =
+        std::dynamic_pointer_cast<Assembly::Longword>(movInstr->getType());
+    if (!longwordType)
+        return false;
+
+    auto immediateSrc = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        movInstr->getSrc());
+    if (!immediateSrc)
+        return false;
+
+    // Check if immediate value is outside 32-bit range (truncation needed).
+    int value = immediateSrc->getImmediate();
+    return static_cast<unsigned int>(value) > 0xFFFFFFFFU || value < 0;
+}
+
+// Function to check if a movsx instruction is invalid.
+bool FixupPass::isInvalidMovsx(
+    std::shared_ptr<Assembly::MovsxInstruction> movsxInstr) {
+    // Movsx can't use a memory address as a destination or an immediate value
+    // as a source.
+    bool invalidSrc = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+                          movsxInstr->getSrc()) != nullptr;
+    bool invalidDst = std::dynamic_pointer_cast<Assembly::StackOperand>(
+                          movsxInstr->getDst()) != nullptr ||
+                      std::dynamic_pointer_cast<Assembly::DataOperand>(
+                          movsxInstr->getDst()) != nullptr;
+    return invalidSrc || invalidDst;
+}
+
+// Function to check if a binary instruction is invalid.
 bool FixupPass::isInvalidBinary(
     std::shared_ptr<Assembly::BinaryInstruction> binInstr) {
     if (std::dynamic_pointer_cast<Assembly::AddOperator>(
@@ -104,6 +212,38 @@ bool FixupPass::isInvalidBinary(
                    binInstr->getOperand2()) != nullptr;
     }
     return false;
+}
+
+// Function to check if a binary instruction has a large immediate value.
+bool FixupPass::isInvalidLargeImmediateBinary(
+    std::shared_ptr<Assembly::BinaryInstruction> binInstr) {
+    // Check if it's a `Quadword` `Binary` instruction with a large immediate
+    // value.
+    auto quadwordType =
+        std::dynamic_pointer_cast<Assembly::Quadword>(binInstr->getType());
+    if (!quadwordType)
+        return false;
+
+    auto immediateOp1 = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        binInstr->getOperand1());
+    auto immediateOp2 = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        binInstr->getOperand2());
+
+    std::shared_ptr<Assembly::ImmediateOperand> immediateOp = nullptr;
+    if (immediateOp1) {
+        immediateOp = immediateOp1;
+    }
+    else if (immediateOp2) {
+        immediateOp = immediateOp2;
+    }
+
+    if (!immediateOp)
+        return false;
+
+    // Check if immediate value is outside the range of a `Quadword` (32-bit
+    // signed).
+    int value = immediateOp->getImmediate();
+    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
 }
 
 bool FixupPass::isInvalidIdiv(
@@ -131,6 +271,56 @@ bool FixupPass::isInvalidCmp(
     return false;
 }
 
+// Function to check if a cmp instruction has a large immediate value.
+bool FixupPass::isInvalidLargeImmediateCmp(
+    std::shared_ptr<Assembly::CmpInstruction> cmpInstr) {
+    // Check if it's a `Quadword` `Cmp` instruction with a large immediate
+    // value.
+    auto quadwordType =
+        std::dynamic_pointer_cast<Assembly::Quadword>(cmpInstr->getType());
+    if (!quadwordType)
+        return false;
+
+    auto immediateOp1 = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        cmpInstr->getOperand1());
+    auto immediateOp2 = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        cmpInstr->getOperand2());
+
+    std::shared_ptr<Assembly::ImmediateOperand> immediateOp = nullptr;
+    if (immediateOp1) {
+        immediateOp = immediateOp1;
+    }
+    else if (immediateOp2) {
+        immediateOp = immediateOp2;
+    }
+
+    if (!immediateOp)
+        return false;
+
+    // Check if immediate value is outside the range of a `Quadword` (32-bit
+    // signed).
+    int value = immediateOp->getImmediate();
+    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+}
+
+// Function to check if a push instruction has a large immediate value.
+bool FixupPass::isInvalidLargeImmediatePush(
+    std::shared_ptr<Assembly::PushInstruction> pushInstr) {
+    auto immediateOp = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        pushInstr->getOperand());
+    if (!immediateOp)
+        return false;
+
+    // Check if immediate value is outside the range of a `Quadword` (32-bit
+    // signed).
+    int value = immediateOp->getImmediate();
+    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+}
+
+// Function to rewrite an invalid mov instruction.
+// Rewrite: `Mov(Stack/Data, Stack/Data)` ->
+// `Mov(Quadword, Stack/Data, Reg(R10))` + `Mov(Quadword, Reg(R10),
+// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidMov(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -143,10 +333,10 @@ FixupPass::rewriteInvalidMov(
 
     // Create two new movInstructions using `r10d` as an intermediate register
     // based on the original source and destination operands.
-    auto newMov1 =
-        std::make_shared<Assembly::MovInstruction>(movInst->getSrc(), r10d);
+    auto newMov1 = std::make_shared<Assembly::MovInstruction>(
+        movInst->getType(), movInst->getSrc(), r10d);
     auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-        std::move(r10d), movInst->getDst());
+        movInst->getType(), std::move(r10d), movInst->getDst());
 
     // Replace the original `mov` instruction with the first new `mov`
     // instruction.
@@ -158,6 +348,80 @@ FixupPass::rewriteInvalidMov(
     return it;
 }
 
+// Function to rewrite an invalid movsx instruction.
+// Rewrite: `Movsx(Imm(large), Stack/Data)` ->
+// `Mov(Longword, Imm(large), Reg(R10))` + `Movsx(Reg(R10), Reg(R11))` +
+// `Mov(Quadword, Reg(R11), Stack/Data)`.
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidMovsx(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions,
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::MovsxInstruction> movsxInst) {
+    auto src = movsxInst->getSrc();
+    auto dst = movsxInst->getDst();
+
+    bool invalidSrc =
+        std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src) != nullptr;
+    bool invalidDst =
+        std::dynamic_pointer_cast<Assembly::StackOperand>(dst) != nullptr ||
+        std::dynamic_pointer_cast<Assembly::DataOperand>(dst) != nullptr;
+
+    if (invalidSrc && invalidDst) {
+        auto r10d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R10>());
+        auto r11d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R11>());
+
+        auto newMov1 = std::make_shared<Assembly::MovInstruction>(
+            std::make_shared<Assembly::Longword>(), std::move(src),
+            std::move(r10d));
+
+        auto newMovsx = std::make_shared<Assembly::MovsxInstruction>(
+            std::move(r10d), std::move(r11d));
+
+        auto newMov2 = std::make_shared<Assembly::MovInstruction>(
+            std::make_shared<Assembly::Quadword>(), std::move(r11d),
+            std::move(dst));
+
+        *it = std::move(newMov1);
+        it = instructions->insert(it + 1, std::move(newMovsx));
+        it = instructions->insert(it + 1, std::move(newMov2));
+    }
+    else if (invalidSrc) {
+        auto r10d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R10>());
+
+        auto newMov = std::make_shared<Assembly::MovInstruction>(
+            std::make_shared<Assembly::Longword>(), std::move(src),
+            std::move(r10d));
+
+        auto newMovsx =
+            std::make_shared<Assembly::MovsxInstruction>(std::move(r10d), dst);
+
+        *it = std::move(newMov);
+        it = instructions->insert(it + 1, std::move(newMovsx));
+    }
+    else if (invalidDst) {
+        auto r11d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R11>());
+
+        auto newMovsx = std::make_shared<Assembly::MovsxInstruction>(src, r11d);
+
+        auto newMov = std::make_shared<Assembly::MovInstruction>(
+            std::make_shared<Assembly::Quadword>(), std::move(r11d), dst);
+
+        *it = std::move(newMovsx);
+        it = instructions->insert(it + 1, std::move(newMov));
+    }
+
+    return it;
+}
+
+// Function to rewrite an invalid binary instruction.
+// Rewrite: `Binary(op, Stack/Data, Stack/Data)` ->
+// `Mov(Quadword, Stack/Data, Reg(R10))` + `Binary(op, Quadword, Reg(R10),
+// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidBinary(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -171,9 +435,9 @@ FixupPass::rewriteInvalidBinary(
         auto r10d = std::make_shared<Assembly::RegisterOperand>(
             std::make_shared<Assembly::R10>());
         auto newMov = std::make_shared<Assembly::MovInstruction>(
-            binInstr->getOperand1(), r10d);
+            binInstr->getType(), binInstr->getOperand1(), r10d);
         auto newBin = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), std::move(r10d),
+            binInstr->getBinaryOperator(), binInstr->getType(), std::move(r10d),
             binInstr->getOperand2());
         *it = std::move(newMov);
         it = instructions->insert(it + 1, std::move(newBin));
@@ -183,11 +447,12 @@ FixupPass::rewriteInvalidBinary(
         auto r11d = std::make_shared<Assembly::RegisterOperand>(
             std::make_shared<Assembly::R11>());
         auto newMov1 = std::make_shared<Assembly::MovInstruction>(
-            binInstr->getOperand2(), r11d);
+            binInstr->getType(), binInstr->getOperand2(), r11d);
         auto newImul = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), binInstr->getOperand1(), r11d);
+            binInstr->getBinaryOperator(), binInstr->getType(),
+            binInstr->getOperand1(), r11d);
         auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-            std::move(r11d), binInstr->getOperand2());
+            binInstr->getType(), std::move(r11d), binInstr->getOperand2());
         *it = std::move(newMov1);
         it = instructions->insert(it + 1, std::move(newImul));
         it = instructions->insert(it + 1, std::move(newMov2));
@@ -196,6 +461,9 @@ FixupPass::rewriteInvalidBinary(
     return it;
 }
 
+// Function to rewrite an invalid idiv instruction.
+// Rewrite: `Idiv(Quadword, Imm(large))` ->
+// `Mov(Quadword, Imm(large), Reg(R10))` + `Idiv(Quadword, Reg(R10))`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidIdiv(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -206,8 +474,9 @@ FixupPass::rewriteInvalidIdiv(
         std::make_shared<Assembly::R10>());
 
     auto newMov = std::make_shared<Assembly::MovInstruction>(
-        idivInstr->getOperand(), r10d);
-    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(std::move(r10d));
+        idivInstr->getType(), idivInstr->getOperand(), r10d);
+    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(
+        idivInstr->getType(), std::move(r10d));
 
     *it = std::move(newMov);
     it = instructions->insert(it + 1, std::move(newIdiv));
@@ -215,6 +484,10 @@ FixupPass::rewriteInvalidIdiv(
     return it;
 }
 
+// Function to rewrite an invalid cmp instruction.
+// Rewrite: `Cmp(Stack/Data, Stack/Data)` ->
+// `Mov(Quadword, Stack/Data, Reg(R10))` + `Cmp(Quadword, Reg(R10),
+// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidCmp(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -232,9 +505,9 @@ FixupPass::rewriteInvalidCmp(
         auto r10d = std::make_shared<Assembly::RegisterOperand>(
             std::make_shared<Assembly::R10>());
         auto newMov = std::make_shared<Assembly::MovInstruction>(
-            cmpInstr->getOperand1(), r10d);
+            cmpInstr->getType(), cmpInstr->getOperand1(), r10d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
-            std::move(r10d), cmpInstr->getOperand2());
+            cmpInstr->getType(), std::move(r10d), cmpInstr->getOperand2());
         *it = std::move(newMov);
         it = instructions->insert(it + 1, std::move(newCmp));
     }
@@ -243,12 +516,175 @@ FixupPass::rewriteInvalidCmp(
         auto r11d = std::make_shared<Assembly::RegisterOperand>(
             std::make_shared<Assembly::R11>());
         auto newMov = std::make_shared<Assembly::MovInstruction>(
-            cmpInstr->getOperand2(), r11d);
+            cmpInstr->getType(), cmpInstr->getOperand2(), r11d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
-            cmpInstr->getOperand1(), std::move(r11d));
+            cmpInstr->getType(), cmpInstr->getOperand1(), std::move(r11d));
         *it = std::move(newMov);
         it = instructions->insert(it + 1, std::move(newCmp));
     }
+
+    return it;
+}
+
+// Function to rewrite an invalid mov instruction with a quadword immediate
+// value.
+// Rewrite: `Mov(Quadword, Imm(large), Stack/Data)` ->
+// `Mov(Quadword, Imm(large), Reg(R10))` + `Mov(Quadword, Reg(R10),
+// Stack/Data)`.
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidLargeImmediateMov(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions,
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::MovInstruction> movInst) {
+    auto r10d = std::make_shared<Assembly::RegisterOperand>(
+        std::make_shared<Assembly::R10>());
+
+    auto newMov1 = std::make_shared<Assembly::MovInstruction>(
+        movInst->getType(), movInst->getSrc(), r10d);
+    auto newMov2 = std::make_shared<Assembly::MovInstruction>(
+        movInst->getType(), std::move(r10d), movInst->getDst());
+
+    *it = std::move(newMov1);
+    it = instructions->insert(it + 1, std::move(newMov2));
+
+    return it;
+}
+
+// Function to rewrite an invalid mov instruction with a longword immediate
+// value.
+// Rewrite: `Mov(Longword, Imm(large), Reg)` ->
+// `Mov(Longword, Imm(truncated), Reg)`.
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidLongwordImmediateMov(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions [[maybe_unused]],
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::MovInstruction> movInst) {
+    auto immediateSrc = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        movInst->getSrc());
+    int originalValue = immediateSrc->getImmediate();
+
+    // Truncate to 32 bits (same as the assembler's behavior).
+    int truncatedValue =
+        static_cast<int>(static_cast<unsigned int>(originalValue) & 0xFFFFFFFF);
+
+    auto newImmediate =
+        std::make_shared<Assembly::ImmediateOperand>(truncatedValue);
+    auto newMov = std::make_shared<Assembly::MovInstruction>(
+        movInst->getType(), std::move(newImmediate), movInst->getDst());
+
+    *it = std::move(newMov);
+    return it;
+}
+
+// Function to rewrite an invalid binary instruction with a large immediate
+// value.
+// Rewrite: `Binary(op, Quadword, Imm(large), Reg)` ->
+// `Mov(Quadword, Imm(large), Reg(R10))` + `Binary(op, Quadword, Reg(R10),
+// Reg)`.
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidLargeImmediateBinary(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions,
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::BinaryInstruction> binInstr) {
+    auto r10d = std::make_shared<Assembly::RegisterOperand>(
+        std::make_shared<Assembly::R10>());
+
+    auto immediateOp = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        binInstr->getOperand1());
+    auto otherOp = binInstr->getOperand2();
+    bool isFirstOperand = true;
+    if (!immediateOp) {
+        immediateOp = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+            binInstr->getOperand2());
+        otherOp = binInstr->getOperand1();
+        isFirstOperand = false;
+    }
+
+    auto newMov = std::make_shared<Assembly::MovInstruction>(
+        binInstr->getType(), immediateOp, r10d);
+
+    std::shared_ptr<Assembly::BinaryInstruction> newBin;
+    if (isFirstOperand) {
+        newBin = std::make_shared<Assembly::BinaryInstruction>(
+            binInstr->getBinaryOperator(), binInstr->getType(), std::move(r10d),
+            otherOp);
+    }
+    else {
+        newBin = std::make_shared<Assembly::BinaryInstruction>(
+            binInstr->getBinaryOperator(), binInstr->getType(), otherOp,
+            std::move(r10d));
+    }
+
+    *it = std::move(newMov);
+    it = instructions->insert(it + 1, std::move(newBin));
+
+    return it;
+}
+
+// Function to rewrite an invalid cmp instruction with a large immediate
+// value.
+// Rewrite: `Cmp(Quadword, Imm(large), Reg)` ->
+// `Mov(Quadword, Imm(large), Reg(R10))` + `Cmp(Quadword, Reg(R10), Reg)`.
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidLargeImmediateCmp(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions,
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::CmpInstruction> cmpInstr) {
+    auto r10d = std::make_shared<Assembly::RegisterOperand>(
+        std::make_shared<Assembly::R10>());
+
+    auto immediateOp = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+        cmpInstr->getOperand1());
+    auto otherOp = cmpInstr->getOperand2();
+    bool isFirstOperand = true;
+    if (!immediateOp) {
+        immediateOp = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+            cmpInstr->getOperand2());
+        otherOp = cmpInstr->getOperand1();
+        isFirstOperand = false;
+    }
+
+    auto newMov = std::make_shared<Assembly::MovInstruction>(
+        cmpInstr->getType(), immediateOp, r10d);
+
+    std::shared_ptr<Assembly::CmpInstruction> newCmp;
+    if (isFirstOperand) {
+        newCmp = std::make_shared<Assembly::CmpInstruction>(
+            cmpInstr->getType(), std::move(r10d), otherOp);
+    }
+    else {
+        newCmp = std::make_shared<Assembly::CmpInstruction>(
+            cmpInstr->getType(), otherOp, std::move(r10d));
+    }
+
+    *it = std::move(newMov);
+    it = instructions->insert(it + 1, std::move(newCmp));
+
+    return it;
+}
+
+// Function to rewrite an invalid push instruction with a large immediate
+// value.
+// Rewrite: `Push(Imm(large))` -> `Mov(Quadword, Imm(large), Reg(R10))` +
+// `Push(Reg(R10))`.
+std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidLargeImmediatePush(
+    std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        instructions,
+    std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
+    std::shared_ptr<Assembly::PushInstruction> pushInstr) {
+    auto r10d = std::make_shared<Assembly::RegisterOperand>(
+        std::make_shared<Assembly::R10>());
+    auto newMov = std::make_shared<Assembly::MovInstruction>(
+        std::make_shared<Assembly::Quadword>(), pushInstr->getOperand(), r10d);
+    auto newPush = std::make_shared<Assembly::PushInstruction>(std::move(r10d));
+
+    *it = std::move(newMov);
+    it = instructions->insert(it + 1, std::move(newPush));
 
     return it;
 }

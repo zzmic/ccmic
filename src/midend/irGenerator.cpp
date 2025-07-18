@@ -6,11 +6,16 @@ IRGenerator::IRGenerator(
     const std::unordered_map<
         std::string, std::pair<std::shared_ptr<AST::Type>,
                                std::shared_ptr<AST::IdentifierAttribute>>>
-        &symbols)
-    : irTemporariesCounter(variableResolutionCounter), symbols(symbols) {}
+        &frontendSymbolTable)
+    : irTemporariesCounter(variableResolutionCounter),
+      frontendSymbolTable(frontendSymbolTable) {}
 
-std::pair<std::shared_ptr<IR::Program>,
-          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+std::tuple<
+    std::shared_ptr<IR::Program>,
+    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
+    std::unordered_map<std::string,
+                       std::pair<std::shared_ptr<AST::Type>,
+                                 std::shared_ptr<AST::IdentifierAttribute>>>>
 IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
     // Initialize the vector of IR top-levels (top-level elements).
     auto topLevels =
@@ -24,56 +29,56 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
                     astDeclaration)) {
             // Get the body of the function declaration.
             auto optBody = functionDeclaration->getOptBody();
+
             // Skip generating IR instructions for forward declarations.
             if (!optBody.has_value()) {
                 continue;
             }
+
             // Create a new vector of IR instructions for the function.
             auto instructions = std::make_shared<
                 std::vector<std::shared_ptr<IR::Instruction>>>();
+
             // Get the identifier and the parameters of the function
             // declaration.
             auto identifier = functionDeclaration->getIdentifier();
             auto parameters = functionDeclaration->getParameterIdentifiers();
+
             // Find the global attribute of the function declaration in the
-            // symbols and set the global flag.
+            // frontend symbol table and set the global flag.
             bool global = false;
-            if (symbols.find(identifier) != symbols.end()) {
+            if (frontendSymbolTable.find(identifier) !=
+                frontendSymbolTable.end()) {
                 if (auto functionAttribute =
                         std::dynamic_pointer_cast<AST::FunctionAttribute>(
-                            symbols[identifier].second)) {
+                            frontendSymbolTable[identifier].second)) {
                     global = functionAttribute->isGlobal();
                 }
                 else {
                     throw std::logic_error(
-                        "Function attribute not found in symbols while "
+                        "Function attribute not found in frontendSymbolTable "
+                        "while "
                         "generating IR instructions for function definition");
                 }
             }
             else {
                 throw std::logic_error(
-                    "Function declaration not found in symbols while "
+                    "Function declaration not found in frontendSymbolTable "
+                    "while "
                     "generating IR instructions for function definition");
             }
-            // Generate IR instructions for the body of the function.
+
+            // Generate IR instructions for the function body.
             generateIRBlock(optBody.value(), instructions);
+
             // Create a new IR function definition with the function identifier,
-            // the parameters, and the vector of IR instructions.
-            auto functionDefinition = std::make_shared<IR::FunctionDefinition>(
-                functionDeclaration->getIdentifier(), global, parameters,
-                instructions);
-            // If the function does not end with a return instruction, add a
-            // return instruction with constant value 0.
-            if (functionDefinition->getFunctionBody()->empty() ||
-                !std::dynamic_pointer_cast<IR::ReturnInstruction>(
-                    functionDefinition->getFunctionBody()->back())) {
-                functionDefinition->getFunctionBody()->emplace_back(
-                    std::make_shared<IR::ReturnInstruction>(
-                        std::make_shared<IR::ConstantValue>(
-                            std::make_shared<AST::ConstantInt>(0))));
-            }
+            // the global flag, the parameters, and the instructions.
+            auto irFunctionDefinition =
+                std::make_shared<IR::FunctionDefinition>(
+                    identifier, global, parameters, instructions);
+
             // Add the IR function definition to the vector of IR top-levels.
-            topLevels->emplace_back(std::move(functionDefinition));
+            topLevels->emplace_back(irFunctionDefinition);
         }
         else if (auto variableDeclaration =
                      std::dynamic_pointer_cast<AST::VariableDeclaration>(
@@ -94,11 +99,12 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
 
     // Examine every entry in the symbol table and generate `StaticVariable` IR
     // constructs for some of them after traversing the AST.
-    auto irStaticVariables = convertSymbolsToIRStaticVariables();
+    auto irStaticVariables = convertFrontendSymbolTableToIRStaticVariables();
 
-    // Return the generated IR program.
-    return std::make_pair(std::make_shared<IR::Program>(std::move(topLevels)),
-                          std::move(irStaticVariables));
+    // Return the generated IR program along with the static variables and the
+    // updated symbol table.
+    return std::make_tuple(std::make_shared<IR::Program>(std::move(topLevels)),
+                           std::move(irStaticVariables), frontendSymbolTable);
 }
 
 void IRGenerator::generateIRBlock(
@@ -136,6 +142,7 @@ void IRGenerator::generateIRBlock(
                                                  instructions);
                 }
             }
+
             // Generate IR instructions for the function declaration (that has a
             // body).
             else if (auto functionDeclaration =
@@ -144,6 +151,7 @@ void IRGenerator::generateIRBlock(
                 generateIRFunctionDefinition(functionDeclaration, instructions);
             }
         }
+
         // If the block item is a `SBockItem` (i.e., a statement), ...
         else if (auto sBlockItem =
                      std::dynamic_pointer_cast<AST::SBlockItem>(blockItem)) {
@@ -533,6 +541,12 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         auto e1Value = generateIRInstruction(
             conditionalExpr->getThenExpression(), instructions);
         auto resultLabel = generateIRResultLabel();
+
+        // Add the result variable to the frontend symbol table with type int.
+        frontendSymbolTable[resultLabel] =
+            std::make_pair(std::make_shared<AST::IntType>(),
+                           std::make_shared<AST::LocalAttribute>());
+
         auto resultValue = std::make_shared<IR::VariableValue>(resultLabel);
         generateIRCopyInstruction(e1Value, resultValue, instructions);
         auto endLabel = generateIREndLabel();
@@ -573,6 +587,11 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
     // Create a temporary variable (in string) to store the result of
     // the unary operation.
     auto tmpName = generateIRTemporary();
+
+    // Add the temporary variable to the frontend symbol table with the type
+    // of the expression and local attribute.
+    frontendSymbolTable[tmpName] = std::make_pair(
+        unaryExpr->getExpType(), std::make_shared<AST::LocalAttribute>());
 
     // Create a variable value for the temporary variable.
     auto dst = std::make_shared<IR::VariableValue>(tmpName);
@@ -640,6 +659,12 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     // Generate a copy instruction with 1 being copied to a (new) result
     // label.
     auto resultLabel = generateIRResultLabel();
+
+    // Add the result variable to the frontend symbol table with type int.
+    frontendSymbolTable[resultLabel] =
+        std::make_pair(std::make_shared<AST::IntType>(),
+                       std::make_shared<AST::LocalAttribute>());
+
     auto dst = std::make_shared<IR::VariableValue>(resultLabel);
     generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
                                   std::make_shared<AST::ConstantInt>(1)),
@@ -688,6 +713,12 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     // Generate a copy instruction with 0 being copied to a (new) result
     // label.
     auto resultLabel = generateIRResultLabel();
+
+    // Add the result variable to the frontend symbol table with type int.
+    frontendSymbolTable[resultLabel] =
+        std::make_pair(std::make_shared<AST::IntType>(),
+                       std::make_shared<AST::LocalAttribute>());
+
     auto dst = std::make_shared<IR::VariableValue>(resultLabel);
     generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
                                   std::make_shared<AST::ConstantInt>(0)),
@@ -768,6 +799,23 @@ IRGenerator::generateIRFunctionCallInstruction(
     // Create a temporary variable (in string) to store the result of
     // the function call.
     auto tmpName = generateIRTemporary();
+
+    // Look up the function's return type in the frontend symbol table.
+    auto functionType =
+        frontendSymbolTable[std::string(functionIdentifier)].first;
+    auto functionTypePtr =
+        std::dynamic_pointer_cast<AST::FunctionType>(functionType);
+    if (!functionTypePtr) {
+        throw std::logic_error("Function type not found in symbol table: " +
+                               std::string(functionIdentifier));
+    }
+    auto returnType = functionTypePtr->getReturnType();
+
+    // Add the temporary variable to the frontend symbol table with the type
+    // of the function's return type and local attribute.
+    frontendSymbolTable[tmpName] =
+        std::make_pair(returnType, std::make_shared<AST::LocalAttribute>());
+
     // Create a variable value for the temporary variable.
     auto dst = std::make_shared<IR::VariableValue>(tmpName);
     // Generate a function call instruction with the function identifier,
@@ -792,11 +840,10 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
                 std::dynamic_pointer_cast<IR::VariableValue>(result)) {
             return variableValue;
         }
-        // TODO(zzmic): Check if this is correct.
         else if (auto constantValue =
                      std::dynamic_pointer_cast<IR::ConstantValue>(result)) {
             auto dstName = generateIRTemporary();
-            symbols[dstName] =
+            frontendSymbolTable[dstName] =
                 std::make_pair(castExpr->getTargetType(),
                                std::make_shared<AST::LocalAttribute>());
             auto dst = std::make_shared<IR::VariableValue>(dstName);
@@ -809,14 +856,19 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
                 "Unknown result value type in cast instruction");
         }
     }
+
     // Create a temporary variable (in string) to store the result of
     // the cast operation.
     auto dstName = generateIRTemporary();
-    // Create a new entry in the symbol table for the casted variable.
-    symbols[dstName] = std::make_pair(castExpr->getTargetType(),
-                                      std::make_shared<AST::LocalAttribute>());
+
+    // Add the temporary variable to the frontend symbol table with the type
+    // of the target type and local attribute.
+    frontendSymbolTable[dstName] = std::make_pair(
+        castExpr->getTargetType(), std::make_shared<AST::LocalAttribute>());
+
     // Create a variable value for the temporary variable.
     auto dst = std::make_shared<IR::VariableValue>(dstName);
+
     // If the target type is a long type, generate a sign extend instruction.
     // Otherwise, generate a truncate instruction.
     if (std::dynamic_pointer_cast<AST::LongType>(castExpr->getTargetType())) {
@@ -827,6 +879,7 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
         instructions->emplace_back(
             std::make_shared<IR::TruncateInstruction>(result, dst));
     }
+
     // Return the destination value.
     return dst;
 }
@@ -887,10 +940,10 @@ std::string IRGenerator::generateIRStartLabel() const {
 }
 
 std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-IRGenerator::convertSymbolsToIRStaticVariables() {
+IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
     auto irDefs =
         std::make_shared<std::vector<std::shared_ptr<IR::StaticVariable>>>();
-    for (const auto &symbol : symbols) {
+    for (const auto &symbol : frontendSymbolTable) {
         auto name = symbol.first;
         auto type = symbol.second.first;
         auto attribute = symbol.second.second;
@@ -916,7 +969,7 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                 else {
                     throw std::logic_error(
                         "Unsupported static initializer type while converting "
-                        "symbols to IR static variables");
+                        "frontendSymbolTable to IR static variables");
                 }
             }
             else if (auto tentative = std::dynamic_pointer_cast<AST::Tentative>(
@@ -931,9 +984,9 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                         std::make_shared<AST::LongInit>(0L)));
                 }
                 else {
-                    throw std::logic_error(
-                        "Unsupported tentative type while converting symbols "
-                        "to IR static variables");
+                    throw std::logic_error("Unsupported tentative type while "
+                                           "converting frontendSymbolTable "
+                                           "to IR static variables");
                 }
             }
             else if (std::dynamic_pointer_cast<AST::NoInitializer>(
@@ -941,9 +994,9 @@ IRGenerator::convertSymbolsToIRStaticVariables() {
                 continue;
             }
             else {
-                throw std::logic_error(
-                    "Unsupported initial value type while converting symbols "
-                    "to IR static variables");
+                throw std::logic_error("Unsupported initial value type while "
+                                       "converting frontendSymbolTable "
+                                       "to IR static variables");
             }
         }
         else {
@@ -1016,10 +1069,10 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRVariable(
     // the binary operation.
     auto tmpName = generateIRTemporary();
 
-    // Add the temporary variable to the symbols table with the appropriate type
-    // and local attribute.
-    symbols[tmpName] = std::make_pair(binaryExpr->getExpType(),
-                                      std::make_shared<AST::LocalAttribute>());
+    // Add the temporary variable to the frontend symbol table with the
+    // appropriate type and local attribute.
+    frontendSymbolTable[tmpName] = std::make_pair(
+        binaryExpr->getExpType(), std::make_shared<AST::LocalAttribute>());
 
     // Create a variable value for the temporary variable and return it.
     return std::make_shared<IR::VariableValue>(tmpName);

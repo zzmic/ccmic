@@ -59,13 +59,8 @@ class PrettyPrinters {
         const std::shared_ptr<Assembly::Instruction> &instruction);
     static void printAssyMovInstruction(
         const std::shared_ptr<Assembly::MovInstruction> &movInstruction);
-    static void printAssyRetInstruction();
-    static void printAssyAllocateStackInstruction(
-        const std::shared_ptr<Assembly::AllocateStackInstruction>
-            &allocateStackInstruction);
-    static void printAssyDeallocateStackInstruction(
-        const std::shared_ptr<Assembly::DeallocateStackInstruction>
-            &deallocateStackInstruction);
+    static void printAssyRetInstruction(
+        const std::shared_ptr<Assembly::RetInstruction> &retInstruction);
     static void printAssyPushInstruction(
         const std::shared_ptr<Assembly::PushInstruction> &pushInstruction);
     static void printAssyCallInstruction(

@@ -9,6 +9,8 @@
 #include <variant>
 #include <vector>
 
+#include "../frontend/semanticAnalysisPasses.h"
+
 namespace Assembly {
 class Register {
   public:
@@ -67,7 +69,7 @@ class ImmediateOperand : public Operand {
     int imm;
 
   public:
-    ImmediateOperand(int imm) : imm(imm) {}
+    explicit ImmediateOperand(int imm) : imm(imm) {}
     int getImmediate() const override { return imm; }
 };
 
@@ -84,7 +86,9 @@ class RegisterOperand : public Operand {
                          {typeid(R8), "%r8b"},
                          {typeid(R9), "%r9b"},
                          {typeid(R10), "%r10b"},
-                         {typeid(R11), "%r11b"}}},
+                         {typeid(R11), "%r11b"},
+                         {typeid(SP), "%spl"},
+                         {typeid(BP), "%bpl"}}},
                        {4, // 4-byte registers.
                         {{typeid(AX), "%eax"},
                          {typeid(CX), "%ecx"},
@@ -94,7 +98,9 @@ class RegisterOperand : public Operand {
                          {typeid(R8), "%r8d"},
                          {typeid(R9), "%r9d"},
                          {typeid(R10), "%r10d"},
-                         {typeid(R11), "%r11d"}}},
+                         {typeid(R11), "%r11d"},
+                         {typeid(SP), "%esp"},
+                         {typeid(BP), "%ebp"}}},
                        {8, // 8-byte registers.
                         {{typeid(AX), "%rax"},
                          {typeid(CX), "%rcx"},
@@ -104,11 +110,13 @@ class RegisterOperand : public Operand {
                          {typeid(R8), "%r8"},
                          {typeid(R9), "%r9"},
                          {typeid(R10), "%r10"},
-                         {typeid(R11), "%r11"}}}};
+                         {typeid(R11), "%r11"},
+                         {typeid(SP), "%rsp"},
+                         {typeid(BP), "%rbp"}}}};
 
   public:
-    RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {}
-    RegisterOperand(std::string regInStr) {
+    explicit RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {}
+    explicit RegisterOperand(std::string regInStr) {
         if (regInStr == "AX") {
             reg = std::make_shared<AX>();
         }
@@ -136,21 +144,26 @@ class RegisterOperand : public Operand {
         else if (regInStr == "R11") {
             reg = std::make_shared<R11>();
         }
+        else if (regInStr == "RSP") {
+            reg = std::make_shared<SP>();
+        }
         else {
-            throw std::logic_error("Unsupported register");
+            throw std::logic_error("Unsupported register: " + regInStr);
         }
     }
     std::shared_ptr<Register> getRegister() const override { return reg; }
     std::string getRegisterInBytesInStr(int size) const {
         auto sizeIt = regMappings.find(size);
         if (sizeIt == regMappings.end()) {
-            throw std::logic_error("Unsupported register size");
+            throw std::logic_error("Unsupported register size: " +
+                                   std::to_string(size));
         }
         const auto &sizeMappings = sizeIt->second;
         auto &r = *reg.get();
         auto regIt = sizeMappings.find(typeid(r));
         if (regIt == sizeMappings.end()) {
-            throw std::logic_error("Unsupported register");
+            throw std::logic_error("Unsupported register type: " +
+                                   std::string(typeid(r).name()));
         }
         return regIt->second;
     }
@@ -161,7 +174,8 @@ class PseudoRegisterOperand : public Operand {
     std::string pseudoReg;
 
   public:
-    PseudoRegisterOperand(std::string pseudoReg) : pseudoReg(pseudoReg) {}
+    explicit PseudoRegisterOperand(std::string pseudoReg)
+        : pseudoReg(pseudoReg) {}
     std::string getPseudoRegister() const override { return pseudoReg; }
 };
 
@@ -171,7 +185,8 @@ class StackOperand : public Operand {
     std::shared_ptr<ReservedRegister> reservedReg;
 
   public:
-    StackOperand(int offset, std::shared_ptr<ReservedRegister> reservedReg)
+    explicit StackOperand(int offset,
+                          std::shared_ptr<ReservedRegister> reservedReg)
         : offset(offset), reservedReg(reservedReg) {}
     int getOffset() const override { return offset; }
     std::shared_ptr<ReservedRegister> getReservedRegister() const override {
@@ -179,6 +194,9 @@ class StackOperand : public Operand {
     }
     std::string getReservedRegisterInStr() const {
         if (auto sp = std::dynamic_pointer_cast<SP>(reservedReg)) {
+            return "%rsp";
+        }
+        else if (auto rsp = std::dynamic_pointer_cast<SP>(reservedReg)) {
             return "%rsp";
         }
         else if (auto bp = std::dynamic_pointer_cast<BP>(reservedReg)) {
@@ -195,7 +213,7 @@ class DataOperand : public Operand {
     std::string identifier;
 
   public:
-    DataOperand(std::string identifier) : identifier(identifier) {}
+    explicit DataOperand(std::string identifier) : identifier(identifier) {}
     std::string getIdentifier() const override { return identifier; }
 };
 
@@ -242,12 +260,42 @@ class Instruction {
     virtual ~Instruction() = default;
 };
 
+class AssemblyType {
+  public:
+    virtual ~AssemblyType() = default;
+};
+
+class Longword : public AssemblyType {};
+
+class Quadword : public AssemblyType {};
+
 class MovInstruction : public Instruction {
+  private:
+    std::shared_ptr<AssemblyType> type;
+    std::shared_ptr<Operand> src, dst;
+
+  public:
+    explicit MovInstruction(std::shared_ptr<AssemblyType> type,
+                            std::shared_ptr<Operand> src,
+                            std::shared_ptr<Operand> dst)
+        : type(type), src(src), dst(dst) {}
+    std::shared_ptr<AssemblyType> getType() { return type; }
+    std::shared_ptr<Operand> getSrc() { return src; }
+    std::shared_ptr<Operand> getDst() { return dst; }
+    void setType(std::shared_ptr<AssemblyType> newType) {
+        this->type = newType;
+    }
+    void setSrc(std::shared_ptr<Operand> newSrc) { this->src = newSrc; }
+    void setDst(std::shared_ptr<Operand> newDst) { this->dst = newDst; }
+};
+
+class MovsxInstruction : public Instruction {
   private:
     std::shared_ptr<Operand> src, dst;
 
   public:
-    MovInstruction(std::shared_ptr<Operand> src, std::shared_ptr<Operand> dst)
+    explicit MovsxInstruction(std::shared_ptr<Operand> src,
+                              std::shared_ptr<Operand> dst)
         : src(src), dst(dst) {}
     std::shared_ptr<Operand> getSrc() { return src; }
     std::shared_ptr<Operand> getDst() { return dst; }
@@ -258,16 +306,22 @@ class MovInstruction : public Instruction {
 class UnaryInstruction : public Instruction {
   private:
     std::shared_ptr<UnaryOperator> unaryOperator;
+    std::shared_ptr<AssemblyType> type;
     std::shared_ptr<Operand> operand;
 
   public:
-    UnaryInstruction(std::shared_ptr<UnaryOperator> unaryOperator,
-                     std::shared_ptr<Operand> operand)
-        : unaryOperator(unaryOperator), operand(operand) {}
+    explicit UnaryInstruction(std::shared_ptr<UnaryOperator> unaryOperator,
+                              std::shared_ptr<AssemblyType> type,
+                              std::shared_ptr<Operand> operand)
+        : unaryOperator(unaryOperator), type(type), operand(operand) {}
     std::shared_ptr<UnaryOperator> getUnaryOperator() { return unaryOperator; }
+    std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand() { return operand; }
     void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator) {
         this->unaryOperator = newUnaryOperator;
+    }
+    void setType(std::shared_ptr<AssemblyType> newType) {
+        this->type = newType;
     }
     void setOperand(std::shared_ptr<Operand> newOperand) {
         this->operand = newOperand;
@@ -277,21 +331,27 @@ class UnaryInstruction : public Instruction {
 class BinaryInstruction : public Instruction {
   private:
     std::shared_ptr<BinaryOperator> binaryOperator;
+    std::shared_ptr<AssemblyType> type;
     std::shared_ptr<Operand> operand1, operand2;
 
   public:
-    BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
-                      std::shared_ptr<Operand> operand1,
-                      std::shared_ptr<Operand> operand2)
-        : binaryOperator(binaryOperator), operand1(operand1),
+    explicit BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
+                               std::shared_ptr<AssemblyType> type,
+                               std::shared_ptr<Operand> operand1,
+                               std::shared_ptr<Operand> operand2)
+        : binaryOperator(binaryOperator), type(type), operand1(operand1),
           operand2(operand2) {}
     std::shared_ptr<BinaryOperator> getBinaryOperator() {
         return binaryOperator;
     }
+    std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand1() { return operand1; }
     std::shared_ptr<Operand> getOperand2() { return operand2; }
     void setBinaryOperator(std::shared_ptr<BinaryOperator> newBinaryOperator) {
         this->binaryOperator = newBinaryOperator;
+    }
+    void setType(std::shared_ptr<AssemblyType> newType) {
+        this->type = newType;
     }
     void setOperand1(std::shared_ptr<Operand> newOperand1) {
         this->operand1 = newOperand1;
@@ -303,14 +363,20 @@ class BinaryInstruction : public Instruction {
 
 class CmpInstruction : public Instruction {
   private:
+    std::shared_ptr<AssemblyType> type;
     std::shared_ptr<Operand> operand1, operand2;
 
   public:
-    CmpInstruction(std::shared_ptr<Operand> operand1,
-                   std::shared_ptr<Operand> operand2)
-        : operand1(operand1), operand2(operand2) {}
+    explicit CmpInstruction(std::shared_ptr<AssemblyType> type,
+                            std::shared_ptr<Operand> operand1,
+                            std::shared_ptr<Operand> operand2)
+        : type(type), operand1(operand1), operand2(operand2) {}
+    std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand1() { return operand1; }
     std::shared_ptr<Operand> getOperand2() { return operand2; }
+    void setType(std::shared_ptr<AssemblyType> newType) {
+        this->type = newType;
+    }
     void setOperand1(std::shared_ptr<Operand> newOperand1) {
         this->operand1 = newOperand1;
     }
@@ -321,24 +387,41 @@ class CmpInstruction : public Instruction {
 
 class IdivInstruction : public Instruction {
   private:
+    std::shared_ptr<AssemblyType> type;
     std::shared_ptr<Operand> operand;
 
   public:
-    IdivInstruction(std::shared_ptr<Operand> operand) : operand(operand) {}
+    explicit IdivInstruction(std::shared_ptr<AssemblyType> type,
+                             std::shared_ptr<Operand> operand)
+        : type(type), operand(operand) {}
+    std::shared_ptr<AssemblyType> getType() { return type; }
     std::shared_ptr<Operand> getOperand() { return operand; }
+    void setType(std::shared_ptr<AssemblyType> newType) {
+        this->type = newType;
+    }
     void setOperand(std::shared_ptr<Operand> newOperand) {
         this->operand = newOperand;
     }
 };
 
-class CdqInstruction : public Instruction {};
+class CdqInstruction : public Instruction {
+  private:
+    std::shared_ptr<AssemblyType> type;
+
+  public:
+    explicit CdqInstruction(std::shared_ptr<AssemblyType> type) : type(type) {}
+    std::shared_ptr<AssemblyType> getType() { return type; }
+    void setType(std::shared_ptr<AssemblyType> newType) {
+        this->type = newType;
+    }
+};
 
 class JmpInstruction : public Instruction {
   private:
     std::string label;
 
   public:
-    JmpInstruction(std::string label) : label(label) {}
+    explicit JmpInstruction(std::string label) : label(label) {}
     std::string getLabel() { return label; }
     void setLabel(std::string newLabel) { this->label = newLabel; }
 };
@@ -349,7 +432,8 @@ class JmpCCInstruction : public Instruction {
     std::string label;
 
   public:
-    JmpCCInstruction(std::shared_ptr<CondCode> condCode, std::string label)
+    explicit JmpCCInstruction(std::shared_ptr<CondCode> condCode,
+                              std::string label)
         : condCode(condCode), label(label) {}
     std::shared_ptr<CondCode> getCondCode() { return condCode; }
     std::string getLabel() { return label; }
@@ -365,8 +449,8 @@ class SetCCInstruction : public Instruction {
     std::shared_ptr<Operand> operand;
 
   public:
-    SetCCInstruction(std::shared_ptr<CondCode> condCode,
-                     std::shared_ptr<Operand> operand)
+    explicit SetCCInstruction(std::shared_ptr<CondCode> condCode,
+                              std::shared_ptr<Operand> operand)
         : condCode(condCode), operand(operand) {}
     std::shared_ptr<CondCode> getCondCode() { return condCode; }
     std::shared_ptr<Operand> getOperand() { return operand; }
@@ -383,29 +467,9 @@ class LabelInstruction : public Instruction {
     std::string label;
 
   public:
-    LabelInstruction(std::string label) : label(label) {}
+    explicit LabelInstruction(std::string label) : label(label) {}
     std::string getLabel() { return label; }
     void setLabel(std::string newLabel) { this->label = newLabel; }
-};
-
-class AllocateStackInstruction : public Instruction {
-  private:
-    int addressGivenOffsetFromRBP;
-
-  public:
-    AllocateStackInstruction(int addressGivenOffsetFromRBP)
-        : addressGivenOffsetFromRBP(addressGivenOffsetFromRBP) {}
-    int getAddressGivenOffsetFromRBP() { return addressGivenOffsetFromRBP; }
-};
-
-class DeallocateStackInstruction : public Instruction {
-  private:
-    int addressGivenOffsetFromRBP;
-
-  public:
-    DeallocateStackInstruction(int addressGivenOffsetFromRBP)
-        : addressGivenOffsetFromRBP(addressGivenOffsetFromRBP) {}
-    int getAddressGivenOffsetFromRBP() { return addressGivenOffsetFromRBP; }
 };
 
 class PushInstruction : public Instruction {
@@ -413,7 +477,8 @@ class PushInstruction : public Instruction {
     std::shared_ptr<Operand> operand;
 
   public:
-    PushInstruction(std::shared_ptr<Operand> operand) : operand(operand) {}
+    explicit PushInstruction(std::shared_ptr<Operand> operand)
+        : operand(operand) {}
     std::shared_ptr<Operand> getOperand() { return operand; }
     void setOperand(std::shared_ptr<Operand> newOperand) {
         this->operand = newOperand;
@@ -425,7 +490,7 @@ class CallInstruction : public Instruction {
     std::string functionIdentifier;
 
   public:
-    CallInstruction(std::string functionIdentifier)
+    explicit CallInstruction(std::string functionIdentifier)
         : functionIdentifier(functionIdentifier) {}
     std::string getFunctionIdentifier() { return functionIdentifier; }
 };
@@ -445,7 +510,7 @@ class FunctionDefinition : public TopLevel {
     size_t stackSize;
 
   public:
-    FunctionDefinition(
+    explicit FunctionDefinition(
         std::string functionIdentifier, bool global,
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
         size_t stackSize)
@@ -470,14 +535,22 @@ class StaticVariable : public TopLevel {
   private:
     std::string identifier;
     bool global;
-    int initialValue;
+    int alignment;
+    std::shared_ptr<AST::StaticInit> staticInit;
 
   public:
-    StaticVariable(std::string identifier, bool global, int initialValue)
-        : identifier(identifier), global(global), initialValue(initialValue) {}
+    explicit StaticVariable(std::string identifier, bool global, int alignment,
+                            std::shared_ptr<AST::StaticInit> staticInit)
+        : identifier(identifier), global(global), alignment(alignment),
+          staticInit(staticInit) {}
     std::string getIdentifier() { return identifier; }
     bool isGlobal() { return global; }
-    int getInitialValue() { return initialValue; }
+    int getAlignment() { return alignment; }
+    void setAlignment(int newAlignment) { this->alignment = newAlignment; }
+    std::shared_ptr<AST::StaticInit> getStaticInit() { return staticInit; }
+    void setStaticInit(std::shared_ptr<AST::StaticInit> newStaticInit) {
+        this->staticInit = newStaticInit;
+    }
 };
 
 class Program {
@@ -485,7 +558,8 @@ class Program {
     std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels;
 
   public:
-    Program(std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels)
+    explicit Program(
+        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels)
         : topLevels(topLevels) {}
     std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> getTopLevels() {
         return topLevels;

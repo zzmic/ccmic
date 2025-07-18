@@ -20,10 +20,13 @@ class IRGenerator {
         const std::unordered_map<
             std::string, std::pair<std::shared_ptr<AST::Type>,
                                    std::shared_ptr<AST::IdentifierAttribute>>>
-            &symbols);
-    [[nodiscard]] std::pair<
+            &frontendSymbolTable);
+    [[nodiscard]] std::tuple<
         std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
+        std::unordered_map<
+            std::string, std::pair<std::shared_ptr<AST::Type>,
+                                   std::shared_ptr<AST::IdentifierAttribute>>>>
     generateIR(const std::shared_ptr<AST::Program> &astProgram);
 
   private:
@@ -31,7 +34,7 @@ class IRGenerator {
     std::unordered_map<std::string,
                        std::pair<std::shared_ptr<AST::Type>,
                                  std::shared_ptr<AST::IdentifierAttribute>>>
-        symbols;
+        frontendSymbolTable;
     void generateIRBlock(
         const std::shared_ptr<AST::Block> &astBlock,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
@@ -148,7 +151,7 @@ class IRGenerator {
     [[nodiscard]] std::string generateIRStartLabel() const;
     [[nodiscard]] std::shared_ptr<
         std::vector<std::shared_ptr<IR::StaticVariable>>>
-    convertSymbolsToIRStaticVariables();
+    convertFrontendSymbolTableToIRStaticVariables();
     [[nodiscard]] std::shared_ptr<IR::UnaryOperator>
     convertUnop(const std::shared_ptr<AST::UnaryOperator> &op);
     [[nodiscard]] std::shared_ptr<IR::BinaryOperator>

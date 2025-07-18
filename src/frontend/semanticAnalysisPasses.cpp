@@ -499,7 +499,7 @@ std::string IdentifierResolutionPass::resolveParameter(
 std::unordered_map<std::string, std::pair<std::shared_ptr<Type>,
                                           std::shared_ptr<IdentifierAttribute>>>
 TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
-    this->symbols =
+    this->frontendSymbolTable =
         std::unordered_map<std::string,
                            std::pair<std::shared_ptr<Type>,
                                      std::shared_ptr<IdentifierAttribute>>>();
@@ -519,7 +519,7 @@ TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
         }
     }
     // The symbol table "will need to be accessible in later compiler passes."
-    return this->symbols;
+    return this->frontendSymbolTable;
 }
 
 std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
@@ -615,8 +615,9 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
             declaration->getOptStorageClass().value())) {
         global = false;
     }
-    if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
-        auto oldDeclaration = symbols[declaration->getIdentifier()];
+    if (frontendSymbolTable.find(declaration->getIdentifier()) !=
+        frontendSymbolTable.end()) {
+        auto oldDeclaration = frontendSymbolTable[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
         if (*oldType != *funType) {
             throw std::logic_error("Incompatible function declarations");
@@ -639,12 +640,13 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
 
     auto attribute =
         std::make_shared<FunctionAttribute>(alreadyDefined || hasBody, global);
-    symbols[declaration->getIdentifier()] = {funType, attribute};
+    frontendSymbolTable[declaration->getIdentifier()] = {funType, attribute};
 
     if (hasBody) {
         for (auto &parameter : *declaration->getParameterIdentifiers()) {
-            symbols[parameter] = {std::make_shared<IntType>(),
-                                  std::make_shared<LocalAttribute>()};
+            frontendSymbolTable[parameter] = {
+                std::make_shared<IntType>(),
+                std::make_shared<LocalAttribute>()};
         }
         // Provide the enclosing function's name for the later type-checking of
         // the return statement.
@@ -701,8 +703,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                    !(std::dynamic_pointer_cast<StaticStorageClass>(
                        declaration->getOptStorageClass().value())));
 
-    if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
-        auto oldDeclaration = symbols[declaration->getIdentifier()];
+    if (frontendSymbolTable.find(declaration->getIdentifier()) !=
+        frontendSymbolTable.end()) {
+        auto oldDeclaration = frontendSymbolTable[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first;
         if (*oldType != *varType) {
             throw std::logic_error("Function redeclared as variable");
@@ -736,7 +739,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
 
     auto attribute = std::make_shared<StaticAttribute>(initialValue, global);
     // Store the corresponding variable type and attribute in the symbol table.
-    symbols[declaration->getIdentifier()] = {varType, attribute};
+    frontendSymbolTable[declaration->getIdentifier()] = {varType, attribute};
 }
 
 void TypeCheckingPass::typeCheckLocalVariableDeclaration(
@@ -753,8 +756,10 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             throw std::logic_error(
                 "Initializer on local extern variable declaration");
         }
-        if (symbols.find(declaration->getIdentifier()) != symbols.end()) {
-            auto oldDeclaration = symbols[declaration->getIdentifier()];
+        if (frontendSymbolTable.find(declaration->getIdentifier()) !=
+            frontendSymbolTable.end()) {
+            auto oldDeclaration =
+                frontendSymbolTable[declaration->getIdentifier()];
             auto oldType = oldDeclaration.first;
             if (*oldType != *varType) {
                 throw std::logic_error("Function redeclared as variable");
@@ -763,7 +768,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         else {
             auto staticAttribute = std::make_shared<StaticAttribute>(
                 std::make_shared<NoInitializer>(), true);
-            symbols[declaration->getIdentifier()] =
+            frontendSymbolTable[declaration->getIdentifier()] =
                 std::make_pair(varType, staticAttribute);
         }
     }
@@ -801,12 +806,12 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         }
         auto staticAttribute =
             std::make_shared<StaticAttribute>(initialValue, false);
-        symbols[declaration->getIdentifier()] =
+        frontendSymbolTable[declaration->getIdentifier()] =
             std::make_pair(varType, staticAttribute);
     }
     else {
         auto localAttribute = std::make_shared<LocalAttribute>();
-        symbols[declaration->getIdentifier()] =
+        frontendSymbolTable[declaration->getIdentifier()] =
             std::make_pair(varType, localAttribute);
         if (declaration->getOptInitializer().has_value()) {
             typeCheckExpression(declaration->getOptInitializer().value());
@@ -863,7 +868,8 @@ void TypeCheckingPass::typeCheckExpression(
     std::shared_ptr<Expression> expression) {
     if (auto functionCallExpression =
             std::dynamic_pointer_cast<FunctionCallExpression>(expression)) {
-        auto fType = symbols[functionCallExpression->getIdentifier()].first;
+        auto fType =
+            frontendSymbolTable[functionCallExpression->getIdentifier()].first;
         if (*fType == IntType() || *fType == LongType()) {
             throw std::logic_error("Function name used as variable: " +
                                    functionCallExpression->getIdentifier());
@@ -911,7 +917,8 @@ void TypeCheckingPass::typeCheckExpression(
     }
     else if (auto variableExpression =
                  std::dynamic_pointer_cast<VariableExpression>(expression)) {
-        auto variableType = symbols[variableExpression->getIdentifier()].first;
+        auto variableType =
+            frontendSymbolTable[variableExpression->getIdentifier()].first;
         // If the variable is not of type int or long, it is of type function.
         if (*variableType != IntType() && *variableType != LongType()) {
             std::stringstream msg;
@@ -1013,7 +1020,8 @@ void TypeCheckingPass::typeCheckStatement(
         // value to that type.
         // Use the enclosing function's name to look up the enclosing function's
         // return type.
-        auto functionType = symbols[enclosingFunctionIdentifier].first;
+        auto functionType =
+            frontendSymbolTable[enclosingFunctionIdentifier].first;
         if (!functionType) {
             throw std::logic_error("Function not found in symbol table: " +
                                    enclosingFunctionIdentifier);
