@@ -55,20 +55,12 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 }
 
 // Function to perform semantic-analysis passes on the AST program.
-std::pair<
-    int, std::unordered_map<
-             std::string, std::pair<std::shared_ptr<AST::Type>,
-                                    std::shared_ptr<AST::IdentifierAttribute>>>>
-PipelineStagesExecutors::semanticAnalysisExecutor(
+int PipelineStagesExecutors::semanticAnalysisExecutor(
     const std::shared_ptr<AST::Program> &astProgram) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
     AST::TypeCheckingPass typeCheckingPass;
     AST::LoopLabelingPass loopLabelingPass;
     auto variableResolutionCounter = 0;
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        frontendSymbolTable;
 
     try {
         // Perform the identifier-resolution pass.
@@ -81,7 +73,7 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
     }
     try {
         // Perform the type-checking pass.
-        frontendSymbolTable = typeCheckingPass.typeCheckProgram(astProgram);
+        typeCheckingPass.typeCheckProgram(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Type-checking error: " << e.what();
@@ -106,44 +98,29 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
         throw std::runtime_error(msg.str());
     }
 
-    // Return the variable resolution counter and the symbol table
-    // altogether.
-    return {variableResolutionCounter, frontendSymbolTable};
+    // Return the variable resolution counter.
+    return variableResolutionCounter;
 }
 
 // Function to generate the IR from the AST program.
-std::tuple<
-    std::shared_ptr<IR::Program>,
-    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>>
+std::pair<std::shared_ptr<IR::Program>,
+          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
     const std::shared_ptr<AST::Program> &astProgram,
-    int variableResolutionCounter,
-    const std::unordered_map<
-        std::string, std::pair<std::shared_ptr<AST::Type>,
-                               std::shared_ptr<AST::IdentifierAttribute>>>
-        &frontendSymbolTable) {
+    int variableResolutionCounter) {
     std::cout << "\n";
-    std::tuple<
-        std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
-        std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>>
-        irProgramAndIRStaticVariablesAndSymbolTable;
+    std::pair<std::shared_ptr<IR::Program>,
+              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+        irProgramAndIRStaticVariables;
     try {
-        IR::IRGenerator irGenerator(variableResolutionCounter,
-                                    frontendSymbolTable);
-        irProgramAndIRStaticVariablesAndSymbolTable =
-            irGenerator.generateIR(astProgram);
+        IR::IRGenerator irGenerator(variableResolutionCounter);
+        irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "IR generation error: " << e.what();
         throw std::runtime_error(msg.str());
     }
-    return irProgramAndIRStaticVariablesAndSymbolTable;
+    return irProgramAndIRStaticVariables;
 }
 
 // Function to perform optimization passes on the IR program.
@@ -169,16 +146,11 @@ void PipelineStagesExecutors::irOptimizationExecutor(
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     const std::shared_ptr<IR::Program> &irProgram,
     const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        &irStaticVariables,
-    const std::unordered_map<
-        std::string, std::pair<std::shared_ptr<AST::Type>,
-                               std::shared_ptr<AST::IdentifierAttribute>>>
-        &frontendSymbolTable) {
+        &irStaticVariables) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Instantiate an assembly generator object and generate the assembly.
-        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables,
-                                                      frontendSymbolTable);
+        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables);
         assemblyProgram = assemblyGenerator.generateAssembly(irProgram);
 
         // Instantiate a pseudo-to-stack pass object and associate the stack

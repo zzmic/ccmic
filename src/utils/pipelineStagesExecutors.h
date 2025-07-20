@@ -26,25 +26,13 @@ class PipelineStagesExecutors {
     lexerExecutor(std::string_view sourceFile);
     [[nodiscard]] static std::shared_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
-    [[nodiscard]] static std::pair<
-        int,
-        std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>>
+    [[nodiscard]] static int
     semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram);
-    [[nodiscard]] static std::tuple<
+    [[nodiscard]] static std::pair<
         std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
-        std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>>
-    irGeneratorExecutor(
-        const std::shared_ptr<AST::Program> &astProgram,
-        int variableResolutionCounter,
-        const std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>
-            &frontendSymbolTable);
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+    irGeneratorExecutor(const std::shared_ptr<AST::Program> &astProgram,
+                        int variableResolutionCounter);
     static void
     irOptimizationExecutor(const std::shared_ptr<IR::Program> &irProgram,
                            bool foldConstantsPass, bool propagateCopiesPass,
@@ -53,11 +41,7 @@ class PipelineStagesExecutors {
     [[nodiscard]] static std::shared_ptr<Assembly::Program> codegenExecutor(
         const std::shared_ptr<IR::Program> &irProgram,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            &irStaticVariables,
-        const std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>
-            &frontendSymbolTable);
+            &irStaticVariables);
     static void codeEmissionExecutor(
         const std::shared_ptr<Assembly::Program> &assemblyProgram,
         std::string_view assemblyFile);

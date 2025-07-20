@@ -15,26 +15,14 @@
 namespace IR {
 class IRGenerator {
   public:
-    explicit IRGenerator(
-        int variableResolutionCounter,
-        const std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>
-            &frontendSymbolTable);
-    [[nodiscard]] std::tuple<
+    explicit IRGenerator(int variableResolutionCounter);
+    [[nodiscard]] std::pair<
         std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>,
-        std::unordered_map<
-            std::string, std::pair<std::shared_ptr<AST::Type>,
-                                   std::shared_ptr<AST::IdentifierAttribute>>>>
+        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
     generateIR(const std::shared_ptr<AST::Program> &astProgram);
 
   private:
     int irTemporariesCounter = 0;
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        frontendSymbolTable;
     void generateIRBlock(
         const std::shared_ptr<AST::Block> &astBlock,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>

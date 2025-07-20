@@ -159,12 +159,8 @@ int main(int argc, char *argv[]) {
         }
 
         // Perform semantic analysis on the AST program.
-        auto result =
+        auto variableResolutionCounter =
             PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
-        // Extract the variable resolution counter and the symbol table from the
-        // result since they are needed for the later stages.
-        auto variableResolutionCounter = result.first;
-        auto frontendSymbolTable = result.second;
 
         if (tillValidate) {
             std::cout << "Semantic analysis completed.\n";
@@ -172,15 +168,11 @@ int main(int argc, char *argv[]) {
         }
 
         // Generate the IR from the AST program and return the IR program.
-        auto irProgramAndIRStaticVariablesAndSymbolTable =
+        auto irProgramAndIRStaticVariables =
             PipelineStagesExecutors::irGeneratorExecutor(
-                astProgram, variableResolutionCounter, frontendSymbolTable);
-        auto irProgram =
-            std::get<0>(irProgramAndIRStaticVariablesAndSymbolTable);
-        auto irStaticVariables =
-            std::get<1>(irProgramAndIRStaticVariablesAndSymbolTable);
-        auto updatedFrontendSymbolTable =
-            std::get<2>(irProgramAndIRStaticVariablesAndSymbolTable);
+                astProgram, variableResolutionCounter);
+        auto irProgram = irProgramAndIRStaticVariables.first;
+        auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
         if (foldConstantsPass || propagateCopiesPass ||
             eliminateUnreachableCodePass || eliminateDeadStoresPass) {
@@ -214,8 +206,8 @@ int main(int argc, char *argv[]) {
         // Generate the assembly program from the IR program and the IR static
         // variables.
         std::shared_ptr<Assembly::Program> assemblyProgram =
-            PipelineStagesExecutors::codegenExecutor(
-                irProgram, irStaticVariables, updatedFrontendSymbolTable);
+            PipelineStagesExecutors::codegenExecutor(irProgram,
+                                                     irStaticVariables);
 
         // Print out the (assembly) instructions that would be emitted from the
         // assembly program.

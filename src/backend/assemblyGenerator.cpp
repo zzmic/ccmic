@@ -1,4 +1,5 @@
 #include "assemblyGenerator.h"
+#include "../frontend/frontendSymbolTable.h"
 #include "assembly.h"
 #include "backendSymbolTable.h"
 #include <algorithm>
@@ -6,13 +7,8 @@
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables,
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        frontendSymbolTable)
-    : irStaticVariables(irStaticVariables),
-      frontendSymbolTable(frontendSymbolTable) {}
+        irStaticVariables)
+    : irStaticVariables(irStaticVariables) {}
 
 std::shared_ptr<Assembly::Program>
 AssemblyGenerator::generateAssembly(std::shared_ptr<IR::Program> irProgram) {
@@ -43,9 +39,12 @@ AssemblyGenerator::generateAssembly(std::shared_ptr<IR::Program> irProgram) {
         assyTopLevels->emplace_back(assyStaticVariable);
     }
 
+    // Clear the backend symbol table for this compilation.
+    backendSymbolTable.clear();
+
     // Convert the frontend symbol table to backend symbol table at the very end
     // of the assembly-generation process.
-    Assembly::convertFrontendToBackendSymbolTable(frontendSymbolTable);
+    Assembly::convertFrontendToBackendSymbolTable(AST::frontendSymbolTable);
 
     return std::make_shared<Program>(assyTopLevels);
 }
@@ -671,8 +670,8 @@ AssemblyGenerator::determineAssemblyType(std::shared_ptr<IR::Value> irValue) {
     else if (auto varVal =
                  std::dynamic_pointer_cast<IR::VariableValue>(irValue)) {
         // For variables, look up the type in the (frontend) symbol table.
-        auto symbolIt = frontendSymbolTable.find(varVal->getIdentifier());
-        if (symbolIt != frontendSymbolTable.end()) {
+        auto symbolIt = AST::frontendSymbolTable.find(varVal->getIdentifier());
+        if (symbolIt != AST::frontendSymbolTable.end()) {
             auto varType = symbolIt->second.first;
             return AssemblyGenerator::convertASTTypeToAssemblyType(varType);
         }

@@ -12,21 +12,13 @@ class AssemblyGenerator {
   public:
     explicit AssemblyGenerator(
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables,
-        std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<AST::Type>,
-                                     std::shared_ptr<AST::IdentifierAttribute>>>
-            frontendSymbolTable);
+            irStaticVariables);
     std::shared_ptr<Assembly::Program>
     generateAssembly(std::shared_ptr<IR::Program> irProgram);
 
   private:
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
         irStaticVariables;
-    std::unordered_map<std::string,
-                       std::pair<std::shared_ptr<AST::Type>,
-                                 std::shared_ptr<AST::IdentifierAttribute>>>
-        frontendSymbolTable;
     std::shared_ptr<Assembly::FunctionDefinition>
     convertIRFunctionDefinitionToAssy(
         std::shared_ptr<IR::FunctionDefinition> irFunctionDefinition,

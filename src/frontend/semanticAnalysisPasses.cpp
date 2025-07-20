@@ -1,4 +1,5 @@
 #include "semanticAnalysisPasses.h"
+#include "frontendSymbolTable.h"
 #include <memory>
 #include <sstream>
 
@@ -496,13 +497,11 @@ std::string IdentifierResolutionPass::resolveParameter(
 /*
  * Start: Functions for the type-checking pass.
  */
-std::unordered_map<std::string, std::pair<std::shared_ptr<Type>,
-                                          std::shared_ptr<IdentifierAttribute>>>
-TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
-    this->frontendSymbolTable =
-        std::unordered_map<std::string,
-                           std::pair<std::shared_ptr<Type>,
-                                     std::shared_ptr<IdentifierAttribute>>>();
+void TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
+    // Clear the symbol table for this compilation.
+    frontendSymbolTable.clear();
+
+    // Type-check the program.
     for (auto &declaration : *program->getDeclarations()) {
         if (auto functionDeclaration =
                 std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
@@ -518,8 +517,6 @@ TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
                 "Unsupported declaration type for type checking at top level");
         }
     }
-    // The symbol table "will need to be accessible in later compiler passes."
-    return this->frontendSymbolTable;
 }
 
 std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
