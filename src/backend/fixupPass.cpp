@@ -1,4 +1,5 @@
 #include "fixupPass.h"
+#include <limits>
 
 namespace Assembly {
 void FixupPass::fixup(
@@ -151,8 +152,9 @@ bool FixupPass::isInvalidLargeImmediateMov(
         return false;
 
     // Check if immediate value is outside 32-bit signed range.
-    int value = immediateSrc->getImmediate();
-    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+    long value = immediateSrc->getImmediateLong();
+    return value > std::numeric_limits<int>::max() ||
+           value < std::numeric_limits<int>::min();
 }
 
 // Function to check if a mov instruction has a longword immediate value.
@@ -170,8 +172,8 @@ bool FixupPass::isInvalidLongwordImmediateMov(
         return false;
 
     // Check if immediate value is outside 32-bit range (truncation needed).
-    int value = immediateSrc->getImmediate();
-    return static_cast<unsigned int>(value) > 0xFFFFFFFFU || value < 0;
+    long value = immediateSrc->getImmediateLong();
+    return value > std::numeric_limits<unsigned int>::max() || value < 0;
 }
 
 // Function to check if a movsx instruction is invalid.
@@ -242,8 +244,9 @@ bool FixupPass::isInvalidLargeImmediateBinary(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    int value = immediateOp->getImmediate();
-    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+    long value = immediateOp->getImmediateLong();
+    return value > std::numeric_limits<int>::max() ||
+           value < std::numeric_limits<int>::min();
 }
 
 bool FixupPass::isInvalidIdiv(
@@ -299,8 +302,9 @@ bool FixupPass::isInvalidLargeImmediateCmp(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    int value = immediateOp->getImmediate();
-    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+    long value = immediateOp->getImmediateLong();
+    return value > std::numeric_limits<int>::max() ||
+           value < std::numeric_limits<int>::min();
 }
 
 // Function to check if a push instruction has a large immediate value.
@@ -313,8 +317,9 @@ bool FixupPass::isInvalidLargeImmediatePush(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    int value = immediateOp->getImmediate();
-    return value > 0x7FFFFFFF || value < static_cast<int>(-0x80000000);
+    long value = immediateOp->getImmediateLong();
+    return value > std::numeric_limits<int>::max() ||
+           value < std::numeric_limits<int>::min();
 }
 
 // Function to rewrite an invalid mov instruction.
@@ -560,11 +565,12 @@ FixupPass::rewriteInvalidLongwordImmediateMov(
     std::shared_ptr<Assembly::MovInstruction> movInst) {
     auto immediateSrc = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
         movInst->getSrc());
-    int originalValue = immediateSrc->getImmediate();
+    long originalValue = immediateSrc->getImmediateLong();
 
-    // Truncate to 32 bits (same as the assembler's behavior).
-    int truncatedValue =
-        static_cast<int>(static_cast<unsigned int>(originalValue) & 0xFFFFFFFF);
+    // Truncate the immediate value to 32 bits.
+    long truncatedValue =
+        static_cast<long>(static_cast<unsigned long>(originalValue) &
+                          std::numeric_limits<unsigned int>::max());
 
     auto newImmediate =
         std::make_shared<Assembly::ImmediateOperand>(truncatedValue);

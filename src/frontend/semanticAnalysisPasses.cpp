@@ -640,10 +640,23 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     frontendSymbolTable[declaration->getIdentifier()] = {funType, attribute};
 
     if (hasBody) {
-        for (auto &parameter : *declaration->getParameterIdentifiers()) {
-            frontendSymbolTable[parameter] = {
-                std::make_shared<IntType>(),
-                std::make_shared<LocalAttribute>()};
+        auto funcParameterTypes = funTypePtr->getParameterTypes();
+        auto parameterIdentifiers = declaration->getParameterIdentifiers();
+        // Set parameter types in the symbol table based on the function's
+        // parameter types.
+        for (size_t i = 0; i < parameterIdentifiers->size(); ++i) {
+            // If the parameter type is available, use it.
+            if (i < funcParameterTypes->size()) {
+                frontendSymbolTable[(*parameterIdentifiers)[i]] = {
+                    (*funcParameterTypes)[i],
+                    std::make_shared<LocalAttribute>()};
+            }
+            else {
+                // Otherwise, fallback to IntType.
+                frontendSymbolTable[(*parameterIdentifiers)[i]] = {
+                    std::make_shared<IntType>(),
+                    std::make_shared<LocalAttribute>()};
+            }
         }
         // Provide the enclosing function's name for the later type-checking of
         // the return statement.

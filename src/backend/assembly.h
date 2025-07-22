@@ -66,11 +66,13 @@ class Operand {
 
 class ImmediateOperand : public Operand {
   private:
-    int imm;
+    long imm;
 
   public:
-    explicit ImmediateOperand(int imm) : imm(imm) {}
-    int getImmediate() const override { return imm; }
+    explicit ImmediateOperand(int imm) : imm(static_cast<long>(imm)) {}
+    explicit ImmediateOperand(long imm) : imm(imm) {}
+    int getImmediate() const override { return static_cast<int>(imm); }
+    long getImmediateLong() const { return imm; }
 };
 
 class RegisterOperand : public Operand {

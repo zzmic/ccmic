@@ -78,6 +78,11 @@ class AssemblyGenerator {
     convertValue(std::shared_ptr<IR::Value> value);
     std::shared_ptr<Assembly::AssemblyType>
     determineAssemblyType(std::shared_ptr<IR::Value> value);
+    std::shared_ptr<Assembly::AssemblyType>
+    determineMovType(std::shared_ptr<Assembly::Operand> src,
+                     std::shared_ptr<Assembly::Operand> dst,
+                     std::shared_ptr<IR::Value> irSrc,
+                     std::shared_ptr<IR::Value> irDst);
 
   public:
     static std::shared_ptr<Assembly::AssemblyType>

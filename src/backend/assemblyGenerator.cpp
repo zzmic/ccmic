@@ -3,6 +3,7 @@
 #include "assembly.h"
 #include "backendSymbolTable.h"
 #include <algorithm>
+#include <limits>
 
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
@@ -38,13 +39,6 @@ AssemblyGenerator::generateAssembly(std::shared_ptr<IR::Program> irProgram) {
             convertIRStaticVariableToAssy(irStaticVariable);
         assyTopLevels->emplace_back(assyStaticVariable);
     }
-
-    // Clear the backend symbol table for this compilation.
-    backendSymbolTable.clear();
-
-    // Convert the frontend symbol table to backend symbol table at the very end
-    // of the assembly-generation process.
-    Assembly::convertFrontendToBackendSymbolTable(AST::frontendSymbolTable);
 
     return std::make_shared<Program>(assyTopLevels);
 }
@@ -463,8 +457,9 @@ void AssemblyGenerator::convertIRCopyInstructionToAssy(
     auto srcOperand = convertValue(copyInstr->getSrc());
     auto dstOperand = convertValue(copyInstr->getDst());
 
-    // Determine the assembly type based on the source operand.
-    auto assemblyType = determineAssemblyType(copyInstr->getSrc());
+    // Determine the assembly type of the `Mov` instruction.
+    auto assemblyType = determineMovType(
+        srcOperand, dstOperand, copyInstr->getSrc(), copyInstr->getDst());
 
     // Generate a `Mov` instruction to copy the source operand to the
     // destination operand.
@@ -541,29 +536,34 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
         auto assyStackArg = convertValue(irStackArg);
         auto assemblyType = determineAssemblyType(irStackArg);
 
-        // Check if the operand is a register, immediate, or has type
-        // `Quadword`.
+        // Check if the operand is a register or needs to be moved to a register
+        // first.
         if (std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                assyStackArg) ||
-            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
-                assyStackArg) ||
-            std::dynamic_pointer_cast<Assembly::Quadword>(assemblyType)) {
-            // If it is, push it directly.
+                assyStackArg)) {
+            // If it's already a register, push it directly.
             instructions->emplace_back(
                 std::make_shared<Assembly::PushInstruction>(
                     std::move(assyStackArg)));
         }
         else {
-            // Otherwise, move the operand to the `AX` register (of type
-            // `Longword`) first, then push the `AX` register.
+            // For immediates, stack operands, or data operands, move to a
+            // register first. Use R10 for quadword values, AX for longword
+            // values.
+            std::shared_ptr<Assembly::Register> tempReg;
+            if (std::dynamic_pointer_cast<Assembly::Quadword>(assemblyType)) {
+                tempReg = std::make_shared<Assembly::R10>();
+            }
+            else {
+                tempReg = std::make_shared<Assembly::AX>();
+            }
+
             instructions->emplace_back(
                 std::make_shared<Assembly::MovInstruction>(
-                    std::make_shared<Assembly::Longword>(),
-                    std::move(assyStackArg),
-                    std::make_shared<Assembly::RegisterOperand>(axReg)));
+                    assemblyType, std::move(assyStackArg),
+                    std::make_shared<Assembly::RegisterOperand>(tempReg)));
             instructions->emplace_back(
                 std::make_shared<Assembly::PushInstruction>(
-                    std::make_shared<Assembly::RegisterOperand>(axReg)));
+                    std::make_shared<Assembly::RegisterOperand>(tempReg)));
         }
     }
 
@@ -579,7 +579,8 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
             std::make_shared<Assembly::BinaryInstruction>(
                 std::make_shared<Assembly::AddOperator>(),
                 std::make_shared<Assembly::Quadword>(),
-                std::make_shared<Assembly::ImmediateOperand>(bytesToPop),
+                std::make_shared<Assembly::ImmediateOperand>(
+                    static_cast<long>(bytesToPop)),
                 std::make_shared<Assembly::RegisterOperand>("RSP")));
     }
 
@@ -604,8 +605,9 @@ AssemblyGenerator::convertValue(std::shared_ptr<IR::Value> irValue) {
         }
         else if (auto constLong = std::dynamic_pointer_cast<AST::ConstantLong>(
                      constantVal->getASTConstant())) {
+            // For long constants, we need to handle the full 64-bit value.
             return std::make_shared<Assembly::ImmediateOperand>(
-                static_cast<int>(constLong->getValue()));
+                constLong->getValue());
         }
         else {
             throw std::logic_error("Unsupported constant type");
@@ -699,5 +701,50 @@ AssemblyGenerator::convertASTTypeToAssemblyType(
         throw std::logic_error(
             "Unsupported AST type for assembly value type conversion");
     }
+}
+
+std::shared_ptr<Assembly::AssemblyType>
+AssemblyGenerator::determineMovType(std::shared_ptr<Assembly::Operand> src,
+                                    std::shared_ptr<Assembly::Operand> dst,
+                                    std::shared_ptr<IR::Value> irSrc,
+                                    std::shared_ptr<IR::Value> irDst) {
+    // Determine the assembly type based on the IR operands.
+    auto srcType = determineAssemblyType(irSrc);
+    auto dstType = determineAssemblyType(irDst);
+
+    // Use the larger type as base.
+    std::shared_ptr<Assembly::AssemblyType> baseType;
+    if (std::dynamic_pointer_cast<Assembly::Quadword>(srcType) ||
+        std::dynamic_pointer_cast<Assembly::Quadword>(dstType)) {
+        baseType = std::make_shared<Assembly::Quadword>();
+    }
+    else {
+        baseType = std::make_shared<Assembly::Longword>();
+    }
+
+    // Check if we can optimize to movl when using quadword type.
+    if (std::dynamic_pointer_cast<Assembly::Quadword>(baseType)) {
+        // If source is an immediate that fits in 32 bits, we use movl.
+        if (auto srcImm =
+                std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+            long value = srcImm->getImmediateLong();
+            if (value >= std::numeric_limits<int>::min() &&
+                value <= std::numeric_limits<int>::max()) {
+                return std::make_shared<Assembly::Longword>();
+            }
+        }
+
+        // If destination is an immediate that fits in 32 bits, we use movl.
+        if (auto dstImm =
+                std::dynamic_pointer_cast<Assembly::ImmediateOperand>(dst)) {
+            long value = dstImm->getImmediateLong();
+            if (value >= std::numeric_limits<int>::min() &&
+                value <= std::numeric_limits<int>::max()) {
+                return std::make_shared<Assembly::Longword>();
+            }
+        }
+    }
+
+    return baseType;
 }
 } // namespace Assembly

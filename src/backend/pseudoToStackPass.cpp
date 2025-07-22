@@ -12,7 +12,7 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
                 std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
                     topLevel)) {
             // Reset offset and clear map for each function.
-            this->offset = -4;
+            this->offset = 0;
             this->pseudoToStackMap.clear();
 
             // Replace pseudo registers with stack operands in each instruction.
@@ -91,10 +91,10 @@ PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
                 this->offset = (this->offset / 8) * 8;
             }
 
-            // Update the `pseudoToStackMap` with the new offset.
-            this->pseudoToStackMap[pseudoRegister] = this->offset;
             // Update the offset to the next available stack slot.
             this->offset -= allocationSize;
+            // Update the `pseudoToStackMap` with the new offset.
+            this->pseudoToStackMap[pseudoRegister] = this->offset;
         }
 
         // Replace the pseudo register with a stack operand.

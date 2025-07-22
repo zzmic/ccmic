@@ -832,7 +832,15 @@ void PrettyPrinters::printAssyMovInstruction(
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        srcStr = "$" + std::to_string(srcImm->getImmediate());
+        // Use long value for quadword instructions, int value for longword
+        // instructions.
+        if (auto quadword =
+                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            srcStr = "$" + std::to_string(srcImm->getImmediateLong());
+        }
+        else {
+            srcStr = "$" + std::to_string(srcImm->getImmediate());
+        }
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
@@ -886,7 +894,7 @@ void PrettyPrinters::printAssyMovsxInstruction(
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        srcStr = "$" + std::to_string(srcImm->getImmediate());
+        srcStr = "$" + std::to_string(srcImm->getImmediateLong());
     }
     else if (auto srcStack =
                  std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
@@ -963,7 +971,8 @@ void PrettyPrinters::printAssyPushInstruction(
     else if (auto immOperand =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                      operand)) {
-        std::cout << "    pushq" << " $" << immOperand->getImmediate() << "\n";
+        std::cout << "    pushq" << " $" << immOperand->getImmediateLong()
+                  << "\n";
     }
     else if (auto dataOperand =
                  std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
@@ -1103,7 +1112,13 @@ void PrettyPrinters::printAssyBinaryInstruction(
     auto operand1 = binaryInstruction->getOperand1();
     if (auto operand1Imm =
             std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
-        std::cout << " $" << operand1Imm->getImmediate() << ",";
+        if (auto quadword =
+                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            std::cout << " $" << operand1Imm->getImmediateLong() << ",";
+        }
+        else {
+            std::cout << " $" << operand1Imm->getImmediate() << ",";
+        }
     }
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(
@@ -1171,7 +1186,13 @@ void PrettyPrinters::printAssyCmpInstruction(
     auto operand1 = cmpInstruction->getOperand1();
     if (auto operand1Imm =
             std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
-        std::cout << " $" << operand1Imm->getImmediate();
+        if (auto quadword =
+                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            std::cout << " $" << operand1Imm->getImmediateLong();
+        }
+        else {
+            std::cout << " $" << operand1Imm->getImmediate();
+        }
     }
     else if (auto operand1Reg =
                  std::dynamic_pointer_cast<Assembly::RegisterOperand>(

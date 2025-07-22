@@ -123,13 +123,13 @@ ConstantFoldingPass::foldConstants(
                             binaryInstruction->getSrc2())) {
                     auto binaryOperator =
                         binaryInstruction->getBinaryOperator();
-                    int constantResult = 0;
+                    long constantResult = 0;
                     if (std::dynamic_pointer_cast<IR::AddOperator>(
                             binaryOperator)) {
                         auto astConstant1 = constantValue1->getASTConstant();
                         auto astConstant2 = constantValue2->getASTConstant();
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     astConstant1)) {
@@ -137,7 +137,7 @@ ConstantFoldingPass::foldConstants(
                         }
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(astConstant1)) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -149,18 +149,19 @@ ConstantFoldingPass::foldConstants(
                         }
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(astConstant2)) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
 
+                        // Check for overflow in 64-bit arithmetic.
                         if ((value1 > 0 &&
                              value2 >
-                                 std::numeric_limits<int>::max() - value1) ||
+                                 std::numeric_limits<long>::max() - value1) ||
                             (value1 < 0 &&
                              value2 <
-                                 std::numeric_limits<int>::min() - value1)) {
+                                 std::numeric_limits<long>::min() - value1)) {
                             ++it;
                             continue;
                         }
@@ -170,7 +171,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::SubtractOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -179,7 +180,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         if (auto constInt2 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
@@ -189,15 +190,16 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
 
+                        // Check for overflow in 64-bit arithmetic.
                         if ((value1 > 0 &&
                              value2 <
-                                 std::numeric_limits<int>::min() + value1) ||
+                                 std::numeric_limits<long>::min() + value1) ||
                             (value1 < 0 &&
                              value2 >
-                                 std::numeric_limits<int>::max() - value1)) {
+                                 std::numeric_limits<long>::max() - value1)) {
                             ++it;
                             continue;
                         }
@@ -206,7 +208,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::MultiplyOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -215,7 +217,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -228,7 +230,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -243,7 +245,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::DivideOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -252,7 +254,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -265,7 +267,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -280,7 +282,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::RemainderOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -289,7 +291,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -302,7 +304,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -317,7 +319,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::EqualOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -326,7 +328,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -339,7 +341,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -350,7 +352,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::NotEqualOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -359,7 +361,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -372,7 +374,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -383,7 +385,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::LessThanOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -392,7 +394,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -405,7 +407,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -415,7 +417,7 @@ ConstantFoldingPass::foldConstants(
                     }
                     else if (std::dynamic_pointer_cast<
                                  IR::LessThanOrEqualOperator>(binaryOperator)) {
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -424,7 +426,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -437,7 +439,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -448,7 +450,7 @@ ConstantFoldingPass::foldConstants(
                     else if (std::dynamic_pointer_cast<IR::GreaterThanOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -457,7 +459,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -470,7 +472,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -482,7 +484,7 @@ ConstantFoldingPass::foldConstants(
                                  IR::GreaterThanOrEqualOperator>(
                                  binaryOperator)) {
 
-                        int value1 = 0, value2 = 0;
+                        long value1 = 0, value2 = 0;
                         if (auto constInt1 =
                                 std::dynamic_pointer_cast<AST::ConstantInt>(
                                     constantValue1->getASTConstant())) {
@@ -491,7 +493,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong1 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue1->getASTConstant())) {
-                            value1 = static_cast<int>(constLong1->getValue());
+                            value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -504,7 +506,7 @@ ConstantFoldingPass::foldConstants(
                         else if (auto constLong2 = std::dynamic_pointer_cast<
                                      AST::ConstantLong>(
                                      constantValue2->getASTConstant())) {
-                            value2 = static_cast<int>(constLong2->getValue());
+                            value2 = constLong2->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
@@ -516,11 +518,34 @@ ConstantFoldingPass::foldConstants(
                         throw std::logic_error("Unsupported binary operator");
                     }
 
+                    // Determine the result type based on input types.
+                    bool isLongResult = false;
+                    if (auto constLong1 =
+                            std::dynamic_pointer_cast<AST::ConstantLong>(
+                                constantValue1->getASTConstant())) {
+                        isLongResult = true;
+                    }
+                    else if (auto constLong2 =
+                                 std::dynamic_pointer_cast<AST::ConstantLong>(
+                                     constantValue2->getASTConstant())) {
+                        isLongResult = true;
+                    }
+
+                    std::shared_ptr<IR::ConstantValue> resultConstant;
+                    if (isLongResult) {
+                        resultConstant = std::make_shared<IR::ConstantValue>(
+                            std::make_shared<AST::ConstantLong>(
+                                constantResult));
+                    }
+                    else {
+                        resultConstant = std::make_shared<IR::ConstantValue>(
+                            std::make_shared<AST::ConstantInt>(
+                                static_cast<int>(constantResult)));
+                    }
+
                     auto copyInstruction =
                         std::make_shared<IR::CopyInstruction>(
-                            std::make_shared<IR::ConstantValue>(
-                                std::make_shared<AST::ConstantInt>(
-                                    constantResult)),
+                            std::move(resultConstant),
                             binaryInstruction->getDst());
                     *it = std::move(copyInstruction);
                 }
@@ -534,8 +559,8 @@ ConstantFoldingPass::foldConstants(
             if (auto constantValue =
                     std::dynamic_pointer_cast<IR::ConstantValue>(
                         jumpIfZeroInstruction->getCondition())) {
-                // Get the actual value from AST constant.
-                int conditionValue = 0;
+                // Get the actual value from the AST constant.
+                long conditionValue = 0;
                 if (auto constInt = std::dynamic_pointer_cast<AST::ConstantInt>(
                         constantValue->getASTConstant())) {
                     conditionValue = constInt->getValue();
@@ -543,7 +568,7 @@ ConstantFoldingPass::foldConstants(
                 else if (auto constLong =
                              std::dynamic_pointer_cast<AST::ConstantLong>(
                                  constantValue->getASTConstant())) {
-                    conditionValue = static_cast<int>(constLong->getValue());
+                    conditionValue = constLong->getValue();
                 }
                 else {
                     throw std::logic_error("Unsupported constant type");
@@ -569,8 +594,8 @@ ConstantFoldingPass::foldConstants(
             if (auto constantValue =
                     std::dynamic_pointer_cast<IR::ConstantValue>(
                         jumpIfNotZeroInstruction->getCondition())) {
-                // Get the actual value from AST constant.
-                int conditionValue = 0;
+                // Get the actual value from the AST constant.
+                long conditionValue = 0;
                 if (auto constInt = std::dynamic_pointer_cast<AST::ConstantInt>(
                         constantValue->getASTConstant())) {
                     conditionValue = constInt->getValue();
@@ -578,7 +603,7 @@ ConstantFoldingPass::foldConstants(
                 else if (auto constLong =
                              std::dynamic_pointer_cast<AST::ConstantLong>(
                                  constantValue->getASTConstant())) {
-                    conditionValue = static_cast<int>(constLong->getValue());
+                    conditionValue = constLong->getValue();
                 }
                 else {
                     throw std::logic_error("Unsupported constant type");

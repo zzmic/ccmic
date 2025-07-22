@@ -884,9 +884,11 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
     // Recursively generate the expression in the cast expression.
     auto result =
         generateIRInstruction(castExpr->getExpression(), instructions);
-    // If the target type is the same as the expression type, return the
-    // result as a `VariableValue`.
-    if (*castExpr->getTargetType() == *castExpr->getExpType()) {
+    auto sourceType = castExpr->getExpression()->getExpType();
+    auto targetType = castExpr->getTargetType();
+    // If the target type is the same as the source type, just copy or forward
+    // the value.
+    if (*targetType == *sourceType) {
         if (auto variableValue =
                 std::dynamic_pointer_cast<IR::VariableValue>(result)) {
             return variableValue;
@@ -894,9 +896,8 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
         else if (auto constantValue =
                      std::dynamic_pointer_cast<IR::ConstantValue>(result)) {
             auto dstName = generateIRTemporary();
-            AST::frontendSymbolTable[dstName] =
-                std::make_pair(castExpr->getTargetType(),
-                               std::make_shared<AST::LocalAttribute>());
+            AST::frontendSymbolTable[dstName] = std::make_pair(
+                targetType, std::make_shared<AST::LocalAttribute>());
             auto dst = std::make_shared<IR::VariableValue>(dstName);
             instructions->emplace_back(
                 std::make_shared<IR::CopyInstruction>(std::move(result), dst));
@@ -907,30 +908,33 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
                 "Unknown result value type in cast instruction");
         }
     }
-
     // Create a temporary variable (in string) to store the result of
     // the cast operation.
     auto dstName = generateIRTemporary();
-
     // Add the temporary variable to the frontend symbol table with the type
     // of the target type and local attribute.
-    AST::frontendSymbolTable[dstName] = std::make_pair(
-        castExpr->getTargetType(), std::make_shared<AST::LocalAttribute>());
-
+    AST::frontendSymbolTable[dstName] =
+        std::make_pair(targetType, std::make_shared<AST::LocalAttribute>());
     // Create a variable value for the temporary variable.
     auto dst = std::make_shared<IR::VariableValue>(dstName);
-
-    // If the target type is a long type, generate a sign extend instruction.
-    // Otherwise, generate a truncate instruction.
-    if (std::dynamic_pointer_cast<AST::LongType>(castExpr->getTargetType())) {
+    // Check the types and emit the correct instruction.
+    if (std::dynamic_pointer_cast<AST::IntType>(sourceType) &&
+        std::dynamic_pointer_cast<AST::LongType>(targetType)) {
+        // Casting from int to long.
         instructions->emplace_back(
             std::make_shared<IR::SignExtendInstruction>(result, dst));
     }
-    else {
+    else if (std::dynamic_pointer_cast<AST::LongType>(sourceType) &&
+             std::dynamic_pointer_cast<AST::IntType>(targetType)) {
+        // Casting from long to int.
         instructions->emplace_back(
             std::make_shared<IR::TruncateInstruction>(result, dst));
     }
-
+    else {
+        // Fallback to copy if types are not int/long.
+        instructions->emplace_back(
+            std::make_shared<IR::CopyInstruction>(result, dst));
+    }
     // Return the destination value.
     return dst;
 }
