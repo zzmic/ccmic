@@ -1,7 +1,7 @@
 ## ccmic
 
 ## Overview
-This project is a _work-in-progress_ implementation of a C compiler (that supports a subset of the C programming language) written in C++. The general design of the compiler is based on the book [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). The implementation is tested against [the book's companion test suite (maintained by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git).
+This project is a C++ implementation of a C compiler for a non-trivial subset of the C programming language. The compiler's design is based on the principles and practices outlined in [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). It is continuously developed and tested against the [the book's companion test suite (maintained by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git), ensuring a robust and reliable foundation for C language features. As new features and optimizations are integrated, the compiler's capabilities continue to expand.
 
 The compiler transforms C source code into x86-64 assembly through a multi-stage pipeline:
 
