@@ -47,12 +47,21 @@ $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ -stdlib=libc++
 
+# Debug target.
+debug: CXXFLAGS += -g
+debug: all
+
+# Release target with optimizations.
+# release: CXXFLAGS += -O3 -DNDEBUG
+# release: all
+
 # Format the source files and the header files.
 format:
 	clang-format -i $(SOURCES) $(HEADERS)
 
 # Clean up the object files and the executable.
 clean:
-	rm -f $(BIN_DIR)/*.o $(EXECUTABLE)
+	rm -rf $(BIN_DIR)/*
 
-.PHONY: all clean
+# .PHONY: all debug release clean
+.PHONY: all debug clean
