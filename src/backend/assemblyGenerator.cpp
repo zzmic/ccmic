@@ -1,7 +1,6 @@
 #include "assemblyGenerator.h"
 #include "../frontend/frontendSymbolTable.h"
 #include "assembly.h"
-#include "backendSymbolTable.h"
 #include <algorithm>
 #include <limits>
 
