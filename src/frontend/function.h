@@ -12,15 +12,16 @@
 namespace AST {
 class Function : public AST {
   public:
-    explicit Function(std::string_view identifier, std::shared_ptr<Block> body);
+    explicit Function(std::string_view identifier, Block *body);
+    ~Function(); // Need destructor to clean up raw pointer
     void accept(Visitor &vistor) override;
-    [[nodiscard]] const std::string &getIdentifier() const;
-    [[nodiscard]] std::shared_ptr<Block> getBody() const;
-    void setBody(std::shared_ptr<Block> body);
+    [[nodiscard]] std::string &getIdentifier();
+    [[nodiscard]] Block *getBody();
+    void setBody(Block *body);
 
   private:
     std::string identifier;
-    std::shared_ptr<Block> body;
+    Block *body;
 };
 } // Namespace AST
 

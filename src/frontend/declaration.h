@@ -15,76 +15,70 @@ class Declaration : public AST {};
 class VariableDeclaration : public Declaration {
   public:
     explicit VariableDeclaration(std::string_view identifier,
-                                 std::shared_ptr<Type> varType);
+                                 std::unique_ptr<Type> varType);
     explicit VariableDeclaration(
         std::string_view identifier,
-        std::optional<std::shared_ptr<Expression>> optInitializer,
-        std::shared_ptr<Type> varType);
+        std::optional<std::unique_ptr<Expression>> optInitializer,
+        std::unique_ptr<Type> varType);
     explicit VariableDeclaration(
-        std::string_view identifier, std::shared_ptr<Type> varType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+        std::string_view identifier, std::unique_ptr<Type> varType,
+        std::optional<std::unique_ptr<StorageClass>> optStorageClass);
     explicit VariableDeclaration(
         std::string_view identifier,
-        std::optional<std::shared_ptr<Expression>> optInitializer,
-        std::shared_ptr<Type> varType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+        std::optional<std::unique_ptr<Expression>> optInitializer,
+        std::unique_ptr<Type> varType,
+        std::optional<std::unique_ptr<StorageClass>> optStorageClass);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::string &getIdentifier() const;
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
-    getOptInitializer() const;
-    [[nodiscard]] std::shared_ptr<Type> getVarType() const;
-    [[nodiscard]] std::optional<std::shared_ptr<StorageClass>>
-    getOptStorageClass() const;
+    [[nodiscard]] std::string &getIdentifier();
+    [[nodiscard]] std::optional<std::unique_ptr<Expression>> &
+    getOptInitializer();
+    [[nodiscard]] std::unique_ptr<Type> &getVarType();
+    [[nodiscard]] std::optional<std::unique_ptr<StorageClass>> &
+    getOptStorageClass();
 
   private:
     std::string identifier;
-    std::optional<std::shared_ptr<Expression>> optInitializer;
-    std::shared_ptr<Type> varType;
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass;
+    std::optional<std::unique_ptr<Expression>> optInitializer;
+    std::unique_ptr<Type> varType;
+    std::optional<std::unique_ptr<StorageClass>> optStorageClass;
 };
 
 class FunctionDeclaration : public Declaration {
   public:
+    explicit FunctionDeclaration(std::string_view identifier,
+                                 std::vector<std::string> parameters,
+                                 std::unique_ptr<Type> funType);
+    explicit FunctionDeclaration(std::string_view identifier,
+                                 std::vector<std::string> parameters,
+                                 std::optional<Block *> optBody,
+                                 std::unique_ptr<Type> funType);
     explicit FunctionDeclaration(
-        std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::shared_ptr<Type> funType);
+        std::string_view identifier, std::vector<std::string> parameters,
+        std::unique_ptr<Type> funType,
+        std::optional<std::unique_ptr<StorageClass>> optStorageClass);
     explicit FunctionDeclaration(
-        std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::optional<std::shared_ptr<Block>> optBody,
-        std::shared_ptr<Type> funType);
-    explicit FunctionDeclaration(
-        std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::shared_ptr<Type> funType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
-    explicit FunctionDeclaration(
-        std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::optional<std::shared_ptr<Block>> optBody,
-        std::shared_ptr<Type> funType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+        std::string_view identifier, std::vector<std::string> parameters,
+        std::optional<Block *> optBody, std::unique_ptr<Type> funType,
+        std::optional<std::unique_ptr<StorageClass>> optStorageClass);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::string &getIdentifier() const;
-    [[nodiscard]] const std::shared_ptr<std::vector<std::string>> &
-    getParameterIdentifiers() const;
-    [[nodiscard]] std::shared_ptr<Type> getFunType() const;
-    [[nodiscard]] std::optional<std::shared_ptr<Block>> getOptBody() const;
-    [[nodiscard]] std::optional<std::shared_ptr<StorageClass>>
-    getOptStorageClass() const;
-    void setParameters(std::shared_ptr<std::vector<std::string>> parameters);
-    void setOptBody(std::optional<std::shared_ptr<Block>> optBody);
-    void setFunType(std::shared_ptr<Type> funType);
+    [[nodiscard]] std::string &getIdentifier();
+    [[nodiscard]] std::vector<std::string> &getParameterIdentifiers();
+    [[nodiscard]] std::unique_ptr<Type> &getFunType();
+    [[nodiscard]] std::optional<Block *> &getOptBody();
+    [[nodiscard]] std::optional<std::unique_ptr<StorageClass>> &
+    getOptStorageClass();
+    void setParameters(std::vector<std::string> newParameters);
+    void setOptBody(std::optional<Block *> newOptBody);
+    void setFunType(std::unique_ptr<Type> newFunType);
     void setOptStorageClass(
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+        std::optional<std::unique_ptr<StorageClass>> newOptStorageClass);
 
   private:
     std::string identifier;
-    std::shared_ptr<std::vector<std::string>> parameters;
-    std::optional<std::shared_ptr<Block>> optBody;
-    std::shared_ptr<Type> funType;
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass;
+    std::vector<std::string> parameters;
+    std::optional<Block *> optBody;
+    std::unique_ptr<Type> funType;
+    std::optional<std::unique_ptr<StorageClass>> optStorageClass;
 };
 } // Namespace AST
 

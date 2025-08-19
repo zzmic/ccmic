@@ -1,7 +1,3 @@
-/*
- * This file defines the implementation of the pretty printer for the AST and
- * concretizes the abstract visitor interface.
- */
 #include "printVisitor.h"
 #include "expression.h"
 #include "function.h"
@@ -12,8 +8,8 @@ namespace AST {
 void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
-    if (program.getDeclarations()) {
-        auto &declarations = *program.getDeclarations();
+    const auto &declarations = program.getDeclarations();
+    if (declarations.size() > 0) {
         for (auto it = declarations.begin(); it != declarations.end(); it++) {
             auto &functionDeclaration = *it;
             functionDeclaration->accept(*this);
@@ -49,8 +45,8 @@ void PrintVisitor::visit(Function &function) {
 
     auto functionBody = function.getBody();
     if (functionBody) {
-        auto blockItems = functionBody->getBlockItems();
-        for (auto &blockItem : *blockItems) {
+        const auto &blockItems = functionBody->getBlockItems();
+        for (auto &blockItem : blockItems) {
             blockItem->accept(*this);
         }
     }
@@ -64,7 +60,8 @@ void PrintVisitor::visit(Function &function) {
 void PrintVisitor::visit(Block &block) {
     std::cout << "Block(";
 
-    for (auto &blockItem : *block.getBlockItems()) {
+    const auto &blockItems = block.getBlockItems();
+    for (auto &blockItem : blockItems) {
         blockItem->accept(*this);
     }
 
@@ -144,7 +141,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << "\nparameters = (";
 
-    auto &parameters = *functionDeclaration.getParameterIdentifiers();
+    auto parameters = functionDeclaration.getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         std::cout << parameter;
@@ -191,7 +188,7 @@ void PrintVisitor::visit(FunctionType &functionType) {
 
     std::cout << "parameters = (";
 
-    auto &parameters = *functionType.getParameterTypes();
+    const auto &parameters = functionType.getParameterTypes();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         parameter->accept(*this);
@@ -203,7 +200,8 @@ void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << ")";
 
     std::cout << "\nreturnType = ";
-    functionType.getReturnType()->accept(*this);
+    const auto &returnType = functionType.getReturnType();
+    returnType->accept(*this);
 
     std::cout << "\n)";
 }
@@ -300,7 +298,8 @@ void PrintVisitor::visit(CompoundStatement &compoundStatement) {
     std::cout << "CompoundStatement(\n";
 
     if (compoundStatement.getBlock()) {
-        compoundStatement.getBlock()->accept(*this);
+        auto block = compoundStatement.getBlock();
+        const_cast<Block *>(block)->accept(*this);
     }
     else {
         throw std::logic_error("Null block in compound statement");
@@ -413,12 +412,13 @@ void PrintVisitor::visit(NullStatement &nullStatement) {
 void PrintVisitor::visit(ConstantExpression &constantExpression) {
     std::cout << "ConstantExpression(";
 
-    auto constant = constantExpression.getConstant();
-    if (auto intConst = std::dynamic_pointer_cast<ConstantInt>(constant)) {
+    const auto &constant = constantExpression.getConstant();
+    if (const auto *intConst =
+            dynamic_cast<const ConstantInt *>(constant.get())) {
         std::cout << intConst->getValue();
     }
-    else if (auto longConst =
-                 std::dynamic_pointer_cast<ConstantLong>(constant)) {
+    else if (const auto *longConst =
+                 dynamic_cast<const ConstantLong *>(constant.get())) {
         std::cout << longConst->getValue();
     }
     else {
@@ -589,7 +589,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
 
     std::cout << "\nargs = ";
 
-    auto &args = *functionCallExpression.getArguments();
+    const auto &args = functionCallExpression.getArguments();
     for (auto it = args.begin(); it != args.end(); it++) {
         auto &arg = *it;
         arg->accept(*this);

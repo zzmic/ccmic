@@ -19,60 +19,69 @@ class Statement : public AST {
 
 class ReturnStatement : public Statement {
   public:
-    explicit ReturnStatement(std::shared_ptr<Expression> expr);
+    explicit ReturnStatement(std::unique_ptr<Expression> expr);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
-    void setExpression(std::shared_ptr<Expression> expr);
+    [[nodiscard]] std::unique_ptr<Expression> &getExpression();
+    void setExpression(std::unique_ptr<Expression> expr);
 
   private:
-    std::shared_ptr<Expression> expr;
+    std::unique_ptr<Expression> expr;
 };
 
 class ExpressionStatement : public Statement {
   public:
-    explicit ExpressionStatement(std::shared_ptr<Expression> expr);
+    explicit ExpressionStatement(std::unique_ptr<Expression> expr);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
+    [[nodiscard]] std::unique_ptr<Expression> &getExpression();
+    void setExpression(std::unique_ptr<Expression> expr);
 
   private:
-    std::shared_ptr<Expression> expr;
+    std::unique_ptr<Expression> expr;
 };
 
 class IfStatement : public Statement {
   public:
     explicit IfStatement(
-        std::shared_ptr<Expression> condition,
-        std::shared_ptr<Statement> thenStatement,
-        std::optional<std::shared_ptr<Statement>> elseOptStatement);
-    explicit IfStatement(std::shared_ptr<Expression> condition,
-                         std::shared_ptr<Statement> thenStatement);
+        std::unique_ptr<Expression> condition,
+        std::unique_ptr<Statement> thenStatement,
+        std::optional<std::unique_ptr<Statement>> elseOptStatement);
+    explicit IfStatement(std::unique_ptr<Expression> condition,
+                         std::unique_ptr<Statement> thenStatement);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
-    [[nodiscard]] std::shared_ptr<Statement> getThenStatement() const;
-    [[nodiscard]] std::optional<std::shared_ptr<Statement>>
-    getElseOptStatement() const;
+    [[nodiscard]] std::unique_ptr<Expression> &getCondition();
+    [[nodiscard]] std::unique_ptr<Statement> &getThenStatement();
+    [[nodiscard]] std::optional<std::unique_ptr<Statement>> &
+    getElseOptStatement();
+    void setCondition(std::unique_ptr<Expression> condition);
+    void setThenStatement(std::unique_ptr<Statement> thenStatement);
+    void setElseOptStatement(
+        std::optional<std::unique_ptr<Statement>> elseOptStatement);
 
   private:
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Statement> thenStatement;
-    std::optional<std::shared_ptr<Statement>> elseOptStatement;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Statement> thenStatement;
+    std::optional<std::unique_ptr<Statement>> elseOptStatement;
 };
+
+class Block; // Forward declaration.
 
 class CompoundStatement : public Statement {
   public:
-    explicit CompoundStatement(std::shared_ptr<Block> block);
+    explicit CompoundStatement(Block *block);
+    ~CompoundStatement() = default; // Need destructor to clean up raw pointer.
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Block> getBlock() const;
+    [[nodiscard]] Block *getBlock();
+    void setBlock(Block *block);
 
   private:
-    std::shared_ptr<Block> block;
+    Block *block;
 };
 
 class BreakStatement : public Statement {
   public:
     BreakStatement() : label("") {}
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::string &getLabel() const;
+    [[nodiscard]] std::string &getLabel();
     void setLabel(std::string_view label);
 
   private:
@@ -83,7 +92,7 @@ class ContinueStatement : public Statement {
   public:
     ContinueStatement() : label("") {}
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::string &getLabel() const;
+    [[nodiscard]] std::string &getLabel();
     void setLabel(std::string_view label);
 
   private:
@@ -92,56 +101,64 @@ class ContinueStatement : public Statement {
 
 class WhileStatement : public Statement {
   public:
-    explicit WhileStatement(std::shared_ptr<Expression> condition,
-                            std::shared_ptr<Statement> body);
+    explicit WhileStatement(std::unique_ptr<Expression> condition,
+                            std::unique_ptr<Statement> body);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
-    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
-    [[nodiscard]] const std::string &getLabel() const;
+    [[nodiscard]] std::unique_ptr<Expression> &getCondition();
+    [[nodiscard]] std::unique_ptr<Statement> &getBody();
+    [[nodiscard]] std::string &getLabel();
+    void setCondition(std::unique_ptr<Expression> condition);
+    void setBody(std::unique_ptr<Statement> body);
     void setLabel(std::string_view label);
 
   private:
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Statement> body;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Statement> body;
     std::string label;
 };
 
 class DoWhileStatement : public Statement {
   public:
-    explicit DoWhileStatement(std::shared_ptr<Expression> condition,
-                              std::shared_ptr<Statement> body);
+    explicit DoWhileStatement(std::unique_ptr<Expression> condition,
+                              std::unique_ptr<Statement> body);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
-    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
-    [[nodiscard]] const std::string &getLabel() const;
+    [[nodiscard]] std::unique_ptr<Expression> &getCondition();
+    [[nodiscard]] std::unique_ptr<Statement> &getBody();
+    [[nodiscard]] std::string &getLabel();
+    void setCondition(std::unique_ptr<Expression> condition);
+    void setBody(std::unique_ptr<Statement> body);
     void setLabel(std::string_view label);
 
   private:
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Statement> body;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Statement> body;
     std::string label;
 };
 
 class ForStatement : public Statement {
   public:
-    explicit ForStatement(std::shared_ptr<ForInit> forInit,
-                          std::optional<std::shared_ptr<Expression>> condition,
-                          std::optional<std::shared_ptr<Expression>> post,
-                          std::shared_ptr<Statement> body);
+    explicit ForStatement(std::unique_ptr<ForInit> forInit,
+                          std::optional<std::unique_ptr<Expression>> condition,
+                          std::optional<std::unique_ptr<Expression>> post,
+                          std::unique_ptr<Statement> body);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<ForInit> getForInit() const;
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
-    getOptCondition() const;
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>> getOptPost() const;
-    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
-    [[nodiscard]] const std::string &getLabel() const;
+    [[nodiscard]] std::unique_ptr<ForInit> &getForInit();
+    [[nodiscard]] std::optional<std::unique_ptr<Expression>> &getOptCondition();
+    [[nodiscard]] std::optional<std::unique_ptr<Expression>> &getOptPost();
+    [[nodiscard]] std::unique_ptr<Statement> &getBody();
+    [[nodiscard]] std::string &getLabel();
+    void setForInit(std::unique_ptr<ForInit> forInit);
+    void
+    setOptCondition(std::optional<std::unique_ptr<Expression>> optCondition);
+    void setOptPost(std::optional<std::unique_ptr<Expression>> optPost);
+    void setBody(std::unique_ptr<Statement> body);
     void setLabel(std::string_view label);
 
   private:
-    std::shared_ptr<ForInit> forInit;
-    std::optional<std::shared_ptr<Expression>> optCondition;
-    std::optional<std::shared_ptr<Expression>> optPost;
-    std::shared_ptr<Statement> body;
+    std::unique_ptr<ForInit> forInit;
+    std::optional<std::unique_ptr<Expression>> optCondition;
+    std::optional<std::unique_ptr<Expression>> optPost;
+    std::unique_ptr<Statement> body;
     std::string label;
 };
 

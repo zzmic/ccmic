@@ -21,9 +21,11 @@ class MapEntry {
     MapEntry(std::string newName, bool fromCurrentScope, bool hasLinkage)
         : newName(newName), fromCurrentScope(fromCurrentScope),
           hasLinkage(hasLinkage) {}
-    std::string getNewName() { return newName; }
-    constexpr bool fromCurrentScopeOrNot() { return fromCurrentScope; }
-    constexpr bool hasLinkageOrNot() { return hasLinkage; }
+    [[nodiscard]] std::string &getNewName() { return newName; }
+    [[nodiscard]] constexpr bool fromCurrentScopeOrNot() {
+        return fromCurrentScope;
+    }
+    [[nodiscard]] constexpr bool hasLinkageOrNot() { return hasLinkage; }
 
   private:
     std::string newName;
@@ -33,35 +35,39 @@ class MapEntry {
 
 class IdentifierResolutionPass : public SemanticAnalysisPass {
   public:
-    int resolveProgram(std::shared_ptr<Program> program);
+    [[nodiscard]] int resolveProgram(std::unique_ptr<Program> program);
 
   private:
     int variableResolutionCounter = 0;
-    std::string generateUniqueVariableName(const std::string &identifier);
-    std::unordered_map<std::string, MapEntry>
+    [[nodiscard]] std::string
+    generateUniqueVariableName(const std::string &identifier);
+    [[nodiscard]] std::unordered_map<std::string, MapEntry>
     copyIdentifierMap(std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<Declaration> resolveFileScopeVariableDeclaration(
-        std::shared_ptr<Declaration> declaration,
+    [[nodiscard]] std::unique_ptr<Declaration>
+    resolveFileScopeVariableDeclaration(
+        std::unique_ptr<Declaration> declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<VariableDeclaration> resolveLocalVariableDeclaration(
-        std::shared_ptr<VariableDeclaration> declaration,
+    [[nodiscard]] std::unique_ptr<VariableDeclaration>
+    resolveLocalVariableDeclaration(
+        std::unique_ptr<VariableDeclaration> declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<Statement>
-    resolveStatement(std::shared_ptr<Statement> statement,
+    [[nodiscard]] std::unique_ptr<Statement>
+    resolveStatement(std::unique_ptr<Statement> statement,
                      std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<Expression>
-    resolveExpression(std::shared_ptr<Expression> expression,
+    [[nodiscard]] std::unique_ptr<Expression>
+    resolveExpression(std::unique_ptr<Expression> expression,
                       std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<Block>
-    resolveBlock(std::shared_ptr<Block> block,
+    [[nodiscard]] Block *
+    resolveBlock(Block *block,
                  std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<ForInit>
-    resolveForInit(std::shared_ptr<ForInit> forInit,
+    [[nodiscard]] std::unique_ptr<ForInit>
+    resolveForInit(std::unique_ptr<ForInit> forInit,
                    std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::shared_ptr<FunctionDeclaration> resolveFunctionDeclaration(
-        std::shared_ptr<FunctionDeclaration> declaration,
+    [[nodiscard]] std::unique_ptr<FunctionDeclaration>
+    resolveFunctionDeclaration(
+        std::unique_ptr<FunctionDeclaration> declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
-    std::string
+    [[nodiscard]] std::string
     resolveParameter(std::string parameter,
                      std::unordered_map<std::string, MapEntry> &identifierMap);
 };
@@ -69,13 +75,15 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
 class StaticInit {
   public:
     virtual ~StaticInit() = default;
-    virtual std::variant<int, long> getValue() = 0;
+    [[nodiscard]] virtual std::variant<int, long> getValue() const = 0;
 };
 
 class IntInit : public StaticInit {
   public:
     constexpr IntInit(int value) : value(value) {}
-    std::variant<int, long> getValue() override { return value; }
+    [[nodiscard]] std::variant<int, long> getValue() const override {
+        return value;
+    }
 
   private:
     int value;
@@ -84,7 +92,9 @@ class IntInit : public StaticInit {
 class LongInit : public StaticInit {
   public:
     constexpr LongInit(long value) : value(value) {}
-    std::variant<int, long> getValue() override { return value; }
+    [[nodiscard]] std::variant<int, long> getValue() const override {
+        return value;
+    }
 
   private:
     long value;
@@ -99,13 +109,16 @@ class Tentative : public InitialValue {};
 
 class Initial : public InitialValue {
   public:
-    Initial(int value) : staticInit(std::make_shared<IntInit>(value)) {}
-    Initial(long value) : staticInit(std::make_shared<LongInit>(value)) {}
-    Initial(std::shared_ptr<StaticInit> staticInit) : staticInit(staticInit) {}
-    std::shared_ptr<StaticInit> getStaticInit() { return staticInit; }
+    Initial(int value) : staticInit(std::make_unique<IntInit>(value)) {}
+    Initial(long value) : staticInit(std::make_unique<LongInit>(value)) {}
+    Initial(std::unique_ptr<StaticInit> staticInit)
+        : staticInit(std::move(staticInit)) {}
+    [[nodiscard]] std::unique_ptr<StaticInit> &getStaticInit() {
+        return staticInit;
+    }
 
   private:
-    std::shared_ptr<StaticInit> staticInit;
+    std::unique_ptr<StaticInit> staticInit;
 };
 
 class NoInitializer : public InitialValue {};
@@ -119,8 +132,8 @@ class FunctionAttribute : public IdentifierAttribute {
   public:
     constexpr FunctionAttribute(bool defined, bool global)
         : defined(defined), global(global) {}
-    constexpr bool isDefined() { return defined; }
-    constexpr bool isGlobal() { return global; }
+    [[nodiscard]] constexpr bool isDefined() { return defined; }
+    [[nodiscard]] constexpr bool isGlobal() { return global; }
 
   private:
     bool defined;
@@ -129,13 +142,15 @@ class FunctionAttribute : public IdentifierAttribute {
 
 class StaticAttribute : public IdentifierAttribute {
   public:
-    StaticAttribute(std::shared_ptr<InitialValue> initialValue, bool global)
-        : initialValue(initialValue), global(global) {}
-    std::shared_ptr<InitialValue> getInitialValue() { return initialValue; }
-    constexpr bool isGlobal() { return global; }
+    StaticAttribute(std::unique_ptr<InitialValue> initialValue, bool global)
+        : initialValue(std::move(initialValue)), global(global) {}
+    [[nodiscard]] std::unique_ptr<InitialValue> &getInitialValue() {
+        return initialValue;
+    }
+    [[nodiscard]] constexpr bool isGlobal() { return global; }
 
   private:
-    std::shared_ptr<InitialValue> initialValue;
+    std::unique_ptr<InitialValue> initialValue;
     bool global;
 };
 
@@ -143,46 +158,53 @@ class LocalAttribute : public IdentifierAttribute {};
 
 class TypeCheckingPass : public SemanticAnalysisPass {
   public:
-    void typeCheckProgram(std::shared_ptr<Program> program);
+    [[nodiscard]] std::unique_ptr<Program>
+    typeCheckProgram(std::unique_ptr<Program> program);
 
   private:
     // Convert a compile-time constant (int or long) to a static initializer
     // (`IntInit` or `LongInit`).
-    std::shared_ptr<StaticInit> convertStaticConstantToStaticInit(
-        std::shared_ptr<Type> varType,
-        std::shared_ptr<ConstantExpression> constantExpr);
-    std::shared_ptr<Type> getCommonType(std::shared_ptr<Type> type1,
-                                        std::shared_ptr<Type> type2);
-    std::shared_ptr<Expression>
-    convertTo(std::shared_ptr<Expression> expression,
-              std::shared_ptr<Type> targetType);
-    void typeCheckFunctionDeclaration(
-        std::shared_ptr<FunctionDeclaration> declaration);
-    void typeCheckFileScopeVariableDeclaration(
-        std::shared_ptr<VariableDeclaration> declaration);
-    void typeCheckLocalVariableDeclaration(
-        std::shared_ptr<VariableDeclaration> declaration);
-    void typeCheckExpression(std::shared_ptr<Expression> expression);
-    void typeCheckBlock(std::shared_ptr<Block> block,
-                        std::string enclosingFunctionIdentifier);
-    void typeCheckStatement(std::shared_ptr<Statement> statement,
-                            std::string enclosingFunctionIdentifier);
-    void typeCheckForInit(std::shared_ptr<ForInit> forInit);
+    [[nodiscard]] std::unique_ptr<StaticInit> convertStaticConstantToStaticInit(
+        std::unique_ptr<Type> varType,
+        std::unique_ptr<ConstantExpression> constantExpr);
+    [[nodiscard]] std::unique_ptr<Type>
+    getCommonType(std::unique_ptr<Type> type1, std::unique_ptr<Type> type2);
+    [[nodiscard]] std::unique_ptr<Expression>
+    convertTo(std::unique_ptr<Expression> expression,
+              std::unique_ptr<Type> targetType);
+    [[nodiscard]] std::unique_ptr<FunctionDeclaration>
+    typeCheckFunctionDeclaration(
+        std::unique_ptr<FunctionDeclaration> declaration);
+    [[nodiscard]] std::unique_ptr<VariableDeclaration>
+    typeCheckFileScopeVariableDeclaration(
+        std::unique_ptr<VariableDeclaration> declaration);
+    [[nodiscard]] std::unique_ptr<VariableDeclaration>
+    typeCheckLocalVariableDeclaration(
+        std::unique_ptr<VariableDeclaration> declaration);
+    [[nodiscard]] std::unique_ptr<Expression>
+    typeCheckExpression(std::unique_ptr<Expression> expression);
+    [[nodiscard]] Block *
+    typeCheckBlock(Block *block, std::string enclosingFunctionIdentifier);
+    [[nodiscard]] std::unique_ptr<Statement>
+    typeCheckStatement(std::unique_ptr<Statement> statement,
+                       std::string enclosingFunctionIdentifier);
+    [[nodiscard]] std::unique_ptr<ForInit>
+    typeCheckForInit(std::unique_ptr<ForInit> forInit);
 };
 
 class LoopLabelingPass : public SemanticAnalysisPass {
   public:
-    void labelLoops(std::shared_ptr<Program> program);
+    [[nodiscard]] std::unique_ptr<Program>
+    labelLoops(std::unique_ptr<Program> program);
 
   private:
     int loopLabelingCounter = 0;
-    std::string generateLoopLabel();
-    std::shared_ptr<Statement>
-    annotateStatement(std::shared_ptr<Statement> statement, std::string label);
-    std::shared_ptr<Statement>
-    labelStatement(std::shared_ptr<Statement> statement, std::string label);
-    std::shared_ptr<Block> labelBlock(std::shared_ptr<Block> block,
-                                      std::string label);
+    [[nodiscard]] std::string generateLoopLabel();
+    [[nodiscard]] std::unique_ptr<Statement>
+    annotateStatement(std::unique_ptr<Statement> statement, std::string label);
+    [[nodiscard]] std::unique_ptr<Statement>
+    labelStatement(std::unique_ptr<Statement> statement, std::string label);
+    [[nodiscard]] Block *labelBlock(Block *block, std::string label);
 };
 } // namespace AST
 

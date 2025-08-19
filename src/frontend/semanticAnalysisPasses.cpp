@@ -7,7 +7,7 @@ namespace AST {
 /*
  * Start: Functions for the identifier-resolution pass.
  */
-int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
+int IdentifierResolutionPass::resolveProgram(std::unique_ptr<Program> program) {
     // Initialize an empty identifier map (that will be passed to the helpers).
     // Instead of maintaining a "global" identifier map, we pass the identifier
     // map to the helper functions to, together with `copyIdentifierMap`, ensure
@@ -16,29 +16,32 @@ int IdentifierResolutionPass::resolveProgram(std::shared_ptr<Program> program) {
 
     // At the top level, resolve the list of declarations in the
     // program.
-    auto resolvedDeclarations =
-        std::make_shared<std::vector<std::shared_ptr<Declaration>>>();
-    for (auto &declaration : *program->getDeclarations()) {
-        if (auto functionDeclaration =
-                std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
-            auto resolvedFunctionDeclaration =
-                resolveFunctionDeclaration(functionDeclaration, identifierMap);
-            resolvedDeclarations->emplace_back(resolvedFunctionDeclaration);
+    std::vector<std::unique_ptr<Declaration>> resolvedDeclarations;
+    auto &declarations = program->getDeclarations();
+    for (auto &declaration : declarations) {
+        if (dynamic_cast<FunctionDeclaration *>(declaration.get())) {
+            auto funcDeclPtr = std::unique_ptr<FunctionDeclaration>(
+                static_cast<FunctionDeclaration *>(declaration.release()));
+            auto resolvedFunctionDeclaration = resolveFunctionDeclaration(
+                std::move(funcDeclPtr), identifierMap);
+            resolvedDeclarations.emplace_back(
+                std::move(resolvedFunctionDeclaration));
         }
-        else if (auto variableDeclaration =
-                     std::dynamic_pointer_cast<VariableDeclaration>(
-                         declaration)) {
+        else if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
+            auto varDeclPtr = std::unique_ptr<VariableDeclaration>(
+                static_cast<VariableDeclaration *>(declaration.release()));
             auto resolvedVariableDeclaration =
-                resolveFileScopeVariableDeclaration(variableDeclaration,
+                resolveFileScopeVariableDeclaration(std::move(varDeclPtr),
                                                     identifierMap);
-            resolvedDeclarations->emplace_back(resolvedVariableDeclaration);
+            resolvedDeclarations.emplace_back(
+                std::move(resolvedVariableDeclaration));
         }
         else {
             throw std::logic_error(
                 "Unsupported declaration type for identifier resolution");
         }
     }
-    program->setDeclarations(resolvedDeclarations);
+    program->setDeclarations(std::move(resolvedDeclarations));
 
     return this->variableResolutionCounter;
 }
@@ -62,15 +65,16 @@ std::string IdentifierResolutionPass::generateUniqueVariableName(
     return identifier + "." + std::to_string(this->variableResolutionCounter++);
 }
 
-std::shared_ptr<Declaration>
+std::unique_ptr<Declaration>
 IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
-    std::shared_ptr<Declaration> declaration,
+    std::unique_ptr<Declaration> declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (auto variableDeclaration =
-            std::dynamic_pointer_cast<VariableDeclaration>(declaration)) {
-        identifierMap[variableDeclaration->getIdentifier()] =
-            MapEntry(variableDeclaration->getIdentifier(), true, true);
-        return declaration;
+    if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
+        auto varDeclPtr = std::unique_ptr<VariableDeclaration>(
+            static_cast<VariableDeclaration *>(declaration.release()));
+        identifierMap[varDeclPtr->getIdentifier()] =
+            MapEntry(varDeclPtr->getIdentifier(), true, true);
+        return varDeclPtr;
     }
     else {
         throw std::logic_error(
@@ -78,9 +82,9 @@ IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
     }
 }
 
-std::shared_ptr<VariableDeclaration>
+std::unique_ptr<VariableDeclaration>
 IdentifierResolutionPass::resolveLocalVariableDeclaration(
-    std::shared_ptr<VariableDeclaration> declaration,
+    std::unique_ptr<VariableDeclaration> declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     if (identifierMap.find(declaration->getIdentifier()) !=
         identifierMap.end()) {
@@ -88,8 +92,8 @@ IdentifierResolutionPass::resolveLocalVariableDeclaration(
         if (previousEntry.fromCurrentScopeOrNot()) {
             if (!(previousEntry.hasLinkageOrNot() &&
                   declaration->getOptStorageClass().has_value() &&
-                  std::dynamic_pointer_cast<ExternStorageClass>(
-                      declaration->getOptStorageClass().value()))) {
+                  dynamic_cast<ExternStorageClass *>(
+                      declaration->getOptStorageClass().value().get()))) {
                 std::stringstream msg;
                 msg << "Conflicting local variable declaration: "
                     << declaration->getIdentifier();
@@ -98,8 +102,8 @@ IdentifierResolutionPass::resolveLocalVariableDeclaration(
         }
     }
     if (declaration->getOptStorageClass().has_value() &&
-        std::dynamic_pointer_cast<ExternStorageClass>(
-            declaration->getOptStorageClass().value())) {
+        dynamic_cast<ExternStorageClass *>(
+            declaration->getOptStorageClass().value().get())) {
         identifierMap[declaration->getIdentifier()] =
             MapEntry(declaration->getIdentifier(), true, true);
         return declaration;
@@ -110,135 +114,149 @@ IdentifierResolutionPass::resolveLocalVariableDeclaration(
             generateUniqueVariableName(declarationIdentifier);
         identifierMap[declarationIdentifier] =
             MapEntry(uniqueVariableName, true, false);
-        auto optInitializer = declaration->getOptInitializer();
+        auto &optInitializer = declaration->getOptInitializer();
         if (optInitializer.has_value()) {
-            auto tmpInitializer =
-                resolveExpression(optInitializer.value(), identifierMap);
-            optInitializer = std::make_optional(tmpInitializer);
+            auto resolvedInitializer = resolveExpression(
+                std::move(optInitializer.value()), identifierMap);
+            optInitializer = std::make_optional(std::move(resolvedInitializer));
         }
-        return std::make_shared<VariableDeclaration>(
+        return std::make_unique<VariableDeclaration>(
             identifierMap[declarationIdentifier].getNewName(),
-            std::move(optInitializer), declaration->getVarType(),
-            declaration->getOptStorageClass());
+            std::move(optInitializer), std::move(declaration->getVarType()),
+            std::move(declaration->getOptStorageClass()));
     }
 }
 
-std::shared_ptr<Statement> IdentifierResolutionPass::resolveStatement(
-    std::shared_ptr<Statement> statement,
+std::unique_ptr<Statement> IdentifierResolutionPass::resolveStatement(
+    std::unique_ptr<Statement> statement,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (auto returnStatement =
-            std::dynamic_pointer_cast<ReturnStatement>(statement)) {
+    if (dynamic_cast<ReturnStatement *>(statement.get())) {
+        auto returnStatementPtr = std::unique_ptr<ReturnStatement>(
+            static_cast<ReturnStatement *>(statement.release()));
         // If the statement is a return statement, resolve the expression in the
         // return statement.
-        auto resolvedExpression =
-            resolveExpression(returnStatement->getExpression(), identifierMap);
+        auto resolvedExpression = resolveExpression(
+            std::move(returnStatementPtr->getExpression()), identifierMap);
         // Return a new return statement with the resolved expression.
-        return std::make_shared<ReturnStatement>(std::move(resolvedExpression));
+        return std::make_unique<ReturnStatement>(std::move(resolvedExpression));
     }
-    else if (auto expressionStatement =
-                 std::dynamic_pointer_cast<ExpressionStatement>(statement)) {
+    else if (dynamic_cast<ExpressionStatement *>(statement.get())) {
+        auto expressionStatementPtr = std::unique_ptr<ExpressionStatement>(
+            static_cast<ExpressionStatement *>(statement.release()));
         // If the statement is an expression statement, resolve the expression
         // in the expression statement.
         auto resolvedExpression = resolveExpression(
-            expressionStatement->getExpression(), identifierMap);
+            std::move(expressionStatementPtr->getExpression()), identifierMap);
         // Return a new expression statement with the resolved expression.
-        return std::make_shared<ExpressionStatement>(
+        return std::make_unique<ExpressionStatement>(
             std::move(resolvedExpression));
     }
-    else if (auto compoundStatement =
-                 std::dynamic_pointer_cast<CompoundStatement>(statement)) {
+    else if (dynamic_cast<CompoundStatement *>(statement.get())) {
+        auto compoundStatementPtr = std::unique_ptr<CompoundStatement>(
+            static_cast<CompoundStatement *>(statement.release()));
         // Copy the identifier map (with modifications) and resolve the block in
         // the compound statement.
         auto copiedIdentifierMap = copyIdentifierMap(identifierMap);
         auto resolvedBlock =
-            resolveBlock(compoundStatement->getBlock(), copiedIdentifierMap);
-        return std::make_shared<CompoundStatement>(std::move(resolvedBlock));
+            resolveBlock(compoundStatementPtr->getBlock(), copiedIdentifierMap);
+        return std::make_unique<CompoundStatement>(std::move(resolvedBlock));
     }
-    else if (auto breakStatement =
-                 std::dynamic_pointer_cast<BreakStatement>(statement)) {
+    else if (dynamic_cast<BreakStatement *>(statement.get())) {
+        auto breakStatementPtr = std::unique_ptr<BreakStatement>(
+            static_cast<BreakStatement *>(statement.release()));
         // If the statement is a break statement, return the break statement.
-        return breakStatement;
+        return breakStatementPtr;
     }
-    else if (auto continueStatement =
-                 std::dynamic_pointer_cast<ContinueStatement>(statement)) {
+    else if (dynamic_cast<ContinueStatement *>(statement.get())) {
+        auto continueStatementPtr = std::unique_ptr<ContinueStatement>(
+            static_cast<ContinueStatement *>(statement.release()));
         // If the statement is a continue statement, return the continue
         // statement.
-        return continueStatement;
+        return continueStatementPtr;
     }
-    else if (auto whileStatement =
-                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
+    else if (dynamic_cast<WhileStatement *>(statement.get())) {
+        auto whileStatementPtr = std::unique_ptr<WhileStatement>(
+            static_cast<WhileStatement *>(statement.release()));
         // If the statement is a while-statement, resolve the condition
         // expression and the body statement in the while-statement.
-        auto resolvedCondition =
-            resolveExpression(whileStatement->getCondition(), identifierMap);
-        auto resolvedBody =
-            resolveStatement(whileStatement->getBody(), identifierMap);
-        return std::make_shared<WhileStatement>(std::move(resolvedCondition),
+        auto resolvedCondition = resolveExpression(
+            std::move(whileStatementPtr->getCondition()), identifierMap);
+        auto resolvedBody = resolveStatement(
+            std::move(whileStatementPtr->getBody()), identifierMap);
+        return std::make_unique<WhileStatement>(std::move(resolvedCondition),
                                                 std::move(resolvedBody));
     }
-    else if (auto doWhileStatement =
-                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
+    else if (dynamic_cast<DoWhileStatement *>(statement.get())) {
+        auto doWhileStatementPtr = std::unique_ptr<DoWhileStatement>(
+            static_cast<DoWhileStatement *>(statement.release()));
         // If the statement is a do-while-statement, resolve the condition
         // expression and the body statement in the do-while-statement.
-        auto resolvedCondition =
-            resolveExpression(doWhileStatement->getCondition(), identifierMap);
-        auto resolvedBody =
-            resolveStatement(doWhileStatement->getBody(), identifierMap);
-        return std::make_shared<DoWhileStatement>(std::move(resolvedCondition),
+        auto resolvedCondition = resolveExpression(
+            std::move(doWhileStatementPtr->getCondition()), identifierMap);
+        auto resolvedBody = resolveStatement(
+            std::move(doWhileStatementPtr->getBody()), identifierMap);
+        return std::make_unique<DoWhileStatement>(std::move(resolvedCondition),
                                                   std::move(resolvedBody));
     }
-    else if (auto forStatement =
-                 std::dynamic_pointer_cast<ForStatement>(statement)) {
+    else if (dynamic_cast<ForStatement *>(statement.get())) {
+        auto forStatementPtr = std::unique_ptr<ForStatement>(
+            static_cast<ForStatement *>(statement.release()));
         // Copy the identifier map (with modifications) and resolve the
         // for-init, (optional) condition, (optional) post, and body in the
         // for-statement.
         auto copiedIdentifierMap = copyIdentifierMap(identifierMap);
-        auto resolvedForInit =
-            resolveForInit(forStatement->getForInit(), copiedIdentifierMap);
+        auto resolvedForInit = resolveForInit(
+            std::move(forStatementPtr->getForInit()), copiedIdentifierMap);
         auto resolvedOptCondition =
-            std::optional<std::shared_ptr<Expression>>();
-        if (forStatement->getOptCondition().has_value()) {
+            std::optional<std::unique_ptr<Expression>>();
+        if (forStatementPtr->getOptCondition().has_value()) {
             auto resolvedCondition = resolveExpression(
-                forStatement->getOptCondition().value(), copiedIdentifierMap);
-            resolvedOptCondition = std::make_optional(resolvedCondition);
+                std::move(forStatementPtr->getOptCondition().value()),
+                copiedIdentifierMap);
+            resolvedOptCondition =
+                std::make_optional(std::move(resolvedCondition));
         }
-        auto resolvedOptPost = std::optional<std::shared_ptr<Expression>>();
-        if (forStatement->getOptPost().has_value()) {
+        auto resolvedOptPost = std::optional<std::unique_ptr<Expression>>();
+        if (forStatementPtr->getOptPost().has_value()) {
             auto resolvedPost = resolveExpression(
-                forStatement->getOptPost().value(), copiedIdentifierMap);
-            resolvedOptPost = std::make_optional(resolvedPost);
+                std::move(forStatementPtr->getOptPost().value()),
+                copiedIdentifierMap);
+            resolvedOptPost = std::make_optional(std::move(resolvedPost));
         }
-        auto resolvedBody =
-            resolveStatement(forStatement->getBody(), copiedIdentifierMap);
-        return std::make_shared<ForStatement>(
+        auto resolvedBody = resolveStatement(
+            std::move(forStatementPtr->getBody()), copiedIdentifierMap);
+        return std::make_unique<ForStatement>(
             std::move(resolvedForInit), std::move(resolvedOptCondition),
             std::move(resolvedOptPost), std::move(resolvedBody));
     }
-    else if (auto ifStatement =
-                 std::dynamic_pointer_cast<IfStatement>(statement)) {
+    else if (dynamic_cast<IfStatement *>(statement.get())) {
+        auto ifStatementPtr = std::unique_ptr<IfStatement>(
+            static_cast<IfStatement *>(statement.release()));
         // If the statement is an if-statement, resolve the condition
         // expression, then-statement, and (optional) else-statement in the
         // if-statement.
-        auto resolvedCondition =
-            resolveExpression(ifStatement->getCondition(), identifierMap);
-        auto resolvedThenStatement =
-            resolveStatement(ifStatement->getThenStatement(), identifierMap);
-        if (ifStatement->getElseOptStatement().has_value()) {
+        auto resolvedCondition = resolveExpression(
+            std::move(ifStatementPtr->getCondition()), identifierMap);
+        auto resolvedThenStatement = resolveStatement(
+            std::move(ifStatementPtr->getThenStatement()), identifierMap);
+        if (ifStatementPtr->getElseOptStatement().has_value()) {
             auto resolvedElseStatement = resolveStatement(
-                ifStatement->getElseOptStatement().value(), identifierMap);
-            return std::make_shared<IfStatement>(
+                std::move(ifStatementPtr->getElseOptStatement().value()),
+                identifierMap);
+            return std::make_unique<IfStatement>(
                 std::move(resolvedCondition), std::move(resolvedThenStatement),
                 std::move(resolvedElseStatement));
         }
         else {
-            return std::make_shared<IfStatement>(
+            return std::make_unique<IfStatement>(
                 std::move(resolvedCondition), std::move(resolvedThenStatement));
         }
     }
-    else if (auto nullStatement =
-                 std::dynamic_pointer_cast<NullStatement>(statement)) {
+    else if (dynamic_cast<NullStatement *>(statement.get())) {
+        auto nullStatementPtr = std::unique_ptr<NullStatement>(
+            static_cast<NullStatement *>(statement.release()));
         // If the statement is a null statement, return the null statement.
-        return nullStatement;
+        return nullStatementPtr;
     }
     else {
         throw std::logic_error(
@@ -246,117 +264,148 @@ std::shared_ptr<Statement> IdentifierResolutionPass::resolveStatement(
     }
 }
 
-std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
-    std::shared_ptr<Expression> expression,
+std::unique_ptr<Expression> IdentifierResolutionPass::resolveExpression(
+    std::unique_ptr<Expression> expression,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (auto assignmentExpression =
-            std::dynamic_pointer_cast<AssignmentExpression>(expression)) {
-        if (!(std::dynamic_pointer_cast<VariableExpression>(
-                assignmentExpression->getLeft()))) {
+    if (dynamic_cast<AssignmentExpression *>(expression.get())) {
+        auto assignmentExpressionPtr = std::unique_ptr<AssignmentExpression>(
+            static_cast<AssignmentExpression *>(expression.release()));
+        if (!(dynamic_cast<VariableExpression *>(
+                assignmentExpressionPtr->getLeft().get()))) {
             throw std::logic_error("Invalid lvalue in assignment expression");
         }
-        auto resolvedLeft =
-            resolveExpression(assignmentExpression->getLeft(), identifierMap);
-        auto resolvedRight =
-            resolveExpression(assignmentExpression->getRight(), identifierMap);
-        return std::make_shared<AssignmentExpression>(std::move(resolvedLeft),
+        auto resolvedLeft = resolveExpression(
+            std::move(assignmentExpressionPtr->getLeft()), identifierMap);
+        auto resolvedRight = resolveExpression(
+            std::move(assignmentExpressionPtr->getRight()), identifierMap);
+        return std::make_unique<AssignmentExpression>(std::move(resolvedLeft),
                                                       std::move(resolvedRight));
     }
-    else if (auto variableExpression =
-                 std::dynamic_pointer_cast<VariableExpression>(expression)) {
+    else if (dynamic_cast<VariableExpression *>(expression.get())) {
         // If the expression is a variable expression, check if the variable is
         // already in the identifier map. If it is not, throw an error.
         // Otherwise, return a new variable expression with the resolved
         // identifier from the identifier map.
-        auto identifier = variableExpression->getIdentifier();
-        if (identifierMap.find(identifier) == identifierMap.end()) {
+        auto variableExpressionPtr = std::unique_ptr<VariableExpression>(
+            static_cast<VariableExpression *>(expression.release()));
+        if (identifierMap.find(variableExpressionPtr->getIdentifier()) ==
+            identifierMap.end()) {
             std::stringstream msg;
-            msg << "Undeclared variable: " << identifier;
+            msg << "Undeclared variable: "
+                << variableExpressionPtr->getIdentifier();
             throw std::logic_error(msg.str());
         }
-        return std::make_shared<VariableExpression>(
-            identifierMap[identifier].getNewName());
+        return std::make_unique<VariableExpression>(
+            identifierMap[variableExpressionPtr->getIdentifier()].getNewName());
     }
-    else if (auto constantExpression =
-                 std::dynamic_pointer_cast<ConstantExpression>(expression)) {
+    else if (dynamic_cast<ConstantExpression *>(expression.get())) {
         // If the expression is a constant expression, return the constant
         // expression.
-        return constantExpression;
+        auto constantExpressionPtr = std::unique_ptr<ConstantExpression>(
+            static_cast<ConstantExpression *>(expression.release()));
+        return constantExpressionPtr;
     }
-    else if (auto unaryExpression =
-                 std::dynamic_pointer_cast<UnaryExpression>(expression)) {
+    else if (dynamic_cast<UnaryExpression *>(expression.get())) {
         // If the expression is a unary expression, resolve the expression in
         // the unary expression.
-        auto resolvedExpression =
-            resolveExpression(unaryExpression->getExpression(), identifierMap);
-        // Return a new unary expression with the resolved expression.
-        return std::make_shared<UnaryExpression>(
-            unaryExpression->getOperator(),
-            std::static_pointer_cast<Factor>(std::move(resolvedExpression)));
+        auto unaryExpressionPtr = std::unique_ptr<UnaryExpression>(
+            static_cast<UnaryExpression *>(expression.release()));
+        auto resolvedExpression = resolveExpression(
+            std::move(unaryExpressionPtr->getExpression()), identifierMap);
+        if (dynamic_cast<Factor *>(resolvedExpression.get())) {
+            auto factorPtr = std::unique_ptr<Factor>(
+                static_cast<Factor *>(resolvedExpression.release()));
+            return std::make_unique<UnaryExpression>(
+                std::move(unaryExpressionPtr->getOperator()),
+                std::move(factorPtr));
+        }
+        else {
+            throw std::logic_error(
+                "Unsupported expression type for unary expression identifier "
+                "resolution");
+        }
     }
-    else if (auto binaryExpression =
-                 std::dynamic_pointer_cast<BinaryExpression>(expression)) {
+    else if (dynamic_cast<BinaryExpression *>(expression.get())) {
         // If the expression is a binary expression, resolve the left and right
         // expressions in the binary expression.
-        auto resolvedLeft =
-            resolveExpression(binaryExpression->getLeft(), identifierMap);
-        auto resolvedRight =
-            resolveExpression(binaryExpression->getRight(), identifierMap);
-        // Return a new binary expression with the resolved left and right
-        // expressions.
-        return std::make_shared<BinaryExpression>(
-            std::move(resolvedLeft), binaryExpression->getOperator(),
-            std::move(resolvedRight));
+        auto binaryExpressionPtr = std::unique_ptr<BinaryExpression>(
+            static_cast<BinaryExpression *>(expression.release()));
+        auto resolvedLeft = resolveExpression(
+            std::move(binaryExpressionPtr->getLeft()), identifierMap);
+        auto resolvedRight = resolveExpression(
+            std::move(binaryExpressionPtr->getRight()), identifierMap);
+        if (dynamic_cast<BinaryOperator *>(
+                binaryExpressionPtr->getOperator().get())) {
+            auto binaryOperatorPtr =
+                std::unique_ptr<BinaryOperator>(static_cast<BinaryOperator *>(
+                    binaryExpressionPtr->getOperator().release()));
+            return std::make_unique<BinaryExpression>(
+                std::move(resolvedLeft), std::move(binaryOperatorPtr),
+                std::move(resolvedRight));
+        }
+        else {
+            throw std::logic_error(
+                "Unsupported operator type for binary expression identifier "
+                "resolution");
+        }
     }
-    else if (auto conditionalExpression =
-                 std::dynamic_pointer_cast<ConditionalExpression>(expression)) {
+    else if (dynamic_cast<ConditionalExpression *>(expression.get())) {
         // If the expression is a conditional expression, resolve the condition
         // expression, then-expression, and else-expression in the conditional
         // expression.
+        auto conditionalExpressionPtr = std::unique_ptr<ConditionalExpression>(
+            static_cast<ConditionalExpression *>(expression.release()));
         auto resolvedCondition = resolveExpression(
-            conditionalExpression->getCondition(), identifierMap);
+            std::move(conditionalExpressionPtr->getCondition()), identifierMap);
         auto resolvedThenExpression = resolveExpression(
-            conditionalExpression->getThenExpression(), identifierMap);
+            std::move(conditionalExpressionPtr->getThenExpression()),
+            identifierMap);
         auto resolvedElseExpression = resolveExpression(
-            conditionalExpression->getElseExpression(), identifierMap);
+            std::move(conditionalExpressionPtr->getElseExpression()),
+            identifierMap);
         // Return a new conditional expression with the resolved condition
         // expression, then-expression, and else-expression.
-        return std::make_shared<ConditionalExpression>(
+        return std::make_unique<ConditionalExpression>(
             std::move(resolvedCondition), std::move(resolvedThenExpression),
             std::move(resolvedElseExpression));
     }
-    else if (auto functionCallExpression =
-                 std::dynamic_pointer_cast<FunctionCallExpression>(
-                     expression)) {
+    else if (dynamic_cast<FunctionCallExpression *>(expression.get())) {
         // If the expression is a function call expression, check if the
         // function is already in the identifier map. If it is not, throw an
         // error. Otherwise, return a new function call expression with the
         // resolved identifier from the identifier map and the resolved
         // arguments.
-        if (identifierMap.find(functionCallExpression->getIdentifier()) ==
+        auto functionCallExpressionPtr =
+            std::unique_ptr<FunctionCallExpression>(
+                static_cast<FunctionCallExpression *>(expression.release()));
+        if (identifierMap.find(functionCallExpressionPtr->getIdentifier()) ==
             identifierMap.end()) {
             std::stringstream msg;
             msg << "Undeclared function: "
-                << functionCallExpression->getIdentifier();
+                << functionCallExpressionPtr->getIdentifier();
             throw std::logic_error(msg.str());
         }
         auto resolvedFunctionName =
-            identifierMap[functionCallExpression->getIdentifier()].getNewName();
-        auto resolvedArguments =
-            std::make_shared<std::vector<std::shared_ptr<Expression>>>();
-        for (auto &argument : *functionCallExpression->getArguments()) {
-            resolvedArguments->emplace_back(
-                resolveExpression(argument, identifierMap));
+            identifierMap[functionCallExpressionPtr->getIdentifier()]
+                .getNewName();
+        auto resolvedArguments = std::vector<std::unique_ptr<Expression>>();
+        auto &oldArguments = functionCallExpressionPtr->getArguments();
+        for (auto &argument : oldArguments) {
+            auto resolvedArgument =
+                resolveExpression(std::move(argument), identifierMap);
+            resolvedArguments.emplace_back(std::move(resolvedArgument));
         }
-        return std::make_shared<FunctionCallExpression>(resolvedFunctionName,
-                                                        resolvedArguments);
+        return std::make_unique<FunctionCallExpression>(
+            std::move(resolvedFunctionName), std::move(resolvedArguments));
     }
-    else if (auto castExpression =
-                 std::dynamic_pointer_cast<CastExpression>(expression)) {
-        auto resolvedExpression =
-            resolveExpression(castExpression->getExpression(), identifierMap);
-        return std::make_shared<CastExpression>(castExpression->getTargetType(),
-                                                std::move(resolvedExpression));
+    else if (dynamic_cast<CastExpression *>(expression.get())) {
+        auto castExpressionPtr = std::unique_ptr<CastExpression>(
+            static_cast<CastExpression *>(expression.release()));
+        auto resolvedExpression = resolveExpression(
+            std::move(castExpressionPtr->getExpression()), identifierMap);
+        return std::make_unique<CastExpression>(
+            std::move(castExpressionPtr->getTargetType()),
+            std::move(resolvedExpression));
     }
     else {
         throw std::logic_error(
@@ -364,39 +413,45 @@ std::shared_ptr<Expression> IdentifierResolutionPass::resolveExpression(
     }
 }
 
-std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
-    std::shared_ptr<Block> block,
-    std::unordered_map<std::string, MapEntry> &identifierMap) {
+Block *IdentifierResolutionPass::resolveBlock(
+    Block *block, std::unordered_map<std::string, MapEntry> &identifierMap) {
     // Get the block items from the block and resolve the variables in each
     // block item.
-    auto blockItems = block->getBlockItems();
-    for (auto &blockItem : *blockItems) {
-        if (auto dBlockItem =
-                std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
-            if (auto variableDeclaration =
-                    std::dynamic_pointer_cast<VariableDeclaration>(
-                        dBlockItem->getDeclaration())) {
+    auto &blockItems = block->getBlockItems();
+    for (auto &blockItem : blockItems) {
+        if (dynamic_cast<DBlockItem *>(blockItem.get())) {
+            auto dBlockItemPtr = std::unique_ptr<DBlockItem>(
+                static_cast<DBlockItem *>(blockItem.release()));
+            auto declaration = std::move(dBlockItemPtr->getDeclaration());
+            if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
+                auto variableDeclarationPtr =
+                    std::unique_ptr<VariableDeclaration>(
+                        static_cast<VariableDeclaration *>(
+                            declaration.release()));
                 auto resolvedDeclaration = resolveLocalVariableDeclaration(
-                    variableDeclaration, identifierMap);
-                dBlockItem->setDeclaration(resolvedDeclaration);
+                    std::move(variableDeclarationPtr), identifierMap);
+                dBlockItemPtr->setDeclaration(std::move(resolvedDeclaration));
             }
-            else if (auto functionDeclaration =
-                         std::dynamic_pointer_cast<FunctionDeclaration>(
-                             dBlockItem->getDeclaration())) {
+            else if (dynamic_cast<FunctionDeclaration *>(declaration.get())) {
+                auto functionDeclarationPtr =
+                    std::unique_ptr<FunctionDeclaration>(
+                        static_cast<FunctionDeclaration *>(
+                            declaration.release()));
                 auto resolvedDeclaration = resolveFunctionDeclaration(
-                    functionDeclaration, identifierMap);
-                dBlockItem->setDeclaration(resolvedDeclaration);
+                    std::move(functionDeclarationPtr), identifierMap);
+                dBlockItemPtr->setDeclaration(std::move(resolvedDeclaration));
             }
             else {
                 throw std::logic_error(
                     "Unsupported declaration type for identifier resolution");
             }
         }
-        else if (auto sBlockItem =
-                     std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
-            auto resolvedStatement =
-                resolveStatement(sBlockItem->getStatement(), identifierMap);
-            sBlockItem->setStatement(resolvedStatement);
+        else if (dynamic_cast<SBlockItem *>(blockItem.get())) {
+            auto sBlockItemPtr = std::unique_ptr<SBlockItem>(
+                static_cast<SBlockItem *>(blockItem.release()));
+            auto resolvedStatement = resolveStatement(
+                std::move(sBlockItemPtr->getStatement()), identifierMap);
+            sBlockItemPtr->setStatement(std::move(resolvedStatement));
         }
         else {
             throw std::logic_error(
@@ -405,28 +460,32 @@ std::shared_ptr<Block> IdentifierResolutionPass::resolveBlock(
     }
 
     // Return a new block with the resolved block items.
-    return std::make_shared<Block>(std::move(blockItems));
+    return new Block(std::move(blockItems));
 }
 
-std::shared_ptr<ForInit> IdentifierResolutionPass::resolveForInit(
-    std::shared_ptr<ForInit> forInit,
+std::unique_ptr<ForInit> IdentifierResolutionPass::resolveForInit(
+    std::unique_ptr<ForInit> forInit,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     // Resolve the for-init based on the type of the for init.
-    if (auto initExpr = std::dynamic_pointer_cast<InitExpr>(forInit)) {
-        auto optExpr = initExpr->getExpression();
+    if (dynamic_cast<InitExpr *>(forInit.get())) {
+        auto initExprPtr = std::unique_ptr<InitExpr>(
+            static_cast<InitExpr *>(forInit.release()));
+        auto optExpr = std::move(initExprPtr->getExpression());
         if (optExpr.has_value()) {
             auto resolvedExpr =
-                resolveExpression(optExpr.value(), identifierMap);
-            return std::make_shared<InitExpr>(std::move(resolvedExpr));
+                resolveExpression(std::move(optExpr.value()), identifierMap);
+            return std::make_unique<InitExpr>(std::move(resolvedExpr));
         }
         else {
-            return std::make_shared<InitExpr>();
+            return std::make_unique<InitExpr>();
         }
     }
-    else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
+    else if (dynamic_cast<InitDecl *>(forInit.get())) {
+        auto initDeclPtr = std::unique_ptr<InitDecl>(
+            static_cast<InitDecl *>(forInit.release()));
         auto resolvedDecl = resolveLocalVariableDeclaration(
-            initDecl->getVariableDeclaration(), identifierMap);
-        return std::make_shared<InitDecl>(std::move(resolvedDecl));
+            std::move(initDeclPtr->getVariableDeclaration()), identifierMap);
+        return std::make_unique<InitDecl>(std::move(resolvedDecl));
     }
     else {
         throw std::logic_error(
@@ -434,9 +493,9 @@ std::shared_ptr<ForInit> IdentifierResolutionPass::resolveForInit(
     }
 }
 
-std::shared_ptr<FunctionDeclaration>
+std::unique_ptr<FunctionDeclaration>
 IdentifierResolutionPass::resolveFunctionDeclaration(
-    std::shared_ptr<FunctionDeclaration> declaration,
+    std::unique_ptr<FunctionDeclaration> declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     if (identifierMap.find(declaration->getIdentifier()) !=
         identifierMap.end()) {
@@ -452,25 +511,25 @@ IdentifierResolutionPass::resolveFunctionDeclaration(
     identifierMap[declaration->getIdentifier()] =
         MapEntry(declaration->getIdentifier(), true, true);
     auto innerIdentifierMap = copyIdentifierMap(identifierMap);
-    auto resolvedParameters = std::make_shared<std::vector<std::string>>();
-    for (auto &parameter : *declaration->getParameterIdentifiers()) {
+    auto resolvedParameters = std::vector<std::string>();
+    for (auto &parameter : declaration->getParameterIdentifiers()) {
         // Skip the built-in types `int` and `long` since they are not actual
         // parameters.
         if (parameter == "int" || parameter == "long") {
             continue;
         }
-        resolvedParameters->emplace_back(
+        resolvedParameters.emplace_back(
             resolveParameter(parameter, innerIdentifierMap));
     }
-    auto resolvedOptBody = std::optional<std::shared_ptr<Block>>();
+    auto resolvedOptBody = std::optional<Block *>();
     if (declaration->getOptBody().has_value()) {
         resolvedOptBody = std::make_optional(resolveBlock(
             declaration->getOptBody().value(), innerIdentifierMap));
     }
-    return std::make_shared<FunctionDeclaration>(
+    return std::make_unique<FunctionDeclaration>(
         declaration->getIdentifier(), std::move(resolvedParameters),
-        std::move(resolvedOptBody), declaration->getFunType(),
-        declaration->getOptStorageClass());
+        std::move(resolvedOptBody), std::move(declaration->getFunType()),
+        std::move(declaration->getOptStorageClass()));
 }
 
 std::string IdentifierResolutionPass::resolveParameter(
@@ -497,31 +556,43 @@ std::string IdentifierResolutionPass::resolveParameter(
 /*
  * Start: Functions for the type-checking pass.
  */
-void TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
+std::unique_ptr<Program>
+TypeCheckingPass::typeCheckProgram(std::unique_ptr<Program> program) {
     // Clear the symbol table for this compilation.
     frontendSymbolTable.clear();
 
     // Type-check the program.
-    for (auto &declaration : *program->getDeclarations()) {
-        if (auto functionDeclaration =
-                std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
-            typeCheckFunctionDeclaration(functionDeclaration);
+    for (auto &declaration : program->getDeclarations()) {
+        if (dynamic_cast<FunctionDeclaration *>(declaration.get())) {
+            auto functionDeclarationPtr = std::unique_ptr<FunctionDeclaration>(
+                static_cast<FunctionDeclaration *>(declaration.release()));
+            auto resolvedFunctionDeclaration =
+                typeCheckFunctionDeclaration(std::move(functionDeclarationPtr));
+            program->getDeclarations().emplace_back(
+                std::move(resolvedFunctionDeclaration));
         }
-        else if (auto variableDeclaration =
-                     std::dynamic_pointer_cast<VariableDeclaration>(
-                         declaration)) {
-            typeCheckFileScopeVariableDeclaration(variableDeclaration);
+        else if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
+            auto variableDeclarationPtr = std::unique_ptr<VariableDeclaration>(
+                static_cast<VariableDeclaration *>(declaration.release()));
+            auto resolvedVariableDeclaration =
+                typeCheckFileScopeVariableDeclaration(
+                    std::move(variableDeclarationPtr));
+            program->getDeclarations().emplace_back(
+                std::move(resolvedVariableDeclaration));
         }
         else {
             throw std::logic_error(
                 "Unsupported declaration type for type checking at top level");
         }
     }
+
+    // Return the type-checked program.
+    return program;
 }
 
-std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
-    std::shared_ptr<Type> varType,
-    std::shared_ptr<ConstantExpression> constantExpression) {
+std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
+    std::unique_ptr<Type> varType,
+    std::unique_ptr<ConstantExpression> constantExpression) {
     // Extract the numeric value from the AST constant.
     auto variantValue = constantExpression->getConstantInIntOrLongVariant();
 
@@ -541,20 +612,21 @@ std::shared_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
         // This does a 32-bit wrap-around if `numericValue` doesn't fit.
         int wrappedNumericValue =
             static_cast<int>(static_cast<unsigned long>(numericValue));
-        return std::make_shared<IntInit>(wrappedNumericValue);
+        return std::make_unique<IntInit>(wrappedNumericValue);
     }
     // If the declared type is long, store the full 64-bit value.
     else if (*varType == LongType()) {
-        return std::make_shared<LongInit>(numericValue);
+        return std::make_unique<LongInit>(numericValue);
     }
+    // Otherwise, throw an error.
     else {
         throw std::logic_error("Unsupported type in static initializer");
     }
 }
 
-std::shared_ptr<Type>
-TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
-                                std::shared_ptr<Type> type2) {
+std::unique_ptr<Type>
+TypeCheckingPass::getCommonType(std::unique_ptr<Type> type1,
+                                std::unique_ptr<Type> type2) {
     // If `type1` is `nullptr`, throw an error.
     if (type1 == nullptr) {
         throw std::logic_error("Null type1 in getCommonType");
@@ -571,123 +643,162 @@ TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
     }
     // Otherwise, return the larger type.
     else {
-        return std::make_shared<LongType>();
+        return std::make_unique<LongType>();
     }
 }
 
-std::shared_ptr<Expression>
-TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
-                            std::shared_ptr<Type> targetType) {
+std::unique_ptr<Expression>
+TypeCheckingPass::convertTo(std::unique_ptr<Expression> expression,
+                            std::unique_ptr<Type> targetType) {
     if (expression == nullptr) {
         throw std::logic_error("Null expression in convertTo");
     }
     if (targetType == nullptr) {
         throw std::logic_error("Null target type in convertTo");
     }
-    if (expression->getExpType() == targetType) {
+    auto expressionType = std::move(expression->getExpType());
+    if (expressionType == nullptr) {
+        throw std::logic_error("Null expression type in convertTo");
+    }
+    // If the expression type is the same as the target type, return the
+    // expression.
+    if (*expressionType == *targetType) {
         return expression;
     }
-    // Otherwise, wrap the expression in a cast expression and annotate the
-    // result with the correct type.
-    auto castExpression =
-        std::make_shared<CastExpression>(targetType, expression);
+    // Otherwise, wrap the expression in a cast expression and return the cast
+    // expression.
+    auto castExpression = std::make_unique<CastExpression>(
+        std::move(targetType), std::move(expression));
     return castExpression;
 }
 
-void TypeCheckingPass::typeCheckFunctionDeclaration(
-    std::shared_ptr<FunctionDeclaration> declaration) {
-    auto funType = declaration->getFunType();
-    auto funTypePtr = std::dynamic_pointer_cast<FunctionType>(funType);
+std::unique_ptr<FunctionDeclaration>
+TypeCheckingPass::typeCheckFunctionDeclaration(
+    std::unique_ptr<FunctionDeclaration> declaration) {
+    auto funType = std::move(declaration->getFunType());
+    auto funTypePtr = std::unique_ptr<FunctionType>(
+        static_cast<FunctionType *>(funType.release()));
     if (funTypePtr == nullptr) {
         throw std::logic_error("Function type is not a FunctionType");
     }
-    auto parameterTypes = funTypePtr->getParameterTypes();
-    auto returnType = funTypePtr->getReturnType();
+
+    auto parameterTypes = std::move(funTypePtr->getParameterTypes());
+    auto returnType = std::move(funTypePtr->getReturnType());
     auto hasBody = declaration->getOptBody().has_value();
     auto alreadyDefined = false;
     auto global = true;
 
     if (declaration->getOptStorageClass().has_value() &&
-        std::dynamic_pointer_cast<StaticStorageClass>(
-            declaration->getOptStorageClass().value())) {
+        dynamic_cast<StaticStorageClass *>(
+            declaration->getOptStorageClass().value().get())) {
         global = false;
     }
+
     if (frontendSymbolTable.find(declaration->getIdentifier()) !=
         frontendSymbolTable.end()) {
-        auto oldDeclaration = frontendSymbolTable[declaration->getIdentifier()];
-        auto oldType = oldDeclaration.first;
+        auto oldDeclaration =
+            std::move(frontendSymbolTable.at(declaration->getIdentifier()));
+        auto oldType = std::move(oldDeclaration.first);
         if (*oldType != *funType) {
             throw std::logic_error("Incompatible function declarations");
         }
-        auto oldFunctionAttribute =
-            std::dynamic_pointer_cast<FunctionAttribute>(oldDeclaration.second);
+        auto oldFunctionAttribute = std::unique_ptr<FunctionAttribute>(
+            static_cast<FunctionAttribute *>(oldDeclaration.second.release()));
         alreadyDefined = oldFunctionAttribute->isDefined();
         if (alreadyDefined && hasBody) {
             throw std::logic_error("Function redefinition");
         }
         if (oldFunctionAttribute->isGlobal() &&
             declaration->getOptStorageClass().has_value() &&
-            std::dynamic_pointer_cast<StaticStorageClass>(
-                declaration->getOptStorageClass().value())) {
+            dynamic_cast<StaticStorageClass *>(
+                declaration->getOptStorageClass().value().get())) {
             throw std::logic_error(
                 "Static function declaration follows non-static");
         }
         global = oldFunctionAttribute->isGlobal();
     }
 
+    // Create a function attribute and store it in the symbol table.
     auto attribute =
-        std::make_shared<FunctionAttribute>(alreadyDefined || hasBody, global);
-    frontendSymbolTable[declaration->getIdentifier()] = {funType, attribute};
+        std::make_unique<FunctionAttribute>(alreadyDefined || hasBody, global);
+    frontendSymbolTable[declaration->getIdentifier()] = {std::move(funType),
+                                                         std::move(attribute)};
 
     if (hasBody) {
-        auto funcParameterTypes = funTypePtr->getParameterTypes();
-        auto parameterIdentifiers = declaration->getParameterIdentifiers();
+        const auto &funcParameterTypes = funTypePtr->getParameterTypes();
+        auto parameterIdentifiers =
+            std::move(declaration->getParameterIdentifiers());
         // Set parameter types in the symbol table based on the function's
         // parameter types.
-        for (size_t i = 0; i < parameterIdentifiers->size(); ++i) {
+        for (size_t i = 0; i < parameterIdentifiers.size(); ++i) {
             // If the parameter type is available, use it.
-            if (i < funcParameterTypes->size()) {
-                frontendSymbolTable[(*parameterIdentifiers)[i]] = {
-                    (*funcParameterTypes)[i],
-                    std::make_shared<LocalAttribute>()};
+            if (i < funcParameterTypes.size()) {
+                // Create a copy of the parameter type
+                std::unique_ptr<Type> paramTypeCopy;
+                if (dynamic_cast<IntType *>(funcParameterTypes[i].get())) {
+                    paramTypeCopy = std::make_unique<IntType>();
+                }
+                else if (dynamic_cast<LongType *>(
+                             funcParameterTypes[i].get())) {
+                    paramTypeCopy = std::make_unique<LongType>();
+                }
+                else {
+                    paramTypeCopy = std::make_unique<IntType>(); // Fallback.
+                }
+                frontendSymbolTable[parameterIdentifiers[i]] = {
+                    std::move(paramTypeCopy),
+                    std::make_unique<LocalAttribute>()};
             }
             else {
                 // Otherwise, fallback to IntType.
-                frontendSymbolTable[(*parameterIdentifiers)[i]] = {
-                    std::make_shared<IntType>(),
-                    std::make_shared<LocalAttribute>()};
+                frontendSymbolTable[parameterIdentifiers[i]] = {
+                    std::make_unique<IntType>(),
+                    std::make_unique<LocalAttribute>()};
             }
         }
         // Provide the enclosing function's name for the later type-checking of
         // the return statement.
-        typeCheckBlock(declaration->getOptBody().value(),
-                       declaration->getIdentifier());
+        auto resolvedBody =
+            typeCheckBlock(std::move(declaration->getOptBody().value()),
+                           declaration->getIdentifier());
+        return std::make_unique<FunctionDeclaration>(
+            declaration->getIdentifier(), std::move(parameterIdentifiers),
+            std::move(resolvedBody), std::move(funType),
+            std::move(declaration->getOptStorageClass()));
+    }
+    else {
+        return std::make_unique<FunctionDeclaration>(
+            declaration->getIdentifier(),
+            std::move(declaration->getParameterIdentifiers()),
+            std::move(funType), std::move(declaration->getOptStorageClass()));
     }
 }
 
-void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
-    std::shared_ptr<VariableDeclaration> declaration) {
-    auto varType = declaration->getVarType();
+std::unique_ptr<VariableDeclaration>
+TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
+    std::unique_ptr<VariableDeclaration> declaration) {
+    auto varType = std::move(declaration->getVarType());
     if (*varType != IntType() && *varType != LongType()) {
         throw std::logic_error(
             "Unsupported variable type for file-scope variables");
     }
 
-    auto initialValue = std::make_shared<InitialValue>();
-
+    std::unique_ptr<InitialValue> initialValue;
     if (declaration->getOptInitializer().has_value() &&
-        std::dynamic_pointer_cast<ConstantExpression>(
-            declaration->getOptInitializer().value())) {
-        auto constantExpression = std::dynamic_pointer_cast<ConstantExpression>(
-            declaration->getOptInitializer().value());
-        auto variantValue = constantExpression->getConstantInIntOrLongVariant();
+        dynamic_cast<ConstantExpression *>(
+            declaration->getOptInitializer().value().get())) {
+        auto constantExpressionPtr = std::unique_ptr<ConstantExpression>(
+            static_cast<ConstantExpression *>(
+                declaration->getOptInitializer().value().release()));
+        auto variantValue =
+            constantExpressionPtr->getConstantInIntOrLongVariant();
         if (std::holds_alternative<long>(variantValue)) {
             initialValue =
-                std::make_shared<Initial>(std::get<long>(variantValue));
+                std::make_unique<Initial>(std::get<long>(variantValue));
         }
         else if (std::holds_alternative<int>(variantValue)) {
             initialValue =
-                std::make_shared<Initial>(std::get<int>(variantValue));
+                std::make_unique<Initial>(std::get<int>(variantValue));
         }
         else {
             throw std::logic_error("Unsupported type in static initializer");
@@ -695,12 +806,12 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     }
     else if (!declaration->getOptInitializer().has_value()) {
         if (declaration->getOptStorageClass().has_value() &&
-            std::dynamic_pointer_cast<ExternStorageClass>(
-                declaration->getOptStorageClass().value())) {
-            initialValue = std::make_shared<NoInitializer>();
+            dynamic_cast<ExternStorageClass *>(
+                declaration->getOptStorageClass().value().get())) {
+            initialValue = std::make_unique<NoInitializer>();
         }
         else {
-            initialValue = std::make_shared<Tentative>();
+            initialValue = std::make_unique<Tentative>();
         }
     }
     else {
@@ -710,58 +821,66 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     // Determine the linkage of the variable.
     auto global = (!declaration->getOptStorageClass().has_value()) ||
                   (declaration->getOptStorageClass().has_value() &&
-                   !(std::dynamic_pointer_cast<StaticStorageClass>(
-                       declaration->getOptStorageClass().value())));
+                   !(dynamic_cast<StaticStorageClass *>(
+                       declaration->getOptStorageClass().value().get())));
 
     if (frontendSymbolTable.find(declaration->getIdentifier()) !=
         frontendSymbolTable.end()) {
-        auto oldDeclaration = frontendSymbolTable[declaration->getIdentifier()];
-        auto oldType = oldDeclaration.first;
+        auto oldDeclaration =
+            std::move(frontendSymbolTable.at(declaration->getIdentifier()));
+        auto oldType = std::move(oldDeclaration.first);
         if (*oldType != *varType) {
             throw std::logic_error("Function redeclared as variable");
         }
-        auto oldStaticAttribute =
-            std::dynamic_pointer_cast<StaticAttribute>(oldDeclaration.second);
+        auto oldStaticAttribute = std::unique_ptr<StaticAttribute>(
+            static_cast<StaticAttribute *>(oldDeclaration.second.release()));
         if (declaration->getOptStorageClass().has_value() &&
-            std::dynamic_pointer_cast<ExternStorageClass>(
-                declaration->getOptStorageClass().value())) {
+            dynamic_cast<ExternStorageClass *>(
+                declaration->getOptStorageClass().value().get())) {
             global = oldStaticAttribute->isGlobal();
         }
         else if (oldStaticAttribute->isGlobal() != global) {
             throw std::logic_error("Conflicting variable linkage");
         }
-        if (auto oldInitialValue = std::dynamic_pointer_cast<Initial>(
-                oldStaticAttribute->getInitialValue())) {
-            if (std::dynamic_pointer_cast<Initial>(initialValue)) {
+        if (dynamic_cast<Initial *>(
+                oldStaticAttribute->getInitialValue().get())) {
+            if (dynamic_cast<Initial *>(initialValue.get())) {
                 throw std::logic_error(
                     "Conflicting file-scope variable definitions");
             }
             else {
-                initialValue = oldInitialValue;
+                initialValue = std::move(oldStaticAttribute->getInitialValue());
             }
         }
-        else if (!std::dynamic_pointer_cast<Initial>(initialValue) &&
-                 std::dynamic_pointer_cast<Tentative>(
-                     oldStaticAttribute->getInitialValue())) {
-            initialValue = std::make_shared<Tentative>();
+        else if (!dynamic_cast<Initial *>(initialValue.get()) &&
+                 dynamic_cast<Tentative *>(
+                     oldStaticAttribute->getInitialValue().get())) {
+            initialValue = std::make_unique<Tentative>();
         }
     }
 
-    auto attribute = std::make_shared<StaticAttribute>(initialValue, global);
-    // Store the corresponding variable type and attribute in the symbol table.
-    frontendSymbolTable[declaration->getIdentifier()] = {varType, attribute};
+    // Create a static attribute and store it in the symbol table.
+    auto attribute =
+        std::make_unique<StaticAttribute>(std::move(initialValue), global);
+    frontendSymbolTable[declaration->getIdentifier()] = {std::move(varType),
+                                                         std::move(attribute)};
+
+    return std::make_unique<VariableDeclaration>(
+        declaration->getIdentifier(), std::move(varType),
+        std::move(declaration->getOptStorageClass()));
 }
 
-void TypeCheckingPass::typeCheckLocalVariableDeclaration(
-    std::shared_ptr<VariableDeclaration> declaration) {
-    auto varType = declaration->getVarType();
+std::unique_ptr<VariableDeclaration>
+TypeCheckingPass::typeCheckLocalVariableDeclaration(
+    std::unique_ptr<VariableDeclaration> declaration) {
+    auto varType = std::move(declaration->getVarType());
     if (*varType != IntType() && *varType != LongType()) {
         throw std::logic_error("Unsupported variable type for local variables");
     }
 
     if (declaration->getOptStorageClass().has_value() &&
-        std::dynamic_pointer_cast<ExternStorageClass>(
-            declaration->getOptStorageClass().value())) {
+        dynamic_cast<ExternStorageClass *>(
+            declaration->getOptStorageClass().value().get())) {
         if (declaration->getOptInitializer().has_value()) {
             throw std::logic_error(
                 "Initializer on local extern variable declaration");
@@ -769,38 +888,41 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         if (frontendSymbolTable.find(declaration->getIdentifier()) !=
             frontendSymbolTable.end()) {
             auto oldDeclaration =
-                frontendSymbolTable[declaration->getIdentifier()];
-            auto oldType = oldDeclaration.first;
+                std::move(frontendSymbolTable.at(declaration->getIdentifier()));
+            auto oldType = std::move(oldDeclaration.first);
             if (*oldType != *varType) {
                 throw std::logic_error("Function redeclared as variable");
             }
         }
         else {
-            auto staticAttribute = std::make_shared<StaticAttribute>(
-                std::make_shared<NoInitializer>(), true);
-            frontendSymbolTable[declaration->getIdentifier()] =
-                std::make_pair(varType, staticAttribute);
+            auto staticAttribute = std::make_unique<StaticAttribute>(
+                std::make_unique<NoInitializer>(), true);
+            frontendSymbolTable[declaration->getIdentifier()] = {
+                std::move(varType), std::move(staticAttribute)};
         }
+        return std::make_unique<VariableDeclaration>(
+            declaration->getIdentifier(), std::move(varType),
+            std::move(declaration->getOptStorageClass()));
     }
     else if (declaration->getOptStorageClass().has_value() &&
-             std::dynamic_pointer_cast<StaticStorageClass>(
-                 declaration->getOptStorageClass().value())) {
-        auto initialValue = std::make_shared<InitialValue>();
+             dynamic_cast<StaticStorageClass *>(
+                 declaration->getOptStorageClass().value().get())) {
+        std::unique_ptr<InitialValue> initialValue;
         if (declaration->getOptInitializer().has_value() &&
-            std::dynamic_pointer_cast<ConstantExpression>(
-                declaration->getOptInitializer().value())) {
-            auto constantExpression =
-                std::dynamic_pointer_cast<ConstantExpression>(
-                    declaration->getOptInitializer().value());
+            dynamic_cast<ConstantExpression *>(
+                declaration->getOptInitializer().value().get())) {
+            auto constantExpressionPtr = std::unique_ptr<ConstantExpression>(
+                static_cast<ConstantExpression *>(
+                    declaration->getOptInitializer().value().release()));
             auto variantValue =
-                constantExpression->getConstantInIntOrLongVariant();
+                constantExpressionPtr->getConstantInIntOrLongVariant();
             if (std::holds_alternative<long>(variantValue)) {
                 initialValue =
-                    std::make_shared<Initial>(std::get<long>(variantValue));
+                    std::make_unique<Initial>(std::get<long>(variantValue));
             }
             else if (std::holds_alternative<int>(variantValue)) {
                 initialValue =
-                    std::make_shared<Initial>(std::get<int>(variantValue));
+                    std::make_unique<Initial>(std::get<int>(variantValue));
             }
             else {
                 throw std::logic_error(
@@ -808,230 +930,317 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             }
         }
         else if (!declaration->getOptInitializer().has_value()) {
-            initialValue = std::make_shared<Initial>(0);
+            initialValue = std::make_unique<Initial>(0);
         }
         else {
             throw std::logic_error(
                 "Non-constant initializer on local static variable");
         }
         auto staticAttribute =
-            std::make_shared<StaticAttribute>(initialValue, false);
-        frontendSymbolTable[declaration->getIdentifier()] =
-            std::make_pair(varType, staticAttribute);
+            std::make_unique<StaticAttribute>(std::move(initialValue), false);
+        frontendSymbolTable[declaration->getIdentifier()] = {
+            std::move(varType), std::move(staticAttribute)};
+        return std::make_unique<VariableDeclaration>(
+            declaration->getIdentifier(), std::move(varType),
+            std::move(declaration->getOptStorageClass()));
     }
     else {
-        auto localAttribute = std::make_shared<LocalAttribute>();
-        frontendSymbolTable[declaration->getIdentifier()] =
-            std::make_pair(varType, localAttribute);
+        auto localAttribute = std::make_unique<LocalAttribute>();
+        frontendSymbolTable[declaration->getIdentifier()] = {
+            std::move(varType), std::move(localAttribute)};
         if (declaration->getOptInitializer().has_value()) {
-            typeCheckExpression(declaration->getOptInitializer().value());
+            auto resolvedInitializer = typeCheckExpression(
+                std::move(declaration->getOptInitializer().value()));
+            return std::make_unique<VariableDeclaration>(
+                declaration->getIdentifier(), std::move(resolvedInitializer),
+                std::move(varType),
+                std::move(declaration->getOptStorageClass()));
+        }
+        else {
+            return std::make_unique<VariableDeclaration>(
+                declaration->getIdentifier(), std::move(varType),
+                std::move(declaration->getOptStorageClass()));
         }
     }
 }
 
-void TypeCheckingPass::typeCheckBlock(std::shared_ptr<Block> block,
-                                      std::string enclosingFunctionIdentifier) {
-    for (auto &blockItem : *block->getBlockItems()) {
-        if (auto dBlockItem =
-                std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
-            if (auto variableDeclaration =
-                    std::dynamic_pointer_cast<VariableDeclaration>(
-                        dBlockItem->getDeclaration())) {
-                typeCheckLocalVariableDeclaration(variableDeclaration);
+Block *
+TypeCheckingPass::typeCheckBlock(Block *block,
+                                 std::string enclosingFunctionIdentifier) {
+    auto &blockItems = block->getBlockItems();
+    for (auto &blockItem : blockItems) {
+        if (dynamic_cast<DBlockItem *>(blockItem.get())) {
+            auto dBlockItemPtr = std::unique_ptr<DBlockItem>(
+                static_cast<DBlockItem *>(blockItem.release()));
+            auto declaration = std::move(dBlockItemPtr->getDeclaration());
+            if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
+                auto variableDeclarationPtr =
+                    std::unique_ptr<VariableDeclaration>(
+                        static_cast<VariableDeclaration *>(
+                            declaration.release()));
+                auto resolvedDeclaration = typeCheckLocalVariableDeclaration(
+                    std::move(variableDeclarationPtr));
+                dBlockItemPtr->setDeclaration(std::move(resolvedDeclaration));
             }
-            else if (auto functionDeclaration =
-                         std::dynamic_pointer_cast<FunctionDeclaration>(
-                             dBlockItem->getDeclaration())) {
-                if (functionDeclaration->getOptBody().has_value()) {
+            else if (dynamic_cast<FunctionDeclaration *>(declaration.get())) {
+                auto functionDeclarationPtr =
+                    std::unique_ptr<FunctionDeclaration>(
+                        static_cast<FunctionDeclaration *>(
+                            declaration.release()));
+                if (functionDeclarationPtr->getOptBody().has_value()) {
                     throw std::logic_error(
                         "Nested function definitions are not permitted");
                 }
-                if (functionDeclaration->getOptStorageClass().has_value() &&
-                    std::dynamic_pointer_cast<StaticStorageClass>(
-                        functionDeclaration->getOptStorageClass().value())) {
+                if (functionDeclarationPtr->getOptStorageClass().has_value() &&
+                    dynamic_cast<StaticStorageClass *>(
+                        functionDeclarationPtr->getOptStorageClass()
+                            .value()
+                            .get())) {
                     throw std::logic_error(
                         "Static storage class on block-scope function "
                         "declaration");
                 }
-                typeCheckFunctionDeclaration(functionDeclaration);
+                auto resolvedDeclaration = typeCheckFunctionDeclaration(
+                    std::move(functionDeclarationPtr));
+                dBlockItemPtr->setDeclaration(std::move(resolvedDeclaration));
             }
             else {
                 throw std::logic_error(
                     "Unsupported declaration type for type-checking");
             }
         }
-        else if (auto sBlockItem =
-                     std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
+        else if (dynamic_cast<SBlockItem *>(blockItem.get())) {
+            auto sBlockItemPtr = std::unique_ptr<SBlockItem>(
+                static_cast<SBlockItem *>(blockItem.release()));
             // Provide the enclosing function's name for the later type-checking
             // of the return statement.
-            typeCheckStatement(sBlockItem->getStatement(),
-                               enclosingFunctionIdentifier);
+            auto resolvedStatement =
+                typeCheckStatement(std::move(sBlockItemPtr->getStatement()),
+                                   enclosingFunctionIdentifier);
+            sBlockItemPtr->setStatement(std::move(resolvedStatement));
         }
         else {
             throw std::logic_error(
                 "Unsupported block item type for type-checking");
         }
     }
+
+    return new Block(std::move(blockItems));
 }
 
-void TypeCheckingPass::typeCheckExpression(
-    std::shared_ptr<Expression> expression) {
-    if (auto functionCallExpression =
-            std::dynamic_pointer_cast<FunctionCallExpression>(expression)) {
-        auto fType =
-            frontendSymbolTable[functionCallExpression->getIdentifier()].first;
+std::unique_ptr<Expression>
+TypeCheckingPass::typeCheckExpression(std::unique_ptr<Expression> expression) {
+    if (dynamic_cast<FunctionCallExpression *>(expression.get())) {
+        auto functionCallExpressionPtr =
+            std::unique_ptr<FunctionCallExpression>(
+                static_cast<FunctionCallExpression *>(expression.release()));
+        auto fType = std::move(
+            frontendSymbolTable.at(functionCallExpressionPtr->getIdentifier())
+                .first);
+
         if (*fType == IntType() || *fType == LongType()) {
             throw std::logic_error("Function name used as variable: " +
-                                   functionCallExpression->getIdentifier());
+                                   functionCallExpressionPtr->getIdentifier());
         }
         else {
-            auto functionType = std::dynamic_pointer_cast<FunctionType>(fType);
-            auto parameterTypes = functionType->getParameterTypes();
-            auto arguments = functionCallExpression->getArguments();
-            if (parameterTypes->size() != arguments->size()) {
+            auto functionType = std::unique_ptr<FunctionType>(
+                static_cast<FunctionType *>(fType.release()));
+            auto &parameterTypes = functionType->getParameterTypes();
+            auto &arguments = functionCallExpressionPtr->getArguments();
+            if (parameterTypes.size() != arguments.size()) {
                 throw std::logic_error(
                     "Function called with a wrong number of arguments");
             }
             auto convertedArguments =
-                std::make_shared<std::vector<std::shared_ptr<Expression>>>();
+                std::vector<std::unique_ptr<Expression>>();
             // Iterate over the function's arguments and parameters together.
             // Type-check each argument and convert it to the corresponding
             // parameter type.
-            for (size_t i = 0; i < arguments->size(); ++i) {
-                auto argument = arguments->at(i);
-                auto parameterType = parameterTypes->at(i);
-                typeCheckExpression(argument);
-                convertTo(argument, parameterType);
-                convertedArguments->emplace_back(argument);
+            for (size_t i = 0; i < arguments.size(); ++i) {
+                auto argument = std::move(arguments[i]);
+                auto parameterType = std::move(parameterTypes[i]);
+                auto resolvedArgument =
+                    typeCheckExpression(std::move(argument));
+                auto convertedArgument = convertTo(std::move(resolvedArgument),
+                                                   std::move(parameterType));
+                convertedArguments.emplace_back(std::move(convertedArgument));
             }
             // Set the function call expression's arguments to the converted
             // arguments.
-            functionCallExpression->setArguments(convertedArguments);
+            functionCallExpressionPtr->setArguments(
+                std::move(convertedArguments));
             // Set the function call expression's type to the function's return
             // type.
-            functionCallExpression->setExpType(functionType->getReturnType());
+            functionCallExpressionPtr->setExpType(
+                std::move(functionType->getReturnType()));
         }
+
+        return functionCallExpressionPtr;
     }
-    else if (auto constantExpression =
-                 std::dynamic_pointer_cast<ConstantExpression>(expression)) {
-        auto constant = constantExpression->getConstant();
-        if (std::dynamic_pointer_cast<ConstantInt>(constant)) {
-            constantExpression->setExpType(std::make_shared<IntType>());
+    else if (dynamic_cast<ConstantExpression *>(expression.get())) {
+        auto constantExpressionPtr = std::unique_ptr<ConstantExpression>(
+            static_cast<ConstantExpression *>(expression.release()));
+        auto constant = std::move(constantExpressionPtr->getConstant());
+
+        if (dynamic_cast<ConstantInt *>(constant.get())) {
+            constantExpressionPtr->setExpType(std::make_unique<IntType>());
         }
-        else if (std::dynamic_pointer_cast<ConstantLong>(constant)) {
-            constantExpression->setExpType(std::make_shared<LongType>());
+        else if (dynamic_cast<ConstantLong *>(constant.get())) {
+            constantExpressionPtr->setExpType(std::make_unique<LongType>());
         }
         else {
             throw std::logic_error("Unsupported constant type");
         }
+
+        return constantExpressionPtr;
     }
-    else if (auto variableExpression =
-                 std::dynamic_pointer_cast<VariableExpression>(expression)) {
-        auto variableType =
-            frontendSymbolTable[variableExpression->getIdentifier()].first;
+    else if (dynamic_cast<VariableExpression *>(expression.get())) {
+        auto variableExpressionPtr = std::unique_ptr<VariableExpression>(
+            static_cast<VariableExpression *>(expression.release()));
+        auto variableType = std::move(
+            frontendSymbolTable[variableExpressionPtr->getIdentifier()].first);
+
         // If the variable is not of type int or long, it is of type function.
         if (*variableType != IntType() && *variableType != LongType()) {
             std::stringstream msg;
             msg << "Function name used as variable: "
-                << variableExpression->getIdentifier();
+                << variableExpressionPtr->getIdentifier();
             throw std::logic_error(msg.str());
         }
         // Otherwise, set the expression type to the variable type.
-        variableExpression->setExpType(variableType);
+        variableExpressionPtr->setExpType(std::move(variableType));
+
+        return variableExpressionPtr;
     }
-    else if (auto castExpression =
-                 std::dynamic_pointer_cast<CastExpression>(expression)) {
-        typeCheckExpression(castExpression->getExpression());
-        castExpression->setExpType(castExpression->getTargetType());
+    else if (dynamic_cast<CastExpression *>(expression.get())) {
+        auto castExpressionPtr = std::unique_ptr<CastExpression>(
+            static_cast<CastExpression *>(expression.release()));
+        auto resolvedExpression =
+            typeCheckExpression(std::move(castExpressionPtr->getExpression()));
+        castExpressionPtr->setExpType(
+            std::move(castExpressionPtr->getTargetType()));
+
+        return castExpressionPtr;
     }
-    else if (auto assignmentExpression =
-                 std::dynamic_pointer_cast<AssignmentExpression>(expression)) {
-        auto left = assignmentExpression->getLeft();
-        auto right = assignmentExpression->getRight();
-        typeCheckExpression(left);
-        typeCheckExpression(right);
-        auto leftType = left->getExpType();
-        right->setExpType(leftType);
-        assignmentExpression->setExpType(leftType);
+    else if (dynamic_cast<AssignmentExpression *>(expression.get())) {
+        auto assignmentExpressionPtr = std::unique_ptr<AssignmentExpression>(
+            static_cast<AssignmentExpression *>(expression.release()));
+        auto left = std::move(assignmentExpressionPtr->getLeft());
+        auto right = std::move(assignmentExpressionPtr->getRight());
+        auto resolvedLeft = typeCheckExpression(std::move(left));
+        auto resolvedRight = typeCheckExpression(std::move(right));
+        assignmentExpressionPtr->setLeft(std::move(resolvedLeft));
+        assignmentExpressionPtr->setRight(std::move(resolvedRight));
+        auto leftType = std::move(resolvedLeft->getExpType());
+        assignmentExpressionPtr->setExpType(std::move(leftType));
+
+        return assignmentExpressionPtr;
     }
-    else if (auto unaryExpression =
-                 std::dynamic_pointer_cast<UnaryExpression>(expression)) {
-        typeCheckExpression(unaryExpression->getExpression());
-        if (std::dynamic_pointer_cast<NotOperator>(
-                unaryExpression->getOperator())) {
-            unaryExpression->setExpType(std::make_shared<IntType>());
+    else if (dynamic_cast<UnaryExpression *>(expression.get())) {
+        auto unaryExpressionPtr = std::unique_ptr<UnaryExpression>(
+            static_cast<UnaryExpression *>(expression.release()));
+        auto resolvedExpression =
+            typeCheckExpression(std::move(unaryExpressionPtr->getExpression()));
+        unaryExpressionPtr->setExpression(std::unique_ptr<Factor>(
+            static_cast<Factor *>(resolvedExpression.release())));
+
+        if (dynamic_cast<NotOperator *>(
+                unaryExpressionPtr->getOperator().get())) {
+            unaryExpressionPtr->setExpType(std::make_unique<IntType>());
         }
         else {
-            unaryExpression->setExpType(
-                unaryExpression->getExpression()->getExpType());
+            unaryExpressionPtr->setExpType(
+                std::move(unaryExpressionPtr->getExpression()->getExpType()));
         }
+
+        return unaryExpressionPtr;
     }
-    else if (auto binaryExpression =
-                 std::dynamic_pointer_cast<BinaryExpression>(expression)) {
-        typeCheckExpression(binaryExpression->getLeft());
-        typeCheckExpression(binaryExpression->getRight());
-        auto binaryOperator = binaryExpression->getOperator();
-        if (std::dynamic_pointer_cast<AndOperator>(binaryOperator) ||
-            std::dynamic_pointer_cast<OrOperator>(binaryOperator)) {
+    else if (dynamic_cast<BinaryExpression *>(expression.get())) {
+        auto binaryExpressionPtr = std::unique_ptr<BinaryExpression>(
+            static_cast<BinaryExpression *>(expression.release()));
+        auto resolvedLeft =
+            typeCheckExpression(std::move(binaryExpressionPtr->getLeft()));
+        auto resolvedRight =
+            typeCheckExpression(std::move(binaryExpressionPtr->getRight()));
+        binaryExpressionPtr->setLeft(std::move(resolvedLeft));
+        binaryExpressionPtr->setRight(std::move(resolvedRight));
+        auto binaryOperator = std::move(binaryExpressionPtr->getOperator());
+        if (dynamic_cast<AndOperator *>(binaryOperator.get()) ||
+            dynamic_cast<OrOperator *>(binaryOperator.get())) {
             // Logical operators should always return type `int`.
-            binaryExpression->setExpType(std::make_shared<IntType>());
-            return;
+            binaryExpressionPtr->setExpType(std::make_unique<IntType>());
+            return binaryExpressionPtr;
         }
-        auto leftType = binaryExpression->getLeft()->getExpType();
-        auto rightType = binaryExpression->getRight()->getExpType();
-        auto commonType = getCommonType(leftType, rightType);
-        auto convertedLeft = convertTo(binaryExpression->getLeft(), commonType);
+        auto leftType = std::move(resolvedLeft->getExpType());
+        auto rightType = std::move(resolvedRight->getExpType());
+        auto commonType =
+            getCommonType(std::move(leftType), std::move(rightType));
+        auto convertedLeft =
+            convertTo(std::move(resolvedLeft), std::move(commonType));
         auto convertedRight =
-            convertTo(binaryExpression->getRight(), commonType);
-        binaryExpression->setLeft(convertedLeft);
-        binaryExpression->setRight(convertedRight);
-        if (std::dynamic_pointer_cast<AddOperator>(binaryOperator) ||
-            std::dynamic_pointer_cast<SubtractOperator>(binaryOperator) ||
-            std::dynamic_pointer_cast<MultiplyOperator>(binaryOperator) ||
-            std::dynamic_pointer_cast<DivideOperator>(binaryOperator) ||
-            std::dynamic_pointer_cast<RemainderOperator>(binaryOperator)) {
-            binaryExpression->setExpType(commonType);
+            convertTo(std::move(resolvedRight), std::move(commonType));
+        binaryExpressionPtr->setLeft(std::move(convertedLeft));
+        binaryExpressionPtr->setRight(std::move(convertedRight));
+        if (dynamic_cast<AddOperator *>(binaryOperator.get()) ||
+            dynamic_cast<SubtractOperator *>(binaryOperator.get()) ||
+            dynamic_cast<MultiplyOperator *>(binaryOperator.get()) ||
+            dynamic_cast<DivideOperator *>(binaryOperator.get()) ||
+            dynamic_cast<RemainderOperator *>(binaryOperator.get())) {
+            binaryExpressionPtr->setExpType(std::move(commonType));
         }
         else {
-            binaryExpression->setExpType(std::make_shared<IntType>());
+            binaryExpressionPtr->setExpType(std::make_unique<IntType>());
         }
+
+        return binaryExpressionPtr;
     }
-    else if (auto conditionalExpression =
-                 std::dynamic_pointer_cast<ConditionalExpression>(expression)) {
-        typeCheckExpression(conditionalExpression->getCondition());
-        typeCheckExpression(conditionalExpression->getThenExpression());
-        typeCheckExpression(conditionalExpression->getElseExpression());
+    else if (dynamic_cast<ConditionalExpression *>(expression.get())) {
+        auto conditionalExpressionPtr = std::unique_ptr<ConditionalExpression>(
+            static_cast<ConditionalExpression *>(expression.release()));
+        auto resolvedCondition = typeCheckExpression(
+            std::move(conditionalExpressionPtr->getCondition()));
+        auto resolvedThen = typeCheckExpression(
+            std::move(conditionalExpressionPtr->getThenExpression()));
+        auto resolvedElse = typeCheckExpression(
+            std::move(conditionalExpressionPtr->getElseExpression()));
         auto conditionType =
-            conditionalExpression->getCondition()->getExpType();
-        auto thenType =
-            conditionalExpression->getThenExpression()->getExpType();
-        auto elseType =
-            conditionalExpression->getElseExpression()->getExpType();
+            std::move(conditionalExpressionPtr->getCondition()->getExpType());
+        auto thenType = std::move(
+            conditionalExpressionPtr->getThenExpression()->getExpType());
+        auto elseType = std::move(
+            conditionalExpressionPtr->getElseExpression()->getExpType());
         // Get the common type of the then and else expressions/branches.
-        auto commonType = getCommonType(thenType, elseType);
+        auto commonType =
+            getCommonType(std::move(thenType), std::move(elseType));
         // Convert the then and else expressions to the common type.
         auto convertedThen =
-            convertTo(conditionalExpression->getThenExpression(), commonType);
+            convertTo(std::move(resolvedThen), std::move(commonType));
         auto convertedElse =
-            convertTo(conditionalExpression->getElseExpression(), commonType);
-        conditionalExpression->setThenExpression(convertedThen);
-        conditionalExpression->setElseExpression(convertedElse);
+            convertTo(std::move(resolvedElse), std::move(commonType));
+        conditionalExpressionPtr->setThenExpression(std::move(convertedThen));
+        conditionalExpressionPtr->setElseExpression(std::move(convertedElse));
         // Set the conditional expression type to the common type.
-        conditionalExpression->setExpType(commonType);
+        conditionalExpressionPtr->setExpType(std::move(commonType));
+
+        return conditionalExpressionPtr;
+    }
+    else {
+        throw std::logic_error("Unsupported expression type for type-checking");
     }
 }
 
-void TypeCheckingPass::typeCheckStatement(
-    std::shared_ptr<Statement> statement,
-    std::string enclosingFunctionIdentifier) {
-    if (auto returnStatement =
-            std::dynamic_pointer_cast<ReturnStatement>(statement)) {
+std::unique_ptr<Statement>
+TypeCheckingPass::typeCheckStatement(std::unique_ptr<Statement> statement,
+                                     std::string enclosingFunctionIdentifier) {
+    if (dynamic_cast<ReturnStatement *>(statement.get())) {
+        auto returnStatementPtr = std::unique_ptr<ReturnStatement>(
+            static_cast<ReturnStatement *>(statement.release()));
         // Look up the enclosing function's return type and convert the return
         // value to that type.
         // Use the enclosing function's name to look up the enclosing function's
         // return type.
         auto functionType =
-            frontendSymbolTable[enclosingFunctionIdentifier].first;
+            std::move(frontendSymbolTable[enclosingFunctionIdentifier].first);
         if (!functionType) {
             throw std::logic_error("Function not found in symbol table: " +
                                    enclosingFunctionIdentifier);
@@ -1040,74 +1249,142 @@ void TypeCheckingPass::typeCheckStatement(
             throw std::logic_error("Function name used as variable: " +
                                    enclosingFunctionIdentifier);
         }
-        auto returnType = std::dynamic_pointer_cast<FunctionType>(functionType);
-        if (returnStatement->getExpression()) {
-            typeCheckExpression(returnStatement->getExpression());
-            auto convertedReturn = convertTo(returnStatement->getExpression(),
-                                             returnType->getReturnType());
-            returnStatement->setExpression(convertedReturn);
+        auto returnType = std::unique_ptr<FunctionType>(
+            static_cast<FunctionType *>(functionType.release()));
+        if (returnStatementPtr->getExpression()) {
+            auto resolvedExpression = typeCheckExpression(
+                std::move(returnStatementPtr->getExpression()));
+            auto convertedReturn =
+                convertTo(std::move(resolvedExpression),
+                          std::move(returnType->getReturnType()));
+            returnStatementPtr->setExpression(std::move(convertedReturn));
+            return returnStatementPtr;
         }
+        return returnStatementPtr;
     }
-    else if (auto expressionStatement =
-                 std::dynamic_pointer_cast<ExpressionStatement>(statement)) {
-        typeCheckExpression(expressionStatement->getExpression());
+    else if (dynamic_cast<ExpressionStatement *>(statement.get())) {
+        auto expressionStatementPtr = std::unique_ptr<ExpressionStatement>(
+            static_cast<ExpressionStatement *>(statement.release()));
+        auto resolvedExpression = typeCheckExpression(
+            std::move(expressionStatementPtr->getExpression()));
+        expressionStatementPtr->setExpression(std::move(resolvedExpression));
+        return expressionStatementPtr;
     }
-    else if (auto compoundStatement =
-                 std::dynamic_pointer_cast<CompoundStatement>(statement)) {
-        typeCheckBlock(compoundStatement->getBlock(),
-                       enclosingFunctionIdentifier);
-    }
-    else if (auto whileStatement =
-                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
-        typeCheckExpression(whileStatement->getCondition());
-        typeCheckStatement(whileStatement->getBody(),
+    else if (dynamic_cast<CompoundStatement *>(statement.get())) {
+        auto compoundStatementPtr = std::unique_ptr<CompoundStatement>(
+            static_cast<CompoundStatement *>(statement.release()));
+        auto resolvedBlock =
+            typeCheckBlock(std::move(compoundStatementPtr->getBlock()),
                            enclosingFunctionIdentifier);
+        compoundStatementPtr->setBlock(std::move(resolvedBlock));
+        return compoundStatementPtr;
     }
-    else if (auto doWhileStatement =
-                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
-        typeCheckExpression(doWhileStatement->getCondition());
-        typeCheckStatement(doWhileStatement->getBody(),
-                           enclosingFunctionIdentifier);
-    }
-    else if (auto forStatement =
-                 std::dynamic_pointer_cast<ForStatement>(statement)) {
-        if (forStatement->getForInit()) {
-            typeCheckForInit(forStatement->getForInit());
-        }
-        if (forStatement->getOptCondition().has_value()) {
-            typeCheckExpression(forStatement->getOptCondition().value());
-        }
-        if (forStatement->getOptPost().has_value()) {
-            typeCheckExpression(forStatement->getOptPost().value());
-        }
-        typeCheckStatement(forStatement->getBody(),
-                           enclosingFunctionIdentifier);
-    }
-    else if (auto ifStatement =
-                 std::dynamic_pointer_cast<IfStatement>(statement)) {
-        typeCheckExpression(ifStatement->getCondition());
-        typeCheckStatement(ifStatement->getThenStatement(),
-                           enclosingFunctionIdentifier);
-        if (ifStatement->getElseOptStatement().has_value()) {
-            typeCheckStatement(ifStatement->getElseOptStatement().value(),
+    else if (dynamic_cast<WhileStatement *>(statement.get())) {
+        auto whileStatementPtr = std::unique_ptr<WhileStatement>(
+            static_cast<WhileStatement *>(statement.release()));
+        auto resolvedCondition =
+            typeCheckExpression(std::move(whileStatementPtr->getCondition()));
+        auto resolvedBody =
+            typeCheckStatement(std::move(whileStatementPtr->getBody()),
                                enclosingFunctionIdentifier);
+        whileStatementPtr->setCondition(std::move(resolvedCondition));
+        whileStatementPtr->setBody(std::move(resolvedBody));
+        return whileStatementPtr;
+    }
+    else if (dynamic_cast<DoWhileStatement *>(statement.get())) {
+        auto doWhileStatementPtr = std::unique_ptr<DoWhileStatement>(
+            static_cast<DoWhileStatement *>(statement.release()));
+        auto resolvedCondition =
+            typeCheckExpression(std::move(doWhileStatementPtr->getCondition()));
+        auto resolvedBody =
+            typeCheckStatement(std::move(doWhileStatementPtr->getBody()),
+                               enclosingFunctionIdentifier);
+        doWhileStatementPtr->setCondition(std::move(resolvedCondition));
+        doWhileStatementPtr->setBody(std::move(resolvedBody));
+        return doWhileStatementPtr;
+    }
+    else if (dynamic_cast<ForStatement *>(statement.get())) {
+        auto forStatementPtr = std::unique_ptr<ForStatement>(
+            static_cast<ForStatement *>(statement.release()));
+
+        if (forStatementPtr->getForInit()) {
+            auto resolvedForInit =
+                typeCheckForInit(std::move(forStatementPtr->getForInit()));
+            forStatementPtr->setForInit(std::move(resolvedForInit));
         }
+        if (forStatementPtr->getOptCondition().has_value()) {
+            auto resolvedCondition = typeCheckExpression(
+                std::move(forStatementPtr->getOptCondition().value()));
+            auto resolvedOptCondition =
+                std::make_optional(std::move(resolvedCondition));
+            forStatementPtr->setOptCondition(std::move(resolvedOptCondition));
+        }
+        if (forStatementPtr->getOptPost().has_value()) {
+            auto resolvedPost = typeCheckExpression(
+                std::move(forStatementPtr->getOptPost().value()));
+            auto resolvedOptPost = std::make_optional(std::move(resolvedPost));
+            forStatementPtr->setOptPost(std::move(resolvedOptPost));
+        }
+
+        auto resolvedBody = typeCheckStatement(
+            std::move(forStatementPtr->getBody()), enclosingFunctionIdentifier);
+        forStatementPtr->setBody(std::move(resolvedBody));
+
+        return forStatementPtr;
+    }
+    else if (dynamic_cast<IfStatement *>(statement.get())) {
+        auto ifStatementPtr = std::unique_ptr<IfStatement>(
+            static_cast<IfStatement *>(statement.release()));
+        auto resolvedCondition =
+            typeCheckExpression(std::move(ifStatementPtr->getCondition()));
+        auto resolvedThen =
+            typeCheckStatement(std::move(ifStatementPtr->getThenStatement()),
+                               enclosingFunctionIdentifier);
+        if (ifStatementPtr->getElseOptStatement().has_value()) {
+            auto resolvedElse = typeCheckStatement(
+                std::move(ifStatementPtr->getElseOptStatement().value()),
+                enclosingFunctionIdentifier);
+            ifStatementPtr->setElseOptStatement(std::move(resolvedElse));
+        }
+        ifStatementPtr->setCondition(std::move(resolvedCondition));
+        ifStatementPtr->setThenStatement(std::move(resolvedThen));
+        return ifStatementPtr;
+    }
+    else if (dynamic_cast<NullStatement *>(statement.get())) {
+        auto nullStatementPtr = std::unique_ptr<NullStatement>(
+            static_cast<NullStatement *>(statement.release()));
+        return nullStatementPtr;
+    }
+    else {
+        throw std::logic_error("Unsupported statement type for type-checking");
     }
 }
 
-void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
-    if (auto initExpr = std::dynamic_pointer_cast<InitExpr>(forInit)) {
-        if (initExpr->getExpression()) {
-            typeCheckExpression(initExpr->getExpression().value());
+std::unique_ptr<ForInit>
+TypeCheckingPass::typeCheckForInit(std::unique_ptr<ForInit> forInit) {
+    if (dynamic_cast<InitExpr *>(forInit.get())) {
+        auto initExprPtr = std::unique_ptr<InitExpr>(
+            static_cast<InitExpr *>(forInit.release()));
+        if (initExprPtr->getExpression()) {
+            auto resolvedExpression = typeCheckExpression(
+                std::move(initExprPtr->getExpression().value()));
+            return std::make_unique<InitExpr>(std::move(resolvedExpression));
+        }
+        else {
+            return std::make_unique<InitExpr>();
         }
     }
-    else if (auto initDecl = std::dynamic_pointer_cast<InitDecl>(forInit)) {
-        if (initDecl->getVariableDeclaration()
+    else if (dynamic_cast<InitDecl *>(forInit.get())) {
+        auto initDeclPtr = std::unique_ptr<InitDecl>(
+            static_cast<InitDecl *>(forInit.release()));
+        if (initDeclPtr->getVariableDeclaration()
                 ->getOptStorageClass()
                 .has_value()) {
             throw std::logic_error("Storage class in for-init declaration");
         }
-        typeCheckLocalVariableDeclaration(initDecl->getVariableDeclaration());
+        auto resolvedDecl = typeCheckLocalVariableDeclaration(
+            std::move(initDeclPtr->getVariableDeclaration()));
+        return std::make_unique<InitDecl>(std::move(resolvedDecl));
     }
     else {
         throw std::logic_error("Unsupported for-init type for type-checking");
@@ -1120,18 +1397,21 @@ void TypeCheckingPass::typeCheckForInit(std::shared_ptr<ForInit> forInit) {
 /*
  * Start: Functions for the loop-labeling pass.
  */
-void LoopLabelingPass::labelLoops(std::shared_ptr<Program> program) {
-    for (auto &declaration : *program->getDeclarations()) {
-        if (auto functionDeclaration =
-                std::dynamic_pointer_cast<FunctionDeclaration>(declaration)) {
-            if (functionDeclaration->getOptBody().has_value()) {
-                auto resolvedBody =
-                    labelBlock(functionDeclaration->getOptBody().value(), "");
-                functionDeclaration->setOptBody(
-                    std::make_optional(resolvedBody));
+std::unique_ptr<Program>
+LoopLabelingPass::labelLoops(std::unique_ptr<Program> program) {
+    for (auto &declaration : program->getDeclarations()) {
+        if (dynamic_cast<FunctionDeclaration *>(declaration.get())) {
+            auto functionDeclarationPtr = std::unique_ptr<FunctionDeclaration>(
+                static_cast<FunctionDeclaration *>(declaration.release()));
+            if (functionDeclarationPtr->getOptBody().has_value()) {
+                auto resolvedBody = labelBlock(
+                    functionDeclarationPtr->getOptBody().value(), "");
+                functionDeclarationPtr->setOptBody(
+                    std::make_optional(std::move(resolvedBody)));
             }
         }
     }
+    return program;
 }
 
 std::string LoopLabelingPass::generateLoopLabel() {
@@ -1139,133 +1419,152 @@ std::string LoopLabelingPass::generateLoopLabel() {
     return "loop" + std::to_string(this->loopLabelingCounter++);
 }
 
-std::shared_ptr<Statement>
-LoopLabelingPass::annotateStatement(std::shared_ptr<Statement> statement,
+std::unique_ptr<Statement>
+LoopLabelingPass::annotateStatement(std::unique_ptr<Statement> statement,
                                     std::string label) {
-    if (auto breakStatement =
-            std::dynamic_pointer_cast<BreakStatement>(statement)) {
-        breakStatement->setLabel(label);
-        return breakStatement;
+    if (dynamic_cast<BreakStatement *>(statement.get())) {
+        auto breakStatementPtr = std::unique_ptr<BreakStatement>(
+            static_cast<BreakStatement *>(statement.release()));
+        breakStatementPtr->setLabel(label);
+        return breakStatementPtr;
     }
-    else if (auto continueStatement =
-                 std::dynamic_pointer_cast<ContinueStatement>(statement)) {
-        continueStatement->setLabel(label);
-        return continueStatement;
+    else if (dynamic_cast<ContinueStatement *>(statement.get())) {
+        auto continueStatementPtr = std::unique_ptr<ContinueStatement>(
+            static_cast<ContinueStatement *>(statement.release()));
+        continueStatementPtr->setLabel(label);
+        return continueStatementPtr;
     }
-    else if (auto whileStatement =
-                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
-        whileStatement->setLabel(label);
-        return whileStatement;
+    else if (dynamic_cast<WhileStatement *>(statement.get())) {
+        auto whileStatementPtr = std::unique_ptr<WhileStatement>(
+            static_cast<WhileStatement *>(statement.release()));
+        whileStatementPtr->setLabel(label);
+        return whileStatementPtr;
     }
-    else if (auto doWhileStatement =
-                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
-        doWhileStatement->setLabel(label);
-        return doWhileStatement;
+    else if (dynamic_cast<DoWhileStatement *>(statement.get())) {
+        auto doWhileStatementPtr = std::unique_ptr<DoWhileStatement>(
+            static_cast<DoWhileStatement *>(statement.release()));
+        doWhileStatementPtr->setLabel(label);
+        return doWhileStatementPtr;
     }
-    else if (auto forStatement =
-                 std::dynamic_pointer_cast<ForStatement>(statement)) {
-        forStatement->setLabel(label);
-        return forStatement;
+    else if (dynamic_cast<ForStatement *>(statement.get())) {
+        auto forStatementPtr = std::unique_ptr<ForStatement>(
+            static_cast<ForStatement *>(statement.release()));
+        forStatementPtr->setLabel(label);
+        return forStatementPtr;
     }
     else {
         return statement;
     }
 }
 
-std::shared_ptr<Statement>
-LoopLabelingPass::labelStatement(std::shared_ptr<Statement> statement,
+std::unique_ptr<Statement>
+LoopLabelingPass::labelStatement(std::unique_ptr<Statement> statement,
                                  std::string label) {
-    if (auto breakStatement =
-            std::dynamic_pointer_cast<BreakStatement>(statement)) {
+    if (dynamic_cast<BreakStatement *>(statement.get())) {
+        auto breakStatementPtr = std::unique_ptr<BreakStatement>(
+            static_cast<BreakStatement *>(statement.release()));
         if (label == "") {
             throw std::logic_error("Break statement outside of loop");
         }
-        return annotateStatement(std::move(breakStatement), label);
+        return annotateStatement(std::move(breakStatementPtr), label);
     }
-    else if (auto continueStatement =
-                 std::dynamic_pointer_cast<ContinueStatement>(statement)) {
+    else if (dynamic_cast<ContinueStatement *>(statement.get())) {
+        auto continueStatementPtr = std::unique_ptr<ContinueStatement>(
+            static_cast<ContinueStatement *>(statement.release()));
         if (label == "") {
             throw std::logic_error("Continue statement outside of loop");
         }
-        return annotateStatement(std::move(continueStatement), label);
+        return annotateStatement(std::move(continueStatementPtr), label);
     }
-    else if (auto whileStatement =
-                 std::dynamic_pointer_cast<WhileStatement>(statement)) {
-        auto newLabel = generateLoopLabel();
-        auto labeledBody = labelStatement(whileStatement->getBody(), newLabel);
-        auto labeledWhileStatement = std::make_shared<WhileStatement>(
-            whileStatement->getCondition(), std::move(labeledBody));
-        return annotateStatement(std::move(labeledWhileStatement), newLabel);
-    }
-    else if (auto doWhileStatement =
-                 std::dynamic_pointer_cast<DoWhileStatement>(statement)) {
+    else if (dynamic_cast<WhileStatement *>(statement.get())) {
+        auto whileStatementPtr = std::unique_ptr<WhileStatement>(
+            static_cast<WhileStatement *>(statement.release()));
         auto newLabel = generateLoopLabel();
         auto labeledBody =
-            labelStatement(doWhileStatement->getBody(), newLabel);
-        auto labeledDoWhileStatement = std::make_shared<DoWhileStatement>(
-            doWhileStatement->getCondition(), std::move(labeledBody));
+            labelStatement(std::move(whileStatementPtr->getBody()), newLabel);
+        auto labeledWhileStatement = std::make_unique<WhileStatement>(
+            std::move(whileStatementPtr->getCondition()),
+            std::move(labeledBody));
+        return annotateStatement(std::move(labeledWhileStatement), newLabel);
+    }
+    else if (dynamic_cast<DoWhileStatement *>(statement.get())) {
+        auto doWhileStatementPtr = std::unique_ptr<DoWhileStatement>(
+            static_cast<DoWhileStatement *>(statement.release()));
+        auto newLabel = generateLoopLabel();
+        auto labeledBody =
+            labelStatement(std::move(doWhileStatementPtr->getBody()), newLabel);
+        auto labeledDoWhileStatement = std::make_unique<DoWhileStatement>(
+            std::move(doWhileStatementPtr->getCondition()),
+            std::move(labeledBody));
         return annotateStatement(std::move(labeledDoWhileStatement), newLabel);
     }
-    else if (auto forStatement =
-                 std::dynamic_pointer_cast<ForStatement>(statement)) {
+    else if (dynamic_cast<ForStatement *>(statement.get())) {
+        auto forStatementPtr = std::unique_ptr<ForStatement>(
+            static_cast<ForStatement *>(statement.release()));
         auto newLabel = generateLoopLabel();
-        auto labeledBody = labelStatement(forStatement->getBody(), newLabel);
-        auto labeledForStatement = std::make_shared<ForStatement>(
-            forStatement->getForInit(), forStatement->getOptCondition(),
-            forStatement->getOptPost(), std::move(labeledBody));
+        auto labeledBody =
+            labelStatement(std::move(forStatementPtr->getBody()), newLabel);
+        auto labeledForStatement = std::make_unique<ForStatement>(
+            std::move(forStatementPtr->getForInit()),
+            std::move(forStatementPtr->getOptCondition()),
+            std::move(forStatementPtr->getOptPost()), std::move(labeledBody));
         return annotateStatement(std::move(labeledForStatement), newLabel);
     }
-    else if (auto ifStatement =
-                 std::dynamic_pointer_cast<IfStatement>(statement)) {
-        auto labeledThenStatement =
-            labelStatement(ifStatement->getThenStatement(), label);
-        if (ifStatement->getElseOptStatement().has_value()) {
+    else if (dynamic_cast<IfStatement *>(statement.get())) {
+        auto ifStatementPtr = std::unique_ptr<IfStatement>(
+            static_cast<IfStatement *>(statement.release()));
+        auto labeledThenStatement = labelStatement(
+            std::move(ifStatementPtr->getThenStatement()), label);
+        if (ifStatementPtr->getElseOptStatement().has_value()) {
             auto labeledElseStatement = labelStatement(
-                ifStatement->getElseOptStatement().value(), label);
-            return std::make_shared<IfStatement>(
-                ifStatement->getCondition(), std::move(labeledThenStatement),
+                std::move(ifStatementPtr->getElseOptStatement().value()),
+                label);
+            return std::make_unique<IfStatement>(
+                std::move(ifStatementPtr->getCondition()),
+                std::move(labeledThenStatement),
                 std::move(labeledElseStatement));
         }
         else {
-            return std::make_shared<IfStatement>(
-                ifStatement->getCondition(), std::move(labeledThenStatement));
+            return std::make_unique<IfStatement>(
+                std::move(ifStatementPtr->getCondition()),
+                std::move(labeledThenStatement));
         }
     }
-    else if (auto compoundStatement =
-                 std::dynamic_pointer_cast<CompoundStatement>(statement)) {
-        auto block = compoundStatement->getBlock();
-        auto labeledBlock = labelBlock(block, label);
-        return std::make_shared<CompoundStatement>(std::move(labeledBlock));
+    else if (dynamic_cast<CompoundStatement *>(statement.get())) {
+        auto compoundStatementPtr = std::unique_ptr<CompoundStatement>(
+            static_cast<CompoundStatement *>(statement.release()));
+        auto labeledBlock = labelBlock(compoundStatementPtr->getBlock(), label);
+        return std::make_unique<CompoundStatement>(std::move(labeledBlock));
     }
     else {
         return statement;
     }
 }
 
-std::shared_ptr<Block>
-LoopLabelingPass::labelBlock(std::shared_ptr<Block> block, std::string label) {
-    auto blockItems = block->getBlockItems();
-    auto newBlockItems =
-        std::make_shared<std::vector<std::shared_ptr<BlockItem>>>();
-    for (auto &blockItem : *blockItems) {
-        if (auto dBlockItem =
-                std::dynamic_pointer_cast<DBlockItem>(blockItem)) {
-            newBlockItems->emplace_back(dBlockItem);
+Block *LoopLabelingPass::labelBlock(Block *block, std::string label) {
+    auto &blockItems = block->getBlockItems();
+    auto newBlockItems = std::vector<std::unique_ptr<BlockItem>>();
+    for (auto &blockItem : blockItems) {
+        if (dynamic_cast<DBlockItem *>(blockItem.get())) {
+            auto dBlockItemPtr = std::unique_ptr<DBlockItem>(
+                static_cast<DBlockItem *>(blockItem.release()));
+            newBlockItems.emplace_back(std::move(dBlockItemPtr));
         }
-        else if (auto sBlockItem =
-                     std::dynamic_pointer_cast<SBlockItem>(blockItem)) {
+        else if (dynamic_cast<SBlockItem *>(blockItem.get())) {
+            auto sBlockItemPtr = std::unique_ptr<SBlockItem>(
+                static_cast<SBlockItem *>(blockItem.release()));
             auto resolvedStatement =
-                labelStatement(sBlockItem->getStatement(), label);
-            auto labeledSBlockItem =
-                std::make_shared<SBlockItem>(std::move(resolvedStatement));
-            newBlockItems->emplace_back(std::move(labeledSBlockItem));
+                labelStatement(std::move(sBlockItemPtr->getStatement()), label);
+            auto labeledSBlockItemPtr =
+                std::make_unique<SBlockItem>(std::move(resolvedStatement));
+            newBlockItems.emplace_back(std::move(labeledSBlockItemPtr));
         }
         else {
             throw std::logic_error(
                 "Unsupported block item type for loop labeling");
         }
     }
-    return std::make_shared<Block>(std::move(newBlockItems));
+    return new Block(std::move(newBlockItems));
 }
 /*
  * End: Functions for the loop-labeling pass.
