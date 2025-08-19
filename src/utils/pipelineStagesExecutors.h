@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string.h>
 #include <string_view>
@@ -24,10 +25,10 @@ class PipelineStagesExecutors {
   public:
     [[nodiscard]] static std::vector<Token>
     lexerExecutor(std::string_view sourceFile);
-    [[nodiscard]] static std::shared_ptr<AST::Program>
+    [[nodiscard]] static std::unique_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
-    [[nodiscard]] static int
-    semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram);
+    [[nodiscard]] static std::pair<std::unique_ptr<AST::Program>, int>
+    semanticAnalysisExecutor(std::unique_ptr<AST::Program> &astProgram);
     [[nodiscard]] static std::pair<
         std::shared_ptr<IR::Program>,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>

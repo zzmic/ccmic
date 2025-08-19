@@ -35,7 +35,8 @@ class MapEntry {
 
 class IdentifierResolutionPass : public SemanticAnalysisPass {
   public:
-    [[nodiscard]] int resolveProgram(std::unique_ptr<Program> program);
+    [[nodiscard]] std::pair<std::unique_ptr<Program>, int>
+    resolveProgram(std::unique_ptr<Program> program);
 
   private:
     int variableResolutionCounter = 0;

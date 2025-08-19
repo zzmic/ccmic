@@ -7,7 +7,8 @@ namespace AST {
 /*
  * Start: Functions for the identifier-resolution pass.
  */
-int IdentifierResolutionPass::resolveProgram(std::unique_ptr<Program> program) {
+std::pair<std::unique_ptr<Program>, int>
+IdentifierResolutionPass::resolveProgram(std::unique_ptr<Program> program) {
     // Initialize an empty identifier map (that will be passed to the helpers).
     // Instead of maintaining a "global" identifier map, we pass the identifier
     // map to the helper functions to, together with `copyIdentifierMap`, ensure
@@ -43,7 +44,7 @@ int IdentifierResolutionPass::resolveProgram(std::unique_ptr<Program> program) {
     }
     program->setDeclarations(std::move(resolvedDeclarations));
 
-    return this->variableResolutionCounter;
+    return std::make_pair(std::move(program), this->variableResolutionCounter);
 }
 
 std::unordered_map<std::string, MapEntry>

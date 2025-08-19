@@ -1,6 +1,5 @@
 #include "pipelineStagesExecutors.h"
 #include "../frontend/frontendSymbolTable.h"
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -41,9 +40,9 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
 
 // Function to parse the tokens, generate the AST, visit the AST, and print the
 // AST.
-std::shared_ptr<AST::Program>
+std::unique_ptr<AST::Program>
 PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
-    std::shared_ptr<AST::Program> program;
+    std::unique_ptr<AST::Program> program;
     try {
         AST::Parser parser(tokens);
         program = parser.parse();
@@ -55,13 +54,13 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
         msg << "Parsing error: " << e.what();
         throw std::runtime_error(msg.str());
     }
-
     return program;
 }
 
 // Function to perform semantic-analysis passes on the AST program.
-int PipelineStagesExecutors::semanticAnalysisExecutor(
-    const std::shared_ptr<AST::Program> &astProgram) {
+std::pair<std::unique_ptr<AST::Program>, int>
+PipelineStagesExecutors::semanticAnalysisExecutor(
+    std::unique_ptr<AST::Program> &astProgram) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
     AST::TypeCheckingPass typeCheckingPass;
     AST::LoopLabelingPass loopLabelingPass;
@@ -69,8 +68,10 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
 
     try {
         // Perform the identifier-resolution pass.
-        variableResolutionCounter =
-            IdentifierResolutionPass.resolveProgram(astProgram);
+        auto identifierResolutionResult =
+            IdentifierResolutionPass.resolveProgram(std::move(astProgram));
+        astProgram = std::move(identifierResolutionResult.first);
+        variableResolutionCounter = identifierResolutionResult.second;
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Identifier resolution error: " << e.what();
@@ -78,7 +79,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     }
     try {
         // Perform the type-checking pass.
-        typeCheckingPass.typeCheckProgram(astProgram);
+        auto typeCheckingResult =
+            typeCheckingPass.typeCheckProgram(std::move(astProgram));
+        astProgram = std::move(typeCheckingResult);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Type-checking error: " << e.what();
@@ -86,7 +89,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     }
     try {
         // Perform the loop-labeling pass.
-        loopLabelingPass.labelLoops(astProgram);
+        auto loopLabelingResult =
+            loopLabelingPass.labelLoops(std::move(astProgram));
+        astProgram = std::move(loopLabelingResult);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Loop-labeling error: " << e.what();
@@ -103,8 +108,8 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         throw std::runtime_error(msg.str());
     }
 
-    // Return the variable resolution counter.
-    return variableResolutionCounter;
+    // Return the AST program and the variable resolution counter.
+    return std::make_pair(std::move(astProgram), variableResolutionCounter);
 }
 
 // Function to generate the IR from the AST program.
