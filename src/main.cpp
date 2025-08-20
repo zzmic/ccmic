@@ -172,8 +172,8 @@ int main(int argc, char *argv[]) {
         // Generate the IR from the AST program and return the IR program.
         auto irProgramAndIRStaticVariables =
             PipelineStagesExecutors::irGeneratorExecutor(
-                std::move(astProgram), variableResolutionCounter);
-        auto irProgram = irProgramAndIRStaticVariables.first;
+                astProgram, variableResolutionCounter);
+        auto irProgram = std::move(irProgramAndIRStaticVariables.first);
         auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
         if (foldConstantsPass || propagateCopiesPass ||
@@ -182,8 +182,8 @@ int main(int argc, char *argv[]) {
             std::cout << "<<< Before optimization passes: >>>\n";
             PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
 
-            // Perform the optimization passes on the IR program (if any of the
-            // flags is set to true).
+            // Perform the optimization passes on the IR program (if any of
+            // the flags is set to true).
             PipelineStagesExecutors::irOptimizationExecutor(
                 irProgram, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
@@ -197,6 +197,8 @@ int main(int argc, char *argv[]) {
             // Print the IR program onto the stdout.
             PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
         }
+        // Print the IR program onto the stdout.
+        PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
 
         if (tillIR) {
             std::cout

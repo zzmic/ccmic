@@ -3,21 +3,22 @@
 
 namespace IR {
 // Helper function to perform optimization passes on the IR function definition.
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-IROptimizer::irOptimize(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &functionBody,
+std::vector<std::unique_ptr<IR::Instruction>> IROptimizer::irOptimize(
+    std::vector<std::unique_ptr<IR::Instruction>> &functionBody,
     bool foldConstantsPass, bool propagateCopiesPass,
     bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {
-    if (functionBody->empty()) {
-        return functionBody;
+    if (functionBody.empty()) {
+        return std::move(functionBody);
     }
-    auto currentFunctionBody = functionBody;
-    while (true) {
-        auto postConstantFoldingFunctionBody = currentFunctionBody;
+    auto currentFunctionBody = std::move(functionBody);
+    // Limit iterations to prevent infinite loops
+    const int maxIterations = 10;
+    for (int iteration = 0; iteration < maxIterations; ++iteration) {
+        auto postConstantFoldingFunctionBody = std::move(currentFunctionBody);
         if (foldConstantsPass) {
             postConstantFoldingFunctionBody =
-                IR::ConstantFoldingPass::foldConstants(currentFunctionBody);
+                IR::ConstantFoldingPass::foldConstants(
+                    postConstantFoldingFunctionBody);
         }
         auto cfg =
             IR::CFG::makeControlFlowGraph(postConstantFoldingFunctionBody);
@@ -32,123 +33,115 @@ IROptimizer::irOptimize(
             cfg = IR::DeadStoreEliminationPass::eliminateDeadStores(cfg);
         }
         auto optimizedFunctionBody = IR::CFG::cfgToInstructions(cfg);
-        if (optimizedFunctionBody == currentFunctionBody ||
-            optimizedFunctionBody->empty()) {
+        if (optimizedFunctionBody.empty()) {
             return optimizedFunctionBody;
         }
-        currentFunctionBody = optimizedFunctionBody;
+        currentFunctionBody = std::move(optimizedFunctionBody);
     }
+    return currentFunctionBody;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+std::vector<std::unique_ptr<IR::Instruction>>
 ConstantFoldingPass::foldConstants(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &functionBody) {
-    auto postConstantFoldingFunctionBody = functionBody;
-    for (auto it = postConstantFoldingFunctionBody->begin();
-         it != postConstantFoldingFunctionBody->end();) {
-        auto instruction = *it;
+    std::vector<std::unique_ptr<IR::Instruction>> &functionBody) {
+    auto postConstantFoldingFunctionBody = std::move(functionBody);
+    for (auto it = postConstantFoldingFunctionBody.begin();
+         it != postConstantFoldingFunctionBody.end();) {
+        auto instruction = it->get();
         // Handle unary instructions with a constant source operand.
         if (auto unaryInstruction =
-                std::dynamic_pointer_cast<IR::UnaryInstruction>(instruction)) {
-            if (auto constantValue =
-                    std::dynamic_pointer_cast<IR::ConstantValue>(
-                        unaryInstruction->getSrc())) {
-                auto unaryOperator = unaryInstruction->getUnaryOperator();
-                auto astConstant = constantValue->getASTConstant();
-                if (std::dynamic_pointer_cast<IR::NegateOperator>(
-                        unaryOperator)) {
-                    if (auto constantInt =
-                            std::dynamic_pointer_cast<AST::ConstantInt>(
-                                astConstant)) {
-                        astConstant = std::make_shared<AST::ConstantInt>(
+                dynamic_cast<IR::UnaryInstruction *>(instruction)) {
+            if (auto constantValue = dynamic_cast<IR::ConstantValue *>(
+                    unaryInstruction->getSrc().get())) {
+                auto unaryOperator =
+                    std::move(unaryInstruction->getUnaryOperator());
+                auto astConstant = std::move(constantValue->getASTConstant());
+                if (dynamic_cast<IR::NegateOperator *>(unaryOperator.get())) {
+                    if (auto constantInt = dynamic_cast<AST::ConstantInt *>(
+                            astConstant.get())) {
+                        astConstant = std::make_unique<AST::ConstantInt>(
                             -constantInt->getValue());
                     }
                     else if (auto constantLong =
-                                 std::dynamic_pointer_cast<AST::ConstantLong>(
-                                     astConstant)) {
-                        astConstant = std::make_shared<AST::ConstantLong>(
+                                 dynamic_cast<AST::ConstantLong *>(
+                                     astConstant.get())) {
+                        astConstant = std::make_unique<AST::ConstantLong>(
                             -constantLong->getValue());
                     }
                 }
-                else if (std::dynamic_pointer_cast<IR::ComplementOperator>(
-                             unaryOperator)) {
-                    if (auto constantInt =
-                            std::dynamic_pointer_cast<AST::ConstantInt>(
-                                astConstant)) {
-                        astConstant = std::make_shared<AST::ConstantInt>(
+                else if (dynamic_cast<IR::ComplementOperator *>(
+                             unaryOperator.get())) {
+                    if (auto constantInt = dynamic_cast<AST::ConstantInt *>(
+                            astConstant.get())) {
+                        astConstant = std::make_unique<AST::ConstantInt>(
                             ~constantInt->getValue());
                     }
                     else if (auto constantLong =
-                                 std::dynamic_pointer_cast<AST::ConstantLong>(
-                                     astConstant)) {
-                        astConstant = std::make_shared<AST::ConstantLong>(
+                                 dynamic_cast<AST::ConstantLong *>(
+                                     astConstant.get())) {
+                        astConstant = std::make_unique<AST::ConstantLong>(
                             ~constantLong->getValue());
                     }
                 }
-                else if (std::dynamic_pointer_cast<IR::NotOperator>(
-                             unaryOperator)) {
-                    if (auto constantInt =
-                            std::dynamic_pointer_cast<AST::ConstantInt>(
-                                astConstant)) {
-                        astConstant = std::make_shared<AST::ConstantInt>(
+                else if (dynamic_cast<IR::NotOperator *>(unaryOperator.get())) {
+                    if (auto constantInt = dynamic_cast<AST::ConstantInt *>(
+                            astConstant.get())) {
+                        astConstant = std::make_unique<AST::ConstantInt>(
                             !constantInt->getValue());
                     }
                     else if (auto constantLong =
-                                 std::dynamic_pointer_cast<AST::ConstantLong>(
-                                     astConstant)) {
-                        astConstant = std::make_shared<AST::ConstantLong>(
+                                 dynamic_cast<AST::ConstantLong *>(
+                                     astConstant.get())) {
+                        astConstant = std::make_unique<AST::ConstantLong>(
                             !constantLong->getValue());
                     }
                 }
                 else {
                     throw std::logic_error("Unsupported unary operator");
                 }
-                auto copyInstruction = std::make_shared<IR::CopyInstruction>(
-                    std::make_shared<IR::ConstantValue>(astConstant),
-                    unaryInstruction->getDst());
+                auto copyInstruction = std::make_unique<IR::CopyInstruction>(
+                    std::make_unique<IR::ConstantValue>(std::move(astConstant)),
+                    std::move(unaryInstruction->getDst()));
                 *it = std::move(copyInstruction);
             }
             ++it;
         }
         // Handle binary instructions with two constant source operands.
         else if (auto binaryInstruction =
-                     std::dynamic_pointer_cast<IR::BinaryInstruction>(
-                         instruction)) {
-            if (auto constantValue1 =
-                    std::dynamic_pointer_cast<IR::ConstantValue>(
-                        binaryInstruction->getSrc1())) {
-                if (auto constantValue2 =
-                        std::dynamic_pointer_cast<IR::ConstantValue>(
-                            binaryInstruction->getSrc2())) {
+                     dynamic_cast<IR::BinaryInstruction *>(instruction)) {
+            if (auto constantValue1 = dynamic_cast<IR::ConstantValue *>(
+                    binaryInstruction->getSrc1().get())) {
+                if (auto constantValue2 = dynamic_cast<IR::ConstantValue *>(
+                        binaryInstruction->getSrc2().get())) {
                     auto binaryOperator =
-                        binaryInstruction->getBinaryOperator();
+                        std::move(binaryInstruction->getBinaryOperator());
                     long constantResult = 0;
-                    if (std::dynamic_pointer_cast<IR::AddOperator>(
-                            binaryOperator)) {
-                        auto astConstant1 = constantValue1->getASTConstant();
-                        auto astConstant2 = constantValue2->getASTConstant();
+                    if (dynamic_cast<IR::AddOperator *>(binaryOperator.get())) {
+                        auto astConstant1 =
+                            std::move(constantValue1->getASTConstant());
+                        auto astConstant2 =
+                            std::move(constantValue2->getASTConstant());
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    astConstant1)) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                astConstant1.get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(astConstant1)) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         astConstant1.get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    astConstant2)) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                astConstant2.get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(astConstant2)) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         astConstant2.get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -168,28 +161,28 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 + value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::SubtractOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::SubtractOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
 
@@ -205,31 +198,31 @@ ConstantFoldingPass::foldConstants(
                         }
                         constantResult = value1 - value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::MultiplyOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::MultiplyOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -242,31 +235,31 @@ ConstantFoldingPass::foldConstants(
                             continue;
                         }
                     }
-                    else if (std::dynamic_pointer_cast<IR::DivideOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::DivideOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -279,31 +272,31 @@ ConstantFoldingPass::foldConstants(
                         }
                         constantResult = value1 / value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::RemainderOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::RemainderOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -316,31 +309,31 @@ ConstantFoldingPass::foldConstants(
                         }
                         constantResult = value1 % value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::EqualOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::EqualOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -349,31 +342,31 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 == value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::NotEqualOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::NotEqualOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -382,31 +375,31 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 != value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::LessThanOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::LessThanOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -415,30 +408,30 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 < value2;
                     }
-                    else if (std::dynamic_pointer_cast<
-                                 IR::LessThanOrEqualOperator>(binaryOperator)) {
+                    else if (dynamic_cast<IR::LessThanOrEqualOperator *>(
+                                 binaryOperator.get())) {
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -447,31 +440,31 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 <= value2;
                     }
-                    else if (std::dynamic_pointer_cast<IR::GreaterThanOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::GreaterThanOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -480,32 +473,31 @@ ConstantFoldingPass::foldConstants(
 
                         constantResult = value1 > value2;
                     }
-                    else if (std::dynamic_pointer_cast<
-                                 IR::GreaterThanOrEqualOperator>(
-                                 binaryOperator)) {
+                    else if (dynamic_cast<IR::GreaterThanOrEqualOperator *>(
+                                 binaryOperator.get())) {
 
                         long value1 = 0, value2 = 0;
-                        if (auto constInt1 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue1->getASTConstant())) {
+                        if (auto constInt1 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue1->getASTConstant().get())) {
                             value1 = constInt1->getValue();
                         }
-                        else if (auto constLong1 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue1->getASTConstant())) {
+                        else if (auto constLong1 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue1->getASTConstant()
+                                             .get())) {
                             value1 = constLong1->getValue();
                         }
                         else {
                             throw std::logic_error("Unsupported constant type");
                         }
-                        if (auto constInt2 =
-                                std::dynamic_pointer_cast<AST::ConstantInt>(
-                                    constantValue2->getASTConstant())) {
+                        if (auto constInt2 = dynamic_cast<AST::ConstantInt *>(
+                                constantValue2->getASTConstant().get())) {
                             value2 = constInt2->getValue();
                         }
-                        else if (auto constLong2 = std::dynamic_pointer_cast<
-                                     AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                        else if (auto constLong2 =
+                                     dynamic_cast<AST::ConstantLong *>(
+                                         constantValue2->getASTConstant()
+                                             .get())) {
                             value2 = constLong2->getValue();
                         }
                         else {
@@ -520,33 +512,31 @@ ConstantFoldingPass::foldConstants(
 
                     // Determine the result type based on input types.
                     bool isLongResult = false;
-                    if (auto constLong1 =
-                            std::dynamic_pointer_cast<AST::ConstantLong>(
-                                constantValue1->getASTConstant())) {
+                    if (dynamic_cast<AST::ConstantLong *>(
+                            constantValue1->getASTConstant().get())) {
                         isLongResult = true;
                     }
-                    else if (auto constLong2 =
-                                 std::dynamic_pointer_cast<AST::ConstantLong>(
-                                     constantValue2->getASTConstant())) {
+                    else if (dynamic_cast<AST::ConstantLong *>(
+                                 constantValue2->getASTConstant().get())) {
                         isLongResult = true;
                     }
 
-                    std::shared_ptr<IR::ConstantValue> resultConstant;
+                    std::unique_ptr<IR::ConstantValue> resultConstant;
                     if (isLongResult) {
-                        resultConstant = std::make_shared<IR::ConstantValue>(
-                            std::make_shared<AST::ConstantLong>(
+                        resultConstant = std::make_unique<IR::ConstantValue>(
+                            std::make_unique<AST::ConstantLong>(
                                 constantResult));
                     }
                     else {
-                        resultConstant = std::make_shared<IR::ConstantValue>(
-                            std::make_shared<AST::ConstantInt>(
+                        resultConstant = std::make_unique<IR::ConstantValue>(
+                            std::make_unique<AST::ConstantInt>(
                                 static_cast<int>(constantResult)));
                     }
 
                     auto copyInstruction =
-                        std::make_shared<IR::CopyInstruction>(
+                        std::make_unique<IR::CopyInstruction>(
                             std::move(resultConstant),
-                            binaryInstruction->getDst());
+                            std::move(binaryInstruction->getDst()));
                     *it = std::move(copyInstruction);
                 }
             }
@@ -554,20 +544,17 @@ ConstantFoldingPass::foldConstants(
         }
         // Handle `JumpIfZero` instructions.
         else if (auto jumpIfZeroInstruction =
-                     std::dynamic_pointer_cast<IR::JumpIfZeroInstruction>(
-                         instruction)) {
-            if (auto constantValue =
-                    std::dynamic_pointer_cast<IR::ConstantValue>(
-                        jumpIfZeroInstruction->getCondition())) {
+                     dynamic_cast<IR::JumpIfZeroInstruction *>(instruction)) {
+            if (auto constantValue = dynamic_cast<IR::ConstantValue *>(
+                    jumpIfZeroInstruction->getCondition().get())) {
                 // Get the actual value from the AST constant.
                 long conditionValue = 0;
-                if (auto constInt = std::dynamic_pointer_cast<AST::ConstantInt>(
-                        constantValue->getASTConstant())) {
+                if (auto constInt = dynamic_cast<AST::ConstantInt *>(
+                        constantValue->getASTConstant().get())) {
                     conditionValue = constInt->getValue();
                 }
-                else if (auto constLong =
-                             std::dynamic_pointer_cast<AST::ConstantLong>(
-                                 constantValue->getASTConstant())) {
+                else if (auto constLong = dynamic_cast<AST::ConstantLong *>(
+                             constantValue->getASTConstant().get())) {
                     conditionValue = constLong->getValue();
                 }
                 else {
@@ -575,12 +562,12 @@ ConstantFoldingPass::foldConstants(
                 }
 
                 if (conditionValue == 0) {
-                    *it = std::make_shared<IR::JumpInstruction>(
+                    *it = std::make_unique<IR::JumpInstruction>(
                         jumpIfZeroInstruction->getTarget());
                     ++it;
                 }
                 else {
-                    it = postConstantFoldingFunctionBody->erase(it);
+                    it = postConstantFoldingFunctionBody.erase(it);
                 }
             }
             else {
@@ -589,20 +576,18 @@ ConstantFoldingPass::foldConstants(
         }
         // Handle `JumpIfNotZero` instructions.
         else if (auto jumpIfNotZeroInstruction =
-                     std::dynamic_pointer_cast<IR::JumpIfNotZeroInstruction>(
+                     dynamic_cast<IR::JumpIfNotZeroInstruction *>(
                          instruction)) {
-            if (auto constantValue =
-                    std::dynamic_pointer_cast<IR::ConstantValue>(
-                        jumpIfNotZeroInstruction->getCondition())) {
+            if (auto constantValue = dynamic_cast<IR::ConstantValue *>(
+                    jumpIfNotZeroInstruction->getCondition().get())) {
                 // Get the actual value from the AST constant.
                 long conditionValue = 0;
-                if (auto constInt = std::dynamic_pointer_cast<AST::ConstantInt>(
-                        constantValue->getASTConstant())) {
+                if (auto constInt = dynamic_cast<AST::ConstantInt *>(
+                        constantValue->getASTConstant().get())) {
                     conditionValue = constInt->getValue();
                 }
-                else if (auto constLong =
-                             std::dynamic_pointer_cast<AST::ConstantLong>(
-                                 constantValue->getASTConstant())) {
+                else if (auto constLong = dynamic_cast<AST::ConstantLong *>(
+                             constantValue->getASTConstant().get())) {
                     conditionValue = constLong->getValue();
                 }
                 else {
@@ -610,12 +595,12 @@ ConstantFoldingPass::foldConstants(
                 }
 
                 if (conditionValue != 0) {
-                    *it = std::make_shared<IR::JumpInstruction>(
+                    *it = std::make_unique<IR::JumpInstruction>(
                         jumpIfNotZeroInstruction->getTarget());
                     ++it;
                 }
                 else {
-                    it = postConstantFoldingFunctionBody->erase(it);
+                    it = postConstantFoldingFunctionBody.erase(it);
                 }
             }
             else {
@@ -629,34 +614,31 @@ ConstantFoldingPass::foldConstants(
     return postConstantFoldingFunctionBody;
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-CFG::makeControlFlowGraph(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &functionBody) {
-    return functionBody;
+std::vector<std::unique_ptr<IR::Instruction>> CFG::makeControlFlowGraph(
+    std::vector<std::unique_ptr<IR::Instruction>> &functionBody) {
+    return std::move(functionBody);
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-CFG::cfgToInstructions(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
-    return cfg;
+std::vector<std::unique_ptr<IR::Instruction>>
+CFG::cfgToInstructions(std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
+    return std::move(cfg);
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+std::vector<std::unique_ptr<IR::Instruction>>
 UnreachableCodeEliminationPass::eliminateUnreachableCode(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
-    return cfg;
+    std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
+    return std::move(cfg);
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+std::vector<std::unique_ptr<IR::Instruction>>
 CopyPropagationPass::propagateCopies(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
-    return cfg;
+    std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
+    return std::move(cfg);
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
+std::vector<std::unique_ptr<IR::Instruction>>
 DeadStoreEliminationPass::eliminateDeadStores(
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>> &cfg) {
-    return cfg;
+    std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
+    return std::move(cfg);
 }
 } // namespace IR

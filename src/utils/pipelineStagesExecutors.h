@@ -35,7 +35,7 @@ class PipelineStagesExecutors {
     irGeneratorExecutor(std::unique_ptr<AST::Program> &astProgram,
                         int variableResolutionCounter);
     static void
-    irOptimizationExecutor(const std::shared_ptr<IR::Program> &irProgram,
+    irOptimizationExecutor(const std::unique_ptr<IR::Program> &irProgram,
                            bool foldConstantsPass, bool propagateCopiesPass,
                            bool eliminateUnreachableCodePass,
                            bool eliminateDeadStoresPass);

@@ -13,7 +13,7 @@ IRGenerator::generateIR(const std::unique_ptr<AST::Program> &astProgram) {
     std::vector<std::unique_ptr<IR::TopLevel>> topLevels;
 
     // Generate IR instructions for each AST top-level element.
-    auto astDeclarations = astProgram->getDeclarations();
+    auto &astDeclarations = astProgram->getDeclarations();
     for (auto &astDeclaration : astDeclarations) {
         if (dynamic_cast<AST::FunctionDeclaration *>(astDeclaration.get())) {
             auto functionDeclaration =
@@ -175,7 +175,7 @@ void IRGenerator::generateIRBlock(
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
 
     // Get the block items from the block.
-    auto blockItems = astBlock->getBlockItems();
+    auto &blockItems = astBlock->getBlockItems();
 
     // Generate IR instructions for each block item.
     for (const auto &blockItem : blockItems) {
@@ -279,14 +279,12 @@ void IRGenerator::generateIRStatement(
     std::unique_ptr<AST::Statement> &astStatement,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
 
-    if (auto returnStmt =
-            dynamic_cast<AST::ReturnStatement *>(astStatement.get())) {
+    if (dynamic_cast<AST::ReturnStatement *>(astStatement.get())) {
         auto returnStmtPtr = std::unique_ptr<AST::ReturnStatement>(
             static_cast<AST::ReturnStatement *>(astStatement.release()));
         generateIRReturnStatement(returnStmtPtr, instructions);
     }
-    else if (auto expressionStmt =
-                 dynamic_cast<AST::ExpressionStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::ExpressionStatement *>(astStatement.get())) {
         auto expressionStmtPtr = std::unique_ptr<AST::ExpressionStatement>(
             static_cast<AST::ExpressionStatement *>(astStatement.release()));
         generateIRExpressionStatement(expressionStmtPtr, instructions);
@@ -296,44 +294,37 @@ void IRGenerator::generateIRStatement(
         // If the statement is a compound statement, generate a block.
         generateIRBlock(compoundStmt->getBlock(), instructions);
     }
-    else if (auto ifStmt =
-                 dynamic_cast<AST::IfStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::IfStatement *>(astStatement.get())) {
         auto ifStmtPtr = std::unique_ptr<AST::IfStatement>(
             static_cast<AST::IfStatement *>(astStatement.release()));
         generateIRIfStatement(ifStmtPtr, instructions);
     }
-    else if (auto breakStmt =
-                 dynamic_cast<AST::BreakStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::BreakStatement *>(astStatement.get())) {
         auto breakStmtPtr = std::unique_ptr<AST::BreakStatement>(
             static_cast<AST::BreakStatement *>(astStatement.release()));
         generateIRBreakStatement(breakStmtPtr, instructions);
     }
-    else if (auto continueStmt =
-                 dynamic_cast<AST::ContinueStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::ContinueStatement *>(astStatement.get())) {
         auto continueStmtPtr = std::unique_ptr<AST::ContinueStatement>(
             static_cast<AST::ContinueStatement *>(astStatement.release()));
         generateIRContinueStatement(continueStmtPtr, instructions);
     }
-    else if (auto whileStmt =
-                 dynamic_cast<AST::WhileStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::WhileStatement *>(astStatement.get())) {
         auto whileStmtPtr = std::unique_ptr<AST::WhileStatement>(
             static_cast<AST::WhileStatement *>(astStatement.release()));
         generateIRWhileStatement(whileStmtPtr, instructions);
     }
-    else if (auto doWhileStmt =
-                 dynamic_cast<AST::DoWhileStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::DoWhileStatement *>(astStatement.get())) {
         auto doWhileStmtPtr = std::unique_ptr<AST::DoWhileStatement>(
             static_cast<AST::DoWhileStatement *>(astStatement.release()));
         generateIRDoWhileStatement(doWhileStmtPtr, instructions);
     }
-    else if (auto forStmt =
-                 dynamic_cast<AST::ForStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::ForStatement *>(astStatement.get())) {
         auto forStmtPtr = std::unique_ptr<AST::ForStatement>(
             static_cast<AST::ForStatement *>(astStatement.release()));
         generateIRForStatement(forStmtPtr, instructions);
     }
-    else if (auto nullStmt =
-                 dynamic_cast<AST::NullStatement *>(astStatement.get())) {
+    else if (dynamic_cast<AST::NullStatement *>(astStatement.get())) {
         // If the statement is a null statement, do nothing.
     }
     else {
@@ -365,8 +356,7 @@ void IRGenerator::generateIRExpressionStatement(
 
     // Process the expression and generate the corresponding IR
     // instructions.
-    auto result = generateIRInstruction(exp, instructions);
-    instructions.emplace_back(std::move(result));
+    [[maybe_unused]] auto result = generateIRInstruction(exp, instructions);
 }
 
 void IRGenerator::generateIRIfStatement(
@@ -512,9 +502,8 @@ void IRGenerator::generateIRForStatement(
             static_cast<AST::InitExpr *>(forInit.release()));
         auto optExpr = std::move(initExprPtr->getExpression());
         if (optExpr.has_value()) {
-            auto resolvedExpr =
+            [[maybe_unused]] auto resolvedExpr =
                 generateIRInstruction(optExpr.value(), instructions);
-            instructions.emplace_back(std::move(resolvedExpr));
         }
     }
     else if (dynamic_cast<AST::InitDecl *>(forInit.get())) {
@@ -554,8 +543,8 @@ void IRGenerator::generateIRForStatement(
     // for-statement.
     auto optPost = std::move(forStmt->getOptPost());
     if (optPost.has_value()) {
-        auto postValue = generateIRInstruction(optPost.value(), instructions);
-        instructions.emplace_back(std::move(postValue));
+        [[maybe_unused]] auto postValue =
+            generateIRInstruction(optPost.value(), instructions);
     }
     // Generate a jump instruction with the start label.
     instructions.emplace_back(
@@ -1071,8 +1060,8 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
                 std::move(staticAttributePtr->getInitialValue());
             auto global = staticAttributePtr->isGlobal();
             if (dynamic_cast<AST::Initial *>(initialValue.get())) {
-                auto initialPtr = std::move(std::unique_ptr<AST::Initial>(
-                    static_cast<AST::Initial *>(initialValue.release())));
+                auto initialPtr = std::unique_ptr<AST::Initial>(
+                    static_cast<AST::Initial *>(initialValue.release()));
                 auto valueVariant = initialPtr->getStaticInit()->getValue();
                 if (std::holds_alternative<int>(valueVariant)) {
                     irDefs.emplace_back(std::make_unique<StaticVariable>(
