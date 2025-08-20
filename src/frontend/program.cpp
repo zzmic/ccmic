@@ -2,20 +2,17 @@
 #include "visitor.h"
 
 namespace AST {
-Program::Program(
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations)
-    : declarations(declarations) {}
+Program::Program(std::vector<std::unique_ptr<Declaration>> declarations)
+    : declarations(std::move(declarations)) {}
 
 void Program::accept(Visitor &visitor) { visitor.visit(*this); }
 
-const std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> &
-Program::getDeclarations() const {
+std::vector<std::unique_ptr<Declaration>> &Program::getDeclarations() {
     return declarations;
 }
 
 void Program::setDeclarations(
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
-        newDeclarations) {
-    this->declarations = newDeclarations;
+    std::vector<std::unique_ptr<Declaration>> newDeclarations) {
+    this->declarations = std::move(newDeclarations);
 }
 } // Namespace AST

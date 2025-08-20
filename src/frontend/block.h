@@ -2,23 +2,21 @@
 #define FRONTEND_BLOCK_H
 
 #include "blockItem.h"
+#include <memory>
 #include <vector>
 
 namespace AST {
 class Block : public AST {
   public:
-    explicit Block(
-        std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
+    explicit Block(std::vector<std::unique_ptr<BlockItem>> blockItems);
+    ~Block() = default; // Vector destructor handles cleanup automatically.
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<BlockItem>>> &
-    getBlockItems() const;
-    void addBlockItem(std::shared_ptr<BlockItem> blockItem);
-    void setBlockItems(
-        std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
+    [[nodiscard]] std::vector<std::unique_ptr<BlockItem>> &getBlockItems();
+    void addBlockItem(std::unique_ptr<BlockItem> blockItem);
+    void setBlockItems(std::vector<std::unique_ptr<BlockItem>> blockItems);
 
   private:
-    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems;
+    std::vector<std::unique_ptr<BlockItem>> blockItems;
 };
 } // namespace AST
 

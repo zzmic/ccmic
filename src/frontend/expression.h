@@ -15,189 +15,189 @@ namespace AST {
 class Expression : public AST {
   public:
     constexpr Expression() = default;
-    virtual std::shared_ptr<Type> getExpType() const = 0;
-    virtual void setExpType(std::shared_ptr<Type> expType) = 0;
+    virtual std::unique_ptr<Type> &getExpType() = 0;
+    virtual void setExpType(std::unique_ptr<Type> expType) = 0;
 };
 
 class Factor : public Expression {};
 
 class ConstantExpression : public Factor {
   public:
-    explicit ConstantExpression(std::shared_ptr<Constant> constant);
-    explicit ConstantExpression(std::shared_ptr<Constant> constant,
-                                std::shared_ptr<Type> expType);
+    explicit ConstantExpression(std::unique_ptr<Constant> constant);
+    explicit ConstantExpression(std::unique_ptr<Constant> constant,
+                                std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Constant> getConstant() const;
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::unique_ptr<Constant> &getConstant();
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
     [[nodiscard]] int getConstantInInt() const;
     [[nodiscard]] std::variant<int, long> getConstantInIntOrLongVariant() const;
 
   private:
-    std::shared_ptr<Constant> constant;
+    std::unique_ptr<Constant> constant;
     // Type information of, in this case, the constant-expression AST node.
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<Type> expType;
 };
 
 class VariableExpression : public Factor {
   public:
     explicit VariableExpression(std::string_view identifier);
     explicit VariableExpression(std::string_view identifier,
-                                std::shared_ptr<Type> expType);
+                                std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::string &getIdentifier() const;
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::string &getIdentifier();
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
     std::string identifier;
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<Type> expType;
 };
 
 class CastExpression : public Factor {
   public:
-    explicit CastExpression(std::shared_ptr<Type> targetType,
-                            std::shared_ptr<Expression> expr);
-    explicit CastExpression(std::shared_ptr<Type> targetType,
-                            std::shared_ptr<Expression> expr,
-                            std::shared_ptr<Type> expType);
+    explicit CastExpression(std::unique_ptr<Type> targetType,
+                            std::unique_ptr<Expression> expr);
+    explicit CastExpression(std::unique_ptr<Type> targetType,
+                            std::unique_ptr<Expression> expr,
+                            std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Type> getTargetType() const;
-    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::unique_ptr<Type> &getTargetType();
+    [[nodiscard]] std::unique_ptr<Expression> &getExpression();
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
-    std::shared_ptr<Type> targetType;
-    std::shared_ptr<Expression> expr;
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<Type> targetType;
+    std::unique_ptr<Expression> expr;
+    std::unique_ptr<Type> expType;
 };
 
 class UnaryExpression : public Factor {
   public:
     explicit UnaryExpression(std::string_view opInStr,
-                             std::shared_ptr<Expression> expr);
+                             std::unique_ptr<Expression> expr);
     explicit UnaryExpression(std::string_view opInStr,
-                             std::shared_ptr<Expression> expr,
-                             std::shared_ptr<Type> expType);
-    explicit UnaryExpression(std::shared_ptr<UnaryOperator> op,
-                             std::shared_ptr<Factor> expr);
-    explicit UnaryExpression(std::shared_ptr<UnaryOperator> op,
-                             std::shared_ptr<Factor> expr,
-                             std::shared_ptr<Type> expType);
+                             std::unique_ptr<Expression> expr,
+                             std::unique_ptr<Type> expType);
+    explicit UnaryExpression(std::unique_ptr<UnaryOperator> op,
+                             std::unique_ptr<Factor> expr);
+    explicit UnaryExpression(std::unique_ptr<UnaryOperator> op,
+                             std::unique_ptr<Factor> expr,
+                             std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<UnaryOperator> getOperator() const;
-    [[nodiscard]] std::shared_ptr<Factor> getExpression() const;
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::unique_ptr<UnaryOperator> &getOperator();
+    [[nodiscard]] std::unique_ptr<Factor> &getExpression();
+    void setExpression(std::unique_ptr<Factor> newExpr);
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
-    std::shared_ptr<UnaryOperator> op;
-    std::shared_ptr<Factor> expr;
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<UnaryOperator> op;
+    std::unique_ptr<Factor> expr;
+    std::unique_ptr<Type> expType;
 };
 
 class BinaryExpression : public Expression {
   public:
-    explicit BinaryExpression(std::shared_ptr<Expression> left,
+    explicit BinaryExpression(std::unique_ptr<Expression> left,
                               std::string_view opInStr,
-                              std::shared_ptr<Expression> right);
-    explicit BinaryExpression(std::shared_ptr<Expression> left,
+                              std::unique_ptr<Expression> right);
+    explicit BinaryExpression(std::unique_ptr<Expression> left,
                               std::string_view opInStr,
-                              std::shared_ptr<Expression> right,
-                              std::shared_ptr<Type> expType);
-    explicit BinaryExpression(std::shared_ptr<Expression> left,
-                              std::shared_ptr<BinaryOperator> op,
-                              std::shared_ptr<Expression> right);
-    explicit BinaryExpression(std::shared_ptr<Expression> left,
-                              std::shared_ptr<BinaryOperator> op,
-                              std::shared_ptr<Expression> right,
-                              std::shared_ptr<Type> expType);
+                              std::unique_ptr<Expression> right,
+                              std::unique_ptr<Type> expType);
+    explicit BinaryExpression(std::unique_ptr<Expression> left,
+                              std::unique_ptr<BinaryOperator> op,
+                              std::unique_ptr<Expression> right);
+    explicit BinaryExpression(std::unique_ptr<Expression> left,
+                              std::unique_ptr<BinaryOperator> op,
+                              std::unique_ptr<Expression> right,
+                              std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getLeft() const;
-    void setLeft(std::shared_ptr<Expression> left);
-    [[nodiscard]] std::shared_ptr<BinaryOperator> getOperator() const;
-    void setOperator(std::shared_ptr<BinaryOperator> op);
-    [[nodiscard]] std::shared_ptr<Expression> getRight() const;
-    void setRight(std::shared_ptr<Expression> right);
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::unique_ptr<Expression> &getLeft();
+    void setLeft(std::unique_ptr<Expression> newLeft);
+    [[nodiscard]] std::unique_ptr<BinaryOperator> &getOperator();
+    void setOperator(std::unique_ptr<BinaryOperator> newOp);
+    [[nodiscard]] std::unique_ptr<Expression> &getRight();
+    void setRight(std::unique_ptr<Expression> newRight);
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
-    std::shared_ptr<Expression> left;
-    std::shared_ptr<BinaryOperator> op;
-    std::shared_ptr<Expression> right;
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<Expression> left;
+    std::unique_ptr<BinaryOperator> op;
+    std::unique_ptr<Expression> right;
+    std::unique_ptr<Type> expType;
 };
 
 class AssignmentExpression : public Expression {
   public:
-    explicit AssignmentExpression(std::shared_ptr<Expression> left,
-                                  std::shared_ptr<Expression> right);
-    explicit AssignmentExpression(std::shared_ptr<Expression> left,
-                                  std::shared_ptr<Expression> right,
-                                  std::shared_ptr<Type> expType);
+    explicit AssignmentExpression(std::unique_ptr<Expression> left,
+                                  std::unique_ptr<Expression> right);
+    explicit AssignmentExpression(std::unique_ptr<Expression> left,
+                                  std::unique_ptr<Expression> right,
+                                  std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getLeft() const;
-    [[nodiscard]] std::shared_ptr<Expression> getRight() const;
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::unique_ptr<Expression> &getLeft();
+    void setLeft(std::unique_ptr<Expression> newLeft);
+    [[nodiscard]] std::unique_ptr<Expression> &getRight();
+    void setRight(std::unique_ptr<Expression> newRight);
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
-    std::shared_ptr<Expression> left;
-    std::shared_ptr<Expression> right;
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<Expression> left;
+    std::unique_ptr<Expression> right;
+    std::unique_ptr<Type> expType;
 };
 
 class ConditionalExpression : public Expression {
   public:
-    explicit ConditionalExpression(std::shared_ptr<Expression> condition,
-                                   std::shared_ptr<Expression> thenExpression,
-                                   std::shared_ptr<Expression> elseExpression);
-    explicit ConditionalExpression(std::shared_ptr<Expression> condition,
-                                   std::shared_ptr<Expression> thenExpression,
-                                   std::shared_ptr<Expression> elseExpression,
-                                   std::shared_ptr<Type> expType);
+    explicit ConditionalExpression(std::unique_ptr<Expression> condition,
+                                   std::unique_ptr<Expression> thenExpression,
+                                   std::unique_ptr<Expression> elseExpression);
+    explicit ConditionalExpression(std::unique_ptr<Expression> condition,
+                                   std::unique_ptr<Expression> thenExpression,
+                                   std::unique_ptr<Expression> elseExpression,
+                                   std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
-    void setCondition(std::shared_ptr<Expression> condition);
-    [[nodiscard]] std::shared_ptr<Expression> getThenExpression() const;
-    void setThenExpression(std::shared_ptr<Expression> thenExpression);
-    [[nodiscard]] std::shared_ptr<Expression> getElseExpression() const;
-    void setElseExpression(std::shared_ptr<Expression> elseExpression);
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::unique_ptr<Expression> &getCondition();
+    void setCondition(std::unique_ptr<Expression> newCondition);
+    [[nodiscard]] std::unique_ptr<Expression> &getThenExpression();
+    void setThenExpression(std::unique_ptr<Expression> newThenExpression);
+    [[nodiscard]] std::unique_ptr<Expression> &getElseExpression();
+    void setElseExpression(std::unique_ptr<Expression> newElseExpression);
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
-    std::shared_ptr<Expression> condition;
-    std::shared_ptr<Expression> thenExpression;
-    std::shared_ptr<Expression> elseExpression;
-    std::shared_ptr<Type> expType;
+    std::unique_ptr<Expression> condition;
+    std::unique_ptr<Expression> thenExpression;
+    std::unique_ptr<Expression> elseExpression;
+    std::unique_ptr<Type> expType;
 };
 
 class FunctionCallExpression : public Expression {
   public:
     explicit FunctionCallExpression(
         std::string_view identifier,
-        std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments);
+        std::vector<std::unique_ptr<Expression>> arguments);
     explicit FunctionCallExpression(
         std::string_view identifier,
-        std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments,
-        std::shared_ptr<Type> expType);
+        std::vector<std::unique_ptr<Expression>> arguments,
+        std::unique_ptr<Type> expType);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::string &getIdentifier() const;
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<Expression>>> &
-    getArguments() const;
-    void setArguments(
-        std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments);
-    [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
-    void setExpType(std::shared_ptr<Type> expType) override;
+    [[nodiscard]] std::string &getIdentifier();
+    [[nodiscard]] std::vector<std::unique_ptr<Expression>> &getArguments();
+    void setArguments(std::vector<std::unique_ptr<Expression>> newArguments);
+    [[nodiscard]] std::unique_ptr<Type> &getExpType() override;
+    void setExpType(std::unique_ptr<Type> expType) override;
 
   private:
     std::string identifier;
-    std::shared_ptr<std::vector<std::shared_ptr<Expression>>> arguments;
-    std::shared_ptr<Type> expType;
+    std::vector<std::unique_ptr<Expression>> arguments;
+    std::unique_ptr<Type> expType;
 };
 } // Namespace AST
 

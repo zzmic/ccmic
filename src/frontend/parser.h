@@ -9,13 +9,14 @@
 #include "program.h"
 #include "statement.h"
 #include "type.h"
+#include <memory>
 #include <unordered_map>
 
 namespace AST {
 class Parser {
   public:
-    Parser(const std::vector<Token> &tokens);
-    std::shared_ptr<Program> parse();
+    explicit Parser(const std::vector<Token> &tokens);
+    std::unique_ptr<Program> parse();
 
   private:
     const std::vector<Token> &tokens;
@@ -36,24 +37,23 @@ class Parser {
     bool matchToken(TokenType type);
     Token consumeToken(TokenType type);
     void expectToken(TokenType type);
-    std::shared_ptr<Declaration> parseDeclaration();
-    void parseTypeSpecifiersInParameters(
-        const std::shared_ptr<std::vector<std::string>> &parameters);
-    std::shared_ptr<BlockItem> parseBlockItem();
-    std::shared_ptr<Block> parseBlock();
-    std::shared_ptr<ForInit> parseForInit();
-    std::shared_ptr<Statement> parseStatement();
-    std::shared_ptr<Expression> parseFactor();
-    std::shared_ptr<Constant> parseConstant();
-    std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);
-    std::shared_ptr<Expression> parseConditionalMiddle();
-    std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
+    std::unique_ptr<Declaration> parseDeclaration();
+    void parseTypeSpecifiersInParameters(std::vector<std::string> &parameters);
+    std::unique_ptr<BlockItem> parseBlockItem();
+    Block *parseBlock();
+    std::unique_ptr<ForInit> parseForInit();
+    std::unique_ptr<Statement> parseStatement();
+    std::unique_ptr<Expression> parseFactor();
+    std::unique_ptr<Constant> parseConstant();
+    std::unique_ptr<Expression> parseExpression(int minPrecedence = 0);
+    std::unique_ptr<Expression> parseConditionalMiddle();
+    std::pair<std::unique_ptr<Type>, std::unique_ptr<StorageClass>>
     parseTypeAndStorageClass(const std::vector<std::string> &specifierList);
-    std::shared_ptr<Type>
+    std::unique_ptr<Type>
     parseType(const std::vector<std::string> &specifierList);
-    std::shared_ptr<StorageClass>
+    std::unique_ptr<StorageClass>
     parseStorageClass(const std::string &specifier);
-    int getPrecedence(const Token &token);
+    int getPrecedence(const Token &token) const;
 };
 } // Namespace AST
 

@@ -8,18 +8,14 @@
 namespace AST {
 class Program : public AST {
   public:
-    explicit Program(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
-                         declarations);
+    explicit Program(std::vector<std::unique_ptr<Declaration>> declarations);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<Declaration>>> &
-    getDeclarations() const;
+    [[nodiscard]] std::vector<std::unique_ptr<Declaration>> &getDeclarations();
     void
-    setDeclarations(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
-                        declarations);
+    setDeclarations(std::vector<std::unique_ptr<Declaration>> newDeclarations);
 
   private:
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations;
+    std::vector<std::unique_ptr<Declaration>> declarations;
 };
 } // Namespace AST
 

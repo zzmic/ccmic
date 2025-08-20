@@ -13,24 +13,24 @@ class BlockItem : public AST {
 
 class SBlockItem : public BlockItem {
   public:
-    explicit SBlockItem(std::shared_ptr<Statement> statement);
+    explicit SBlockItem(std::unique_ptr<Statement> statement);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Statement> getStatement() const;
-    void setStatement(std::shared_ptr<Statement> statement);
+    [[nodiscard]] std::unique_ptr<Statement> &getStatement();
+    void setStatement(std::unique_ptr<Statement> statement);
 
   private:
-    std::shared_ptr<Statement> statement;
+    std::unique_ptr<Statement> statement;
 };
 
 class DBlockItem : public BlockItem {
   public:
-    explicit DBlockItem(std::shared_ptr<Declaration> declaration);
+    explicit DBlockItem(std::unique_ptr<Declaration> declaration);
     void accept(Visitor &visitor) override;
-    [[nodiscard]] std::shared_ptr<Declaration> getDeclaration() const;
-    void setDeclaration(std::shared_ptr<Declaration> declaration);
+    [[nodiscard]] std::unique_ptr<Declaration> &getDeclaration();
+    void setDeclaration(std::unique_ptr<Declaration> declaration);
 
   private:
-    std::shared_ptr<Declaration> declaration;
+    std::unique_ptr<Declaration> declaration;
 };
 } // namespace AST
 

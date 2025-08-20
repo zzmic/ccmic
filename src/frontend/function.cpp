@@ -2,14 +2,19 @@
 #include "visitor.h"
 
 namespace AST {
-Function::Function(std::string_view identifier, std::shared_ptr<Block> body)
+Function::Function(std::string_view identifier, Block *body)
     : identifier(identifier), body(body) {}
+
+Function::~Function() {
+    // Clean up the raw pointer.
+    delete body;
+}
 
 void Function::accept(Visitor &visitor) { visitor.visit(*this); }
 
-const std::string &Function::getIdentifier() const { return identifier; }
+std::string &Function::getIdentifier() { return identifier; }
 
-std::shared_ptr<Block> Function::getBody() const { return body; }
+Block *Function::getBody() { return body; }
 
-void Function::setBody(std::shared_ptr<Block> newBody) { this->body = newBody; }
+void Function::setBody(Block *newBody) { this->body = newBody; }
 } // Namespace AST

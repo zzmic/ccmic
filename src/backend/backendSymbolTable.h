@@ -41,10 +41,12 @@ extern std::unordered_map<std::string, std::shared_ptr<BackendSymbolTableEntry>>
     backendSymbolTable;
 
 // Function to convert a frontend symbol table to a backend symbol table.
+// TODO(zzmic): The function signature is temporarily changed to accommodate
+// the frontend symbol table type change.
 void convertFrontendToBackendSymbolTable(
     const std::unordered_map<
-        std::string, std::pair<std::shared_ptr<AST::Type>,
-                               std::shared_ptr<AST::IdentifierAttribute>>>
+        std::string, std::pair<std::unique_ptr<AST::Type>,
+                               std::unique_ptr<AST::IdentifierAttribute>>>
         &frontendSymbolTable);
 } // namespace Assembly
 

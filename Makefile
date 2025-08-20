@@ -28,6 +28,16 @@ SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
   $(wildcard $(UTILS_DIR)/*.cpp) \
   $(wildcard $(SRC_DIR)/*.cpp)
 
+# Frontend-only source files.
+FRONTEND_SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
+  $(wildcard $(UTILS_DIR)/*.cpp) \
+  $(SRC_DIR)/main.cpp
+
+# Midend-only source files.
+MIDEND_SOURCES = $(wildcard $(MIDEND_DIR)/*.cpp) \
+  $(wildcard $(UTILS_DIR)/*.cpp) \
+  $(SRC_DIR)/main.cpp
+
 # Header files.
 HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
   $(wildcard $(MIDEND_DIR)/*.h) \
@@ -38,13 +48,31 @@ HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
 # Object files.
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 
+# Frontend-only object files.
+FRONTEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(FRONTEND_SOURCES))
+
+# Midend-only object files.
+MIDEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(MIDEND_SOURCES))
+
 # Executable file.
 EXECUTABLE = $(BIN_DIR)/main
 
+# Frontend-only executable.
+FRONTEND_EXECUTABLE = $(BIN_DIR)/frontend_test
+
+# Midend-only executable.
+MIDEND_EXECUTABLE = $(BIN_DIR)/midend_test
+
 # Default target.
-.PHONY: all clean debug format release
+.PHONY: all clean debug format release frontend-test midend-test
 
 all: $(BIN_DIR) $(EXECUTABLE)
+
+# Frontend-only test target.
+frontend-test: $(BIN_DIR) $(FRONTEND_EXECUTABLE)
+
+# Midend-only test target.
+midend-test: $(BIN_DIR) $(MIDEND_EXECUTABLE)
 
 # Create the `bin` directory if it does not exist.
 $(BIN_DIR):
@@ -67,6 +95,14 @@ DEPS = $(OBJECTS:.o=.d)
 # Link the object files to create the executable.
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS) $(LDLIBS)
+
+# Link the frontend object files to create the frontend test executable.
+$(FRONTEND_EXECUTABLE): $(FRONTEND_OBJECTS)
+	$(CXX) $(FRONTEND_OBJECTS) -o $@ $(LDFLAGS) $(LDLIBS)
+
+# Link the midend object files to create the midend test executable.
+$(MIDEND_EXECUTABLE): $(MIDEND_OBJECTS)
+	$(CXX) $(MIDEND_OBJECTS) -o $@ $(LDFLAGS) $(LDLIBS)
 
 # Debug target.
 debug: CXXFLAGS += -g -O0 $(SAN_FLAGS) -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
