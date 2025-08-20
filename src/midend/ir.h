@@ -216,20 +216,18 @@ class LabelInstruction : public Instruction {
 class FunctionCallInstruction : public Instruction {
   private:
     std::string functionIdentifier;
-    std::unique_ptr<std::vector<std::unique_ptr<Value>>> args;
+    std::vector<std::unique_ptr<Value>> args;
     std::unique_ptr<Value> dst;
 
   public:
-    FunctionCallInstruction(
-        std::string_view functionIdentifier,
-        std::unique_ptr<std::vector<std::unique_ptr<Value>>> args,
-        std::unique_ptr<Value> dst);
+    FunctionCallInstruction(std::string_view functionIdentifier,
+                            std::vector<std::unique_ptr<Value>> args,
+                            std::unique_ptr<Value> dst);
     [[nodiscard]] const std::string &getFunctionIdentifier() const;
-    [[nodiscard]] const std::unique_ptr<std::vector<std::unique_ptr<Value>>> &
-    getArgs() const;
+    [[nodiscard]] std::vector<std::unique_ptr<Value>> &getArgs();
     [[nodiscard]] std::unique_ptr<Value> &getDst();
     void setFunctionIdentifier(std::string_view newFunctionIdentifier);
-    void setArgs(std::unique_ptr<std::vector<std::unique_ptr<Value>>> newArgs);
+    void setArgs(std::vector<std::unique_ptr<Value>> newArgs);
     void setDst(std::unique_ptr<Value> newDst);
 };
 
@@ -242,25 +240,19 @@ class FunctionDefinition : public TopLevel {
   private:
     std::string functionIdentifier;
     bool global;
-    std::unique_ptr<std::vector<std::string>> parameters;
-    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody;
+    std::vector<std::string> parameters;
+    std::vector<std::unique_ptr<Instruction>> functionBody;
 
   public:
-    FunctionDefinition(
-        std::string_view functionIdentifier, bool global,
-        std::unique_ptr<std::vector<std::string>> parameters,
-        std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
-            functionBody);
+    FunctionDefinition(std::string_view functionIdentifier, bool global,
+                       std::vector<std::string> parameters,
+                       std::vector<std::unique_ptr<Instruction>> functionBody);
     [[nodiscard]] const std::string &getFunctionIdentifier() const;
     [[nodiscard]] bool isGlobal() const;
-    [[nodiscard]] const std::unique_ptr<std::vector<std::string>> &
-    getParameterIdentifiers() const;
-    [[nodiscard]] const std::unique_ptr<
-        std::vector<std::unique_ptr<Instruction>>> &
-    getFunctionBody() const;
+    [[nodiscard]] std::vector<std::string> &getParameterIdentifiers();
+    [[nodiscard]] std::vector<std::unique_ptr<Instruction>> &getFunctionBody();
     void
-    setFunctionBody(std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
-                        newFunctionBody);
+    setFunctionBody(std::vector<std::unique_ptr<Instruction>> newFunctionBody);
 };
 
 class StaticVariable : public TopLevel {
@@ -282,13 +274,11 @@ class StaticVariable : public TopLevel {
 
 class Program {
   private:
-    std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels;
+    std::vector<std::unique_ptr<TopLevel>> topLevels;
 
   public:
-    explicit Program(
-        std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels);
-    [[nodiscard]] std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> &
-    getTopLevels();
+    explicit Program(std::vector<std::unique_ptr<TopLevel>> topLevels);
+    [[nodiscard]] std::vector<std::unique_ptr<TopLevel>> &getTopLevels();
 };
 } // namespace IR
 

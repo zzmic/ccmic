@@ -1,4 +1,5 @@
 #include "declaration.h"
+#include "block.h"
 #include "visitor.h"
 
 namespace AST {
@@ -97,6 +98,13 @@ void FunctionDeclaration::setParameters(
 
 void FunctionDeclaration::setOptBody(std::optional<Block *> newOptBody) {
     this->optBody = newOptBody;
+}
+
+FunctionDeclaration::~FunctionDeclaration() {
+    // Clean up the raw pointer if it exists.
+    if (optBody.has_value()) {
+        delete optBody.value();
+    }
 }
 
 void FunctionDeclaration::setFunType(std::unique_ptr<Type> newFunType) {

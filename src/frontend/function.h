@@ -13,7 +13,7 @@ namespace AST {
 class Function : public AST {
   public:
     explicit Function(std::string_view identifier, Block *body);
-    ~Function(); // Need destructor to clean up raw pointer
+    ~Function();
     void accept(Visitor &vistor) override;
     [[nodiscard]] std::string &getIdentifier();
     [[nodiscard]] Block *getBody();

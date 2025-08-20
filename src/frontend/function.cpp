@@ -6,7 +6,8 @@ Function::Function(std::string_view identifier, Block *body)
     : identifier(identifier), body(body) {}
 
 Function::~Function() {
-    delete body; // Clean up raw pointer.
+    // Clean up the raw pointer.
+    delete body;
 }
 
 void Function::accept(Visitor &visitor) { visitor.visit(*this); }

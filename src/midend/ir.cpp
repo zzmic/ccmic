@@ -323,14 +323,9 @@ void LabelInstruction::setLabel(std::string_view newLabel) {
 
 FunctionCallInstruction::FunctionCallInstruction(
     std::string_view functionIdentifier,
-    std::unique_ptr<std::vector<std::unique_ptr<Value>>> args,
-    std::unique_ptr<Value> dst)
+    std::vector<std::unique_ptr<Value>> args, std::unique_ptr<Value> dst)
     : functionIdentifier(functionIdentifier), args(std::move(args)),
       dst(std::move(dst)) {
-    if (!args) {
-        throw std::logic_error(
-            "Creating FunctionCallInstruction with null args");
-    }
     if (!dst) {
         throw std::logic_error(
             "Creating FunctionCallInstruction with null dst");
@@ -341,8 +336,7 @@ const std::string &FunctionCallInstruction::getFunctionIdentifier() const {
     return functionIdentifier;
 }
 
-const std::unique_ptr<std::vector<std::unique_ptr<Value>>> &
-FunctionCallInstruction::getArgs() const {
+std::vector<std::unique_ptr<Value>> &FunctionCallInstruction::getArgs() {
     return args;
 }
 
@@ -354,10 +348,7 @@ void FunctionCallInstruction::setFunctionIdentifier(
 }
 
 void FunctionCallInstruction::setArgs(
-    std::unique_ptr<std::vector<std::unique_ptr<Value>>> newArgs) {
-    if (!newArgs) {
-        throw std::logic_error("Setting FunctionCallInstruction args to null");
-    }
+    std::vector<std::unique_ptr<Value>> newArgs) {
     this->args = std::move(newArgs);
 }
 
@@ -370,18 +361,10 @@ void FunctionCallInstruction::setDst(std::unique_ptr<Value> newDst) {
 
 FunctionDefinition::FunctionDefinition(
     std::string_view functionIdentifier, bool global,
-    std::unique_ptr<std::vector<std::string>> parameters,
-    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody)
+    std::vector<std::string> parameters,
+    std::vector<std::unique_ptr<Instruction>> functionBody)
     : functionIdentifier(functionIdentifier), global(global),
       parameters(std::move(parameters)), functionBody(std::move(functionBody)) {
-    if (!parameters) {
-        throw std::logic_error(
-            "Creating FunctionDefinition with null parameters");
-    }
-    if (!functionBody) {
-        throw std::logic_error(
-            "Creating FunctionDefinition with null functionBody");
-    }
 }
 
 const std::string &FunctionDefinition::getFunctionIdentifier() const {
@@ -390,23 +373,17 @@ const std::string &FunctionDefinition::getFunctionIdentifier() const {
 
 bool FunctionDefinition::isGlobal() const { return global; }
 
-const std::unique_ptr<std::vector<std::string>> &
-FunctionDefinition::getParameterIdentifiers() const {
+std::vector<std::string> &FunctionDefinition::getParameterIdentifiers() {
     return parameters;
 }
 
-const std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> &
-FunctionDefinition::getFunctionBody() const {
+std::vector<std::unique_ptr<Instruction>> &
+FunctionDefinition::getFunctionBody() {
     return functionBody;
 }
 
 void FunctionDefinition::setFunctionBody(
-    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
-        newFunctionBody) {
-    if (!newFunctionBody) {
-        throw std::logic_error(
-            "Setting FunctionDefinition functionBody to null");
-    }
+    std::vector<std::unique_ptr<Instruction>> newFunctionBody) {
     this->functionBody = std::move(newFunctionBody);
 }
 
@@ -433,16 +410,10 @@ std::unique_ptr<AST::StaticInit> &StaticVariable::getStaticInit() {
     return staticInit;
 }
 
-Program::Program(
-    std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels)
-    : topLevels(std::move(topLevels)) {
-    if (!topLevels) {
-        throw std::logic_error("Creating Program with null topLevels");
-    }
-}
+Program::Program(std::vector<std::unique_ptr<TopLevel>> topLevels)
+    : topLevels(std::move(topLevels)) {}
 
-std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> &
-Program::getTopLevels() {
+std::vector<std::unique_ptr<TopLevel>> &Program::getTopLevels() {
     return topLevels;
 }
 } // namespace IR

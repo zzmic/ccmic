@@ -68,7 +68,7 @@ class Block; // Forward declaration.
 class CompoundStatement : public Statement {
   public:
     explicit CompoundStatement(Block *block);
-    ~CompoundStatement() = default; // Need destructor to clean up raw pointer.
+    ~CompoundStatement();
     void accept(Visitor &visitor) override;
     [[nodiscard]] Block *getBlock();
     void setBlock(Block *block);

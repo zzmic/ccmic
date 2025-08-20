@@ -67,6 +67,11 @@ void IfStatement::setElseOptStatement(
 
 CompoundStatement::CompoundStatement(Block *block) : block(block) {}
 
+CompoundStatement::~CompoundStatement() {
+    // Clean up the raw pointer.
+    delete block;
+}
+
 void CompoundStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
 Block *CompoundStatement::getBlock() { return block; }

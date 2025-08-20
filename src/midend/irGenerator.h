@@ -22,85 +22,83 @@ class IRGenerator {
 
   private:
     int irTemporariesCounter = 0;
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>> generateIRBlock(
-        std::unique_ptr<AST::Block> &astBlock,
+    void generateIRBlock(
+        AST::Block *astBlock,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRFunctionDefinition(
+    void generateIRFunctionDefinition(
         std::unique_ptr<AST::FunctionDeclaration> &astFunctionDeclaration,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRVariableDefinition(
+    void generateIRVariableDefinition(
         std::unique_ptr<AST::VariableDeclaration> &astVariableDeclaration,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRStatement(
+    void generateIRStatement(
         std::unique_ptr<AST::Statement> &astStatement,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRReturnStatement(
+    void generateIRReturnStatement(
         std::unique_ptr<AST::ReturnStatement> &returnStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRExpressionStatement(
+    void generateIRExpressionStatement(
         std::unique_ptr<AST::ExpressionStatement> &expressionStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRIfStatement(
+    void generateIRIfStatement(
         std::unique_ptr<AST::IfStatement> &ifStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRBreakStatement(
+    void generateIRBreakStatement(
         std::unique_ptr<AST::BreakStatement> &breakStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRContinueStatement(
+    void generateIRContinueStatement(
         std::unique_ptr<AST::ContinueStatement> &continueStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRWhileStatement(
+    void generateIRWhileStatement(
         std::unique_ptr<AST::WhileStatement> &whileStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRDoWhileStatement(
+    void generateIRDoWhileStatement(
         std::unique_ptr<AST::DoWhileStatement> &doWhileStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRForStatement(
+    void generateIRForStatement(
         std::unique_ptr<AST::ForStatement> &forStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
-    [[nodiscard]] std::unique_ptr<IR::Value>
-    generateIRInstruction(std::unique_ptr<AST::Expression> &e);
+    [[nodiscard]] std::unique_ptr<IR::Value> generateIRInstruction(
+        std::unique_ptr<AST::Expression> &e,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
     [[nodiscard]] std::unique_ptr<IR::VariableValue> generateIRUnaryInstruction(
-        std::unique_ptr<AST::UnaryExpression> &unaryExpr);
+        std::unique_ptr<AST::UnaryExpression> &unaryExpr,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
     [[nodiscard]] std::unique_ptr<IR::VariableValue>
     generateIRBinaryInstruction(
-        std::unique_ptr<AST::BinaryExpression> &binaryExpr);
+        std::unique_ptr<AST::BinaryExpression> &binaryExpr,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
     [[nodiscard]] std::unique_ptr<IR::VariableValue>
     generateIRInstructionWithLogicalAnd(
-        std::unique_ptr<AST::BinaryExpression> &binaryExpr);
+        std::unique_ptr<AST::BinaryExpression> &binaryExpr,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
     [[nodiscard]] std::unique_ptr<IR::VariableValue>
     generateIRInstructionWithLogicalOr(
-        std::unique_ptr<AST::BinaryExpression> &binaryExpr);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRCopyInstruction(std::unique_ptr<IR::Value> src,
-                              std::unique_ptr<IR::Value> dst);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRJumpInstruction(std::string_view target);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRJumpIfZeroInstruction(std::unique_ptr<IR::Value> condition,
-                                    std::string_view target);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRJumpIfNotZeroInstruction(std::unique_ptr<IR::Value> condition,
-                                       std::string_view target);
-    [[nodiscard]] std::vector<std::unique_ptr<IR::Instruction>>
-    generateIRLabelInstruction(std::string_view identifier);
+        std::unique_ptr<AST::BinaryExpression> &binaryExpr,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
+    void generateIRCopyInstruction(
+        std::unique_ptr<IR::Value> src, std::unique_ptr<IR::Value> dst,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
+    void generateIRJumpInstruction(
+        std::string_view target,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
+    void generateIRJumpIfZeroInstruction(
+        std::unique_ptr<IR::Value> condition, std::string_view target,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
+    void generateIRJumpIfNotZeroInstruction(
+        std::unique_ptr<IR::Value> condition, std::string_view target,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
+    void generateIRLabelInstruction(
+        std::string_view identifier,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
     [[nodiscard]] std::unique_ptr<IR::VariableValue>
     generateIRFunctionCallInstruction(
         std::string_view functionIdentifier,
-        std::vector<std::unique_ptr<IR::Value>> &args);
-    [[nodiscard]] std::unique_ptr<IR::VariableValue>
-    generateIRCastInstruction(std::unique_ptr<AST::CastExpression> &castExpr);
+        std::vector<std::unique_ptr<IR::Value>> &args,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
+    [[nodiscard]] std::unique_ptr<IR::VariableValue> generateIRCastInstruction(
+        std::unique_ptr<AST::CastExpression> &castExpr,
+        std::vector<std::unique_ptr<IR::Instruction>> &instructions);
     [[nodiscard]] std::string generateIRTemporary();
     [[nodiscard]] std::string generateIRFalseLabel();
     [[nodiscard]] std::string generateIRTrueLabel();

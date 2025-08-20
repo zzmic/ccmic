@@ -60,6 +60,7 @@ class FunctionDeclaration : public Declaration {
         std::string_view identifier, std::vector<std::string> parameters,
         std::optional<Block *> optBody, std::unique_ptr<Type> funType,
         std::optional<std::unique_ptr<StorageClass>> optStorageClass);
+    ~FunctionDeclaration();
     void accept(Visitor &visitor) override;
     [[nodiscard]] std::string &getIdentifier();
     [[nodiscard]] std::vector<std::string> &getParameterIdentifiers();
