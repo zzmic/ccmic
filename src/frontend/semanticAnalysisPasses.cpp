@@ -725,6 +725,8 @@ TypeCheckingPass::typeCheckFunctionDeclaration(
     frontendSymbolTable[declaration->getIdentifier()] = {std::move(funType),
                                                          std::move(attribute)};
 
+    // If the function has a body, we need to set the parameter types in the
+    // symbol table.
     if (hasBody) {
         const auto &funcParameterTypes = funTypePtr->getParameterTypes();
         auto parameterIdentifiers =
@@ -734,7 +736,7 @@ TypeCheckingPass::typeCheckFunctionDeclaration(
         for (size_t i = 0; i < parameterIdentifiers.size(); ++i) {
             // If the parameter type is available, use it.
             if (i < funcParameterTypes.size()) {
-                // Create a copy of the parameter type
+                // Create a "copy" that resonates the parameter type.
                 std::unique_ptr<Type> paramTypeCopy;
                 if (dynamic_cast<IntType *>(funcParameterTypes[i].get())) {
                     paramTypeCopy = std::make_unique<IntType>();
@@ -744,14 +746,17 @@ TypeCheckingPass::typeCheckFunctionDeclaration(
                     paramTypeCopy = std::make_unique<LongType>();
                 }
                 else {
-                    paramTypeCopy = std::make_unique<IntType>(); // Fallback.
+                    // Fallback to `IntType`.
+                    paramTypeCopy = std::make_unique<IntType>();
                 }
                 frontendSymbolTable[parameterIdentifiers[i]] = {
                     std::move(paramTypeCopy),
                     std::make_unique<LocalAttribute>()};
             }
+            // Otherwise, fallback to `IntType`.
+            // TODO(zzmic): Check if this should be retained or be replaced by
+            // an exception being thrown.
             else {
-                // Otherwise, fallback to IntType.
                 frontendSymbolTable[parameterIdentifiers[i]] = {
                     std::make_unique<IntType>(),
                     std::make_unique<LocalAttribute>()};

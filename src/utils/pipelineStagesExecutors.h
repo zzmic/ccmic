@@ -30,9 +30,9 @@ class PipelineStagesExecutors {
     [[nodiscard]] static std::pair<std::unique_ptr<AST::Program>, int>
     semanticAnalysisExecutor(std::unique_ptr<AST::Program> &astProgram);
     [[nodiscard]] static std::pair<
-        std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
-    irGeneratorExecutor(const std::shared_ptr<AST::Program> &astProgram,
+        std::unique_ptr<IR::Program>,
+        std::vector<std::unique_ptr<IR::StaticVariable>>>
+    irGeneratorExecutor(std::unique_ptr<AST::Program> &astProgram,
                         int variableResolutionCounter);
     static void
     irOptimizationExecutor(const std::shared_ptr<IR::Program> &irProgram,

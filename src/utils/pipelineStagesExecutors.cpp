@@ -113,18 +113,18 @@ PipelineStagesExecutors::semanticAnalysisExecutor(
 }
 
 // Function to generate the IR from the AST program.
-std::pair<std::shared_ptr<IR::Program>,
-          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+std::pair<std::unique_ptr<IR::Program>,
+          std::vector<std::unique_ptr<IR::StaticVariable>>>
 PipelineStagesExecutors::irGeneratorExecutor(
-    const std::shared_ptr<AST::Program> &astProgram,
-    int variableResolutionCounter) {
+    std::unique_ptr<AST::Program> &astProgram, int variableResolutionCounter) {
     std::cout << "\n";
-    std::pair<std::shared_ptr<IR::Program>,
-              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+    std::pair<std::unique_ptr<IR::Program>,
+              std::vector<std::unique_ptr<IR::StaticVariable>>>
         irProgramAndIRStaticVariables;
     try {
         IR::IRGenerator irGenerator(variableResolutionCounter);
-        irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
+        irProgramAndIRStaticVariables =
+            irGenerator.generateIR(std::move(astProgram));
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "IR generation error: " << e.what();

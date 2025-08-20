@@ -159,8 +159,10 @@ int main(int argc, char *argv[]) {
         }
 
         // Perform semantic analysis on the AST program.
-        auto variableResolutionCounter =
+        auto semanticAnalysisResult =
             PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
+        astProgram = std::move(semanticAnalysisResult.first);
+        auto variableResolutionCounter = semanticAnalysisResult.second;
 
         if (tillValidate) {
             std::cout << "Semantic analysis completed.\n";
@@ -170,7 +172,7 @@ int main(int argc, char *argv[]) {
         // Generate the IR from the AST program and return the IR program.
         auto irProgramAndIRStaticVariables =
             PipelineStagesExecutors::irGeneratorExecutor(
-                astProgram, variableResolutionCounter);
+                std::move(astProgram), variableResolutionCounter);
         auto irProgram = irProgramAndIRStaticVariables.first;
         auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
