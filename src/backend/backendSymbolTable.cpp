@@ -32,7 +32,7 @@ void convertFrontendToBackendSymbolTable(
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
             auto objEntry = std::make_shared<ObjEntry>(
-                std::move(assemblyType), true); // true for static storage.
+                assemblyType, true); // true for static storage.
             backendSymbolTable[identifier] = objEntry;
         }
         else if (auto localAttribute =
@@ -41,7 +41,7 @@ void convertFrontendToBackendSymbolTable(
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
             auto objEntry = std::make_shared<ObjEntry>(
-                std::move(assemblyType),
+                assemblyType,
                 false); // false for non-static storage.
             backendSymbolTable[identifier] = objEntry;
         }

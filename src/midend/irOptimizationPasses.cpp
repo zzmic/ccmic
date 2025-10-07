@@ -107,7 +107,7 @@ ConstantFoldingPass::foldConstants(
                 auto copyInstruction = std::make_shared<IR::CopyInstruction>(
                     std::make_shared<IR::ConstantValue>(astConstant),
                     unaryInstruction->getDst());
-                *it = std::move(copyInstruction);
+                *it = copyInstruction;
             }
             ++it;
         }
@@ -545,9 +545,8 @@ ConstantFoldingPass::foldConstants(
 
                     auto copyInstruction =
                         std::make_shared<IR::CopyInstruction>(
-                            std::move(resultConstant),
-                            binaryInstruction->getDst());
-                    *it = std::move(copyInstruction);
+                            resultConstant, binaryInstruction->getDst());
+                    *it = copyInstruction;
                 }
             }
             ++it;

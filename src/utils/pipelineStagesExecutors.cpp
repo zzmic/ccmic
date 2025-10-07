@@ -1,6 +1,5 @@
 #include "pipelineStagesExecutors.h"
 #include "../frontend/frontendSymbolTable.h"
-#include <filesystem>
 #include <fstream>
 #include <iostream>
 #include <sstream>
@@ -28,7 +27,7 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
 
     std::vector<Token> tokens;
     try {
-        tokens = lexer(std::move(input));
+        tokens = lexer(input);
         printTokens(tokens);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
@@ -1016,6 +1015,6 @@ void PipelineStagesExecutors::prependUnderscoreToIdentifierIfMacOS(
 // If the underlying OS is macOS, prepend an underscore to the function name.
 // Otherwise, leave the function name as is.
 #ifdef __APPLE__
-    identifier = "_" + std::move(identifier);
+    identifier = "_" + identifier;
 #endif
 }

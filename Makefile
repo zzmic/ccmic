@@ -1,5 +1,5 @@
 # Compiler.
-CXX = clang++
+CXX = /usr/bin/clang++
 
 # Common (compiler) flags.
 STDFLAGS = -std=c++23

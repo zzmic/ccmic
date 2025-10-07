@@ -154,8 +154,8 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
     auto irStaticVariables = convertFrontendSymbolTableToIRStaticVariables();
 
     // Return the generated IR program along with the static variables.
-    return std::make_pair(std::make_shared<IR::Program>(std::move(topLevels)),
-                          std::move(irStaticVariables));
+    return std::make_pair(std::make_shared<IR::Program>(topLevels),
+                          irStaticVariables);
 }
 
 void IRGenerator::generateIRBlock(
@@ -242,8 +242,8 @@ void IRGenerator::generateIRVariableDefinition(
 
         // Generate a copy instruction with the result value and the
         // destination value.
-        instructions->emplace_back(std::make_shared<IR::CopyInstruction>(
-            std::move(result), std::move(dst)));
+        instructions->emplace_back(
+            std::make_shared<IR::CopyInstruction>(result, dst));
     }
     // Otherwise (i.e., if the declaration does not have an initializer),
     // we do not need to generate any IR instructions.
@@ -316,8 +316,7 @@ void IRGenerator::generateIRReturnStatement(
     auto result = generateIRInstruction(exp, instructions);
 
     // Generate a return instruction with the result value.
-    instructions->emplace_back(
-        std::make_shared<IR::ReturnInstruction>(std::move(result)));
+    instructions->emplace_back(std::make_shared<IR::ReturnInstruction>(result));
 }
 
 void IRGenerator::generateIRExpressionStatement(
@@ -350,7 +349,7 @@ void IRGenerator::generateIRIfStatement(
         // Generate a jump-if-zero instruction with the condition value and the
         // else label.
         instructions->emplace_back(std::make_shared<IR::JumpIfZeroInstruction>(
-            std::move(conditionValue), elseLabel));
+            conditionValue, elseLabel));
         // Get the then-statement from the if-statement.
         auto thenStatement = ifStmt->getThenStatement();
         // Process the then-statement and generate the corresponding IR
@@ -370,7 +369,7 @@ void IRGenerator::generateIRIfStatement(
         // Generate a jump-if-zero instruction with the condition value and the
         // end label.
         instructions->emplace_back(std::make_shared<IR::JumpIfZeroInstruction>(
-            std::move(conditionValue), endLabel));
+            conditionValue, endLabel));
         // Get the then-statement from the if-statement.
         auto thenStatement = ifStmt->getThenStatement();
         // Process the then-statement and generate the corresponding IR
@@ -573,8 +572,8 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
                     variableExpr1->getIdentifier());
             auto result =
                 generateIRInstruction(assignmentExpr->getRight(), instructions);
-            instructions->emplace_back(std::make_shared<IR::CopyInstruction>(
-                std::move(result), variableValue));
+            instructions->emplace_back(
+                std::make_shared<IR::CopyInstruction>(result, variableValue));
             return variableValue;
         }
         else {
@@ -653,8 +652,8 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
 
     // Generate a unary instruction with the IR unary operator, the
     // source value, and the destination value.
-    instructions->emplace_back(std::make_shared<IR::UnaryInstruction>(
-        std::move(IROp), std::move(src), dst));
+    instructions->emplace_back(
+        std::make_shared<IR::UnaryInstruction>(IROp, src, dst));
 
     // Return the destination value.
     return dst;
@@ -680,8 +679,8 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
     // Generate a binary instruction with the IR binary operator, the
     // left-hand side value, the right-hand side value, and the
     // destination value.
-    instructions->emplace_back(std::make_shared<IR::BinaryInstruction>(
-        std::move(IROp), std::move(lhs), std::move(rhs), dst));
+    instructions->emplace_back(
+        std::make_shared<IR::BinaryInstruction>(IROp, lhs, rhs, dst));
 
     // Return the destination value.
     return dst;
@@ -698,14 +697,14 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     // Generate a JumpIfZero instruction with the left-hand side value and a
     // (new) false label.
     auto falseLabel = generateIRFalseLabel();
-    generateIRJumpIfZeroInstruction(std::move(lhs), falseLabel, instructions);
+    generateIRJumpIfZeroInstruction(lhs, falseLabel, instructions);
 
     // Recursively generate the right expression in the binary expression.
     auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
 
     // Generate a JumpIfZero instruction with the right-hand side value and
     // the same (new) false label.
-    generateIRJumpIfZeroInstruction(std::move(rhs), falseLabel, instructions);
+    generateIRJumpIfZeroInstruction(rhs, falseLabel, instructions);
 
     // Generate a copy instruction with 1 being copied to a (new) result
     // label.
@@ -751,7 +750,7 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     // Generate a JumpIfNotZero instruction with the left-hand side value
     // and a (new) true label.
     auto trueLabel = generateIRTrueLabel();
-    generateIRJumpIfNotZeroInstruction(std::move(lhs), trueLabel, instructions);
+    generateIRJumpIfNotZeroInstruction(lhs, trueLabel, instructions);
 
     // Recursively generate the right expression in the binary expression.
     auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
@@ -759,7 +758,7 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     // Generate a JumpIfNotZero instruction with the right-hand side value
     // and the same (new) true label.
     auto trueLabelRight = generateIRTrueLabel();
-    generateIRJumpIfNotZeroInstruction(std::move(rhs), trueLabel, instructions);
+    generateIRJumpIfNotZeroInstruction(rhs, trueLabel, instructions);
 
     // Generate a copy instruction with 0 being copied to a (new) result
     // label.
@@ -900,7 +899,7 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
                 targetType, std::make_shared<AST::LocalAttribute>());
             auto dst = std::make_shared<IR::VariableValue>(dstName);
             instructions->emplace_back(
-                std::make_shared<IR::CopyInstruction>(std::move(result), dst));
+                std::make_shared<IR::CopyInstruction>(result, dst));
             return dst;
         }
         else {

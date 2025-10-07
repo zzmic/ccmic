@@ -1389,7 +1389,7 @@ void PrettyPrinters::prependUnderscoreToIdentifierIfMacOS(
 // If the underlying OS is macOS, prepend an underscore to the function name.
 // Otherwise, leave the function name as is.
 #ifdef __APPLE__
-    identifier = "_" + std::move(identifier);
+    identifier = "_" + identifier;
 #endif
 }
 /*

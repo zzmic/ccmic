@@ -341,13 +341,13 @@ FixupPass::rewriteInvalidMov(
     auto newMov1 = std::make_shared<Assembly::MovInstruction>(
         movInst->getType(), movInst->getSrc(), r10d);
     auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-        movInst->getType(), std::move(r10d), movInst->getDst());
+        movInst->getType(), r10d, movInst->getDst());
 
     // Replace the original `mov` instruction with the first new `mov`
     // instruction.
-    *it = std::move(newMov1);
+    *it = newMov1;
     // Insert the second new `mov` instruction after the first one.
-    it = instructions->insert(it + 1, std::move(newMov2));
+    it = instructions->insert(it + 1, newMov2);
 
     // Return the new iterator pointing to the second `mov` instruction.
     return it;
@@ -379,30 +379,29 @@ FixupPass::rewriteInvalidMovsx(
             std::make_shared<Assembly::R11>());
 
         auto newMov1 = std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::Longword>(), std::move(src), r10d);
+            std::make_shared<Assembly::Longword>(), src, r10d);
 
         auto newMovsx =
             std::make_shared<Assembly::MovsxInstruction>(r10d, r11d);
 
         auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::Quadword>(), std::move(r11d),
-            std::move(dst));
+            std::make_shared<Assembly::Quadword>(), r11d, dst);
 
-        *it = std::move(newMov1);
-        it = instructions->insert(it + 1, std::move(newMovsx));
-        it = instructions->insert(it + 1, std::move(newMov2));
+        *it = newMov1;
+        it = instructions->insert(it + 1, newMovsx);
+        it = instructions->insert(it + 1, newMov2);
     }
     else if (invalidSrc) {
         auto r10d = std::make_shared<Assembly::RegisterOperand>(
             std::make_shared<Assembly::R10>());
 
         auto newMov = std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::Longword>(), std::move(src), r10d);
+            std::make_shared<Assembly::Longword>(), src, r10d);
 
         auto newMovsx = std::make_shared<Assembly::MovsxInstruction>(r10d, dst);
 
-        *it = std::move(newMov);
-        it = instructions->insert(it + 1, std::move(newMovsx));
+        *it = newMov;
+        it = instructions->insert(it + 1, newMovsx);
     }
     else if (invalidDst) {
         auto r11d = std::make_shared<Assembly::RegisterOperand>(
@@ -411,10 +410,10 @@ FixupPass::rewriteInvalidMovsx(
         auto newMovsx = std::make_shared<Assembly::MovsxInstruction>(src, r11d);
 
         auto newMov = std::make_shared<Assembly::MovInstruction>(
-            std::make_shared<Assembly::Quadword>(), std::move(r11d), dst);
+            std::make_shared<Assembly::Quadword>(), r11d, dst);
 
-        *it = std::move(newMovsx);
-        it = instructions->insert(it + 1, std::move(newMov));
+        *it = newMovsx;
+        it = instructions->insert(it + 1, newMov);
     }
 
     return it;
@@ -439,10 +438,10 @@ FixupPass::rewriteInvalidBinary(
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             binInstr->getType(), binInstr->getOperand1(), r10d);
         auto newBin = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), binInstr->getType(), std::move(r10d),
+            binInstr->getBinaryOperator(), binInstr->getType(), r10d,
             binInstr->getOperand2());
-        *it = std::move(newMov);
-        it = instructions->insert(it + 1, std::move(newBin));
+        *it = newMov;
+        it = instructions->insert(it + 1, newBin);
     }
     else if (std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
                  binInstr->getBinaryOperator())) {
@@ -454,10 +453,10 @@ FixupPass::rewriteInvalidBinary(
             binInstr->getBinaryOperator(), binInstr->getType(),
             binInstr->getOperand1(), r11d);
         auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-            binInstr->getType(), std::move(r11d), binInstr->getOperand2());
-        *it = std::move(newMov1);
-        it = instructions->insert(it + 1, std::move(newImul));
-        it = instructions->insert(it + 1, std::move(newMov2));
+            binInstr->getType(), r11d, binInstr->getOperand2());
+        *it = newMov1;
+        it = instructions->insert(it + 1, newImul);
+        it = instructions->insert(it + 1, newMov2);
     }
 
     return it;
@@ -477,11 +476,11 @@ FixupPass::rewriteInvalidIdiv(
 
     auto newMov = std::make_shared<Assembly::MovInstruction>(
         idivInstr->getType(), idivInstr->getOperand(), r10d);
-    auto newIdiv = std::make_shared<Assembly::IdivInstruction>(
-        idivInstr->getType(), std::move(r10d));
+    auto newIdiv =
+        std::make_shared<Assembly::IdivInstruction>(idivInstr->getType(), r10d);
 
-    *it = std::move(newMov);
-    it = instructions->insert(it + 1, std::move(newIdiv));
+    *it = newMov;
+    it = instructions->insert(it + 1, newIdiv);
 
     return it;
 }
@@ -509,9 +508,9 @@ FixupPass::rewriteInvalidCmp(
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             cmpInstr->getType(), cmpInstr->getOperand1(), r10d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
-            cmpInstr->getType(), std::move(r10d), cmpInstr->getOperand2());
-        *it = std::move(newMov);
-        it = instructions->insert(it + 1, std::move(newCmp));
+            cmpInstr->getType(), r10d, cmpInstr->getOperand2());
+        *it = newMov;
+        it = instructions->insert(it + 1, newCmp);
     }
     else if (std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
                  cmpInstr->getOperand2())) {
@@ -520,9 +519,9 @@ FixupPass::rewriteInvalidCmp(
         auto newMov = std::make_shared<Assembly::MovInstruction>(
             cmpInstr->getType(), cmpInstr->getOperand2(), r11d);
         auto newCmp = std::make_shared<Assembly::CmpInstruction>(
-            cmpInstr->getType(), cmpInstr->getOperand1(), std::move(r11d));
-        *it = std::move(newMov);
-        it = instructions->insert(it + 1, std::move(newCmp));
+            cmpInstr->getType(), cmpInstr->getOperand1(), r11d);
+        *it = newMov;
+        it = instructions->insert(it + 1, newCmp);
     }
 
     return it;
@@ -545,10 +544,10 @@ FixupPass::rewriteInvalidLargeImmediateMov(
     auto newMov1 = std::make_shared<Assembly::MovInstruction>(
         movInst->getType(), movInst->getSrc(), r10d);
     auto newMov2 = std::make_shared<Assembly::MovInstruction>(
-        movInst->getType(), std::move(r10d), movInst->getDst());
+        movInst->getType(), r10d, movInst->getDst());
 
-    *it = std::move(newMov1);
-    it = instructions->insert(it + 1, std::move(newMov2));
+    *it = newMov1;
+    it = instructions->insert(it + 1, newMov2);
 
     return it;
 }
@@ -575,9 +574,9 @@ FixupPass::rewriteInvalidLongwordImmediateMov(
     auto newImmediate =
         std::make_shared<Assembly::ImmediateOperand>(truncatedValue);
     auto newMov = std::make_shared<Assembly::MovInstruction>(
-        movInst->getType(), std::move(newImmediate), movInst->getDst());
+        movInst->getType(), newImmediate, movInst->getDst());
 
-    *it = std::move(newMov);
+    *it = newMov;
     return it;
 }
 
@@ -612,17 +611,15 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
     std::shared_ptr<Assembly::BinaryInstruction> newBin;
     if (isFirstOperand) {
         newBin = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), binInstr->getType(), std::move(r10d),
-            otherOp);
+            binInstr->getBinaryOperator(), binInstr->getType(), r10d, otherOp);
     }
     else {
         newBin = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), binInstr->getType(), otherOp,
-            std::move(r10d));
+            binInstr->getBinaryOperator(), binInstr->getType(), otherOp, r10d);
     }
 
-    *it = std::move(newMov);
-    it = instructions->insert(it + 1, std::move(newBin));
+    *it = newMov;
+    it = instructions->insert(it + 1, newBin);
 
     return it;
 }
@@ -656,16 +653,16 @@ FixupPass::rewriteInvalidLargeImmediateCmp(
 
     std::shared_ptr<Assembly::CmpInstruction> newCmp;
     if (isFirstOperand) {
-        newCmp = std::make_shared<Assembly::CmpInstruction>(
-            cmpInstr->getType(), std::move(r10d), otherOp);
+        newCmp = std::make_shared<Assembly::CmpInstruction>(cmpInstr->getType(),
+                                                            r10d, otherOp);
     }
     else {
-        newCmp = std::make_shared<Assembly::CmpInstruction>(
-            cmpInstr->getType(), otherOp, std::move(r10d));
+        newCmp = std::make_shared<Assembly::CmpInstruction>(cmpInstr->getType(),
+                                                            otherOp, r10d);
     }
 
-    *it = std::move(newMov);
-    it = instructions->insert(it + 1, std::move(newCmp));
+    *it = newMov;
+    it = instructions->insert(it + 1, newCmp);
 
     return it;
 }
@@ -684,10 +681,10 @@ FixupPass::rewriteInvalidLargeImmediatePush(
         std::make_shared<Assembly::R10>());
     auto newMov = std::make_shared<Assembly::MovInstruction>(
         std::make_shared<Assembly::Quadword>(), pushInstr->getOperand(), r10d);
-    auto newPush = std::make_shared<Assembly::PushInstruction>(std::move(r10d));
+    auto newPush = std::make_shared<Assembly::PushInstruction>(r10d);
 
-    *it = std::move(newMov);
-    it = instructions->insert(it + 1, std::move(newPush));
+    *it = newMov;
+    it = instructions->insert(it + 1, newPush);
 
     return it;
 }
