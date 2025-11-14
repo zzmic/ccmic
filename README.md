@@ -1,35 +1,50 @@
-## ccmic
+# ccmic
 
 ## Overview
 This project is a C++ implementation of a C compiler for a non-trivial subset of the C programming language, adhering to the C17 standard. The compiler's design is based on the principles and practices outlined in [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). It is continuously developed and tested against the [the book's companion test suite (hosted by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git). As new features and optimizations are integrated into the codebase, the compiler's capabilities continue to expand modularly.
 
 The compiler transforms C source code into x86-64 assembly through a multi-stage pipeline:
 
-1. **Lexing**: Regex-based tokenization of C source.
-2. **Parsing**: Recursive descent parsing with precedence climbing for AST construction.
+- **Lexing**: Regex-based tokenization of C source.
+- **Parsing**: Recursive descent parsing with precedence climbing for AST construction.
    - Leverages the [Visitor design pattern](https://en.wikipedia.org/wiki/Visitor_pattern) for AST traversal.
-3. **Semantic Analysis**: Type checking, symbol resolution, and loop labeling.
-4. **IR Generation**: AST lowering to a custom intermediate representation (IR).
-5. **Code Generation**: IR-to-assembly translation, stack allocation, and fixup passes.
-6. **Assembly Emission**: Final x86-64 assembly output.
+- **Semantic Analysis**: Type checking, symbol resolution, and loop labeling.
+- **IR Generation**: AST lowering to a custom intermediate representation (IR).
+- **Code Generation**: IR-to-assembly translation, stack allocation, and fixup passes.
+- **Assembly Emission**: Final x86-64 assembly output.
 
 ```
-Lexing (Lexical Analysis)
-   |
-   v
-Parsing (Syntactic Analysis)
-   |
-   v
-Semantic Analysis
-   |
-   v
-IR Generation
-   |
-   v
-Code Generation (Assembly Generation)
-   |
-   v
-Assembly Emission
+╭────────────────────────╮
+│         Lexing         │
+│   (Lexical Analysis)   │
+╰────────────────────────╯
+             │
+             ▼
+╭──────────────────────────╮
+│         Parsing          │
+│   (Syntactic Analysis)   │
+╰──────────────────────────╯
+             │
+             ▼
+╭───────────────────────╮
+│   Semantic Analysis   │
+╰───────────────────────╯
+             │
+             ▼
+╭───────────────────────╮
+│     IR Generation     │
+╰───────────────────────╯
+             │
+             ▼
+╭───────────────────────────╮
+│      Code Generation      │
+│   (Assembly Generation)   │
+╰───────────────────────────╯
+             │
+             ▼
+╭───────────────────────╮
+│   Assembly Emission   │
+╰───────────────────────╯
 ```
 
 ## Supported Language Features
