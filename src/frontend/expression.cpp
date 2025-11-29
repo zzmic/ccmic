@@ -311,6 +311,14 @@ std::shared_ptr<Expression> AssignmentExpression::getRight() const {
     return right;
 }
 
+void AssignmentExpression::setLeft(std::shared_ptr<Expression> newLeft) {
+    this->left = newLeft;
+}
+
+void AssignmentExpression::setRight(std::shared_ptr<Expression> newRight) {
+    this->right = newRight;
+}
+
 std::shared_ptr<Type> AssignmentExpression::getExpType() const {
     return expType;
 }

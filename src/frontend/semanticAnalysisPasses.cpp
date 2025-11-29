@@ -579,13 +579,15 @@ TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
     if (targetType == nullptr) {
         throw std::logic_error("Null target type in convertTo");
     }
-    if (expression->getExpType() == targetType) {
+    if (expression->getExpType() && targetType &&
+        *expression->getExpType() == *targetType) {
         return expression;
     }
     // Otherwise, wrap the expression in a cast expression and annotate the
     // result with the correct type.
     auto castExpression =
         std::make_shared<CastExpression>(targetType, expression);
+    castExpression->setExpType(targetType);
     return castExpression;
 }
 
@@ -896,8 +898,8 @@ void TypeCheckingPass::typeCheckExpression(
                 auto argument = arguments->at(i);
                 auto parameterType = parameterTypes->at(i);
                 typeCheckExpression(argument);
-                convertTo(argument, parameterType);
-                convertedArguments->emplace_back(argument);
+                auto convertedArgument = convertTo(argument, parameterType);
+                convertedArguments->emplace_back(convertedArgument);
             }
             // Set the function call expression's arguments to the converted
             // arguments.
@@ -946,7 +948,8 @@ void TypeCheckingPass::typeCheckExpression(
         typeCheckExpression(left);
         typeCheckExpression(right);
         auto leftType = left->getExpType();
-        right->setExpType(leftType);
+        auto convertedRight = convertTo(right, leftType);
+        assignmentExpression->setRight(convertedRight);
         assignmentExpression->setExpType(leftType);
     }
     else if (auto unaryExpression =

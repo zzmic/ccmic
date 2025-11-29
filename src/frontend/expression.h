@@ -140,6 +140,8 @@ class AssignmentExpression : public Expression {
     void accept(Visitor &visitor) override;
     [[nodiscard]] std::shared_ptr<Expression> getLeft() const;
     [[nodiscard]] std::shared_ptr<Expression> getRight() const;
+    void setLeft(std::shared_ptr<Expression> left);
+    void setRight(std::shared_ptr<Expression> right);
     [[nodiscard]] std::shared_ptr<Type> getExpType() const override;
     void setExpType(std::shared_ptr<Type> expType) override;
 
