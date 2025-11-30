@@ -77,13 +77,12 @@ void FixupPass::rewriteFunctionDefinition(
         else if (auto binInstr =
                      std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
                          *it)) {
-            if (isInvalidBinary(binInstr)) {
-                it = rewriteInvalidBinary(instructions, it, binInstr);
-            }
-            // Check for large immediate values in binary instructions.
-            else if (isInvalidLargeImmediateBinary(binInstr)) {
+            if (isInvalidLargeImmediateBinary(binInstr)) {
                 it = rewriteInvalidLargeImmediateBinary(instructions, it,
                                                         binInstr);
+            }
+            else if (isInvalidBinary(binInstr)) {
+                it = rewriteInvalidBinary(instructions, it, binInstr);
             }
         }
         else if (auto idivInstr =
@@ -95,19 +94,17 @@ void FixupPass::rewriteFunctionDefinition(
         }
         else if (auto cmpInstr =
                      std::dynamic_pointer_cast<Assembly::CmpInstruction>(*it)) {
-            if (isInvalidCmp(cmpInstr)) {
-                it = rewriteInvalidCmp(instructions, it, cmpInstr);
-            }
-            // Check for large immediate values in cmp instructions.
-            else if (isInvalidLargeImmediateCmp(cmpInstr)) {
+            if (isInvalidLargeImmediateCmp(cmpInstr)) {
                 it =
                     rewriteInvalidLargeImmediateCmp(instructions, it, cmpInstr);
+            }
+            else if (isInvalidCmp(cmpInstr)) {
+                it = rewriteInvalidCmp(instructions, it, cmpInstr);
             }
         }
         else if (auto pushInstr =
                      std::dynamic_pointer_cast<Assembly::PushInstruction>(
                          *it)) {
-            // Check for large immediate values in push instructions.
             if (isInvalidLargeImmediatePush(pushInstr)) {
                 it = rewriteInvalidLargeImmediatePush(instructions, it,
                                                       pushInstr);
@@ -608,18 +605,49 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
     auto newMov = std::make_shared<Assembly::MovInstruction>(
         binInstr->getType(), immediateOp, r10d);
 
+    // Check if `otherOp` is a memory operand (stack or data).
+    // If it is, load it into a register first.
+    auto otherStackOp =
+        std::dynamic_pointer_cast<Assembly::StackOperand>(otherOp);
+    auto otherDataOp =
+        std::dynamic_pointer_cast<Assembly::DataOperand>(otherOp);
+    std::shared_ptr<Assembly::RegisterOperand> otherRegOp = nullptr;
+    if (otherStackOp || otherDataOp) {
+        auto r11d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R11>());
+        auto loadOtherMov = std::make_shared<Assembly::MovInstruction>(
+            binInstr->getType(), otherOp, r11d);
+        *it = newMov;
+        it = instructions->insert(it + 1, loadOtherMov);
+        otherRegOp = r11d;
+    }
+    else {
+        *it = newMov;
+    }
+
     std::shared_ptr<Assembly::BinaryInstruction> newBin;
+    std::shared_ptr<Assembly::Operand> finalOtherOp =
+        otherRegOp ? std::static_pointer_cast<Assembly::Operand>(otherRegOp)
+                   : otherOp;
     if (isFirstOperand) {
         newBin = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), binInstr->getType(), r10d, otherOp);
+            binInstr->getBinaryOperator(), binInstr->getType(), r10d,
+            finalOtherOp);
     }
     else {
         newBin = std::make_shared<Assembly::BinaryInstruction>(
-            binInstr->getBinaryOperator(), binInstr->getType(), otherOp, r10d);
+            binInstr->getBinaryOperator(), binInstr->getType(), finalOtherOp,
+            r10d);
     }
 
-    *it = newMov;
     it = instructions->insert(it + 1, newBin);
+
+    // If we loaded `otherOp` into a register, store it back to memory.
+    if (otherRegOp) {
+        auto storeMov = std::make_shared<Assembly::MovInstruction>(
+            binInstr->getType(), otherRegOp, otherOp);
+        it = instructions->insert(it + 1, storeMov);
+    }
 
     return it;
 }
@@ -651,17 +679,37 @@ FixupPass::rewriteInvalidLargeImmediateCmp(
     auto newMov = std::make_shared<Assembly::MovInstruction>(
         cmpInstr->getType(), immediateOp, r10d);
 
+    // Check if `otherOp` is also an immediate (even a small one).
+    // If it is, load it into a register first.
+    auto otherImmediateOp =
+        std::dynamic_pointer_cast<Assembly::ImmediateOperand>(otherOp);
+    std::shared_ptr<Assembly::RegisterOperand> otherRegOp = nullptr;
+    if (otherImmediateOp) {
+        auto r11d = std::make_shared<Assembly::RegisterOperand>(
+            std::make_shared<Assembly::R11>());
+        auto otherMov = std::make_shared<Assembly::MovInstruction>(
+            cmpInstr->getType(), otherImmediateOp, r11d);
+        *it = newMov;
+        it = instructions->insert(it + 1, otherMov);
+        otherRegOp = r11d;
+    }
+    else {
+        *it = newMov;
+    }
+
     std::shared_ptr<Assembly::CmpInstruction> newCmp;
+    std::shared_ptr<Assembly::Operand> finalOtherOp =
+        otherRegOp ? std::static_pointer_cast<Assembly::Operand>(otherRegOp)
+                   : otherOp;
     if (isFirstOperand) {
         newCmp = std::make_shared<Assembly::CmpInstruction>(cmpInstr->getType(),
-                                                            r10d, otherOp);
+                                                            r10d, finalOtherOp);
     }
     else {
         newCmp = std::make_shared<Assembly::CmpInstruction>(cmpInstr->getType(),
-                                                            otherOp, r10d);
+                                                            finalOtherOp, r10d);
     }
 
-    *it = newMov;
     it = instructions->insert(it + 1, newCmp);
 
     return it;
