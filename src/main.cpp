@@ -124,25 +124,26 @@ int main(int argc, char *argv[]) {
         }
         std::string programName = sourceFile.substr(0, sourceFile.rfind('.'));
         // Construct the preprocessed file name by appending the ".i" extension.
-        std::string preprocessedFile = programName + ".i";
+        std::string preprocessedFileName = programName + ".i";
         // Construct the assembly file name by appending the ".s" extension.
-        std::string assemblyFile = programName + ".s";
+        std::string assemblyFileName = programName + ".s";
         // Construct the object file name by appending the ".o" extension.
-        std::string objectFile = programName + ".o";
+        std::string objectFileName = programName + ".o";
         // Construct a vector to store the object files.
         // Note: For now, there is only one object file.
-        std::vector<std::string> objectFiles;
+        std::vector<std::string> objectFileNames;
         // Construct the executable file name.
-        std::string executableFile = programName;
+        std::string executableFileName = programName;
 
         // Preprocess the source file and write the result to the preprocessed.
-        preprocess(sourceFile, preprocessedFile);
+        preprocess(sourceFile, preprocessedFileName);
 
         // Tokenize the input, print the tokens, and return the tokens.
-        auto tokens = PipelineStagesExecutors::lexerExecutor(preprocessedFile);
+        auto tokens =
+            PipelineStagesExecutors::lexerExecutor(preprocessedFileName);
 
         // Delete the preprocessed file after compiling it to assembly.
-        std::filesystem::remove(preprocessedFile);
+        std::filesystem::remove(preprocessedFileName);
 
         if (tillLex) {
             std::cout << "Lexical tokenization completed.\n";
@@ -220,7 +221,7 @@ int main(int argc, char *argv[]) {
 
         // Emit the generated assembly code to the assembly file.
         PipelineStagesExecutors::codeEmissionExecutor(assemblyProgram,
-                                                      assemblyFile);
+                                                      assemblyFileName);
 
         if (tillEmitAssembly) {
             std::cout << "Code emission completed.\n";
@@ -229,26 +230,28 @@ int main(int argc, char *argv[]) {
 
         // Assemble the assembly file to an object file and add it to the object
         // file vector.
-        assembleToObject(assemblyFile, objectFile);
-        objectFiles.emplace_back(objectFile);
+        assembleToObject(assemblyFileName, objectFileName);
+        objectFileNames.emplace_back(objectFileName);
 
         // Delete the assebmly file after assembling and linking it.
-        std::filesystem::remove(assemblyFile);
+        std::filesystem::remove(assemblyFileName);
 
         if (tillObject) {
-            std::cout << "Compilation completed. Object file: " << objectFile
-                      << "\n";
+            std::cout << "Compilation completed. Object file: "
+                      << objectFileName << "\n";
             return EXIT_SUCCESS;
         }
 
         // Link the object files to an executable file.
-        linkToExecutable(objectFiles, executableFile);
+        linkToExecutable(objectFileNames, executableFileName);
 
-        // Remove the object file after linking it to the executable.
-        std::filesystem::remove(objectFile);
+        // Remove the object files after linking them to the executable.
+        for (const auto &objFileName : objectFileNames) {
+            std::filesystem::remove(objFileName);
+        }
 
         std::cout << "Compilation completed. Executable file: "
-                  << executableFile << "\n";
+                  << executableFileName << "\n";
         return EXIT_SUCCESS;
     } catch (const std::exception &e) {
         std::cerr << "Error: " << e.what() << std::endl;

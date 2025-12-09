@@ -17,33 +17,34 @@ void runCommand(std::string_view command) {
     }
 }
 
-void preprocess(std::string_view inputFile, std::string_view preprocessedFile) {
-    auto command = std::string{"gcc -E -P "} + std::string{inputFile} + " -o " +
-                   std::string{preprocessedFile};
+void preprocess(std::string_view inputFileName,
+                std::string_view preprocessedFileName) {
+    auto command = std::string{"gcc -E -P "} + std::string{inputFileName} +
+                   " -o " + std::string{preprocessedFileName};
     runCommand(command);
 }
 
-void compileToAssembly(std::string_view preprocessedFile,
-                       std::string_view assemblyFile) {
-    auto command = std::string{"gcc -S "} + std::string{preprocessedFile} +
-                   " -o " + std::string{assemblyFile};
+void compileToAssembly(std::string_view preprocessedFileName,
+                       std::string_view assemblyFileName) {
+    auto command = std::string{"gcc -S "} + std::string{preprocessedFileName} +
+                   " -o " + std::string{assemblyFileName};
     runCommand(command);
 }
 
-void assembleToObject(std::string_view assemblyFile,
-                      std::string_view objectFile) {
-    auto command = std::string{"gcc -c "} + std::string{assemblyFile} + " -o " +
-                   std::string{objectFile};
+void assembleToObject(std::string_view assemblyFileName,
+                      std::string_view objectFileName) {
+    auto command = std::string{"gcc -c "} + std::string{assemblyFileName} +
+                   " -o " + std::string{objectFileName};
     runCommand(command);
 }
 
-void linkToExecutable(const std::vector<std::string> &objectFiles,
-                      std::string_view executableFile) {
+void linkToExecutable(const std::vector<std::string> &objectFileNames,
+                      std::string_view executableFileName) {
     auto command = std::string{"gcc"};
-    for (const auto &objectFile : objectFiles) {
+    for (const auto &objectFile : objectFileNames) {
         command += " " + objectFile;
     }
-    command += " -o " + std::string{executableFile};
+    command += " -o " + std::string{executableFileName};
     // Link against the C standard library (libc).
     command += " -lc";
     runCommand(command);

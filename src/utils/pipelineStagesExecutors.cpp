@@ -5,11 +5,11 @@
 #include <sstream>
 
 std::vector<Token>
-PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
-    std::ifstream sourceFileInputStream(std::string{sourceFile});
+PipelineStagesExecutors::lexerExecutor(std::string_view sourceFileName) {
+    std::ifstream sourceFileInputStream(std::string{sourceFileName});
     if (sourceFileInputStream.fail()) {
         std::stringstream msg;
-        msg << "Unable to open source file: " << sourceFile;
+        msg << "Unable to open source file: " << sourceFileName;
         throw std::ios_base::failure(msg.str());
     }
 
@@ -26,8 +26,6 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
 
     std::vector<Token> tokens;
     try {
-        // TODO(zzmic): Can't I directly perform lexing on the input source file
-        // stream instead of reading the entire file into a string first?
         tokens = lexer(input);
         printTokens(tokens);
     } catch (const std::runtime_error &e) {
@@ -186,11 +184,11 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
 
 void PipelineStagesExecutors::codeEmissionExecutor(
     const std::shared_ptr<Assembly::Program> &assemblyProgram,
-    std::string_view assemblyFile) {
-    std::ofstream assemblyFileStream(std::string{assemblyFile});
+    std::string_view assemblyFileName) {
+    std::ofstream assemblyFileStream(std::string{assemblyFileName});
     if (!assemblyFileStream.is_open()) {
         std::stringstream msg;
-        msg << "Error: Unable to open output file " << assemblyFile;
+        msg << "Error: Unable to open output file " << assemblyFileName;
         throw std::ios_base::failure(msg.str());
     }
 
