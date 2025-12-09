@@ -11,6 +11,12 @@
 *.gch
 *.pch
 
+# Linker files
+*.ilk
+
+# Debugger Files
+*.pdb
+
 # Compiled Dynamic libraries
 *.so
 *.dylib
@@ -31,8 +37,11 @@
 *.out
 *.app
 
-.vscode/
-bin/
-playground/
-valgrind-out.txt
-error.txt
+# debug information files
+*.dwo
+
+**/.vscode/
+**/bin/
+**/playground/
+**/valgrind-out.txt
+**/error.txt

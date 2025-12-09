@@ -93,7 +93,7 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 - **Optimizations** (to be implemented): `--fold-constants`, `--propagate-copies`, `--eliminate-unreachable-code`, `--eliminate-dead-stores`, `--optimize`.
 
 ## Development and Extensibility
-- **Adding language features**: Extend frontend classes and corresponding IR representations in `src/frontend/` and `src/midend/`.
+- **Adding language features**: Expand the frontend in `src/frontend/` by modifying the lexer, parser, and AST nodes.
 - **Adding optimizations**: Implement new passes in `src/midend/` following the existing `OptimizationPass` pattern.
-- **Debugging**: Use built-in pretty-printers for IR and assembly inspection in `src/utils/`.
-- **Testing**: Run against the companion test suite linked above.
+- **Debugging**: Use the implemented pretty-printers for IR and assembly inspection in `src/utils/`.
+- **Testing**: Run tests using the companion test suite linked in the overview section.
