@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 /*
- * Start: Functions to print the IR program onto the stdout.
+ * Start: Functions to print the IR program to stdout.
  */
 void PrettyPrinters::printIRProgram(
     const std::shared_ptr<IR::Program> &irProgram,
@@ -596,13 +596,12 @@ void PrettyPrinters::printIRFunctionCallInstruction(
     std::cout << ")\n";
 }
 /*
- * End: Functions to print the IR program onto the stdout.
+ * End: Functions to print the IR program to stdout.
  */
 
 /*
- * Start: Functions to print the assembly program onto the stdout.
+ * Start: Functions to print the assembly program to stdout.
  */
-// Function to print the assembly code onto the stdout.
 void PrettyPrinters::printAssemblyProgram(
     const std::shared_ptr<Assembly::Program> &assemblyProgram) {
     auto topLevels = assemblyProgram->getTopLevels();
@@ -832,8 +831,8 @@ void PrettyPrinters::printAssyMovInstruction(
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        // Use long value for quadword instructions, int value for longword
-        // instructions.
+        // Use long values for quadword instructions and int values for longword
+        // instructions in order to avoid (potential) overflow issues.
         if (auto quadword =
                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
             srcStr = "$" + std::to_string(srcImm->getImmediateLong());
@@ -1393,5 +1392,5 @@ void PrettyPrinters::prependUnderscoreToIdentifierIfMacOS(
 #endif
 }
 /*
- * End: Functions to print the assembly program onto the stdout.
+ * End: Functions to print the assembly program to stdout.
  */

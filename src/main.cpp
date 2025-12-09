@@ -176,7 +176,7 @@ int main(int argc, char *argv[]) {
 
         if (foldConstantsPass || propagateCopiesPass ||
             eliminateUnreachableCodePass || eliminateDeadStoresPass) {
-            // Print the IR program onto the stdout.
+            // Print the IR program to stdout.
             std::cout << "<<< Before optimization passes: >>>\n";
             PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
 
@@ -186,13 +186,13 @@ int main(int argc, char *argv[]) {
                 irProgram, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
 
-            // Print the optimized IR program onto the stdout (after the
+            // Print the optimized IR program to stdout (after the
             // optimization passes).
             std::cout << "<<< After optimization passes: >>>\n";
             PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
         }
         else {
-            // Print the IR program onto the stdout.
+            // Print the IR program to stdout.
             PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
         }
 

@@ -6,7 +6,6 @@
 
 std::vector<Token>
 PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
-    // Instantiate an input file stream to read the source file.
     std::ifstream sourceFileInputStream(std::string{sourceFile});
     if (sourceFileInputStream.fail()) {
         std::stringstream msg;
@@ -27,6 +26,8 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
 
     std::vector<Token> tokens;
     try {
+        // TODO(zzmic): Can't I directly perform lexing on the input source file
+        // stream instead of reading the entire file into a string first?
         tokens = lexer(input);
         printTokens(tokens);
     } catch (const std::runtime_error &e) {
@@ -38,16 +39,16 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFile) {
     return tokens;
 }
 
-// Function to parse the tokens, generate the AST, visit the AST, and print the
-// AST.
 std::shared_ptr<AST::Program>
 PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
     std::shared_ptr<AST::Program> program;
     try {
         AST::Parser parser(tokens);
+        // Parse the tokens to generate the AST program.
         program = parser.parse();
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
+        // Visit and print the AST program after parsing.
         program->accept(printVisitor);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
@@ -58,7 +59,6 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
     return program;
 }
 
-// Function to perform semantic-analysis passes on the AST program.
 int PipelineStagesExecutors::semanticAnalysisExecutor(
     const std::shared_ptr<AST::Program> &astProgram) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
@@ -92,7 +92,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         throw std::runtime_error(msg.str());
     }
     try {
-        // Print the AST after semantic analysis.
+        // Visit and print the AST program after semantic analysis.
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
         astProgram->accept(printVisitor);
@@ -102,11 +102,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         throw std::runtime_error(msg.str());
     }
 
-    // Return the variable resolution counter.
     return variableResolutionCounter;
 }
 
-// Function to generate the IR from the AST program.
 std::pair<std::shared_ptr<IR::Program>,
           std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
@@ -118,6 +116,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
         irProgramAndIRStaticVariables;
     try {
         IR::IRGenerator irGenerator(variableResolutionCounter);
+        // Generate the IR program from the AST program.
         irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
@@ -127,7 +126,6 @@ PipelineStagesExecutors::irGeneratorExecutor(
     return irProgramAndIRStaticVariables;
 }
 
-// Function to perform optimization passes on the IR program.
 void PipelineStagesExecutors::irOptimizationExecutor(
     const std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
     bool propagateCopiesPass, bool eliminateUnreachableCodePass,
@@ -136,6 +134,9 @@ void PipelineStagesExecutors::irOptimizationExecutor(
     for (auto topLevel : *topLevels) {
         if (auto functionDefinition =
                 std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
+            // Extract the function body from the function definition, optimize
+            // the function body, and set the optimized function body back to
+            // the function definition.
             auto functionBody = functionDefinition->getFunctionBody();
             auto optimizedFunctionBody = IR::IROptimizer::irOptimize(
                 functionBody, foldConstantsPass, propagateCopiesPass,
@@ -145,8 +146,6 @@ void PipelineStagesExecutors::irOptimizationExecutor(
     }
 }
 
-// Function to generate (but not yet emit) the assembly program from the AST
-// program.
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     const std::shared_ptr<IR::Program> &irProgram,
     const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
@@ -158,19 +157,18 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         // available.
         Assembly::convertFrontendToBackendSymbolTable(AST::frontendSymbolTable);
 
-        // Instantiate an assembly generator object and generate the assembly.
         Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables);
+        // Generate the assembly program from the IR program.
         assemblyProgram = assemblyGenerator.generateAssembly(irProgram);
 
-        // Instantiate a pseudo-to-stack pass object and associate the stack
-        // size with each top-level element.
         Assembly::PseudoToStackPass pseudoToStackPass;
+        // Associate the stack size with each top-level element.
         auto topLevels = assemblyProgram->getTopLevels();
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
             topLevels);
 
-        // Instantiate a fixup pass object and fixup the assembly program.
         Assembly::FixupPass fixupPass;
+        // Fix up the assembly program.
         fixupPass.fixup(topLevels);
 
         // Set the top-level elements of the assembly program after all the
@@ -186,7 +184,6 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     return assemblyProgram;
 }
 
-// Function to emit the generated assembly code to the assembly file.
 void PipelineStagesExecutors::codeEmissionExecutor(
     const std::shared_ptr<Assembly::Program> &assemblyProgram,
     std::string_view assemblyFile) {
@@ -431,8 +428,8 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     }
     else if (auto srcImm =
                  std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-        // Use long value for quadword instructions, int value for longword
-        // instructions.
+        // Use long values for quadword instructions and int values for longword
+        // instructions in order to avoid (potential) overflow issues.
         if (auto quadword =
                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
             srcStr = "$" + std::to_string(srcImm->getImmediateLong());
