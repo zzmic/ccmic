@@ -7,10 +7,13 @@
 #include <string_view>
 #include <vector>
 
-// Regular expressions for different token types.
-// The caret symbol (^) matches the start of a line or a string.
-// It asserts that the current position in the string is at the beginning of a
-// line or the string.
+/**
+ * Regular expressions for different token types.
+ *
+ * The caret symbol (^) matches the start of a line or a string.
+ * It asserts that the current position in the string is at the beginning of a
+ * line or the string.
+ */
 const std::regex identifier_regex(R"(^[a-zA-Z_]\w*\b)");
 const std::regex LongConstant_regex(R"(^[0-9]+[lL]\b)");
 const std::regex intConstant_regex(R"(^[0-9]+\b)");
@@ -58,11 +61,14 @@ const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
 const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
 const std::regex preprocessorDirective_regex(R"(^#\w+)");
 
-// Define token types as an enum class in which each token type is represented
-// as an enumerator that has a local name scope to the enumeration and their
-// values are not implicitly converted to integers or other types.
-// Reference:
-// https://stackoverflow.com/questions/18335861/why-is-enum-class-considered-safer-to-use-than-plain-enum.
+/**
+ * Enumeration representing different types of tokens.
+ *
+ * Each enumerator has a local name scope to the enumeration, and their
+ * values are not implicitly converted to integers or other types.
+ * Reference:
+ * https://stackoverflow.com/questions/18335861/why-is-enum-class-considered-safer-to-use-than-plain-enum.
+ */
 enum class TokenType {
     Identifier,
     LongConstant,
@@ -112,15 +118,47 @@ enum class TokenType {
     Invalid
 };
 
-// Define a struct to represent a token.
+/**
+ * Structure representing a token with its type and value.
+ */
 struct Token {
     TokenType type;
     std::string value;
 };
 
+/**
+ * Match a token from the input string.
+ *
+ * Match the input string against the regular expressions for the different
+ * token types and return the token struct, containing the token type and the
+ * token value (in string).
+ *
+ * @param input The input string to match the token from.
+ * @return The matched token.
+ */
 Token matchToken(std::string_view input);
+
+/**
+ * Lex the input string into a vector of tokens.
+ *
+ * @param input The input string to lex.
+ * @return A vector of tokens.
+ */
 std::vector<Token> lexer(std::string_view input);
+
+/**
+ * Pretty-print the tokens to the stdout.
+ *
+ * @param tokens The vector of tokens to print.
+ */
 void printTokens(const std::vector<Token> &tokens);
+
+/**
+ * Convert a token type to its string representation.
+ *
+ * @param type The TokenType to convert.
+ * @return The string representation of the TokenType.
+ */
 std::string tokenTypeToString(TokenType type);
 
 #endif // FRONTEND_LEXER_H

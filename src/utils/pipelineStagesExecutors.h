@@ -60,8 +60,8 @@ class PipelineStagesExecutors {
      * @param astProgram The AST program to convert to IR.
      * @param variableResolutionCounter An integer counter for variable
      * resolution.
-     * @return A pair consisting of the IR program and a vector of static
-     * variables in IR.
+     * @return A pair consisting of (a shared pointer to) the IR program and (a
+     * shared pointer to) the vector of static variables in IR.
      */
     [[nodiscard]] static std::pair<
         std::shared_ptr<IR::Program>,

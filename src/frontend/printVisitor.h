@@ -5,6 +5,15 @@
 #include <iostream>
 
 namespace AST {
+/**
+ * Class representing a visitor that prints the AST nodes.
+ *
+ * This class implements the Visitor pattern to traverse and print the AST nodes
+ * in a human-readable format. Each `visit` method corresponds to a specific AST
+ * node type and defines how that node should be printed. The `PrintVisitor`
+ * class inherits from the abstract `Visitor` class and provides concrete
+ * implementations for all the `visit` methods.
+ */
 class PrintVisitor : public Visitor {
   public:
     // Declare the overridden `visit` method for each AST node that is initially

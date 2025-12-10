@@ -1,9 +1,6 @@
 #include "lexer.h"
 #include <sstream>
 
-// Function to match an input token against the regular expressions for the
-// different token types and return the token struct, containing the token type
-// and the token value (in string).
 Token matchToken(std::string_view input) {
     // Convert string_view to string for regex operations
     std::string inputStr(input);
@@ -126,7 +123,6 @@ Token matchToken(std::string_view input) {
     }
 }
 
-// Function to tokenize the input string and return a vector of tokens.
 std::vector<Token> lexer(std::string_view input) {
     std::vector<Token> tokens;
     std::string remainingInput(input);
@@ -192,7 +188,6 @@ std::vector<Token> lexer(std::string_view input) {
     return tokens;
 }
 
-// Function to pretty-print the tokens.
 void printTokens(const std::vector<Token> &tokens) {
     // For each token, print the token type (converted from each token type to
     // its corresponding string) and the token value.
@@ -342,8 +337,6 @@ void printTokens(const std::vector<Token> &tokens) {
     }
 }
 
-// Function to convert each token type to its corresponding string
-// representation.
 std::string tokenTypeToString(TokenType type) {
     std::string typeStr;
     switch (type) {

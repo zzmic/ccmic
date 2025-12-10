@@ -1,23 +1,10 @@
-/*
- * This header file defines the visitor (pattern) interface.
- * The visitor pattern helps to separate the algorithm from the object structure
- * on which it operates. This makes it easier to add new operations to the
- * object structure (which may get more complex) without modifying the objects
- * themselves. For each AST node, its interface will declare an `accept` method
- * that takes a visitor as an argument. The visitor interface will declare a
- * `visit` method for each AST node. The visitor interface will be implemented
- * by concrete visitors that provide the actual implementation of the visit
- * methods. The AST nodes will be implemented to call the `accept` method of the
- * visitor with themselves as an argument. The `accept` method of the AST nodes
- * will call the appropriate `visit` method of the visitor. In this manner, the
- * AST nodes can be visited by different visitors without modifying the nodes
- * themselves.
- */
 #ifndef FRONTEND_VISITOR_H
 #define FRONTEND_VISITOR_H
 
 namespace AST {
-// Forward declarations of AST nodes/classes.
+/**
+ * Forward declarations of all AST node classes to avoid circular dependencies.
+ */
 class Program;
 class Function;
 class Block;
@@ -81,19 +68,38 @@ class Constant;
 class ConstantInt;
 class ConstantLong;
 
+/**
+ * Visitor interface for AST nodes.
+ *
+ * The visitor pattern helps to separate the algorithm from the object structure
+ * on which it operates. This makes it easier to add new operations to the
+ * object structure (which may get more complex) without modifying the objects
+ * themselves. For each AST node, its interface will declare an `accept` method
+ * that takes a visitor as an argument. The visitor interface will declare a
+ * `visit` method for each AST node. The visitor interface will be implemented
+ * by concrete visitors which provide the actual implementation of the visit
+ * methods. The AST nodes will be implemented to call the `accept` method of the
+ * visitor with themselves as an argument. The `accept` method of the AST nodes
+ * will call the appropriate `visit` method of the visitor. In this manner, the
+ * AST nodes can be visited by different visitors without modifying the nodes
+ * themselves.
+ */
 class Visitor {
   public:
-    // Declare a virtual destructor for the visitor interface with the default
-    // implementation.
+    /**
+     * Virtual destructor for visitors.
+     */
     virtual ~Visitor() = default;
-    // Declare pure virtual functions for each AST node (`= 0`).
-    // This, in turn, implies that the whole visitor class is an abstract class.
+
+    /**
+     * Pure virtual visit methods for each AST node.
+     */
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
     virtual void visit(Block &block) = 0;
     virtual void visit(SBlockItem &sBlockItem) = 0;
     virtual void visit(DBlockItem &dBlockItem) = 0;
-    virtual void visit(VariableDeclaration &declaration) = 0;
+    virtual void visit(VariableDeclaration &variableDeclaration) = 0;
     virtual void visit(FunctionDeclaration &functionDeclaration) = 0;
     virtual void visit(IntType &intType) = 0;
     virtual void visit(LongType &longType) = 0;

@@ -7,7 +7,12 @@
 #include <unordered_map>
 
 namespace AST {
-// Global frontend symbol table declaration.
+/**
+ * The symbol table shared across the frontend.
+ *
+ * It maps identifiers (variable and function names) to their corresponding
+ * types and (identifier) attributes.
+ */
 extern std::unordered_map<
     std::string,
     std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>

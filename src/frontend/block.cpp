@@ -12,12 +12,12 @@ Block::getBlockItems() const {
     return blockItems;
 }
 
-void Block::addBlockItem(std::shared_ptr<BlockItem> blockItem) {
-    blockItems->push_back(blockItem);
-}
-
 void Block::setBlockItems(
     std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> newBlockItems) {
     this->blockItems = newBlockItems;
+}
+
+void Block::addBlockItem(std::shared_ptr<BlockItem> blockItem) {
+    blockItems->push_back(blockItem);
 }
 } // namespace AST

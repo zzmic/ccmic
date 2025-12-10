@@ -4,12 +4,21 @@
 #include "visitor.h"
 
 namespace AST {
+/**
+ * Base class for all AST nodes.
+ */
 class AST {
   public:
-    // `= default` instructs the compiler to generate the default
-    // implementation.
+    /**
+     * Default virtual destructor for AST nodes.
+     */
     virtual ~AST() = default;
-    // Virtual accept function to visit the AST node.
+
+    /**
+     * Pure virtual method to accept a visitor.
+     *
+     * @param visitor The visitor to accept.
+     */
     virtual void accept(Visitor &visitor) = 0;
 };
 } // Namespace AST
