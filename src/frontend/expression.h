@@ -25,6 +25,10 @@ class Expression : public AST {
      * Default constructor for the expression class.
      */
     constexpr Expression() = default;
+    /**
+     * Default virtual destructor for the expression class.
+     */
+    virtual ~Expression() = default;
 
     /**
      * Pure virtual getter for the expression type.

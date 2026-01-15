@@ -17,6 +17,10 @@ class Type : public AST {
      */
     constexpr Type() = default;
     /**
+     * Default virtual destructor for the type class.
+     */
+    virtual ~Type() = default;
+    /**
      * Virtual function to check if two types are equal.
      *
      * @param other The other type to compare with.

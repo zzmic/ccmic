@@ -83,16 +83,27 @@ The codebase is organized into modular components:
 
 ## Building and Usage
 
+### Cloning the Repository
+
+```bash
+git clone --recurse-submodules https://github.com/zzmic/ccmic.git
+```
+
+### Installing Dependencies
+
+- clang++ that supports C++17 (or later) for building the compiler.
+- gcc that supports x86-64 and C17 for linking and assembly.
+
 ### Building the Compiler
 
-```
+```bash
 # arch -x86_64 zsh # Run this command if one is running macOS on ARM and is using zsh.
-make
+make -j$(nproc)
 ```
 
 ### Compiling C Programs
 
-```
+```bash
 bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o] <sourceFile>
 ```
 
