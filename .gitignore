@@ -45,3 +45,5 @@
 **/playground/
 **/valgrind-out.txt
 **/error.txt
+
+**/.cache/
