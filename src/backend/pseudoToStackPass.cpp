@@ -4,7 +4,8 @@
 
 namespace Assembly {
 void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> &topLevels) {
+    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> &topLevels,
+    const BackendSymbolTable &backendSymbolTable) {
     // Replace pseudo registers with stack operands in each instruction and
     // associate the stack size with each function.
     for (auto topLevel : *topLevels) {
@@ -17,7 +18,7 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
 
             // Replace pseudo registers with stack operands in each instruction.
             for (auto instruction : *functionDefinition->getFunctionBody()) {
-                replacePseudoWithStack(instruction);
+                replacePseudoWithStack(instruction, backendSymbolTable);
             }
 
             // Set the stack size for the function.
@@ -37,8 +38,9 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
     }
 }
 
-std::shared_ptr<Assembly::Operand>
-PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
+std::shared_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
+    std::shared_ptr<Assembly::Operand> operand,
+    const BackendSymbolTable &backendSymbolTable) {
     if (!operand) {
         throw std::logic_error("Setting null operand in replaceOperand");
     }
@@ -51,9 +53,10 @@ PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
             this->pseudoToStackMap.end()) {
             // If a pseudoregister is not in `pseudoToStackMap`, look it up in
             // the backend symbol table.
-            if (backendSymbolTable.find(pseudoRegister) !=
-                backendSymbolTable.end()) {
-                auto backendEntry = backendSymbolTable[pseudoRegister];
+            auto backendSymbolTableItForAlloc =
+                backendSymbolTable.find(pseudoRegister);
+            if (backendSymbolTableItForAlloc != backendSymbolTable.end()) {
+                auto backendEntry = backendSymbolTableItForAlloc->second;
                 // If it has a static storage duration, map it to a data operand
                 // by the same name.
                 if (auto objEntry =
@@ -69,9 +72,9 @@ PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
             // allocation size.
             int allocationSize =
                 8; // Default to 8 bytes for temporary variables
-            if (backendSymbolTable.find(pseudoRegister) !=
-                backendSymbolTable.end()) {
-                auto backendEntry = backendSymbolTable[pseudoRegister];
+            auto backendSymbolTableIt = backendSymbolTable.find(pseudoRegister);
+            if (backendSymbolTableIt != backendSymbolTable.end()) {
+                auto backendEntry = backendSymbolTableIt->second;
                 if (auto objEntry =
                         std::dynamic_pointer_cast<ObjEntry>(backendEntry)) {
                     auto assemblyType = objEntry->getAssemblyType();
@@ -84,12 +87,18 @@ PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
                 }
             }
 
-            // For `Quadword` types, ensure 8-byte alignment (as required by the
-            // System V ABI).
+            // Align the offset to an 8-byte boundary if allocating 8 bytes (for
+            // type `Quadword`).
             if (allocationSize == 8) {
-                // Round down to the next multiple of 8 for negative offsets.
+                // Compute the (negative) remainder when offset is divided by 8.
                 int rem = this->offset % 8;
+                // If it's not aligned, round down the (negative) offset to the
+                // next 8-byte boundary.
                 if (rem != 0) {
+                    // Essentially, Subtracting `8 + rem` is the same as
+                    // subtracting `8 - |rem|` where `rem` is negative, which
+                    // moves the negative offset down to the next lower multiple
+                    // of 8.
                     this->offset -= (8 + rem);
                 }
             }
@@ -111,13 +120,14 @@ PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
 }
 
 void PseudoToStackPass::replacePseudoWithStack(
-    std::shared_ptr<Assembly::Instruction> &instruction) {
+    std::shared_ptr<Assembly::Instruction> &instruction,
+    const BackendSymbolTable &backendSymbolTable) {
     if (auto movInstruction =
             std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
         auto src = movInstruction->getSrc();
         auto dst = movInstruction->getDst();
-        auto newSrc = replaceOperand(src);
-        auto newDst = replaceOperand(dst);
+        auto newSrc = replaceOperand(src, backendSymbolTable);
+        auto newDst = replaceOperand(dst, backendSymbolTable);
         movInstruction->setSrc(newSrc);
         movInstruction->setDst(newDst);
     }
@@ -126,8 +136,8 @@ void PseudoToStackPass::replacePseudoWithStack(
                      instruction)) {
         auto src = movsxInstruction->getSrc();
         auto dst = movsxInstruction->getDst();
-        auto newSrc = replaceOperand(src);
-        auto newDst = replaceOperand(dst);
+        auto newSrc = replaceOperand(src, backendSymbolTable);
+        auto newDst = replaceOperand(dst, backendSymbolTable);
         movsxInstruction->setSrc(newSrc);
         movsxInstruction->setDst(newDst);
     }
@@ -135,7 +145,7 @@ void PseudoToStackPass::replacePseudoWithStack(
                  std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
                      instruction)) {
         auto operand = unaryInstruction->getOperand();
-        auto newOperand = replaceOperand(operand);
+        auto newOperand = replaceOperand(operand, backendSymbolTable);
         unaryInstruction->setOperand(newOperand);
     }
     else if (auto binaryInstruction =
@@ -143,8 +153,8 @@ void PseudoToStackPass::replacePseudoWithStack(
                      instruction)) {
         auto operand1 = binaryInstruction->getOperand1();
         auto operand2 = binaryInstruction->getOperand2();
-        auto newOperand1 = replaceOperand(operand1);
-        auto newOperand2 = replaceOperand(operand2);
+        auto newOperand1 = replaceOperand(operand1, backendSymbolTable);
+        auto newOperand2 = replaceOperand(operand2, backendSymbolTable);
         binaryInstruction->setOperand1(newOperand1);
         binaryInstruction->setOperand2(newOperand2);
     }
@@ -153,8 +163,8 @@ void PseudoToStackPass::replacePseudoWithStack(
                      instruction)) {
         auto operand1 = cmpInstruction->getOperand1();
         auto operand2 = cmpInstruction->getOperand2();
-        auto newOperand1 = replaceOperand(operand1);
-        auto newOperand2 = replaceOperand(operand2);
+        auto newOperand1 = replaceOperand(operand1, backendSymbolTable);
+        auto newOperand2 = replaceOperand(operand2, backendSymbolTable);
         cmpInstruction->setOperand1(newOperand1);
         cmpInstruction->setOperand2(newOperand2);
     }
@@ -162,21 +172,21 @@ void PseudoToStackPass::replacePseudoWithStack(
                  std::dynamic_pointer_cast<Assembly::IdivInstruction>(
                      instruction)) {
         auto operand = idivInstruction->getOperand();
-        auto newOperand = replaceOperand(operand);
+        auto newOperand = replaceOperand(operand, backendSymbolTable);
         idivInstruction->setOperand(newOperand);
     }
     else if (auto setCCInstruction =
                  std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
                      instruction)) {
         auto operand = setCCInstruction->getOperand();
-        auto newOperand = replaceOperand(operand);
+        auto newOperand = replaceOperand(operand, backendSymbolTable);
         setCCInstruction->setOperand(newOperand);
     }
     else if (auto pushInstruction =
                  std::dynamic_pointer_cast<Assembly::PushInstruction>(
                      instruction)) {
         auto operand = pushInstruction->getOperand();
-        auto newOperand = replaceOperand(operand);
+        auto newOperand = replaceOperand(operand, backendSymbolTable);
         pushInstruction->setOperand(newOperand);
     }
     else if (auto retInstruction =

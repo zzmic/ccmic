@@ -1,8 +1,8 @@
 #ifndef BACKEND_ASSEMBLY_GENERATOR_H
 #define BACKEND_ASSEMBLY_GENERATOR_H
 
+#include "../frontend/frontendSymbolTable.h"
 #include "../frontend/semanticAnalysisPasses.h"
-#include "../frontend/type.h"
 #include "../midend/ir.h"
 #include "assembly.h"
 #include <unordered_map>
@@ -12,13 +12,15 @@ class AssemblyGenerator {
   public:
     explicit AssemblyGenerator(
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables);
+            irStaticVariables,
+        const AST::FrontendSymbolTable &frontendSymbolTable);
     std::shared_ptr<Assembly::Program>
     generateAssembly(std::shared_ptr<IR::Program> irProgram);
 
   private:
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
         irStaticVariables;
+    const AST::FrontendSymbolTable &frontendSymbolTable;
     std::shared_ptr<Assembly::FunctionDefinition>
     convertIRFunctionDefinitionToAssy(
         std::shared_ptr<IR::FunctionDefinition> irFunctionDefinition,

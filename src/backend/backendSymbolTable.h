@@ -1,7 +1,7 @@
 #ifndef BACKEND_BACKEND_SYMBOL_TABLE_H
 #define BACKEND_BACKEND_SYMBOL_TABLE_H
 
-#include "../frontend/semanticAnalysisPasses.h"
+#include "../frontend/frontendSymbolTable.h"
 #include "assembly.h"
 #include <memory>
 #include <unordered_map>
@@ -36,16 +36,24 @@ class FunEntry : public BackendSymbolTableEntry {
     bool defined;
 };
 
-// Global backend symbol table declaration.
-extern std::unordered_map<std::string, std::shared_ptr<BackendSymbolTableEntry>>
-    backendSymbolTable;
+/**
+ * Type alias for the backend symbol table.
+ *
+ * The key is the identifier (variable or function name), and the value is a
+ * shared pointer to the backend symbol table entry.
+ */
+using BackendSymbolTable =
+    std::unordered_map<std::string, std::shared_ptr<BackendSymbolTableEntry>>;
 
-// Function to convert a frontend symbol table to a backend symbol table.
+/**
+ * Convert a frontend symbol table to a backend symbol table.
+ *
+ * @param frontendSymbolTable The frontend symbol table to convert.
+ * @param backendSymbolTable The backend symbol table to populate.
+ */
 void convertFrontendToBackendSymbolTable(
-    const std::unordered_map<
-        std::string, std::pair<std::shared_ptr<AST::Type>,
-                               std::shared_ptr<AST::IdentifierAttribute>>>
-        &frontendSymbolTable);
+    const AST::FrontendSymbolTable &frontendSymbolTable,
+    BackendSymbolTable &backendSymbolTable);
 } // namespace Assembly
 
 #endif // BACKEND_BACKEND_SYMBOL_TABLE_H

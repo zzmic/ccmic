@@ -492,6 +492,9 @@ std::string IdentifierResolutionPass::resolveParameter(
 /*
  * Start: Functions for the type-checking pass.
  */
+TypeCheckingPass::TypeCheckingPass(FrontendSymbolTable &frontendSymbolTable)
+    : frontendSymbolTable(frontendSymbolTable) {}
+
 void TypeCheckingPass::typeCheckProgram(std::shared_ptr<Program> program) {
     // Clear the symbol table for this compilation.
     frontendSymbolTable.clear();

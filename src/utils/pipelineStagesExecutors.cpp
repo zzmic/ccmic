@@ -58,9 +58,10 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 }
 
 int PipelineStagesExecutors::semanticAnalysisExecutor(
-    const std::shared_ptr<AST::Program> &astProgram) {
+    const std::shared_ptr<AST::Program> &astProgram,
+    AST::FrontendSymbolTable &frontendSymbolTable) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
-    AST::TypeCheckingPass typeCheckingPass;
+    AST::TypeCheckingPass typeCheckingPass(frontendSymbolTable);
     AST::LoopLabelingPass loopLabelingPass;
     auto variableResolutionCounter = 0;
 
@@ -107,13 +108,15 @@ std::pair<std::shared_ptr<IR::Program>,
           std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
     const std::shared_ptr<AST::Program> &astProgram,
-    int variableResolutionCounter) {
+    int variableResolutionCounter,
+    AST::FrontendSymbolTable &frontendSymbolTable) {
     std::cout << "\n";
     std::pair<std::shared_ptr<IR::Program>,
               std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
         irProgramAndIRStaticVariables;
     try {
-        IR::IRGenerator irGenerator(variableResolutionCounter);
+        IR::IRGenerator irGenerator(variableResolutionCounter,
+                                    frontendSymbolTable);
         // Generate the IR program from the AST program.
         irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
     } catch (const std::runtime_error &e) {
@@ -147,15 +150,19 @@ void PipelineStagesExecutors::irOptimizationExecutor(
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     const std::shared_ptr<IR::Program> &irProgram,
     const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        &irStaticVariables) {
+        &irStaticVariables,
+    const AST::FrontendSymbolTable &frontendSymbolTable) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {
         // Convert the frontend symbol table to backend symbol table before
         // assembly generation so all variables (including temporaries) are
         // available.
-        Assembly::convertFrontendToBackendSymbolTable(AST::frontendSymbolTable);
+        Assembly::BackendSymbolTable backendSymbolTable;
+        Assembly::convertFrontendToBackendSymbolTable(frontendSymbolTable,
+                                                      backendSymbolTable);
 
-        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables);
+        Assembly::AssemblyGenerator assemblyGenerator(irStaticVariables,
+                                                      frontendSymbolTable);
         // Generate the assembly program from the IR program.
         assemblyProgram = assemblyGenerator.generateAssembly(irProgram);
 
@@ -163,7 +170,7 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         // Associate the stack size with each top-level element.
         auto topLevels = assemblyProgram->getTopLevels();
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
-            topLevels);
+            topLevels, backendSymbolTable);
 
         Assembly::FixupPass fixupPass;
         // Fix up the assembly program.

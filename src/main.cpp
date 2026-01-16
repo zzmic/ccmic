@@ -160,8 +160,10 @@ int main(int argc, char *argv[]) {
         }
 
         // Perform semantic analysis on the AST program.
+        AST::FrontendSymbolTable frontendSymbolTable;
         auto variableResolutionCounter =
-            PipelineStagesExecutors::semanticAnalysisExecutor(astProgram);
+            PipelineStagesExecutors::semanticAnalysisExecutor(
+                astProgram, frontendSymbolTable);
 
         if (tillValidate) {
             std::cout << "Semantic analysis completed.\n";
@@ -171,7 +173,7 @@ int main(int argc, char *argv[]) {
         // Generate the IR from the AST program and return the IR program.
         auto irProgramAndIRStaticVariables =
             PipelineStagesExecutors::irGeneratorExecutor(
-                astProgram, variableResolutionCounter);
+                astProgram, variableResolutionCounter, frontendSymbolTable);
         auto irProgram = irProgramAndIRStaticVariables.first;
         auto irStaticVariables = irProgramAndIRStaticVariables.second;
 
@@ -207,8 +209,8 @@ int main(int argc, char *argv[]) {
         // Generate the assembly program from the IR program and the IR static
         // variables.
         std::shared_ptr<Assembly::Program> assemblyProgram =
-            PipelineStagesExecutors::codegenExecutor(irProgram,
-                                                     irStaticVariables);
+            PipelineStagesExecutors::codegenExecutor(
+                irProgram, irStaticVariables, frontendSymbolTable);
 
         // Print out the (assembly) instructions that would be emitted from the
         // assembly program.

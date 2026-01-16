@@ -1,18 +1,11 @@
 #include "backendSymbolTable.h"
-#include "../frontend/type.h"
 #include "assemblyGenerator.h"
 
 namespace Assembly {
-// Global backend symbol table definition.
-std::unordered_map<std::string, std::shared_ptr<BackendSymbolTableEntry>>
-    backendSymbolTable;
-
 // Function to convert a frontend symbol table to a backend symbol table.
 void convertFrontendToBackendSymbolTable(
-    const std::unordered_map<
-        std::string, std::pair<std::shared_ptr<AST::Type>,
-                               std::shared_ptr<AST::IdentifierAttribute>>>
-        &frontendSymbolTable) {
+    const AST::FrontendSymbolTable &frontendSymbolTable,
+    BackendSymbolTable &backendSymbolTable) {
     // Convert each entry from a frontend symbol table to a backend symbol
     // table.
     for (const auto &[identifier, entry] : frontendSymbolTable) {

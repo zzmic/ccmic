@@ -7,8 +7,10 @@
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
     std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables)
-    : irStaticVariables(irStaticVariables) {}
+        irStaticVariables,
+    const AST::FrontendSymbolTable &frontendSymbolTable)
+    : irStaticVariables(irStaticVariables),
+      frontendSymbolTable(frontendSymbolTable) {}
 
 std::shared_ptr<Assembly::Program>
 AssemblyGenerator::generateAssembly(std::shared_ptr<IR::Program> irProgram) {
@@ -664,8 +666,8 @@ AssemblyGenerator::determineAssemblyType(std::shared_ptr<IR::Value> irValue) {
     else if (auto varVal =
                  std::dynamic_pointer_cast<IR::VariableValue>(irValue)) {
         // For variables, look up the type in the (frontend) symbol table.
-        auto symbolIt = AST::frontendSymbolTable.find(varVal->getIdentifier());
-        if (symbolIt != AST::frontendSymbolTable.end()) {
+        auto symbolIt = frontendSymbolTable.find(varVal->getIdentifier());
+        if (symbolIt != frontendSymbolTable.end()) {
             auto varType = symbolIt->second.first;
             return AssemblyGenerator::convertASTTypeToAssemblyType(varType);
         }

@@ -49,10 +49,12 @@ class PipelineStagesExecutors {
      * Perform semantic-analysis passes on the AST program.
      *
      * @param astProgram The AST program to analyze.
+     * @param frontendSymbolTable The frontend symbol table.
      * @return An integer counter for variable resolution.
      */
     [[nodiscard]] static int
-    semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram);
+    semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram,
+                             AST::FrontendSymbolTable &frontendSymbolTable);
 
     /**
      * Generate (but not yet emit) the IR from the AST program.
@@ -60,6 +62,7 @@ class PipelineStagesExecutors {
      * @param astProgram The AST program to convert to IR.
      * @param variableResolutionCounter An integer counter for variable
      * resolution.
+     * @param frontendSymbolTable The frontend symbol table.
      * @return A pair consisting of (a shared pointer to) the IR program and (a
      * shared pointer to) the vector of static variables in IR.
      */
@@ -67,7 +70,8 @@ class PipelineStagesExecutors {
         std::shared_ptr<IR::Program>,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
     irGeneratorExecutor(const std::shared_ptr<AST::Program> &astProgram,
-                        int variableResolutionCounter);
+                        int variableResolutionCounter,
+                        AST::FrontendSymbolTable &frontendSymbolTable);
 
     /**
      * Perform optimization passes on the IR program.
@@ -91,12 +95,14 @@ class PipelineStagesExecutors {
      *
      * @param irProgram The IR program to convert to assembly.
      * @param irStaticVariables A vector of static variables in IR.
+     * @param frontendSymbolTable The frontend symbol table.
      * @return The assembly program generated from the IR.
      */
     [[nodiscard]] static std::shared_ptr<Assembly::Program> codegenExecutor(
         const std::shared_ptr<IR::Program> &irProgram,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            &irStaticVariables);
+            &irStaticVariables,
+        const AST::FrontendSymbolTable &frontendSymbolTable);
 
     /**
      * Emit the generated assembly code to the assembly file.

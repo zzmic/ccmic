@@ -4,6 +4,7 @@
 #include "../frontend/block.h"
 #include "../frontend/declaration.h"
 #include "../frontend/expression.h"
+#include "../frontend/frontendSymbolTable.h"
 #include "../frontend/function.h"
 #include "../frontend/program.h"
 #include "../frontend/statement.h"
@@ -24,9 +25,18 @@ class IRGenerator {
      *
      * @param variableResolutionCounter The counter used for generating unique
      * variable names.
-     * @return An instance of the `IRGenerator`.
+     * @param frontendSymbolTable The frontend symbol table.
      */
-    explicit IRGenerator(int variableResolutionCounter);
+    explicit IRGenerator(int variableResolutionCounter,
+                         AST::FrontendSymbolTable &frontendSymbolTable);
+
+    /**
+     * Generate the IR from the AST program.
+     *
+     * @param astProgram The AST program to generate the IR from.
+     * @return A pair consisting of (a shared pointer to) the IR program and (a
+     * shared pointer to) the vector of static variables in IR.
+     */
     [[nodiscard]] std::pair<
         std::shared_ptr<IR::Program>,
         std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
@@ -37,6 +47,18 @@ class IRGenerator {
      * The counter used for generating unique temporary variable identifiers.
      */
     int irTemporariesCounter = 0;
+
+    /**
+     * The frontend symbol table.
+     */
+    AST::FrontendSymbolTable &frontendSymbolTable;
+
+    /**
+     * Generate the IR for a block.
+     *
+     * @param astBlock The AST node representing the block.
+     * @param instructions The vector to store the generated IR instructions.
+     */
     void generateIRBlock(
         const std::shared_ptr<AST::Block> &astBlock,
         const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>

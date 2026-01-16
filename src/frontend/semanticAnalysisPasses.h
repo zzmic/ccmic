@@ -3,6 +3,7 @@
 
 #include "declaration.h"
 #include "expression.h"
+#include "frontendSymbolTable.h"
 #include "program.h"
 #include "statement.h"
 #include "type.h"
@@ -386,6 +387,13 @@ class LocalAttribute : public IdentifierAttribute {};
 class TypeCheckingPass : public SemanticAnalysisPass {
   public:
     /**
+     * Constructor for the type checking pass class.
+     *
+     * @param frontendSymbolTable The frontend symbol table.
+     */
+    explicit TypeCheckingPass(FrontendSymbolTable &frontendSymbolTable);
+
+    /**
      * Type check the given program.
      *
      * @param program The program to type check.
@@ -393,6 +401,11 @@ class TypeCheckingPass : public SemanticAnalysisPass {
     void typeCheckProgram(std::shared_ptr<Program> program);
 
   private:
+    /**
+     * The frontend symbol table.
+     */
+    FrontendSymbolTable &frontendSymbolTable;
+
     /**
      * Convert a static constant expression to a static initializer.
      *

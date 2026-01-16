@@ -1,22 +1,24 @@
 #ifndef FRONTEND_SYMBOL_TABLE_H
 #define FRONTEND_SYMBOL_TABLE_H
 
-#include "semanticAnalysisPasses.h"
-#include "type.h"
 #include <memory>
+#include <string>
 #include <unordered_map>
 
 namespace AST {
+class Type;
+class IdentifierAttribute;
+
 /**
- * The symbol table shared across the frontend.
+ * Type alias for the frontend symbol table.
  *
- * It maps identifiers (variable and function names) to their corresponding
- * types and (identifier) attributes.
+ * The key is the identifier (variable or function name), and the value is a
+ * pair consisting of (a shared pointer to) the type and (a shared pointer to)
+ * the identifier attribute.
  */
-extern std::unordered_map<
+using FrontendSymbolTable = std::unordered_map<
     std::string,
-    std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>
-    frontendSymbolTable;
+    std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>;
 } // namespace AST
 
 #endif // FRONTEND_SYMBOL_TABLE_H
