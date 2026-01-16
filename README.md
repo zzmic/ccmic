@@ -110,7 +110,7 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 ### Command-Line Flags
 
 - **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), `--codegen` (code generation).
-- **Output options**: `-S`/`-s` (assembly emission), `-c` (object file emission).
+- **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), `-o <file>` (specify output file).
 - **Optimizations** (to be implemented): `--fold-constants`, `--propagate-copies`, `--eliminate-unreachable-code`, `--eliminate-dead-stores`, `--optimize`.
 
 ## Development and Extensibility
