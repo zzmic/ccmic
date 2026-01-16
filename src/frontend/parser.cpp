@@ -132,32 +132,19 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
         if (matchToken(TokenType::voidKeyword)) {
             consumeToken(TokenType::voidKeyword);
         }
-        else if (matchToken(TokenType::intKeyword)) {
-            parseTypeSpecifiersInParameters(parameters);
+        else if (matchToken(TokenType::intKeyword) ||
+                 matchToken(TokenType::longKeyword)) {
+            auto specifiers = parseTypeSpecifiersInParameters();
             auto parameterNameToken1 = consumeToken(TokenType::Identifier);
             parameters->emplace_back(parameterNameToken1.value);
-            parameterTypes->emplace_back(std::make_shared<IntType>());
+            parameterTypes->emplace_back(parseType(specifiers));
             // Parse additional parameters if they exist.
             while (matchToken(TokenType::Comma)) {
                 consumeToken(TokenType::Comma);
-                parseTypeSpecifiersInParameters(parameters);
+                auto paramSpecifiers = parseTypeSpecifiersInParameters();
                 auto parameterNameToken2 = consumeToken(TokenType::Identifier);
                 parameters->emplace_back(parameterNameToken2.value);
-                parameterTypes->emplace_back(std::make_shared<IntType>());
-            }
-        }
-        else if (matchToken(TokenType::longKeyword)) {
-            parseTypeSpecifiersInParameters(parameters);
-            auto parameterNameToken3 = consumeToken(TokenType::Identifier);
-            parameters->emplace_back(parameterNameToken3.value);
-            parameterTypes->emplace_back(std::make_shared<LongType>());
-            // Parse additional parameters if they exist.
-            while (matchToken(TokenType::Comma)) {
-                consumeToken(TokenType::Comma);
-                parseTypeSpecifiersInParameters(parameters);
-                auto parameterNameToken4 = consumeToken(TokenType::Identifier);
-                parameters->emplace_back(parameterNameToken4.value);
-                parameterTypes->emplace_back(std::make_shared<LongType>());
+                parameterTypes->emplace_back(parseType(paramSpecifiers));
             }
         }
         expectToken(TokenType::CloseParenthesis);
@@ -222,19 +209,23 @@ std::shared_ptr<Declaration> Parser::parseDeclaration() {
     }
 }
 
-void Parser::parseTypeSpecifiersInParameters(
-    const std::shared_ptr<std::vector<std::string>> &parameters) {
+std::vector<std::string> Parser::parseTypeSpecifiersInParameters() {
+    std::vector<std::string> specifiers;
     while (matchToken(TokenType::intKeyword) ||
            matchToken(TokenType::longKeyword)) {
         if (matchToken(TokenType::intKeyword)) {
             expectToken(TokenType::intKeyword);
-            parameters->emplace_back("int");
+            specifiers.emplace_back("int");
         }
         else if (matchToken(TokenType::longKeyword)) {
             expectToken(TokenType::longKeyword);
-            parameters->emplace_back("long");
+            specifiers.emplace_back("long");
         }
     }
+    if (specifiers.empty()) {
+        throw std::invalid_argument("Missing type specifier in parameter");
+    }
+    return specifiers;
 }
 
 std::shared_ptr<ForInit> Parser::parseForInit() {

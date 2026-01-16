@@ -92,8 +92,7 @@ class Parser {
      *
      * @param parameters The list of parameter specifiers.
      */
-    void parseTypeSpecifiersInParameters(
-        const std::shared_ptr<std::vector<std::string>> &parameters);
+    std::vector<std::string> parseTypeSpecifiersInParameters();
 
     /**
      * Parse a block item.

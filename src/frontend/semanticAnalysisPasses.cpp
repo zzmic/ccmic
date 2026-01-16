@@ -678,16 +678,33 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         auto constantExpression = std::dynamic_pointer_cast<ConstantExpression>(
             declaration->getOptInitializer().value());
         auto variantValue = constantExpression->getConstantInIntOrLongVariant();
-        if (std::holds_alternative<long>(variantValue)) {
-            initialValue =
-                std::make_shared<Initial>(std::get<long>(variantValue));
-        }
-        else if (std::holds_alternative<int>(variantValue)) {
-            initialValue =
-                std::make_shared<Initial>(std::get<int>(variantValue));
+        if (std::dynamic_pointer_cast<LongType>(varType)) {
+            if (std::holds_alternative<long>(variantValue)) {
+                initialValue =
+                    std::make_shared<Initial>(std::get<long>(variantValue));
+            }
+            else if (std::holds_alternative<int>(variantValue)) {
+                initialValue = std::make_shared<Initial>(
+                    static_cast<long>(std::get<int>(variantValue)));
+            }
+            else {
+                throw std::logic_error(
+                    "Unsupported type in static initializer");
+            }
         }
         else {
-            throw std::logic_error("Unsupported type in static initializer");
+            if (std::holds_alternative<long>(variantValue)) {
+                initialValue = std::make_shared<Initial>(
+                    static_cast<int>(std::get<long>(variantValue)));
+            }
+            else if (std::holds_alternative<int>(variantValue)) {
+                initialValue =
+                    std::make_shared<Initial>(std::get<int>(variantValue));
+            }
+            else {
+                throw std::logic_error(
+                    "Unsupported type in static initializer");
+            }
         }
     }
     else if (!declaration->getOptInitializer().has_value()) {
@@ -821,7 +838,11 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         frontendSymbolTable[declaration->getIdentifier()] =
             std::make_pair(varType, localAttribute);
         if (declaration->getOptInitializer().has_value()) {
-            typeCheckExpression(declaration->getOptInitializer().value());
+            auto initializer = declaration->getOptInitializer().value();
+            typeCheckExpression(initializer);
+            auto convertedInitializer = convertTo(initializer, varType);
+            declaration->setOptInitializer(
+                std::make_optional(convertedInitializer));
         }
     }
 }

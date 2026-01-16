@@ -714,25 +714,20 @@ AssemblyGenerator::determineMovType(std::shared_ptr<Assembly::Operand> src,
         baseType = std::make_shared<Assembly::Longword>();
     }
 
-    // Check if we can optimize to movl when using quadword type.
+    // Check if we can optimize to `movl` when using `quadword` type.
+    // This is only safe when the destination is a register and the immediate
+    // is non-negative, as `movl` zero-extends to 64 bits and does not write
+    // the upper 4 bytes of memory destinations.
     if (std::dynamic_pointer_cast<Assembly::Quadword>(baseType)) {
-        // If source is an immediate that fits in 32 bits, we use movl.
-        if (auto srcImm =
-                std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
-            long value = srcImm->getImmediateLong();
-            if (value >= std::numeric_limits<int>::min() &&
-                value <= std::numeric_limits<int>::max()) {
-                return std::make_shared<Assembly::Longword>();
-            }
-        }
-
-        // If destination is an immediate that fits in 32 bits, we use movl.
-        if (auto dstImm =
-                std::dynamic_pointer_cast<Assembly::ImmediateOperand>(dst)) {
-            long value = dstImm->getImmediateLong();
-            if (value >= std::numeric_limits<int>::min() &&
-                value <= std::numeric_limits<int>::max()) {
-                return std::make_shared<Assembly::Longword>();
+        auto dstReg = std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst);
+        if (dstReg) {
+            if (auto srcImm =
+                    std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
+                        src)) {
+                long value = srcImm->getImmediateLong();
+                if (value >= 0 && value <= std::numeric_limits<int>::max()) {
+                    return std::make_shared<Assembly::Longword>();
+                }
             }
         }
     }

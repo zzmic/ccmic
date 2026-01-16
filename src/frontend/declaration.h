@@ -80,6 +80,9 @@ class VariableDeclaration : public Declaration {
     [[nodiscard]] std::optional<std::shared_ptr<Expression>>
     getOptInitializer() const;
 
+    void setOptInitializer(
+        std::optional<std::shared_ptr<Expression>> newOptInitializer);
+
     [[nodiscard]] std::shared_ptr<Type> getVarType() const;
 
     [[nodiscard]] std::optional<std::shared_ptr<StorageClass>>

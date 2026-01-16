@@ -38,6 +38,11 @@ VariableDeclaration::getOptInitializer() const {
     return optInitializer;
 }
 
+void VariableDeclaration::setOptInitializer(
+    std::optional<std::shared_ptr<Expression>> newOptInitializer) {
+    optInitializer = newOptInitializer;
+}
+
 std::shared_ptr<Type> VariableDeclaration::getVarType() const {
     return varType;
 }

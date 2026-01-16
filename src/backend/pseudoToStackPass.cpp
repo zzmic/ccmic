@@ -87,8 +87,11 @@ PseudoToStackPass::replaceOperand(std::shared_ptr<Assembly::Operand> operand) {
             // For `Quadword` types, ensure 8-byte alignment (as required by the
             // System V ABI).
             if (allocationSize == 8) {
-                // Round down to the next multiple of 8.
-                this->offset = (this->offset / 8) * 8;
+                // Round down to the next multiple of 8 for negative offsets.
+                int rem = this->offset % 8;
+                if (rem != 0) {
+                    this->offset -= (8 + rem);
+                }
             }
 
             // Update the offset to the next available stack slot.

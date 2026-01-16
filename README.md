@@ -104,13 +104,13 @@ make -j$(nproc)
 ### Compiling C Programs
 
 ```bash
-bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o] <sourceFile>
+bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] <sourceFile>
 ```
 
 ### Command-Line Flags
 
 - **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), `--codegen` (code generation).
-- **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), `-o <file>` (specify output file).
+- **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission).
 - **Optimizations** (to be implemented): `--fold-constants`, `--propagate-copies`, `--eliminate-unreachable-code`, `--eliminate-dead-stores`, `--optimize`.
 
 ## Development and Extensibility
