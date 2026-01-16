@@ -260,14 +260,14 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         globalDirective = "";
     }
 
-    int initialValue = 0;
+    bool isZeroInit = false;
     auto staticInit = staticVariable->getStaticInit();
     if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
-        initialValue = std::get<int>(intInit->getValue());
+        isZeroInit = (std::get<int>(intInit->getValue()) == 0);
     }
     else if (auto longInit =
                  std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
-        initialValue = static_cast<int>(std::get<long>(longInit->getValue()));
+        isZeroInit = (std::get<long>(longInit->getValue()) == 0);
     }
     else {
         throw std::logic_error(
@@ -275,7 +275,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     }
 
     assemblyFileStream << "\n";
-    if (initialValue != 0) {
+    if (!isZeroInit) {
         assemblyFileStream << globalDirective;
         assemblyFileStream << "    .data\n";
         assemblyFileStream << "    " << alignDirective << "\n";
@@ -303,7 +303,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
             }
         }
     }
-    else if (initialValue == 0) {
+    else if (isZeroInit) {
         assemblyFileStream << globalDirective;
         assemblyFileStream << "    .bss\n";
         assemblyFileStream << "    " << alignDirective << "\n";

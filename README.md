@@ -2,7 +2,7 @@
 
 ## Overview
 
-This project is a C++ implementation of a C compiler for a non-trivial subset of the C programming language, adhering to the C17 standard. The compiler's design is based on the principles and practices outlined in [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). It is continuously developed and tested against the [the book's companion test suite (hosted by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git). As new features and optimizations are integrated into the codebase, the compiler's capabilities continue to expand modularly.
+This project is a C++ implementation of a C compiler for a non-trivial subset of the C programming language, adhering to the C17 standard. The compiler's design is based on the principles and practices outlined in [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). It is continuously developed and tested against the [the book's companion test suite (hosted by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git) (also included in the repository as a submodule (`tests/`)). As new features and optimizations are integrated into the codebase, the compiler's capabilities continue to expand modularly.
 
 The compiler transforms C source code into x86-64 assembly through a multi-stage pipeline:
 

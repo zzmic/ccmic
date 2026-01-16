@@ -670,13 +670,13 @@ void PrettyPrinters::printAssyStaticVariable(
     }
 
     auto staticInit = staticVariable->getStaticInit();
-    int initialValue;
+    bool isZeroInit = false;
     if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
-        initialValue = std::get<int>(intInit->getValue());
+        isZeroInit = std::get<int>(intInit->getValue()) == 0;
     }
     else if (auto longInit =
                  std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
-        initialValue = static_cast<int>(std::get<long>(longInit->getValue()));
+        isZeroInit = std::get<long>(longInit->getValue()) == 0L;
     }
     else {
         throw std::logic_error(
@@ -684,33 +684,23 @@ void PrettyPrinters::printAssyStaticVariable(
     }
 
     std::cout << "\n";
-    if (initialValue != 0) {
+    if (!isZeroInit) {
         std::cout << globalDirective;
         std::cout << "    .data\n";
         std::cout << "    " << alignDirective << "\n";
         std::cout << variableIdentifier << ":\n";
         if (auto intInit =
                 std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
-            if (std::get<int>(intInit->getValue()) == 0) {
-                std::cout << "    .zero 4\n";
-            }
-            else {
-                std::cout << "    .long " << std::get<int>(intInit->getValue())
-                          << "\n";
-            }
+            std::cout << "    .long " << std::get<int>(intInit->getValue())
+                      << "\n";
         }
         else if (auto longInit =
                      std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
-            if (std::get<long>(longInit->getValue()) == 0) {
-                std::cout << "    .zero 8\n";
-            }
-            else {
-                std::cout << "    .quad "
-                          << std::get<long>(longInit->getValue()) << "\n";
-            }
+            std::cout << "    .quad " << std::get<long>(longInit->getValue())
+                      << "\n";
         }
     }
-    else if (initialValue == 0) {
+    else if (isZeroInit) {
         std::cout << globalDirective;
         std::cout << "    .bss\n";
         std::cout << "    " << alignDirective << "\n";
