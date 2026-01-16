@@ -3,27 +3,48 @@
 
 int main(int argc, char *argv[]) {
     try {
-        // Check if the user provided the input file (and suggest the proper
-        // usage if not) and extract the source file (name) and the flag(s).
         std::vector<std::string> flags;
         std::string sourceFile;
+        std::string outputFileName;
+        bool isOutputFileSpecified = false;
         if (argc < 2) {
             std::cerr
                 << "Usage: " << argv[0]
-                << " [--lex] [--parse] [--validate] [--tacky] [--codegen] "
-                   "[-S] [-s] [-c] [-o] [--fold-constants] "
-                   "[--propagate-copies] "
-                   "[--eliminate-unreachable-code] [--eliminate-dead-stores] "
-                   "[--optimize] <sourceFile>\n";
+                << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
+                   "[-s] [-c] [-o <outputFile>] <sourceFile>\n";
             std::cerr << "Given argc: " << argc << "\n";
             return EXIT_FAILURE;
         }
-        // Parse the command line arguments and extract the flag(s) and the
-        // source file (name).
-        for (int i = 1; i < argc - 1; ++i) {
-            flags.emplace_back(argv[i]);
+        // Parse the command line arguments and extract the flag(s), the source
+        // file (name), and the output file (name).
+        for (int i = 1; i < argc; ++i) {
+            std::string arg = argv[i];
+            if (arg == "-o") {
+                if (i + 1 >= argc) {
+                    std::cerr << "Missing output file after -o\n";
+                    return EXIT_FAILURE;
+                }
+                outputFileName = argv[++i];
+                isOutputFileSpecified = true;
+                continue;
+            }
+            if (!arg.empty() && arg[0] == '-') {
+                flags.emplace_back(arg);
+                continue;
+            }
+            if (!sourceFile.empty()) {
+                std::cerr << "Multiple source files provided: " << arg << "\n";
+                return EXIT_FAILURE;
+            }
+            sourceFile = arg;
         }
-        sourceFile = argv[argc - 1];
+        if (sourceFile.empty()) {
+            std::cerr
+                << "Usage: " << argv[0]
+                << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
+                   "[-s] [-c] [-o <outputFile>] <sourceFile>\n";
+            return EXIT_FAILURE;
+        }
 
         // Initialize flags to control the intermediate stages of the
         // compilation.
@@ -134,6 +155,19 @@ int main(int argc, char *argv[]) {
         std::vector<std::string> objectFileNames;
         // Construct the executable file name.
         std::string executableFileName = programName;
+
+        // Override the output file names if the output file is specified.
+        if (isOutputFileSpecified) {
+            if (tillEmitAssembly) {
+                assemblyFileName = outputFileName;
+            }
+            else if (tillObject) {
+                objectFileName = outputFileName;
+            }
+            else {
+                executableFileName = outputFileName;
+            }
+        }
 
         // Preprocess the source file and write the result to the preprocessed.
         preprocess(sourceFile, preprocessedFileName);
