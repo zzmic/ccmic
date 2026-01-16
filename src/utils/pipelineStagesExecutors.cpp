@@ -274,7 +274,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     }
     else if (auto longInit =
                  std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
-        isZeroInit = (std::get<long>(longInit->getValue()) == 0);
+        isZeroInit = (std::get<long>(longInit->getValue()) == 0L);
     }
     else {
         throw std::logic_error(
