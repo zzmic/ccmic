@@ -554,12 +554,12 @@ std::shared_ptr<Type>
 TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
                                 std::shared_ptr<Type> type2) {
     // If `type1` is `nullptr`, throw an error.
-    if (type1 == nullptr) {
+    if (!type1) {
         throw std::logic_error("Null type1 in getCommonType");
     }
     // TODO(zzmic): Check if this is correct.
     // If `type2` is `nullptr`, return `type1`.
-    else if (type2 == nullptr) {
+    else if (!type2) {
         return type1;
     }
     // If both types are the same, return `type1` (or `type2`).
@@ -576,10 +576,10 @@ TypeCheckingPass::getCommonType(std::shared_ptr<Type> type1,
 std::shared_ptr<Expression>
 TypeCheckingPass::convertTo(std::shared_ptr<Expression> expression,
                             std::shared_ptr<Type> targetType) {
-    if (expression == nullptr) {
+    if (!expression) {
         throw std::logic_error("Null expression in convertTo");
     }
-    if (targetType == nullptr) {
+    if (!targetType) {
         throw std::logic_error("Null target type in convertTo");
     }
     if (expression->getExpType() && targetType &&
@@ -598,7 +598,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     std::shared_ptr<FunctionDeclaration> declaration) {
     auto funType = declaration->getFunType();
     auto funTypePtr = std::dynamic_pointer_cast<FunctionType>(funType);
-    if (funTypePtr == nullptr) {
+    if (!funTypePtr) {
         throw std::logic_error("Function type is not a FunctionType");
     }
     auto parameterTypes = funTypePtr->getParameterTypes();

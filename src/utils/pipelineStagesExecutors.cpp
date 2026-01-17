@@ -512,7 +512,7 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
     else {
         std::stringstream msg;
         msg << "Invalid source type while printing assembly movsx instruction";
-        if (src == nullptr) {
+        if (!src) {
             msg << ": Source operand is nullptr";
         }
         else {

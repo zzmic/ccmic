@@ -123,7 +123,7 @@ class FunctionType : public Type {
      */
     [[nodiscard]] bool isEqual(const Type &other) const override {
         const auto *otherFn = dynamic_cast<const FunctionType *>(&other);
-        if (otherFn == nullptr) {
+        if (!otherFn) {
             return false;
         }
         // Compare parameter types by value.

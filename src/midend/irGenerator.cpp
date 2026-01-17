@@ -594,10 +594,15 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
             conditionalExpr->getThenExpression(), instructions);
         auto resultLabel = generateIRResultLabel();
 
-        // Add the result variable to the frontend symbol table with type int.
+        auto resultType = conditionalExpr->getExpType();
+        if (!resultType) {
+            throw std::logic_error(
+                "Missing result type for conditional expression");
+        }
+        // Add the result variable to the frontend symbol table with the type of
+        // the conditional expression's result.
         frontendSymbolTable[resultLabel] =
-            std::make_pair(std::make_shared<AST::IntType>(),
-                           std::make_shared<AST::LocalAttribute>());
+            std::make_pair(resultType, std::make_shared<AST::LocalAttribute>());
 
         auto resultValue = std::make_shared<IR::VariableValue>(resultLabel);
         generateIRCopyInstruction(e1Value, resultValue, instructions);

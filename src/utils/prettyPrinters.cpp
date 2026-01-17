@@ -443,7 +443,7 @@ void PrettyPrinters::printIRCopyInstruction(
     std::cout << " = ";
 
     auto src = copyInstruction->getSrc();
-    if (src == nullptr) {
+    if (!src) {
         throw std::logic_error(
             "Source value is null while printing IR copy instruction");
     }
@@ -899,7 +899,7 @@ void PrettyPrinters::printAssyMovsxInstruction(
     else {
         std::stringstream msg;
         msg << "Invalid source type while printing assembly movsx instruction";
-        if (src == nullptr) {
+        if (!src) {
             msg << ": Source operand is nullptr";
         }
         else {
