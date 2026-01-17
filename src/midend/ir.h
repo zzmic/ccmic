@@ -18,7 +18,7 @@ namespace IR {
 class Operator {
   public:
     /**
-     * Virtual destructor for the IR operator class.
+     * Default virtual destructor for the IR operator class.
      */
     virtual ~Operator() = default;
 };

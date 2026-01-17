@@ -8,32 +8,83 @@
 #include <variant>
 
 namespace Assembly {
+/**
+ * Base class for representing a backend symbol table entry.
+ */
 class BackendSymbolTableEntry {
   public:
+    /**
+     * Default virtual destructor for the backend symbol table entry class.
+     */
     virtual ~BackendSymbolTableEntry() = default;
 };
 
+/**
+ * Class for representing an object entry in the backend symbol table.
+ */
 class ObjEntry : public BackendSymbolTableEntry {
   public:
+    /**
+     * Constructor for the object entry class.
+     *
+     * @param assemblyType The assembly type of the object.
+     * @param isStatic Whether the object is static.
+     */
     explicit ObjEntry(std::shared_ptr<AssemblyType> assemblyType, bool isStatic)
         : assemblyType(assemblyType), isStatic(isStatic) {}
+
+    /**
+     * Get the assembly type of the object.
+     *
+     * @return The assembly type of the object.
+     */
     [[nodiscard]] std::shared_ptr<AssemblyType> getAssemblyType() const {
         return assemblyType;
     }
+
+    /**
+     * Check if the object is static storage.
+     *
+     * @return True if the object is static storage, false otherwise.
+     */
     [[nodiscard]] bool isStaticStorage() const { return isStatic; }
 
   private:
+    /**
+     * The assembly type of the object.
+     */
     std::shared_ptr<AssemblyType> assemblyType;
-    bool isStatic;
+
+    /**
+     * Boolean indicating whether the object is static storage.
+     */
+    bool isStatic = false;
 };
 
+/**
+ * Class for representing a function entry in the backend symbol table.
+ */
 class FunEntry : public BackendSymbolTableEntry {
   public:
+    /**
+     * Constructor for the function entry class.
+     *
+     * @param defined Boolean indicating whether the function is defined.
+     */
     explicit FunEntry(bool defined) : defined(defined) {}
+
+    /**
+     * Check if the function is defined.
+     *
+     * @return True if the function is defined, false otherwise.
+     */
     [[nodiscard]] bool isDefined() const { return defined; }
 
   private:
-    bool defined;
+    /**
+     * Boolean indicating whether the function is defined.
+     */
+    bool defined = false;
 };
 
 /**

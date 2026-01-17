@@ -11,60 +11,174 @@
 #include <vector>
 
 namespace Assembly {
+/**
+ * Base class for representing assembly registers.
+ */
 class Register {
   public:
+    /**
+     * Default virtual destructor for the assembly register class.
+     */
     virtual ~Register() = default;
 };
 
+/**
+ * Class for representing the AX assembly register.
+ */
 class AX : public Register {};
 
+/**
+ * Class for representing the CX assembly register.
+ */
 class CX : public Register {};
 
+/**
+ * Class for representing the DX assembly register.
+ */
 class DX : public Register {};
 
+/**
+ * Class for representing the DI assembly register.
+ */
 class DI : public Register {};
 
+/**
+ * Class for representing the SI assembly register.
+ */
 class SI : public Register {};
 
+/**
+ * Class for representing the R8 assembly register.
+ */
 class R8 : public Register {};
 
+/**
+ * Class for representing the R9 assembly register.
+ */
 class R9 : public Register {};
 
+/**
+ * Class for representing the R10 assembly register.
+ */
 class R10 : public Register {};
 
+/**
+ * Class for representing the R11 assembly register.
+ */
 class R11 : public Register {};
 
+/**
+ * Class for representing a reserved assembly register.
+ */
 class ReservedRegister : public Register {};
 
+/**
+ * Class for representing the SP reserved assembly register.
+ */
 class SP : public ReservedRegister {};
 
+/**
+ * Class for representing the BP reserved assembly register.
+ */
 class BP : public ReservedRegister {};
 
+/**
+ * Base class for representing an assembly operand.
+ */
 class Operand {
   public:
+    /**
+     * Default virtual destructor for the assembly operand class.
+     */
     virtual ~Operand() = default;
-    virtual int getImmediate() const;
-    virtual std::shared_ptr<Register> getRegister() const;
-    virtual std::shared_ptr<ReservedRegister> getReservedRegister() const;
-    virtual std::string getPseudoRegister() const;
-    virtual int getOffset() const;
-    virtual std::string getIdentifier() const;
+
+    /**
+     * Get the immediate value of the operand.
+     *
+     * @return The immediate value of the operand.
+     */
+    [[nodiscard]] virtual int getImmediate() const;
+
+    /**
+     * Get the register of the operand.
+     *
+     * @return The register of the operand.
+     */
+    [[nodiscard]] virtual std::shared_ptr<Register> getRegister() const;
+
+    /**
+     * Get the reserved register of the operand.
+     *
+     * @return The reserved register of the operand.
+     */
+    [[nodiscard]] virtual std::shared_ptr<ReservedRegister>
+    getReservedRegister() const;
+
+    /**
+     * Get the pseudo register of the operand.
+     *
+     * @return The pseudo register of the operand.
+     */
+    [[nodiscard]] virtual std::string getPseudoRegister() const;
+
+    /**
+     * Get the offset of the operand.
+     *
+     * @return The offset of the operand.
+     */
+    [[nodiscard]] virtual int getOffset() const;
+
+    /**
+     * Get the identifier of the operand.
+     *
+     * @return The identifier of the operand.
+     */
+    [[nodiscard]] virtual std::string getIdentifier() const;
 };
 
+/**
+ * Class for representing an immediate operand.
+ */
 class ImmediateOperand : public Operand {
   private:
+    /**
+     * The immediate value of the operand.
+     */
     long imm = 0;
 
   public:
+    /**
+     * Constructor for the immediate operand class.
+     *
+     * @param imm The immediate value of the operand.
+     */
     explicit ImmediateOperand(int imm);
+
+    /**
+     * Constructor for the immediate operand class.
+     *
+     * @param imm The immediate value of the operand.
+     */
     explicit ImmediateOperand(long imm);
-    int getImmediate() const override;
-    long getImmediateLong() const;
+
+    [[nodiscard]] int getImmediate() const override;
+
+    [[nodiscard]] long getImmediateLong() const;
 };
 
+/**
+ * Class for representing a register operand.
+ */
 class RegisterOperand : public Operand {
   private:
+    /**
+     * The register of the operand.
+     */
     std::shared_ptr<Register> reg;
+
+    /**
+     * The mapping of register sizes to register names.
+     */
     std::unordered_map<int, std::unordered_map<std::type_index, std::string>>
         regMappings = {{1, // 1-byte registers.
                         {{typeid(AX), "%al"},
@@ -104,328 +218,790 @@ class RegisterOperand : public Operand {
                          {typeid(BP), "%rbp"}}}};
 
   public:
+    /**
+     * Constructor for the register operand class.
+     *
+     * @param reg The register of the operand.
+     */
     explicit RegisterOperand(std::shared_ptr<Register> reg);
+
+    /**
+     * Constructor for the register operand class.
+     *
+     * @param regInStr The string representation of the register.
+     */
     explicit RegisterOperand(std::string regInStr);
-    std::shared_ptr<Register> getRegister() const override;
-    std::string getRegisterInBytesInStr(int size) const;
+
+    [[nodiscard]] std::shared_ptr<Register> getRegister() const override;
+
+    [[nodiscard]] std::string getRegisterInBytesInStr(int size) const;
 };
 
+/**
+ * Class for representing a pseudo register operand.
+ */
 class PseudoRegisterOperand : public Operand {
   private:
+    /**
+     * The pseudo register of the operand.
+     */
     std::string pseudoReg;
 
   public:
+    /**
+     * Constructor for the pseudo register operand class.
+     *
+     * @param pseudoReg The pseudo register of the operand.
+     */
     explicit PseudoRegisterOperand(std::string pseudoReg);
-    std::string getPseudoRegister() const override;
+
+    [[nodiscard]] std::string getPseudoRegister() const override;
 };
 
+/**
+ * Class for representing a stack operand.
+ */
 class StackOperand : public Operand {
   private:
+    /**
+     * The offset of the operand.
+     */
     int offset = 0;
+
+    /**
+     * The reserved register of the operand.
+     */
     std::shared_ptr<ReservedRegister> reservedReg;
 
   public:
+    /**
+     * Constructor for the stack operand class.
+     *
+     * @param offset The offset of the operand.
+     * @param reservedReg The reserved register of the operand.
+     */
     explicit StackOperand(int offset,
                           std::shared_ptr<ReservedRegister> reservedReg);
-    int getOffset() const override;
-    std::shared_ptr<ReservedRegister> getReservedRegister() const override;
-    std::string getReservedRegisterInStr() const;
+
+    [[nodiscard]] int getOffset() const override;
+
+    [[nodiscard]] std::shared_ptr<ReservedRegister>
+    getReservedRegister() const override;
+
+    [[nodiscard]] std::string getReservedRegisterInStr() const;
 };
 
+/**
+ * Class for representing a data operand.
+ */
 class DataOperand : public Operand {
   private:
+    /**
+     * The identifier of the operand.
+     */
     std::string identifier;
 
   public:
+    /**
+     * Constructor for the data operand class.
+     *
+     * @param identifier The identifier of the operand.
+     */
     explicit DataOperand(std::string identifier);
-    std::string getIdentifier() const override;
+
+    [[nodiscard]] std::string getIdentifier() const override;
 };
 
+/**
+ * Base class for representing a condition code.
+ */
 class CondCode {
   public:
+    /**
+     * Default virtual destructor for the condition code class.
+     */
     virtual ~CondCode() = default;
 };
 
+/**
+ * Class for representing the E condition code.
+ */
 class E : public CondCode {};
 
+/**
+ * Class for representing the NE condition code.
+ */
 class NE : public CondCode {};
 
+/**
+ * Class for representing the G condition code.
+ */
 class G : public CondCode {};
 
+/**
+ * Class for representing the GE condition code.
+ */
 class GE : public CondCode {};
 
+/**
+ * Class for representing the L condition code.
+ */
 class L : public CondCode {};
 
+/**
+ * Class for representing the LE condition code.
+ */
 class LE : public CondCode {};
 
+/**
+ * Base class for representing an operator.
+ */
 class Operator {
   public:
+    /**
+     * Default virtual destructor for the operator class.
+     */
     virtual ~Operator() = default;
 };
 
+/**
+ * Base class for representing a unary operator.
+ */
 class UnaryOperator : public Operator {};
 
+/**
+ * Class for representing the negate unary operator.
+ */
 class NegateOperator : public UnaryOperator {};
 
+/**
+ * Class for representing the complement unary operator.
+ */
 class ComplementOperator : public UnaryOperator {};
 
+/**
+ * Class for representing the not unary operator.
+ */
 class NotOperator : public UnaryOperator {};
 
+/**
+ * Base class for representing a binary operator.
+ */
 class BinaryOperator : public Operator {};
 
+/**
+ * Class for representing the add binary operator.
+ */
 class AddOperator : public BinaryOperator {};
 
+/**
+ * Class for representing the subtract binary operator.
+ */
 class SubtractOperator : public BinaryOperator {};
 
+/**
+ * Class for representing the multiply binary operator.
+ */
 class MultiplyOperator : public BinaryOperator {};
 
-class Instruction {
-  public:
-    virtual ~Instruction() = default;
-};
-
+/**
+ * Base class for representing an assembly type.
+ */
 class AssemblyType {
   public:
+    /**
+     * Default virtual destructor for the assembly type class.
+     */
     virtual ~AssemblyType() = default;
 };
 
+/**
+ * Class for representing the longword assembly type.
+ */
 class Longword : public AssemblyType {};
+
+/**
+ * Class for representing the quadword assembly type.
+ */
 
 class Quadword : public AssemblyType {};
 
+/**
+ * Base class for representing an instruction.
+ */
+class Instruction {
+  public:
+    /**
+     * Default virtual destructor for the instruction class.
+     */
+    virtual ~Instruction() = default;
+};
+
+/**
+ * Class for representing the mov instruction.
+ */
 class MovInstruction : public Instruction {
   private:
+    /**
+     * The type of the instruction.
+     */
     std::shared_ptr<AssemblyType> type;
+
+    /**
+     * The source and destination operands of the instruction.
+     */
     std::shared_ptr<Operand> src, dst;
 
   public:
+    /**
+     * Constructor for the mov instruction class.
+     *
+     * @param type The type of the instruction.
+     * @param src The source operand of the instruction.
+     * @param dst The destination operand of the instruction.
+     */
     explicit MovInstruction(std::shared_ptr<AssemblyType> type,
                             std::shared_ptr<Operand> src,
                             std::shared_ptr<Operand> dst);
-    std::shared_ptr<AssemblyType> getType();
-    std::shared_ptr<Operand> getSrc();
-    std::shared_ptr<Operand> getDst();
+
+    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+
+    [[nodiscard]] std::shared_ptr<Operand> getSrc();
+
+    [[nodiscard]] std::shared_ptr<Operand> getDst();
+
     void setType(std::shared_ptr<AssemblyType> newType);
+
     void setSrc(std::shared_ptr<Operand> newSrc);
+
     void setDst(std::shared_ptr<Operand> newDst);
 };
 
+/**
+ * Class for representing the movsx instruction.
+ */
 class MovsxInstruction : public Instruction {
   private:
+    /**
+     * The source and destination operands of the instruction.
+     */
     std::shared_ptr<Operand> src, dst;
 
   public:
+    /**
+     * Constructor for the movsx instruction class.
+     *
+     * @param src The source operand of the instruction.
+     * @param dst The destination operand of the instruction.
+     */
     explicit MovsxInstruction(std::shared_ptr<Operand> src,
                               std::shared_ptr<Operand> dst);
-    std::shared_ptr<Operand> getSrc();
-    std::shared_ptr<Operand> getDst();
+
+    [[nodiscard]] std::shared_ptr<Operand> getSrc();
+
+    [[nodiscard]] std::shared_ptr<Operand> getDst();
+
     void setSrc(std::shared_ptr<Operand> newSrc);
+
     void setDst(std::shared_ptr<Operand> newDst);
 };
 
+/**
+ * Class for representing the unary instruction.
+ */
 class UnaryInstruction : public Instruction {
   private:
+    /**
+     * The unary operator of the instruction.
+     */
     std::shared_ptr<UnaryOperator> unaryOperator;
+
+    /**
+     * The type of the instruction.
+     */
     std::shared_ptr<AssemblyType> type;
+
+    /**
+     * The operand of the instruction.
+     */
     std::shared_ptr<Operand> operand;
 
   public:
+    /**
+     * Constructor for the unary instruction class.
+     *
+     * @param unaryOperator The unary operator of the instruction.
+     * @param type The type of the instruction.
+     * @param operand The operand of the instruction.
+     */
     explicit UnaryInstruction(std::shared_ptr<UnaryOperator> unaryOperator,
                               std::shared_ptr<AssemblyType> type,
                               std::shared_ptr<Operand> operand);
-    std::shared_ptr<UnaryOperator> getUnaryOperator();
-    std::shared_ptr<AssemblyType> getType();
-    std::shared_ptr<Operand> getOperand();
+
+    [[nodiscard]] std::shared_ptr<UnaryOperator> getUnaryOperator();
+
+    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+
     void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator);
+
     void setType(std::shared_ptr<AssemblyType> newType);
+
     void setOperand(std::shared_ptr<Operand> newOperand);
 };
 
+/**
+ * Class for representing the binary instruction.
+ */
 class BinaryInstruction : public Instruction {
   private:
+    /**
+     * The binary operator of the instruction.
+     */
     std::shared_ptr<BinaryOperator> binaryOperator;
+
+    /**
+     * The type of the instruction.
+     */
     std::shared_ptr<AssemblyType> type;
+
+    /**
+     * The first and second operands of the instruction.
+     */
     std::shared_ptr<Operand> operand1, operand2;
 
   public:
+    /**
+     * Constructor for the binary instruction class.
+     *
+     * @param binaryOperator The binary operator of the instruction.
+     * @param type The type of the instruction.
+     * @param operand1 The first operand of the instruction.
+     * @param operand2 The second operand of the instruction.
+     */
     explicit BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
                                std::shared_ptr<AssemblyType> type,
                                std::shared_ptr<Operand> operand1,
                                std::shared_ptr<Operand> operand2);
-    std::shared_ptr<BinaryOperator> getBinaryOperator();
-    std::shared_ptr<AssemblyType> getType();
-    std::shared_ptr<Operand> getOperand1();
-    std::shared_ptr<Operand> getOperand2();
+
+    [[nodiscard]] std::shared_ptr<BinaryOperator> getBinaryOperator();
+
+    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand1();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand2();
+
     void setBinaryOperator(std::shared_ptr<BinaryOperator> newBinaryOperator);
+
     void setType(std::shared_ptr<AssemblyType> newType);
+
     void setOperand1(std::shared_ptr<Operand> newOperand1);
+
     void setOperand2(std::shared_ptr<Operand> newOperand2);
 };
 
+/**
+ * Class for representing the cmp instruction.
+ */
 class CmpInstruction : public Instruction {
   private:
+    /**
+     * The type of the instruction.
+     */
     std::shared_ptr<AssemblyType> type;
+
+    /**
+     * The first and second operands of the instruction.
+     */
     std::shared_ptr<Operand> operand1, operand2;
 
   public:
+    /**
+     * Constructor for the cmp instruction class.
+     *
+     * @param type The type of the instruction.
+     * @param operand1 The first operand of the instruction.
+     * @param operand2 The second operand of the instruction.
+     */
     explicit CmpInstruction(std::shared_ptr<AssemblyType> type,
                             std::shared_ptr<Operand> operand1,
                             std::shared_ptr<Operand> operand2);
-    std::shared_ptr<AssemblyType> getType();
-    std::shared_ptr<Operand> getOperand1();
-    std::shared_ptr<Operand> getOperand2();
+
+    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand1();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand2();
+
     void setType(std::shared_ptr<AssemblyType> newType);
+
     void setOperand1(std::shared_ptr<Operand> newOperand1);
+
     void setOperand2(std::shared_ptr<Operand> newOperand2);
 };
 
+/**
+ * Class for representing the idiv instruction.
+ */
 class IdivInstruction : public Instruction {
   private:
+    /**
+     * The type of the instruction.
+     */
     std::shared_ptr<AssemblyType> type;
+
+    /**
+     * The operand of the instruction.
+     */
     std::shared_ptr<Operand> operand;
 
   public:
+    /**
+     * Constructor for the idiv instruction class.
+     *
+     * @param type The type of the instruction.
+     * @param operand The operand of the instruction.
+     */
     explicit IdivInstruction(std::shared_ptr<AssemblyType> type,
                              std::shared_ptr<Operand> operand);
-    std::shared_ptr<AssemblyType> getType();
-    std::shared_ptr<Operand> getOperand();
+
+    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+
     void setType(std::shared_ptr<AssemblyType> newType);
+
     void setOperand(std::shared_ptr<Operand> newOperand);
 };
 
+/**
+ * Class for representing the cdq instruction.
+ */
 class CdqInstruction : public Instruction {
   private:
+    /**
+     * The type of the instruction.
+     */
     std::shared_ptr<AssemblyType> type;
 
   public:
+    /**
+     * Constructor for the cdq instruction class.
+     *
+     * @param type The type of the instruction.
+     */
     explicit CdqInstruction(std::shared_ptr<AssemblyType> type);
-    std::shared_ptr<AssemblyType> getType();
+
+    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+
     void setType(std::shared_ptr<AssemblyType> newType);
 };
 
+/**
+ * Class for representing the jmp instruction.
+ */
 class JmpInstruction : public Instruction {
   private:
+    /**
+     * The label of the instruction.
+     */
     std::string label;
 
   public:
+    /**
+     * Constructor for the jmp instruction class.
+     *
+     * @param label The label of the instruction.
+     */
     explicit JmpInstruction(std::string label);
-    std::string getLabel();
+
+    [[nodiscard]] std::string getLabel();
+
     void setLabel(std::string newLabel);
 };
 
+/**
+ * Class for representing the jmpcc instruction.
+ */
 class JmpCCInstruction : public Instruction {
   private:
+    /**
+     * The condition code of the instruction.
+     */
     std::shared_ptr<CondCode> condCode;
+
+    /**
+     * The label of the instruction.
+     */
     std::string label;
 
   public:
+    /**
+     * Constructor for the jmpcc instruction class.
+     *
+     * @param condCode The condition code of the instruction.
+     * @param label The label of the instruction.
+     */
     explicit JmpCCInstruction(std::shared_ptr<CondCode> condCode,
                               std::string label);
-    std::shared_ptr<CondCode> getCondCode();
-    std::string getLabel();
+
+    [[nodiscard]] std::shared_ptr<CondCode> getCondCode();
+
+    [[nodiscard]] std::string getLabel();
+
     void setCondCode(std::shared_ptr<CondCode> newCondCode);
+
     void setLabel(std::string newLabel);
 };
 
+/**
+ * Class for representing the setcc instruction.
+ */
 class SetCCInstruction : public Instruction {
   private:
+    /**
+     * The condition code of the instruction.
+     */
     std::shared_ptr<CondCode> condCode;
+
+    /**
+     * The operand of the instruction.
+     */
     std::shared_ptr<Operand> operand;
 
   public:
+    /**
+     * Constructor for the setcc instruction class.
+     *
+     * @param condCode The condition code of the instruction.
+     * @param operand The operand of the instruction.
+     */
     explicit SetCCInstruction(std::shared_ptr<CondCode> condCode,
                               std::shared_ptr<Operand> operand);
-    std::shared_ptr<CondCode> getCondCode();
-    std::shared_ptr<Operand> getOperand();
+
+    [[nodiscard]] std::shared_ptr<CondCode> getCondCode();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+
     void setCondCode(std::shared_ptr<CondCode> newCondCode);
+
     void setOperand(std::shared_ptr<Operand> newOperand);
 };
 
+/**
+ * Class for representing the label instruction.
+ */
 class LabelInstruction : public Instruction {
   private:
+    /**
+     * The label of the instruction.
+     */
     std::string label;
 
   public:
+    /**
+     * Constructor for the label instruction class.
+     *
+     * @param label The label of the instruction.
+     */
     explicit LabelInstruction(std::string label);
-    std::string getLabel();
+
+    [[nodiscard]] std::string getLabel();
+
     void setLabel(std::string newLabel);
 };
 
+/**
+ * Class for representing the push instruction.
+ */
 class PushInstruction : public Instruction {
   private:
+    /**
+     * The operand of the instruction.
+     */
     std::shared_ptr<Operand> operand;
 
   public:
+    /**
+     * Constructor for the push instruction class.
+     *
+     * @param operand The operand of the instruction.
+     */
     explicit PushInstruction(std::shared_ptr<Operand> operand);
-    std::shared_ptr<Operand> getOperand();
+
+    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+
     void setOperand(std::shared_ptr<Operand> newOperand);
 };
 
+/**
+ * Class for representing the call instruction.
+ */
 class CallInstruction : public Instruction {
   private:
+    /**
+     * The function identifier of the instruction.
+     */
     std::string functionIdentifier;
 
   public:
+    /**
+     * Constructor for the call instruction class.
+     *
+     * @param functionIdentifier The function identifier of the instruction.
+     */
     explicit CallInstruction(std::string functionIdentifier);
-    std::string getFunctionIdentifier();
+
+    [[nodiscard]] std::string getFunctionIdentifier();
 };
 
+/**
+ * Class for representing the ret instruction.
+ */
 class RetInstruction : public Instruction {};
 
+/**
+ * Base class for representing a top-level construct.
+ */
 class TopLevel {
   public:
+    /**
+     * Default virtual destructor for the top-level class.
+     */
     virtual ~TopLevel() = default;
 };
 
+/**
+ * Class for representing a function definition.
+ */
 class FunctionDefinition : public TopLevel {
   private:
+    /**
+     * The function identifier of the function definition.
+     */
     std::string functionIdentifier;
+
+    /**
+     * Boolean indicating whether the function definition is global.
+     */
     bool global = false;
+
+    /**
+     * The function body of the function definition.
+     */
     std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
+
+    /**
+     * The stack size of the function definition.
+     */
     size_t stackSize = 0;
 
   public:
+    /**
+     * Constructor for the function definition class.
+     *
+     * @param functionIdentifier The function identifier of the function
+     * definition.
+     * @param global Boolean indicating whether the function definition is
+     * global.
+     * @param functionBody The function body of the function definition.
+     * @param stackSize The stack size of the function definition.
+     */
     explicit FunctionDefinition(
         std::string functionIdentifier, bool global,
         std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
         size_t stackSize);
-    std::string getFunctionIdentifier();
-    bool isGlobal();
-    std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
+
+    [[nodiscard]] std::string getFunctionIdentifier();
+
+    [[nodiscard]] bool isGlobal();
+
+    [[nodiscard]] std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
     getFunctionBody();
+
     void
     setFunctionBody(std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
                         newFunctionBody);
-    size_t getStackSize();
+
+    [[nodiscard]] size_t getStackSize();
+
     void setStackSize(size_t newStackSize);
 };
 
+/**
+ * Class for representing a static variable.
+ */
 class StaticVariable : public TopLevel {
   private:
+    /**
+     * The identifier of the static variable.
+     */
     std::string identifier;
+
+    /**
+     * Boolean indicating whether the static variable is global.
+     */
     bool global = false;
+
+    /**
+     * The alignment of the static variable.
+     */
     int alignment = 0;
+
+    /**
+     * The static initialization of the static variable.
+     */
     std::shared_ptr<AST::StaticInit> staticInit;
 
   public:
+    /**
+     * Constructor for the static variable class.
+     *
+     * @param identifier The identifier of the static variable.
+     * @param global Boolean indicating whether the static variable is global.
+     * @param alignment The alignment of the static variable.
+     * @param staticInit The static initialization of the static variable.
+     */
     explicit StaticVariable(std::string identifier, bool global, int alignment,
                             std::shared_ptr<AST::StaticInit> staticInit);
-    std::string getIdentifier();
-    bool isGlobal();
-    int getAlignment();
+
+    [[nodiscard]] std::string getIdentifier();
+
+    [[nodiscard]] bool isGlobal();
+
+    [[nodiscard]] int getAlignment();
+
     void setAlignment(int newAlignment);
-    std::shared_ptr<AST::StaticInit> getStaticInit();
+
+    [[nodiscard]] std::shared_ptr<AST::StaticInit> getStaticInit();
+
     void setStaticInit(std::shared_ptr<AST::StaticInit> newStaticInit);
 };
 
+/**
+ * Class for representing a program.
+ */
 class Program {
   private:
+    /**
+     * The top-levels of the program.
+     */
     std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels;
 
   public:
+    /**
+     * Constructor for the program class.
+     *
+     * @param topLevels The top-levels of the program.
+     */
     explicit Program(
         std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels);
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> getTopLevels();
+
+    [[nodiscard]] std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>>
+    getTopLevels();
+
     void setTopLevels(
         std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> newTopLevels);
 };

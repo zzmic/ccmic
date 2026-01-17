@@ -76,10 +76,10 @@ The compiler transforms C source code into x86-64 assembly through a multi-stage
 
 The codebase is organized into modular components:
 
-- **src/frontend/**: Lexer, parser, AST, and semantic analysis.
-- **src/midend/**: IR generation (and optimization passes to be implemented).
-- **src/backend/**: Assembly generation, stack allocation, and fixup passes.
-- **src/utils/**: Pipeline orchestration and pretty-printers for debugging.
+- **[src/frontend/](https://github.com/zzmic/ccmic/tree/main/src/frontend)**: Lexer, parser, AST, and semantic analysis.
+- **[src/midend/](https://github.com/zzmic/ccmic/tree/main/src/midend)**: IR generation (and optimization passes to be implemented).
+- **[src/backend/](https://github.com/zzmic/ccmic/tree/main/src/backend)**: Assembly generation, stack allocation, and fixup passes.
+- **[src/utils/](https://github.com/zzmic/ccmic/tree/main/src/utils)**: Pipeline orchestration and pretty-printers for debugging.
 
 ## Building and Usage
 
@@ -91,31 +91,39 @@ git clone --recurse-submodules https://github.com/zzmic/ccmic.git
 
 ### Installing Dependencies
 
-- clang++ that supports C++17 (or later) for building the compiler.
+- clang++ that supports C++20 (or later) for building the compiler.
 - gcc that supports x86-64 and C17 for linking and assembly.
 
 ### Building the Compiler
 
 ```bash
-# arch -x86_64 zsh # Run this command if one is running macOS on ARM and is using zsh.
+# Run any of the following commands to build the compiler if one is running macOS on ARM:
+# arch -x86_64 bash -c "$(make -j$(nproc))"
+# arch -x86_64 zsh -c "$(make -j$(nproc))"
+# arch -x86_64 fish -c "$(make -j$(nproc))"
+# arch -x86_64 tcsh -c "$(make -j$(nproc))"
+# Run the following command to build the compiler if one is running Linux/macOS/Windows on x86-64:
 make -j$(nproc)
 ```
 
 ### Compiling C Programs
 
+## Command-Line Usage
+
 ```bash
 bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o <outputFile>] <sourceFile>
 ```
 
-### Command-Line Flags
+## Command-Line Flags
 
 - **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), `--codegen` (code generation).
 - **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
 - **Optimizations** (to be implemented): `--fold-constants`, `--propagate-copies`, `--eliminate-unreachable-code`, `--eliminate-dead-stores`, `--optimize`.
 
-## Development and Extensibility
+### Development and Extensibility
 
-- **Adding language features**: Expand the frontend in `src/frontend/` by modifying the lexer, parser, and AST nodes.
-- **Adding optimizations**: Implement new passes in `src/midend/` following the existing `OptimizationPass` pattern.
-- **Debugging**: Use the implemented pretty-printers for IR and assembly inspection in `src/utils/`.
+- **Adding language features**: Expand the frontend in [`src/frontend/`](https://github.com/zzmic/ccmic/tree/main/src/frontend) by modifying the lexer, parser, and AST nodes, as well as updating semantic analysis.
+- **Adding optimizations**: Implement new passes in [`src/midend/`](https://github.com/zzmic/ccmic/tree/main/src/midend) following the existing `IR::OptimizationPass` pattern.
+- **Extending code generation**: Modify or add new code generation strategies in [`src/backend/`](https://github.com/zzmic/ccmic/tree/main/src/backend).
+- **Debugging**: Use the implemented pretty-printers for IR and assembly inspection in [`src/utils/`](https://github.com/zzmic/ccmic/tree/main/src/utils).
 - **Testing**: Run tests using the companion test suite linked in the overview section.

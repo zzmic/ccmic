@@ -12,10 +12,6 @@ void FixupPass::fixup(
     }
 }
 
-// Function to insert an allocate-stack instruction at the beginning of a
-// function.
-// Rewrite: `FunctionDefinition(instructions)` ->
-// `FunctionDefinition(instructions)` + `AllocateStack(stackSize)`.
 void FixupPass::insertAllocateStackInstruction(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
         instructions,
@@ -29,9 +25,6 @@ void FixupPass::insertAllocateStackInstruction(
                                  std::make_shared<Assembly::SP>())));
 }
 
-// Function to rewrite a function definition.
-// Rewrite: `FunctionDefinition(instructions)` ->
-// `FunctionDefinition(instructions)` + `AllocateStack(stackSize)`.
 void FixupPass::rewriteFunctionDefinition(
     std::shared_ptr<FunctionDefinition> functionDefinition) {
     auto instructions = functionDefinition->getFunctionBody();
@@ -113,7 +106,6 @@ void FixupPass::rewriteFunctionDefinition(
     }
 }
 
-// Function to check if a mov instruction is invalid.
 bool FixupPass::isInvalidMov(
     std::shared_ptr<Assembly::MovInstruction> movInstr) {
     // Stack operands and data operands are memory addresses (memory-address
@@ -128,7 +120,6 @@ bool FixupPass::isInvalidMov(
                 movInstr->getDst()) != nullptr);
 }
 
-// Function to check if a mov instruction has a large immediate value.
 bool FixupPass::isInvalidLargeImmediateMov(
     std::shared_ptr<Assembly::MovInstruction> movInstr) {
     // Check if it's a quadword mov with large immediate to memory.
@@ -154,7 +145,6 @@ bool FixupPass::isInvalidLargeImmediateMov(
            value < std::numeric_limits<int>::min();
 }
 
-// Function to check if a mov instruction has a longword immediate value.
 bool FixupPass::isInvalidLongwordImmediateMov(
     std::shared_ptr<Assembly::MovInstruction> movInstr) {
     // Check if it's a longword mov with 8-byte immediate value.
@@ -173,7 +163,6 @@ bool FixupPass::isInvalidLongwordImmediateMov(
     return value > std::numeric_limits<unsigned int>::max() || value < 0;
 }
 
-// Function to check if a movsx instruction is invalid.
 bool FixupPass::isInvalidMovsx(
     std::shared_ptr<Assembly::MovsxInstruction> movsxInstr) {
     // Movsx can't use a memory address as a destination or an immediate value
@@ -187,7 +176,6 @@ bool FixupPass::isInvalidMovsx(
     return invalidSrc || invalidDst;
 }
 
-// Function to check if a binary instruction is invalid.
 bool FixupPass::isInvalidBinary(
     std::shared_ptr<Assembly::BinaryInstruction> binInstr) {
     if (std::dynamic_pointer_cast<Assembly::AddOperator>(
@@ -213,7 +201,6 @@ bool FixupPass::isInvalidBinary(
     return false;
 }
 
-// Function to check if a binary instruction has a large immediate value.
 bool FixupPass::isInvalidLargeImmediateBinary(
     std::shared_ptr<Assembly::BinaryInstruction> binInstr) {
     // Check if it's a `Quadword` `Binary` instruction with a large immediate
@@ -271,7 +258,6 @@ bool FixupPass::isInvalidCmp(
     return false;
 }
 
-// Function to check if a cmp instruction has a large immediate value.
 bool FixupPass::isInvalidLargeImmediateCmp(
     std::shared_ptr<Assembly::CmpInstruction> cmpInstr) {
     // Check if it's a `Quadword` `Cmp` instruction with a large immediate
@@ -304,7 +290,6 @@ bool FixupPass::isInvalidLargeImmediateCmp(
            value < std::numeric_limits<int>::min();
 }
 
-// Function to check if a push instruction has a large immediate value.
 bool FixupPass::isInvalidLargeImmediatePush(
     std::shared_ptr<Assembly::PushInstruction> pushInstr) {
     auto immediateOp = std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
@@ -319,10 +304,6 @@ bool FixupPass::isInvalidLargeImmediatePush(
            value < std::numeric_limits<int>::min();
 }
 
-// Function to rewrite an invalid mov instruction.
-// Rewrite: `Mov(Stack/Data, Stack/Data)` ->
-// `Mov(Quadword, Stack/Data, Reg(R10))` + `Mov(Quadword, Reg(R10),
-// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidMov(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -350,10 +331,6 @@ FixupPass::rewriteInvalidMov(
     return it;
 }
 
-// Function to rewrite an invalid movsx instruction.
-// Rewrite: `Movsx(Imm(large), Stack/Data)` ->
-// `Mov(Longword, Imm(large), Reg(R10))` + `Movsx(Reg(R10), Reg(R11))` +
-// `Mov(Quadword, Reg(R11), Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidMovsx(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -416,10 +393,6 @@ FixupPass::rewriteInvalidMovsx(
     return it;
 }
 
-// Function to rewrite an invalid binary instruction.
-// Rewrite: `Binary(op, Stack/Data, Stack/Data)` ->
-// `Mov(Quadword, Stack/Data, Reg(R10))` + `Binary(op, Quadword, Reg(R10),
-// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidBinary(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -459,9 +432,6 @@ FixupPass::rewriteInvalidBinary(
     return it;
 }
 
-// Function to rewrite an invalid idiv instruction.
-// Rewrite: `Idiv(Quadword, Imm(large))` ->
-// `Mov(Quadword, Imm(large), Reg(R10))` + `Idiv(Quadword, Reg(R10))`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidIdiv(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -482,10 +452,6 @@ FixupPass::rewriteInvalidIdiv(
     return it;
 }
 
-// Function to rewrite an invalid cmp instruction.
-// Rewrite: `Cmp(Stack/Data, Stack/Data)` ->
-// `Mov(Quadword, Stack/Data, Reg(R10))` + `Cmp(Quadword, Reg(R10),
-// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidCmp(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -524,11 +490,6 @@ FixupPass::rewriteInvalidCmp(
     return it;
 }
 
-// Function to rewrite an invalid mov instruction with a quadword immediate
-// value.
-// Rewrite: `Mov(Quadword, Imm(large), Stack/Data)` ->
-// `Mov(Quadword, Imm(large), Reg(R10))` + `Mov(Quadword, Reg(R10),
-// Stack/Data)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidLargeImmediateMov(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -549,10 +510,6 @@ FixupPass::rewriteInvalidLargeImmediateMov(
     return it;
 }
 
-// Function to rewrite an invalid mov instruction with a longword immediate
-// value.
-// Rewrite: `Mov(Longword, Imm(large), Reg)` ->
-// `Mov(Longword, Imm(truncated), Reg)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidLongwordImmediateMov(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -577,11 +534,6 @@ FixupPass::rewriteInvalidLongwordImmediateMov(
     return it;
 }
 
-// Function to rewrite an invalid binary instruction with a large immediate
-// value.
-// Rewrite: `Binary(op, Quadword, Imm(large), Reg)` ->
-// `Mov(Quadword, Imm(large), Reg(R10))` + `Binary(op, Quadword, Reg(R10),
-// Reg)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidLargeImmediateBinary(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -652,10 +604,6 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
     return it;
 }
 
-// Function to rewrite an invalid cmp instruction with a large immediate
-// value.
-// Rewrite: `Cmp(Quadword, Imm(large), Reg)` ->
-// `Mov(Quadword, Imm(large), Reg(R10))` + `Cmp(Quadword, Reg(R10), Reg)`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidLargeImmediateCmp(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
@@ -715,10 +663,6 @@ FixupPass::rewriteInvalidLargeImmediateCmp(
     return it;
 }
 
-// Function to rewrite an invalid push instruction with a large immediate
-// value.
-// Rewrite: `Push(Imm(large))` -> `Mov(Quadword, Imm(large), Reg(R10))` +
-// `Push(Reg(R10))`.
 std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidLargeImmediatePush(
     std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
