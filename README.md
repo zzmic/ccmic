@@ -91,7 +91,7 @@ git clone --recurse-submodules https://github.com/zzmic/ccmic.git
 
 ### Installing Dependencies
 
-- clang++ that supports C++20 (or later) for building the compiler.
+- clang++ that supports C++23 (or above) for building the compiler.
 - gcc that supports x86-64 and C17 for linking and assembly.
 
 ### Building the Compiler

@@ -1,6 +1,6 @@
 CXX = /usr/bin/clang++
 
-STDFLAGS = -std=c++20
+STDFLAGS = -std=c++23
 STDLIBFLAGS = -stdlib=libc++
 WARNFLAGS = -Werror -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wnull-dereference \
   -Wsign-conversion -Wimplicit-fallthrough -Wrange-loop-analysis
