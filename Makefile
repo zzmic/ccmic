@@ -4,11 +4,9 @@ STDFLAGS = -std=c++23
 STDLIBFLAGS = -stdlib=libc++
 WARNFLAGS = -Werror -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wnull-dereference \
   -Wsign-conversion -Wimplicit-fallthrough -Wrange-loop-analysis
-CXXFLAGS = $(STDFLAGS) $(WARNFLAGS) $(STDLIBFLAGS)
+CXXFLAGS = $(STDFLAGS) $(WARNFLAGS) $(STDLIBFLAGS) -O2
 LDFLAGS = $(STDLIBFLAGS)
 LDLIBS =
-
-# Sanitizer and hardening flags (for debug builds).
 SAN_FLAGS = -fsanitize=address,undefined,vptr -fno-omit-frame-pointer -fno-sanitize-recover=all
 
 SRC_DIR = src
@@ -18,21 +16,24 @@ BACKEND_DIR = $(SRC_DIR)/backend
 UTILS_DIR = $(SRC_DIR)/utils
 BIN_DIR = bin
 
+# All source files in the project.
 SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
   $(wildcard $(MIDEND_DIR)/*.cpp) \
   $(wildcard $(BACKEND_DIR)/*.cpp) \
   $(wildcard $(UTILS_DIR)/*.cpp) \
   $(wildcard $(SRC_DIR)/*.cpp)
 
+# Header files corresponding to all source files.
 HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
   $(wildcard $(MIDEND_DIR)/*.h) \
   $(wildcard $(BACKEND_DIR)/*.h) \
   $(wildcard $(UTILS_DIR)/*.h) \
   $(wildcard $(SRC_DIR)/*.h)
 
+# Object files corresponding to all source files.
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 
-# Frontend-only sources and objects for compilation checking.
+# Frontend-only compilation check target.
 FRONTEND_SOURCES_ALL = $(wildcard $(FRONTEND_DIR)/*.cpp)
 FRONTEND_SOURCES = $(FRONTEND_SOURCES_ALL)
 FRONTEND_HEADERS = $(wildcard $(FRONTEND_DIR)/*.h)
@@ -43,25 +44,26 @@ MIDEND_SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
   $(wildcard $(MIDEND_DIR)/*.cpp)
 MIDEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(MIDEND_SOURCES))
 
+# Main executable path.
 EXECUTABLE = $(BIN_DIR)/main
 
 .PHONY: all debug release format clean help frontend-check midend-check
 
 all: $(BIN_DIR) $(EXECUTABLE)
 
-# Create the `bin` directory if it does not exist.
+# Create the binary directory if it doesn't exist.
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
 # Compile the source files to object files.
 # The `|` symbol indicates that the `$(BIN_DIR)` directory must exist before the target can be built,
 # but changes to this directory won't trigger a rebuild of the object files.
-# Reference: https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html.
+# Reference: <https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html>.
 $(BIN_DIR)/%.o: $(SRC_DIR)/%.cpp $(HEADERS) | $(BIN_DIR)
 	mkdir -p $(dir $@)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-# Automatic dependency generation.
+# Generate dependency files for each source file.
 CXXFLAGS += -MMD -MP
 DEPS = $(OBJECTS:.o=.d)
 -include $(DEPS)
@@ -70,27 +72,28 @@ DEPS = $(OBJECTS:.o=.d)
 $(EXECUTABLE): $(OBJECTS)
 	$(CXX) $(OBJECTS) -o $@ $(LDFLAGS) $(LDLIBS)
 
-# Debug target.
-debug: CXXFLAGS += -g -O0 $(SAN_FLAGS) -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
+# Debug target with most optimizations disabled, full debug symbols, sanitizers, and runtime hardening.
+debug: CXXFLAGS += -O0 -g $(SAN_FLAGS) -D_LIBCPP_HARDENING_MODE=_LIBCPP_HARDENING_MODE_DEBUG
 debug: LDFLAGS  += $(SAN_FLAGS)
 debug: all
 
-# Release target with optimizations and without debug symbols.
-release: CXXFLAGS += -O3 -DNDEBUG
+# Release target with optimizations, hardening flags, and minimal debug info for profiling/stack traces.
+release: CXXFLAGS += -O3 -DNDEBUG -fstack-protector-strong -D_FORTIFY_SOURCE=3 -fvisibility=hidden -fno-omit-frame-pointer -gline-tables-only
 release: all
 
 format:
 	clang-format -i $(SOURCES) $(HEADERS)
 
 clean:
-	rm -rf $(BIN_DIR)/* $(BIN_DIR)/**/*.d
+	rm -rf $(BIN_DIR)/*
+	@find $(BIN_DIR) -name '*.d' -delete 2>/dev/null || true
 
-# Frontend-only compilation check target.
+# Frontend-only compilation check target for debugging purposes.
 # This compiles only the frontend sources to verify they compile independently.
 frontend-check: $(BIN_DIR) $(FRONTEND_OBJECTS)
 	@echo "Frontend compilation check passed!"
 
-# Frontend + midend compilation check target.
+# Frontend + midend compilation check target for debugging purposes.
 # This compiles the frontend and midend sources (no linking).
 midend-check: $(BIN_DIR) $(MIDEND_OBJECTS)
 	@echo "Frontend + midend compilation check passed!"
@@ -99,11 +102,11 @@ help:
 	@echo 'Usage: make <target>'
 	@echo
 	@echo 'Targets:'
-	@printf '  %-15s %s\n' 'all' 'Build the main executable ($(EXECUTABLE)).'
-	@printf '  %-15s %s\n' 'debug' 'Build with debug info, sanitizers, and hardening.'
-	@printf '  %-15s %s\n' 'release' 'Build with optimizations for release.'
+	@printf '  %-15s %s\n' 'all' 'Build the project (default target).'
+	@printf '  %-15s %s\n' 'debug' 'Build with most optimizations disabled, full debug symbols, sanitizers, and runtime hardening for debugging.'
+	@printf '  %-15s %s\n' 'release' 'Build with optimizations, hardening flags, and minimal debug info for profiling/stack traces for release.'
 	@printf '  %-15s %s\n' 'frontend-check' 'Compile frontend sources only (no linking).'
 	@printf '  %-15s %s\n' 'midend-check' 'Compile frontend + midend sources (no linking).'
-	@printf '  %-15s %s\n' 'format' 'Format the code using clang-format.'
+	@printf '  %-15s %s\n' 'format' 'Format C++ source and header files using `clang-format`.'
 	@printf '  %-15s %s\n' 'clean' 'Remove build artifacts.'
 	@printf '  %-15s %s\n' 'help' 'Show this help message.'

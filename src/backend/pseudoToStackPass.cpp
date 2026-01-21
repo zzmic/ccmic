@@ -290,6 +290,7 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movInstruction->getSrc()));
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 movInstruction->getDst()));
+            (void)movInstruction;
         }
         else if (auto movsxInstruction =
                      dynamic_cast<Assembly::MovsxInstruction *>(
@@ -298,12 +299,14 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movsxInstruction->getSrc()));
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 movsxInstruction->getDst()));
+            (void)movsxInstruction;
         }
         else if (auto unaryInstruction =
                      dynamic_cast<Assembly::UnaryInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 unaryInstruction->getOperand()));
+            (void)unaryInstruction;
         }
         else if (auto binaryInstruction =
                      dynamic_cast<Assembly::BinaryInstruction *>(
@@ -312,6 +315,7 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 binaryInstruction->getOperand1()));
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 binaryInstruction->getOperand2()));
+            (void)binaryInstruction;
         }
         else if (auto cmpInstruction = dynamic_cast<Assembly::CmpInstruction *>(
                      instruction.get())) {
@@ -319,24 +323,28 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 cmpInstruction->getOperand1()));
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 cmpInstruction->getOperand2()));
+            (void)cmpInstruction;
         }
         else if (auto idivInstruction =
                      dynamic_cast<Assembly::IdivInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 idivInstruction->getOperand()));
+            (void)idivInstruction;
         }
         else if (auto setCCInstruction =
                      dynamic_cast<Assembly::SetCCInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 setCCInstruction->getOperand()));
+            (void)setCCInstruction;
         }
         else if (auto pushInstruction =
                      dynamic_cast<Assembly::PushInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 pushInstruction->getOperand()));
+            (void)pushInstruction;
         }
         else if (auto retInstruction = dynamic_cast<Assembly::RetInstruction *>(
                      instruction.get())) {
