@@ -26,8 +26,7 @@ class PrettyPrinters {
      *
      * @param assemblyProgram The assembly program to print.
      */
-    static void printAssemblyProgram(
-        const std::shared_ptr<Assembly::Program> &assemblyProgram);
+    static void printAssemblyProgram(const Assembly::Program &assemblyProgram);
 
   private:
     /**
@@ -147,32 +146,30 @@ class PrettyPrinters {
      * @param functionDefinition The assembly function definition to print.
      */
     static void printAssyFunctionDefinition(
-        const std::shared_ptr<Assembly::FunctionDefinition>
-            &functionDefinition);
+        const Assembly::FunctionDefinition &functionDefinition);
 
     /**
      * Print an assembly static variable to stdout.
      *
      * @param staticVariable The assembly static variable to print.
      */
-    static void printAssyStaticVariable(
-        const std::shared_ptr<Assembly::StaticVariable> &staticVariable);
+    static void
+    printAssyStaticVariable(const Assembly::StaticVariable &staticVariable);
 
     /**
      * Print an assembly instruction to stdout.
      *
      * @param instruction The assembly instruction to print.
      */
-    static void printAssyInstruction(
-        const std::shared_ptr<Assembly::Instruction> &instruction);
+    static void printAssyInstruction(const Assembly::Instruction &instruction);
 
     /**
      * Print an assembly move instruction to stdout.
      *
      * @param movInstruction The assembly move instruction to print.
      */
-    static void printAssyMovInstruction(
-        const std::shared_ptr<Assembly::MovInstruction> &movInstruction);
+    static void
+    printAssyMovInstruction(const Assembly::MovInstruction &movInstruction);
 
     /**
      * Print an assembly move-with-sign-extend instruction to stdout.
@@ -181,31 +178,31 @@ class PrettyPrinters {
      * print.
      */
     static void printAssyMovsxInstruction(
-        const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction);
+        const Assembly::MovsxInstruction &movsxInstruction);
 
     /**
      * Print an assembly return instruction to stdout.
      *
      * @param retInstruction The assembly return instruction to print.
      */
-    static void printAssyRetInstruction(
-        const std::shared_ptr<Assembly::RetInstruction> &retInstruction);
+    static void
+    printAssyRetInstruction(const Assembly::RetInstruction &retInstruction);
 
     /**
      * Print an assembly push instruction to stdout.
      *
      * @param pushInstruction The assembly push instruction to print.
      */
-    static void printAssyPushInstruction(
-        const std::shared_ptr<Assembly::PushInstruction> &pushInstruction);
+    static void
+    printAssyPushInstruction(const Assembly::PushInstruction &pushInstruction);
 
     /**
      * Print an assembly call instruction to stdout.
      *
      * @param callInstruction The assembly call instruction to print.
      */
-    static void printAssyCallInstruction(
-        const std::shared_ptr<Assembly::CallInstruction> &callInstruction);
+    static void
+    printAssyCallInstruction(const Assembly::CallInstruction &callInstruction);
 
     /**
      * Print an assembly unary instruction to stdout.
@@ -213,7 +210,7 @@ class PrettyPrinters {
      * @param unaryInstruction The assembly unary instruction to print.
      */
     static void printAssyUnaryInstruction(
-        const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction);
+        const Assembly::UnaryInstruction &unaryInstruction);
 
     /**
      * Print an assembly binary instruction to stdout.
@@ -221,15 +218,15 @@ class PrettyPrinters {
      * @param binaryInstruction The assembly binary instruction to print.
      */
     static void printAssyBinaryInstruction(
-        const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction);
+        const Assembly::BinaryInstruction &binaryInstruction);
 
     /**
      * Print an assembly compare instruction to stdout.
      *
      * @param cmpInstruction The assembly compare instruction to print.
      */
-    static void printAssyCmpInstruction(
-        const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction);
+    static void
+    printAssyCmpInstruction(const Assembly::CmpInstruction &cmpInstruction);
 
     /**
      * Print an assembly signed-integer-division instruction to stdout.
@@ -237,8 +234,8 @@ class PrettyPrinters {
      * @param idivInstruction The assembly signed-integer-division instruction
      * to print.
      */
-    static void printAssyIdivInstruction(
-        const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction);
+    static void
+    printAssyIdivInstruction(const Assembly::IdivInstruction &idivInstruction);
 
     /**
      * Print an assembly covert-doubleword-to-quadword instruction to stdout.
@@ -246,16 +243,16 @@ class PrettyPrinters {
      * @param cdqInstruction The assembly covert-doubleword-to-quadword
      * instruction to print.
      */
-    static void printAssyCdqInstruction(
-        const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction);
+    static void
+    printAssyCdqInstruction(const Assembly::CdqInstruction &cdqInstruction);
 
     /**
      * Print an assembly jump instruction to stdout.
      *
      * @param jmpInstruction The assembly jump instruction to print.
      */
-    static void printAssyJmpInstruction(
-        const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction);
+    static void
+    printAssyJmpInstruction(const Assembly::JmpInstruction &jmpInstruction);
 
     /**
      * Print an assembly conditional-jump instruction to stdout.
@@ -264,7 +261,7 @@ class PrettyPrinters {
      * print.
      */
     static void printAssyJmpCCInstruction(
-        const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction);
+        const Assembly::JmpCCInstruction &jmpCCInstruction);
 
     /**
      * Print an assembly set-on-condition instruction to stdout.
@@ -273,7 +270,7 @@ class PrettyPrinters {
      * print.
      */
     static void printAssySetCCInstruction(
-        const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction);
+        const Assembly::SetCCInstruction &setCCInstruction);
 
     /**
      * Print an assembly label instruction to stdout.
@@ -281,7 +278,7 @@ class PrettyPrinters {
      * @param labelInstruction The assembly label instruction to print.
      */
     static void printAssyLabelInstruction(
-        const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction);
+        const Assembly::LabelInstruction &labelInstruction);
 
     /**
      * Prepend an underscore to the identifier if the underlying OS is macOS.

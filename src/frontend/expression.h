@@ -230,7 +230,7 @@ class UnaryExpression : public Factor {
      * @param expr The expression being operated on.
      */
     explicit UnaryExpression(std::unique_ptr<UnaryOperator> op,
-                             std::unique_ptr<Factor> expr);
+                             std::unique_ptr<Expression> expr);
 
     /**
      * Constructor for the unary expression class with operator as an object and
@@ -241,14 +241,14 @@ class UnaryExpression : public Factor {
      * @param expType The type of the expression.
      */
     explicit UnaryExpression(std::unique_ptr<UnaryOperator> op,
-                             std::unique_ptr<Factor> expr,
+                             std::unique_ptr<Expression> expr,
                              std::unique_ptr<Type> expType);
 
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] UnaryOperator *getOperator() const;
 
-    [[nodiscard]] Factor *getExpression() const;
+    [[nodiscard]] Expression *getExpression() const;
 
     [[nodiscard]] Type *getExpType() const override;
 
@@ -263,7 +263,7 @@ class UnaryExpression : public Factor {
     /**
      * The expression being operated on.
      */
-    std::unique_ptr<Factor> expr;
+    std::unique_ptr<Expression> expr;
 
     /**
      * The type of the expression.

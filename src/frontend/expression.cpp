@@ -100,9 +100,7 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
     if (!expr) {
         throw std::logic_error("Null expression in unary expression");
     }
-    // Release the `unique_ptr` and re-wrap as `Factor` `unique_ptr`.
-    // This relies on `expr` actually being a `Factor` subtype.
-    this->expr.reset(static_cast<Factor *>(expr.release()));
+    this->expr = std::move(expr);
 }
 
 UnaryExpression::UnaryExpression(std::string_view opInStr,
@@ -125,17 +123,15 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
     if (!expr) {
         throw std::logic_error("Null expression in unary expression");
     }
-    // Release the `unique_ptr` and re-wrap as `Factor` `unique_ptr`.
-    // This relies on `expr` actually being a `Factor` subtype.
-    this->expr.reset(static_cast<Factor *>(expr.release()));
+    this->expr = std::move(expr);
 }
 
 UnaryExpression::UnaryExpression(std::unique_ptr<UnaryOperator> op,
-                                 std::unique_ptr<Factor> expr)
+                                 std::unique_ptr<Expression> expr)
     : op(std::move(op)), expr(std::move(expr)) {}
 
 UnaryExpression::UnaryExpression(std::unique_ptr<UnaryOperator> op,
-                                 std::unique_ptr<Factor> expr,
+                                 std::unique_ptr<Expression> expr,
                                  std::unique_ptr<Type> expType)
     : op(std::move(op)), expr(std::move(expr)), expType(std::move(expType)) {}
 
@@ -143,7 +139,7 @@ void UnaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 UnaryOperator *UnaryExpression::getOperator() const { return op.get(); }
 
-Factor *UnaryExpression::getExpression() const { return expr.get(); }
+Expression *UnaryExpression::getExpression() const { return expr.get(); }
 
 Type *UnaryExpression::getExpType() const { return expType.get(); }
 

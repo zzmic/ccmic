@@ -16,6 +16,7 @@
 #include <filesystem>
 #include <fstream>
 #include <iostream>
+#include <memory>
 #include <sstream>
 #include <string.h>
 #include <string_view>
@@ -42,7 +43,7 @@ class PipelineStagesExecutors {
      * @param tokens The list of tokens to parse.
      * @return The AST program generated from parsing.
      */
-    [[nodiscard]] static std::shared_ptr<AST::Program>
+    [[nodiscard]] static std::unique_ptr<AST::Program>
     parserExecutor(const std::vector<Token> &tokens);
 
     /**
@@ -53,7 +54,7 @@ class PipelineStagesExecutors {
      * @return An integer counter for variable resolution.
      */
     [[nodiscard]] static int
-    semanticAnalysisExecutor(const std::shared_ptr<AST::Program> &astProgram,
+    semanticAnalysisExecutor(AST::Program &astProgram,
                              AST::FrontendSymbolTable &frontendSymbolTable);
 
     /**
@@ -69,7 +70,7 @@ class PipelineStagesExecutors {
     [[nodiscard]] static std::pair<
         std::unique_ptr<IR::Program>,
         std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
-    irGeneratorExecutor(const std::shared_ptr<AST::Program> &astProgram,
+    irGeneratorExecutor(const AST::Program &astProgram,
                         int variableResolutionCounter,
                         AST::FrontendSymbolTable &frontendSymbolTable);
 
@@ -98,7 +99,7 @@ class PipelineStagesExecutors {
      * @param frontendSymbolTable The frontend symbol table.
      * @return The assembly program generated from the IR.
      */
-    [[nodiscard]] static std::shared_ptr<Assembly::Program>
+    [[nodiscard]] static std::unique_ptr<Assembly::Program>
     codegenExecutor(const IR::Program &irProgram,
                     const std::vector<std::unique_ptr<IR::StaticVariable>>
                         &irStaticVariables,
@@ -110,9 +111,8 @@ class PipelineStagesExecutors {
      * @param assemblyProgram The assembly program to emit.
      * @param assemblyFile The output assembly file.
      */
-    static void codeEmissionExecutor(
-        const std::shared_ptr<Assembly::Program> &assemblyProgram,
-        std::string_view assemblyFile);
+    static void codeEmissionExecutor(const Assembly::Program &assemblyProgram,
+                                     std::string_view assemblyFile);
 
   private:
     /**
@@ -122,7 +122,7 @@ class PipelineStagesExecutors {
      * @param assemblyFileStream The output assembly file stream.
      */
     static void emitAssyFunctionDefinition(
-        const std::shared_ptr<Assembly::FunctionDefinition> &functionDefinition,
+        const Assembly::FunctionDefinition &functionDefinition,
         std::ofstream &assemblyFileStream);
 
     /**
@@ -131,9 +131,9 @@ class PipelineStagesExecutors {
      * @param staticVariable The static variable to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyStaticVariable(
-        const std::shared_ptr<Assembly::StaticVariable> &staticVariable,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyStaticVariable(const Assembly::StaticVariable &staticVariable,
+                           std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for an instruction.
@@ -141,9 +141,8 @@ class PipelineStagesExecutors {
      * @param instruction The instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyInstruction(
-        const std::shared_ptr<Assembly::Instruction> &instruction,
-        std::ofstream &assemblyFileStream);
+    static void emitAssyInstruction(const Assembly::Instruction &instruction,
+                                    std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a move instruction.
@@ -151,9 +150,9 @@ class PipelineStagesExecutors {
      * @param movInstruction The move instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyMovInstruction(
-        const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyMovInstruction(const Assembly::MovInstruction &movInstruction,
+                           std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a move-with-sign-extend instruction.
@@ -161,9 +160,9 @@ class PipelineStagesExecutors {
      * @param movsxInstruction The move-with-sign-extend instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyMovsxInstruction(
-        const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyMovsxInstruction(const Assembly::MovsxInstruction &movsxInstruction,
+                             std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a return instruction.
@@ -178,9 +177,9 @@ class PipelineStagesExecutors {
      * @param pushInstruction The push instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyPushInstruction(
-        const std::shared_ptr<Assembly::PushInstruction> &pushInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyPushInstruction(const Assembly::PushInstruction &pushInstruction,
+                            std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a call instruction.
@@ -188,9 +187,9 @@ class PipelineStagesExecutors {
      * @param callInstruction The call instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyCallInstruction(
-        const std::shared_ptr<Assembly::CallInstruction> &callInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyCallInstruction(const Assembly::CallInstruction &callInstruction,
+                            std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a unary instruction.
@@ -198,9 +197,9 @@ class PipelineStagesExecutors {
      * @param unaryInstruction The unary instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyUnaryInstruction(
-        const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyUnaryInstruction(const Assembly::UnaryInstruction &unaryInstruction,
+                             std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a binary instruction.
@@ -209,7 +208,7 @@ class PipelineStagesExecutors {
      * @param assemblyFileStream The output assembly file stream.
      */
     static void emitAssyBinaryInstruction(
-        const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction,
+        const Assembly::BinaryInstruction &binaryInstruction,
         std::ofstream &assemblyFileStream);
 
     /**
@@ -218,9 +217,9 @@ class PipelineStagesExecutors {
      * @param cmpInstruction The compare instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyCmpInstruction(
-        const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyCmpInstruction(const Assembly::CmpInstruction &cmpInstruction,
+                           std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a signed-integer-division instruction.
@@ -228,9 +227,9 @@ class PipelineStagesExecutors {
      * @param idivInstruction The signed-integer-division instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyIdivInstruction(
-        const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyIdivInstruction(const Assembly::IdivInstruction &idivInstruction,
+                            std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a covert-doubleword-to-quadword instruction.
@@ -239,9 +238,9 @@ class PipelineStagesExecutors {
      * emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyCdqInstruction(
-        const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyCdqInstruction(const Assembly::CdqInstruction &cdqInstruction,
+                           std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a jump instruction.
@@ -249,9 +248,9 @@ class PipelineStagesExecutors {
      * @param jmpInstruction The jump instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyJmpInstruction(
-        const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyJmpInstruction(const Assembly::JmpInstruction &jmpInstruction,
+                           std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a conditional jump instruction.
@@ -259,9 +258,9 @@ class PipelineStagesExecutors {
      * @param jmpCCInstruction The conditional jump instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyJmpCCInstruction(
-        const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyJmpCCInstruction(const Assembly::JmpCCInstruction &jmpCCInstruction,
+                             std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a set-byte-on-condition instruction.
@@ -269,9 +268,9 @@ class PipelineStagesExecutors {
      * @param setCCInstruction The set-byte-on-condition instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssySetCCInstruction(
-        const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssySetCCInstruction(const Assembly::SetCCInstruction &setCCInstruction,
+                             std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a label instruction.
@@ -279,9 +278,9 @@ class PipelineStagesExecutors {
      * @param labelInstruction The label instruction to emit.
      * @param assemblyFileStream The output assembly file stream.
      */
-    static void emitAssyLabelInstruction(
-        const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction,
-        std::ofstream &assemblyFileStream);
+    static void
+    emitAssyLabelInstruction(const Assembly::LabelInstruction &labelInstruction,
+                             std::ofstream &assemblyFileStream);
 
     /**
      * Prepend an underscore to the identifier if the underlying OS is macOS.

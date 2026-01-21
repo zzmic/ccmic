@@ -126,24 +126,6 @@ cloneBinaryOperator(const AST::BinaryOperator *op) {
 }
 
 /**
- * Convert an expression to a factor.
- *
- * @param expr The expression to convert.
- * @return The converted factor.
- */
-std::unique_ptr<AST::Factor> toFactor(std::unique_ptr<AST::Expression> expr) {
-    if (!expr) {
-        return nullptr;
-    }
-    auto *raw = dynamic_cast<AST::Factor *>(expr.get());
-    if (!raw) {
-        throw std::logic_error("Expression is not a factor");
-    }
-    auto *released = expr.release();
-    return std::unique_ptr<AST::Factor>(static_cast<AST::Factor *>(released));
-}
-
-/**
  * Clone an expression.
  *
  * @param expression The expression to clone.
@@ -187,8 +169,7 @@ cloneExpression(const AST::Expression *expression) {
     }
     if (auto unaryExpression =
             dynamic_cast<const AST::UnaryExpression *>(expression)) {
-        auto operand =
-            toFactor(cloneExpression(unaryExpression->getExpression()));
+        auto operand = cloneExpression(unaryExpression->getExpression());
         auto cloned = std::make_unique<AST::UnaryExpression>(
             cloneUnaryOperator(unaryExpression->getOperator()),
             std::move(operand), cloneType(unaryExpression->getExpType()));

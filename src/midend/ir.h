@@ -136,7 +136,7 @@ class ConstantValue : public Value {
      */
     explicit ConstantValue(std::unique_ptr<AST::Constant> astConstant)
         : astConstant(std::move(astConstant)) {
-        if (!astConstant) {
+        if (!this->astConstant) {
             throw std::logic_error(
                 "Creating ConstantValue with null astConstant");
         }
@@ -223,7 +223,7 @@ class ReturnInstruction : public Instruction {
      */
     explicit ReturnInstruction(std::unique_ptr<Value> returnValue)
         : returnValue(std::move(returnValue)) {
-        if (!returnValue) {
+        if (!this->returnValue) {
             throw std::logic_error(
                 "Creating ReturnInstruction with null returnValue");
         }
@@ -262,11 +262,11 @@ class SignExtendInstruction : public Instruction {
     SignExtendInstruction(std::unique_ptr<Value> src,
                           std::unique_ptr<Value> dst)
         : src(std::move(src)), dst(std::move(dst)) {
-        if (!src) {
+        if (!this->src) {
             throw std::logic_error("Creating SignExtendInstruction with null "
                                    "src");
         }
-        if (!dst) {
+        if (!this->dst) {
             throw std::logic_error("Creating SignExtendInstruction with null "
                                    "dst");
         }
@@ -312,11 +312,11 @@ class TruncateInstruction : public Instruction {
      */
     TruncateInstruction(std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
         : src(std::move(src)), dst(std::move(dst)) {
-        if (!src) {
+        if (!this->src) {
             throw std::logic_error(
                 "Creating TruncateInstruction with null src");
         }
-        if (!dst) {
+        if (!this->dst) {
             throw std::logic_error(
                 "Creating TruncateInstruction with null dst");
         }
@@ -369,14 +369,14 @@ class UnaryInstruction : public Instruction {
                      std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
         : unaryOperator(std::move(unaryOperator)), src(std::move(src)),
           dst(std::move(dst)) {
-        if (!unaryOperator) {
+        if (!this->unaryOperator) {
             throw std::logic_error(
                 "Creating UnaryInstruction with null unaryOperator");
         }
-        if (!src) {
+        if (!this->src) {
             throw std::logic_error("Creating UnaryInstruction with null src");
         }
-        if (!dst) {
+        if (!this->dst) {
             throw std::logic_error("Creating UnaryInstruction with null dst");
         }
     }
@@ -443,17 +443,17 @@ class BinaryInstruction : public Instruction {
                       std::unique_ptr<Value> dst)
         : binaryOperator(std::move(binaryOperator)), src1(std::move(src1)),
           src2(std::move(src2)), dst(std::move(dst)) {
-        if (!binaryOperator) {
+        if (!this->binaryOperator) {
             throw std::logic_error(
                 "Creating BinaryInstruction with null binaryOperator");
         }
-        if (!src1) {
+        if (!this->src1) {
             throw std::logic_error("Creating BinaryInstruction with null src1");
         }
-        if (!src2) {
+        if (!this->src2) {
             throw std::logic_error("Creating BinaryInstruction with null src2");
         }
-        if (!dst) {
+        if (!this->dst) {
             throw std::logic_error("Creating BinaryInstruction with null dst");
         }
     }
@@ -519,10 +519,10 @@ class CopyInstruction : public Instruction {
      */
     CopyInstruction(std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
         : src(std::move(src)), dst(std::move(dst)) {
-        if (!src) {
+        if (!this->src) {
             throw std::logic_error("Creating CopyInstruction with null src");
         }
-        if (!dst) {
+        if (!this->dst) {
             throw std::logic_error("Creating CopyInstruction with null dst");
         }
     }
@@ -595,7 +595,7 @@ class JumpIfZeroInstruction : public Instruction {
     JumpIfZeroInstruction(std::unique_ptr<Value> condition,
                           std::string_view target)
         : condition(std::move(condition)), target(target) {
-        if (!condition) {
+        if (!this->condition) {
             throw std::logic_error(
                 "Creating JumpIfZeroInstruction with null condition");
         }
@@ -642,7 +642,7 @@ class JumpIfNotZeroInstruction : public Instruction {
     JumpIfNotZeroInstruction(std::unique_ptr<Value> condition,
                              std::string_view target)
         : condition(std::move(condition)), target(target) {
-        if (!condition) {
+        if (!this->condition) {
             throw std::logic_error(
                 "Creating JumpIfNotZeroInstruction with null condition");
         }
@@ -720,11 +720,11 @@ class FunctionCallInstruction : public Instruction {
         std::unique_ptr<Value> dst)
         : functionIdentifier(functionIdentifier), args(std::move(args)),
           dst(std::move(dst)) {
-        if (!args) {
+        if (!this->args) {
             throw std::logic_error(
                 "Creating FunctionCallInstruction with null args");
         }
-        if (!dst) {
+        if (!this->dst) {
             throw std::logic_error(
                 "Creating FunctionCallInstruction with null dst");
         }
@@ -813,11 +813,11 @@ class FunctionDefinition : public TopLevel {
         : functionIdentifier(functionIdentifier), global(global),
           parameters(std::move(parameters)),
           functionBody(std::move(functionBody)) {
-        if (!parameters) {
+        if (!this->parameters) {
             throw std::logic_error(
                 "Creating FunctionDefinition with null parameters");
         }
-        if (!functionBody) {
+        if (!this->functionBody) {
             throw std::logic_error(
                 "Creating FunctionDefinition with null functionBody");
         }
@@ -888,10 +888,10 @@ class StaticVariable : public TopLevel {
                    std::unique_ptr<AST::StaticInit> staticInit)
         : identifier(identifier), global(global), type(std::move(type)),
           staticInit(std::move(staticInit)) {
-        if (!type) {
+        if (!this->type) {
             throw std::logic_error("Creating StaticVariable with null type");
         }
-        if (!staticInit) {
+        if (!this->staticInit) {
             throw std::logic_error(
                 "Creating StaticVariable with null staticInit");
         }
@@ -930,7 +930,7 @@ class Program {
     explicit Program(
         std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels)
         : topLevels(std::move(topLevels)) {
-        if (!topLevels) {
+        if (!this->topLevels) {
             throw std::logic_error("Creating Program with null topLevels");
         }
     }

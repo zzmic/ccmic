@@ -5,11 +5,11 @@ int Operand::getImmediate() const {
     throw std::logic_error("Operand is not an immediate");
 }
 
-std::shared_ptr<Register> Operand::getRegister() const {
+Register *Operand::getRegister() const {
     throw std::logic_error("Operand is not a register");
 }
 
-std::shared_ptr<ReservedRegister> Operand::getReservedRegister() const {
+ReservedRegister *Operand::getReservedRegister() const {
     throw std::logic_error("Operand is not a reserved register");
 }
 
@@ -33,42 +33,43 @@ int ImmediateOperand::getImmediate() const { return static_cast<int>(imm); }
 
 long ImmediateOperand::getImmediateLong() const { return imm; }
 
-RegisterOperand::RegisterOperand(std::shared_ptr<Register> reg) : reg(reg) {
-    if (!reg) {
+RegisterOperand::RegisterOperand(std::unique_ptr<Register> reg)
+    : reg(std::move(reg)) {
+    if (!this->reg) {
         throw std::logic_error("Creating RegisterOperand with null reg");
     }
 }
 
 RegisterOperand::RegisterOperand(std::string regInStr) {
     if (regInStr == "AX") {
-        reg = std::make_shared<AX>();
+        reg = std::make_unique<AX>();
     }
     else if (regInStr == "CX") {
-        reg = std::make_shared<CX>();
+        reg = std::make_unique<CX>();
     }
     else if (regInStr == "DX") {
-        reg = std::make_shared<DX>();
+        reg = std::make_unique<DX>();
     }
     else if (regInStr == "DI") {
-        reg = std::make_shared<DI>();
+        reg = std::make_unique<DI>();
     }
     else if (regInStr == "SI") {
-        reg = std::make_shared<SI>();
+        reg = std::make_unique<SI>();
     }
     else if (regInStr == "R8") {
-        reg = std::make_shared<R8>();
+        reg = std::make_unique<R8>();
     }
     else if (regInStr == "R9") {
-        reg = std::make_shared<R9>();
+        reg = std::make_unique<R9>();
     }
     else if (regInStr == "R10") {
-        reg = std::make_shared<R10>();
+        reg = std::make_unique<R10>();
     }
     else if (regInStr == "R11") {
-        reg = std::make_shared<R11>();
+        reg = std::make_unique<R11>();
     }
     else if (regInStr == "RSP") {
-        reg = std::make_shared<SP>();
+        reg = std::make_unique<SP>();
     }
     else {
         throw std::logic_error("Unsupported register while creating "
@@ -77,7 +78,7 @@ RegisterOperand::RegisterOperand(std::string regInStr) {
     }
 }
 
-std::shared_ptr<Register> RegisterOperand::getRegister() const { return reg; }
+Register *RegisterOperand::getRegister() const { return reg.get(); }
 
 std::string RegisterOperand::getRegisterInBytesInStr(int size) const {
     auto sizeIt = regMappings.find(size);
@@ -105,27 +106,24 @@ std::string PseudoRegisterOperand::getPseudoRegister() const {
 }
 
 StackOperand::StackOperand(int offset,
-                           std::shared_ptr<ReservedRegister> reservedReg)
-    : offset(offset), reservedReg(reservedReg) {
-    if (!reservedReg) {
+                           std::unique_ptr<ReservedRegister> reservedReg)
+    : offset(offset), reservedReg(std::move(reservedReg)) {
+    if (!this->reservedReg) {
         throw std::logic_error("Creating StackOperand with null reservedReg");
     }
 }
 
 int StackOperand::getOffset() const { return offset; }
 
-std::shared_ptr<ReservedRegister> StackOperand::getReservedRegister() const {
-    return reservedReg;
+ReservedRegister *StackOperand::getReservedRegister() const {
+    return reservedReg.get();
 }
 
 std::string StackOperand::getReservedRegisterInStr() const {
-    if (auto sp = std::dynamic_pointer_cast<SP>(reservedReg)) {
+    if (dynamic_cast<SP *>(reservedReg.get())) {
         return "%rsp";
     }
-    else if (auto rsp = std::dynamic_pointer_cast<SP>(reservedReg)) {
-        return "%rsp";
-    }
-    else if (auto bp = std::dynamic_pointer_cast<BP>(reservedReg)) {
+    else if (dynamic_cast<BP *>(reservedReg.get())) {
         return "%rbp";
     }
     else {
@@ -140,396 +138,403 @@ DataOperand::DataOperand(std::string identifier) : identifier(identifier) {}
 
 std::string DataOperand::getIdentifier() const { return identifier; }
 
-MovInstruction::MovInstruction(std::shared_ptr<AssemblyType> type,
-                               std::shared_ptr<Operand> src,
-                               std::shared_ptr<Operand> dst)
-    : type(type), src(src), dst(dst) {
-    if (!type) {
+MovInstruction::MovInstruction(std::unique_ptr<AssemblyType> type,
+                               std::unique_ptr<Operand> src,
+                               std::unique_ptr<Operand> dst)
+    : type(std::move(type)), src(std::move(src)), dst(std::move(dst)) {
+    if (!this->type) {
         throw std::logic_error("Creating MovInstruction with null type");
     }
-    if (!src) {
+    if (!this->src) {
         throw std::logic_error("Creating MovInstruction with null src");
     }
-    if (!dst) {
+    if (!this->dst) {
         throw std::logic_error("Creating MovInstruction with null dst");
     }
 }
 
-std::shared_ptr<AssemblyType> MovInstruction::getType() { return type; }
+const AssemblyType *MovInstruction::getType() const { return type.get(); }
 
-std::shared_ptr<Operand> MovInstruction::getSrc() { return src; }
+const Operand *MovInstruction::getSrc() const { return src.get(); }
 
-std::shared_ptr<Operand> MovInstruction::getDst() { return dst; }
+const Operand *MovInstruction::getDst() const { return dst.get(); }
 
-void MovInstruction::setType(std::shared_ptr<AssemblyType> newType) {
+void MovInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
         throw std::logic_error("Setting null type in MovInstruction");
     }
-    this->type = newType;
+    this->type = std::move(newType);
 }
 
-void MovInstruction::setSrc(std::shared_ptr<Operand> newSrc) {
+void MovInstruction::setSrc(std::unique_ptr<Operand> newSrc) {
     if (!newSrc) {
         throw std::logic_error("Setting null source operand in MovInstruction");
     }
-    this->src = newSrc;
+    this->src = std::move(newSrc);
 }
 
-void MovInstruction::setDst(std::shared_ptr<Operand> newDst) {
+void MovInstruction::setDst(std::unique_ptr<Operand> newDst) {
     if (!newDst) {
         throw std::logic_error(
             "Setting null destination operand in MovInstruction");
     }
-    this->dst = newDst;
+    this->dst = std::move(newDst);
 }
 
-MovsxInstruction::MovsxInstruction(std::shared_ptr<Operand> src,
-                                   std::shared_ptr<Operand> dst)
-    : src(src), dst(dst) {
-    if (!src) {
+MovsxInstruction::MovsxInstruction(std::unique_ptr<Operand> src,
+                                   std::unique_ptr<Operand> dst)
+    : src(std::move(src)), dst(std::move(dst)) {
+    if (!this->src) {
         throw std::logic_error("Creating MovsxInstruction with null src");
     }
-    if (!dst) {
+    if (!this->dst) {
         throw std::logic_error("Creating MovsxInstruction with null dst");
     }
 }
 
-std::shared_ptr<Operand> MovsxInstruction::getSrc() { return src; }
+const Operand *MovsxInstruction::getSrc() const { return src.get(); }
 
-std::shared_ptr<Operand> MovsxInstruction::getDst() { return dst; }
+const Operand *MovsxInstruction::getDst() const { return dst.get(); }
 
-void MovsxInstruction::setSrc(std::shared_ptr<Operand> newSrc) {
+void MovsxInstruction::setSrc(std::unique_ptr<Operand> newSrc) {
     if (!newSrc) {
         throw std::logic_error(
             "Setting null source operand in MovsxInstruction");
     }
-    this->src = newSrc;
+    this->src = std::move(newSrc);
 }
 
-void MovsxInstruction::setDst(std::shared_ptr<Operand> newDst) {
+void MovsxInstruction::setDst(std::unique_ptr<Operand> newDst) {
     if (!newDst) {
         throw std::logic_error(
             "Setting null destination operand in MovsxInstruction");
     }
-    this->dst = newDst;
+    this->dst = std::move(newDst);
 }
 
-UnaryInstruction::UnaryInstruction(std::shared_ptr<UnaryOperator> unaryOperator,
-                                   std::shared_ptr<AssemblyType> type,
-                                   std::shared_ptr<Operand> operand)
-    : unaryOperator(unaryOperator), type(type), operand(operand) {
-    if (!unaryOperator) {
+UnaryInstruction::UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
+                                   std::unique_ptr<AssemblyType> type,
+                                   std::unique_ptr<Operand> operand)
+    : unaryOperator(std::move(unaryOperator)), type(std::move(type)),
+      operand(std::move(operand)) {
+    if (!this->unaryOperator) {
         throw std::logic_error(
             "Creating UnaryInstruction with null unaryOperator");
     }
-    if (!type) {
+    if (!this->type) {
         throw std::logic_error("Creating UnaryInstruction with null type");
     }
-    if (!operand) {
+    if (!this->operand) {
         throw std::logic_error("Creating UnaryInstruction with null operand");
     }
 }
 
-std::shared_ptr<UnaryOperator> UnaryInstruction::getUnaryOperator() {
-    return unaryOperator;
+const UnaryOperator *UnaryInstruction::getUnaryOperator() const {
+    return unaryOperator.get();
 }
 
-std::shared_ptr<AssemblyType> UnaryInstruction::getType() { return type; }
+const AssemblyType *UnaryInstruction::getType() const { return type.get(); }
 
-std::shared_ptr<Operand> UnaryInstruction::getOperand() { return operand; }
+const Operand *UnaryInstruction::getOperand() const { return operand.get(); }
 
 void UnaryInstruction::setUnaryOperator(
-    std::shared_ptr<UnaryOperator> newUnaryOperator) {
+    std::unique_ptr<UnaryOperator> newUnaryOperator) {
     if (!newUnaryOperator) {
         throw std::logic_error(
             "Setting null unary operator in UnaryInstruction");
     }
-    this->unaryOperator = newUnaryOperator;
+    this->unaryOperator = std::move(newUnaryOperator);
 }
 
-void UnaryInstruction::setType(std::shared_ptr<AssemblyType> newType) {
+void UnaryInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
         throw std::logic_error("Setting null type in UnaryInstruction");
     }
-    this->type = newType;
+    this->type = std::move(newType);
 }
 
-void UnaryInstruction::setOperand(std::shared_ptr<Operand> newOperand) {
+void UnaryInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
         throw std::logic_error("Setting null operand in UnaryInstruction");
     }
-    this->operand = newOperand;
+    this->operand = std::move(newOperand);
 }
 
 BinaryInstruction::BinaryInstruction(
-    std::shared_ptr<BinaryOperator> binaryOperator,
-    std::shared_ptr<AssemblyType> type, std::shared_ptr<Operand> operand1,
-    std::shared_ptr<Operand> operand2)
-    : binaryOperator(binaryOperator), type(type), operand1(operand1),
-      operand2(operand2) {
-    if (!binaryOperator) {
+    std::unique_ptr<BinaryOperator> binaryOperator,
+    std::unique_ptr<AssemblyType> type, std::unique_ptr<Operand> operand1,
+    std::unique_ptr<Operand> operand2)
+    : binaryOperator(std::move(binaryOperator)), type(std::move(type)),
+      operand1(std::move(operand1)), operand2(std::move(operand2)) {
+    if (!this->binaryOperator) {
         throw std::logic_error(
             "Creating BinaryInstruction with null binaryOperator");
     }
-    if (!type) {
+    if (!this->type) {
         throw std::logic_error("Creating BinaryInstruction with null type");
     }
-    if (!operand1) {
+    if (!this->operand1) {
         throw std::logic_error("Creating BinaryInstruction with null operand1");
     }
-    if (!operand2) {
+    if (!this->operand2) {
         throw std::logic_error("Creating BinaryInstruction with null operand2");
     }
 }
 
-std::shared_ptr<BinaryOperator> BinaryInstruction::getBinaryOperator() {
-    return binaryOperator;
+const BinaryOperator *BinaryInstruction::getBinaryOperator() const {
+    return binaryOperator.get();
 }
 
-std::shared_ptr<AssemblyType> BinaryInstruction::getType() { return type; }
+const AssemblyType *BinaryInstruction::getType() const { return type.get(); }
 
-std::shared_ptr<Operand> BinaryInstruction::getOperand1() { return operand1; }
+const Operand *BinaryInstruction::getOperand1() const { return operand1.get(); }
 
-std::shared_ptr<Operand> BinaryInstruction::getOperand2() { return operand2; }
+const Operand *BinaryInstruction::getOperand2() const { return operand2.get(); }
 
 void BinaryInstruction::setBinaryOperator(
-    std::shared_ptr<BinaryOperator> newBinaryOperator) {
+    std::unique_ptr<BinaryOperator> newBinaryOperator) {
     if (!newBinaryOperator) {
         throw std::logic_error(
             "Setting null binary operator in BinaryInstruction");
     }
-    this->binaryOperator = newBinaryOperator;
+    this->binaryOperator = std::move(newBinaryOperator);
 }
 
-void BinaryInstruction::setType(std::shared_ptr<AssemblyType> newType) {
+void BinaryInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
         throw std::logic_error("Setting null type in BinaryInstruction");
     }
-    this->type = newType;
+    this->type = std::move(newType);
 }
 
-void BinaryInstruction::setOperand1(std::shared_ptr<Operand> newOperand1) {
+void BinaryInstruction::setOperand1(std::unique_ptr<Operand> newOperand1) {
     if (!newOperand1) {
         throw std::logic_error("Setting null operand1 in BinaryInstruction");
     }
-    this->operand1 = newOperand1;
+    this->operand1 = std::move(newOperand1);
 }
 
-void BinaryInstruction::setOperand2(std::shared_ptr<Operand> newOperand2) {
+void BinaryInstruction::setOperand2(std::unique_ptr<Operand> newOperand2) {
     if (!newOperand2) {
         throw std::logic_error("Setting null operand2 in BinaryInstruction");
     }
-    this->operand2 = newOperand2;
+    this->operand2 = std::move(newOperand2);
 }
 
-CmpInstruction::CmpInstruction(std::shared_ptr<AssemblyType> type,
-                               std::shared_ptr<Operand> operand1,
-                               std::shared_ptr<Operand> operand2)
-    : type(type), operand1(operand1), operand2(operand2) {
-    if (!type) {
+CmpInstruction::CmpInstruction(std::unique_ptr<AssemblyType> type,
+                               std::unique_ptr<Operand> operand1,
+                               std::unique_ptr<Operand> operand2)
+    : type(std::move(type)), operand1(std::move(operand1)),
+      operand2(std::move(operand2)) {
+    if (!this->type) {
         throw std::logic_error("Creating CmpInstruction with null type");
     }
-    if (!operand1) {
+    if (!this->operand1) {
         throw std::logic_error("Creating CmpInstruction with null operand1");
     }
-    if (!operand2) {
+    if (!this->operand2) {
         throw std::logic_error("Creating CmpInstruction with null operand2");
     }
 }
 
-std::shared_ptr<AssemblyType> CmpInstruction::getType() { return type; }
+const AssemblyType *CmpInstruction::getType() const { return type.get(); }
 
-std::shared_ptr<Operand> CmpInstruction::getOperand1() { return operand1; }
+const Operand *CmpInstruction::getOperand1() const { return operand1.get(); }
 
-std::shared_ptr<Operand> CmpInstruction::getOperand2() { return operand2; }
+const Operand *CmpInstruction::getOperand2() const { return operand2.get(); }
 
-void CmpInstruction::setType(std::shared_ptr<AssemblyType> newType) {
+void CmpInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
         throw std::logic_error("Setting null type in CmpInstruction");
     }
-    this->type = newType;
+    this->type = std::move(newType);
 }
 
-void CmpInstruction::setOperand1(std::shared_ptr<Operand> newOperand1) {
+void CmpInstruction::setOperand1(std::unique_ptr<Operand> newOperand1) {
     if (!newOperand1) {
         throw std::logic_error("Setting null operand1 in CmpInstruction");
     }
-    this->operand1 = newOperand1;
+    this->operand1 = std::move(newOperand1);
 }
 
-void CmpInstruction::setOperand2(std::shared_ptr<Operand> newOperand2) {
+void CmpInstruction::setOperand2(std::unique_ptr<Operand> newOperand2) {
     if (!newOperand2) {
         throw std::logic_error("Setting null operand2 in CmpInstruction");
     }
-    this->operand2 = newOperand2;
+    this->operand2 = std::move(newOperand2);
 }
 
-IdivInstruction::IdivInstruction(std::shared_ptr<AssemblyType> type,
-                                 std::shared_ptr<Operand> operand)
-    : type(type), operand(operand) {
-    if (!type) {
+IdivInstruction::IdivInstruction(std::unique_ptr<AssemblyType> type,
+                                 std::unique_ptr<Operand> operand)
+    : type(std::move(type)), operand(std::move(operand)) {
+    if (!this->type) {
         throw std::logic_error("Creating IdivInstruction with null type");
     }
-    if (!operand) {
+    if (!this->operand) {
         throw std::logic_error("Creating IdivInstruction with null operand");
     }
 }
 
-std::shared_ptr<AssemblyType> IdivInstruction::getType() { return type; }
+const AssemblyType *IdivInstruction::getType() const { return type.get(); }
 
-std::shared_ptr<Operand> IdivInstruction::getOperand() { return operand; }
+const Operand *IdivInstruction::getOperand() const { return operand.get(); }
 
-void IdivInstruction::setType(std::shared_ptr<AssemblyType> newType) {
+void IdivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
         throw std::logic_error("Setting null type in IdivInstruction");
     }
-    this->type = newType;
+    this->type = std::move(newType);
 }
 
-void IdivInstruction::setOperand(std::shared_ptr<Operand> newOperand) {
+void IdivInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
         throw std::logic_error("Setting null operand in IdivInstruction");
     }
-    this->operand = newOperand;
+    this->operand = std::move(newOperand);
 }
 
-CdqInstruction::CdqInstruction(std::shared_ptr<AssemblyType> type)
-    : type(type) {}
+CdqInstruction::CdqInstruction(std::unique_ptr<AssemblyType> type)
+    : type(std::move(type)) {}
 
-std::shared_ptr<AssemblyType> CdqInstruction::getType() { return type; }
+const AssemblyType *CdqInstruction::getType() const { return type.get(); }
 
-void CdqInstruction::setType(std::shared_ptr<AssemblyType> newType) {
+void CdqInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
         throw std::logic_error("Setting null type in CdqInstruction");
     }
-    this->type = newType;
+    this->type = std::move(newType);
 }
 
 JmpInstruction::JmpInstruction(std::string label) : label(label) {}
 
-std::string JmpInstruction::getLabel() { return label; }
+std::string JmpInstruction::getLabel() const { return label; }
 
 void JmpInstruction::setLabel(std::string newLabel) { this->label = newLabel; }
 
-JmpCCInstruction::JmpCCInstruction(std::shared_ptr<CondCode> condCode,
+JmpCCInstruction::JmpCCInstruction(std::unique_ptr<CondCode> condCode,
                                    std::string label)
-    : condCode(condCode), label(label) {
-    if (!condCode) {
+    : condCode(std::move(condCode)), label(label) {
+    if (!this->condCode) {
         throw std::logic_error("Creating JmpCCInstruction with null condCode");
     }
 }
 
-std::shared_ptr<CondCode> JmpCCInstruction::getCondCode() { return condCode; }
+const CondCode *JmpCCInstruction::getCondCode() const { return condCode.get(); }
 
-std::string JmpCCInstruction::getLabel() { return label; }
+std::string JmpCCInstruction::getLabel() const { return label; }
 
-void JmpCCInstruction::setCondCode(std::shared_ptr<CondCode> newCondCode) {
+void JmpCCInstruction::setCondCode(std::unique_ptr<CondCode> newCondCode) {
     if (!newCondCode) {
         throw std::logic_error(
             "Setting null condition code in JmpCCInstruction");
     }
-    this->condCode = newCondCode;
+    this->condCode = std::move(newCondCode);
 }
 
 void JmpCCInstruction::setLabel(std::string newLabel) {
     this->label = newLabel;
 }
 
-SetCCInstruction::SetCCInstruction(std::shared_ptr<CondCode> condCode,
-                                   std::shared_ptr<Operand> operand)
-    : condCode(condCode), operand(operand) {
-    if (!condCode) {
+SetCCInstruction::SetCCInstruction(std::unique_ptr<CondCode> condCode,
+                                   std::unique_ptr<Operand> operand)
+    : condCode(std::move(condCode)), operand(std::move(operand)) {
+    if (!this->condCode) {
         throw std::logic_error("Creating SetCCInstruction with null condCode");
     }
-    if (!operand) {
+    if (!this->operand) {
         throw std::logic_error("Creating SetCCInstruction with null operand");
     }
 }
 
-std::shared_ptr<CondCode> SetCCInstruction::getCondCode() { return condCode; }
+const CondCode *SetCCInstruction::getCondCode() const { return condCode.get(); }
 
-std::shared_ptr<Operand> SetCCInstruction::getOperand() { return operand; }
+const Operand *SetCCInstruction::getOperand() const { return operand.get(); }
 
-void SetCCInstruction::setCondCode(std::shared_ptr<CondCode> newCondCode) {
+void SetCCInstruction::setCondCode(std::unique_ptr<CondCode> newCondCode) {
     if (!newCondCode) {
         throw std::logic_error(
             "Setting null condition code in SetCCInstruction");
     }
-    this->condCode = newCondCode;
+    this->condCode = std::move(newCondCode);
 }
 
-void SetCCInstruction::setOperand(std::shared_ptr<Operand> newOperand) {
+void SetCCInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
         throw std::logic_error("Setting null operand in SetCCInstruction");
     }
-    this->operand = newOperand;
+    this->operand = std::move(newOperand);
 }
 
 LabelInstruction::LabelInstruction(std::string label) : label(label) {}
 
-std::string LabelInstruction::getLabel() { return label; }
+std::string LabelInstruction::getLabel() const { return label; }
 
 void LabelInstruction::setLabel(std::string newLabel) {
     this->label = newLabel;
 }
 
-PushInstruction::PushInstruction(std::shared_ptr<Operand> operand)
-    : operand(operand) {
-    if (!operand) {
+PushInstruction::PushInstruction(std::unique_ptr<Operand> operand)
+    : operand(std::move(operand)) {
+    if (!this->operand) {
         throw std::logic_error("Creating PushInstruction with null operand");
     }
 }
 
-std::shared_ptr<Operand> PushInstruction::getOperand() { return operand; }
+const Operand *PushInstruction::getOperand() const { return operand.get(); }
 
-void PushInstruction::setOperand(std::shared_ptr<Operand> newOperand) {
+void PushInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
         throw std::logic_error("Setting null operand in PushInstruction");
     }
-    this->operand = newOperand;
+    this->operand = std::move(newOperand);
 }
 
 CallInstruction::CallInstruction(std::string functionIdentifier)
     : functionIdentifier(functionIdentifier) {}
 
-std::string CallInstruction::getFunctionIdentifier() {
+std::string CallInstruction::getFunctionIdentifier() const {
     return functionIdentifier;
 }
 
 FunctionDefinition::FunctionDefinition(
     std::string functionIdentifier, bool global,
-    std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
+    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody,
     size_t stackSize)
     : functionIdentifier(functionIdentifier), global(global),
-      functionBody(functionBody), stackSize(stackSize) {
-    if (!functionBody) {
+      functionBody(std::move(functionBody)), stackSize(stackSize) {
+    if (!this->functionBody) {
         throw std::logic_error(
             "Creating FunctionDefinition with null functionBody");
     }
 }
 
-std::string FunctionDefinition::getFunctionIdentifier() {
+std::string FunctionDefinition::getFunctionIdentifier() const {
     return functionIdentifier;
 }
 
-bool FunctionDefinition::isGlobal() { return global; }
+bool FunctionDefinition::isGlobal() const { return global; }
 
-std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
+const std::vector<std::unique_ptr<Instruction>> &
+FunctionDefinition::getFunctionBody() const {
+    return *functionBody;
+}
+
+std::vector<std::unique_ptr<Instruction>> &
 FunctionDefinition::getFunctionBody() {
-    return functionBody;
+    return *functionBody;
 }
 
 void FunctionDefinition::setFunctionBody(
-    std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
+    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
         newFunctionBody) {
     if (!newFunctionBody) {
         throw std::logic_error(
             "Setting null function body in FunctionDefinition");
     }
-    this->functionBody = newFunctionBody;
+    this->functionBody = std::move(newFunctionBody);
 }
 
-size_t FunctionDefinition::getStackSize() { return stackSize; }
+size_t FunctionDefinition::getStackSize() const { return stackSize; }
 
 void FunctionDefinition::setStackSize(size_t newStackSize) {
     this->stackSize = newStackSize;
@@ -537,51 +542,54 @@ void FunctionDefinition::setStackSize(size_t newStackSize) {
 
 StaticVariable::StaticVariable(std::string identifier, bool global,
                                int alignment,
-                               std::shared_ptr<AST::StaticInit> staticInit)
+                               std::unique_ptr<AST::StaticInit> staticInit)
     : identifier(identifier), global(global), alignment(alignment),
-      staticInit(staticInit) {
-    if (!staticInit) {
+      staticInit(std::move(staticInit)) {
+    if (!this->staticInit) {
         throw std::logic_error("Creating StaticVariable with null staticInit");
     }
 }
 
-std::string StaticVariable::getIdentifier() { return identifier; }
+std::string StaticVariable::getIdentifier() const { return identifier; }
 
-bool StaticVariable::isGlobal() { return global; }
+bool StaticVariable::isGlobal() const { return global; }
 
-int StaticVariable::getAlignment() { return alignment; }
+int StaticVariable::getAlignment() const { return alignment; }
 
 void StaticVariable::setAlignment(int newAlignment) {
     this->alignment = newAlignment;
 }
 
-std::shared_ptr<AST::StaticInit> StaticVariable::getStaticInit() {
-    return staticInit;
+const AST::StaticInit *StaticVariable::getStaticInit() const {
+    return staticInit.get();
 }
 
 void StaticVariable::setStaticInit(
-    std::shared_ptr<AST::StaticInit> newStaticInit) {
+    std::unique_ptr<AST::StaticInit> newStaticInit) {
     if (!newStaticInit) {
         throw std::logic_error("Setting null static init in StaticVariable");
     }
-    this->staticInit = newStaticInit;
+    this->staticInit = std::move(newStaticInit);
 }
 
 Program::Program(
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels)
-    : topLevels(topLevels) {}
+    std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels)
+    : topLevels(std::move(topLevels)) {}
 
-std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>>
-Program::getTopLevels() {
-    return topLevels;
+const std::vector<std::unique_ptr<TopLevel>> &Program::getTopLevels() const {
+    return *topLevels;
+}
+
+std::vector<std::unique_ptr<TopLevel>> &Program::getTopLevels() {
+    return *topLevels;
 }
 
 void Program::setTopLevels(
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> newTopLevels) {
+    std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> newTopLevels) {
     if (!newTopLevels) {
         throw std::logic_error("Setting null top levels in Program");
     }
-    this->topLevels = newTopLevels;
+    this->topLevels = std::move(newTopLevels);
 }
 
 } // namespace Assembly

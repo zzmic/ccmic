@@ -15,25 +15,23 @@ void convertFrontendToBackendSymbolTable(
         if (auto functionAttribute =
                 dynamic_cast<AST::FunctionAttribute *>(identifierAttribute)) {
             auto funEntry =
-                std::make_shared<FunEntry>(functionAttribute->isDefined());
-            backendSymbolTable[identifier] = funEntry;
+                std::make_unique<FunEntry>(functionAttribute->isDefined());
+            backendSymbolTable[identifier] = std::move(funEntry);
         }
-        else if (auto staticAttribute = dynamic_cast<AST::StaticAttribute *>(
-                     identifierAttribute)) {
+        else if (dynamic_cast<AST::StaticAttribute *>(identifierAttribute)) {
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
-            auto objEntry = std::make_shared<ObjEntry>(
-                assemblyType, true); // true for static storage.
-            backendSymbolTable[identifier] = objEntry;
+            auto objEntry = std::make_unique<ObjEntry>(
+                std::move(assemblyType), true); // true for static storage.
+            backendSymbolTable[identifier] = std::move(objEntry);
         }
-        else if (auto localAttribute =
-                     dynamic_cast<AST::LocalAttribute *>(identifierAttribute)) {
+        else if (dynamic_cast<AST::LocalAttribute *>(identifierAttribute)) {
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
-            auto objEntry = std::make_shared<ObjEntry>(
-                assemblyType,
+            auto objEntry = std::make_unique<ObjEntry>(
+                std::move(assemblyType),
                 false); // false for non-static storage.
-            backendSymbolTable[identifier] = objEntry;
+            backendSymbolTable[identifier] = std::move(objEntry);
         }
         else {
             throw std::logic_error("Unsupported identifier attribute type for "

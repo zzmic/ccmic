@@ -24,7 +24,7 @@ class PseudoToStackPass {
      * @param backendSymbolTable The backend symbol table.
      */
     void replacePseudoWithStackAndAssociateStackSize(
-        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> &topLevels,
+        std::vector<std::unique_ptr<TopLevel>> &topLevels,
         const BackendSymbolTable &backendSymbolTable);
 
   private:
@@ -36,7 +36,7 @@ class PseudoToStackPass {
      * @param backendSymbolTable The backend symbol table.
      */
     void
-    replacePseudoWithStack(std::shared_ptr<Assembly::Instruction> &instruction,
+    replacePseudoWithStack(std::unique_ptr<Assembly::Instruction> &instruction,
                            const BackendSymbolTable &backendSymbolTable);
 
     /**
@@ -46,8 +46,8 @@ class PseudoToStackPass {
      * @param backendSymbolTable The backend symbol table.
      * @return The replaced operand.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::Operand>
-    replaceOperand(std::shared_ptr<Assembly::Operand> operand,
+    [[nodiscard]] std::unique_ptr<Assembly::Operand>
+    replaceOperand(const Assembly::Operand *operand,
                    const BackendSymbolTable &backendSymbolTable);
 
     /**
@@ -57,7 +57,7 @@ class PseudoToStackPass {
      * @param functionDefinition The function definition to check.
      */
     void checkPseudoRegistersInFunctionDefinitionReplaced(
-        std::shared_ptr<Assembly::FunctionDefinition> functionDefinition);
+        const Assembly::FunctionDefinition &functionDefinition);
 
     /**
      * A map from pseudo registers to stack offsets.

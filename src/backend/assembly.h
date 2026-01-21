@@ -104,15 +104,14 @@ class Operand {
      *
      * @return The register of the operand.
      */
-    [[nodiscard]] virtual std::shared_ptr<Register> getRegister() const;
+    [[nodiscard]] virtual Register *getRegister() const;
 
     /**
      * Get the reserved register of the operand.
      *
      * @return The reserved register of the operand.
      */
-    [[nodiscard]] virtual std::shared_ptr<ReservedRegister>
-    getReservedRegister() const;
+    [[nodiscard]] virtual ReservedRegister *getReservedRegister() const;
 
     /**
      * Get the pseudo register of the operand.
@@ -174,7 +173,7 @@ class RegisterOperand : public Operand {
     /**
      * The register of the operand.
      */
-    std::shared_ptr<Register> reg;
+    std::unique_ptr<Register> reg;
 
     /**
      * The mapping of register sizes to register names.
@@ -223,7 +222,7 @@ class RegisterOperand : public Operand {
      *
      * @param reg The register of the operand.
      */
-    explicit RegisterOperand(std::shared_ptr<Register> reg);
+    explicit RegisterOperand(std::unique_ptr<Register> reg);
 
     /**
      * Constructor for the register operand class.
@@ -232,7 +231,7 @@ class RegisterOperand : public Operand {
      */
     explicit RegisterOperand(std::string regInStr);
 
-    [[nodiscard]] std::shared_ptr<Register> getRegister() const override;
+    [[nodiscard]] Register *getRegister() const override;
 
     [[nodiscard]] std::string getRegisterInBytesInStr(int size) const;
 };
@@ -271,7 +270,7 @@ class StackOperand : public Operand {
     /**
      * The reserved register of the operand.
      */
-    std::shared_ptr<ReservedRegister> reservedReg;
+    std::unique_ptr<ReservedRegister> reservedReg;
 
   public:
     /**
@@ -281,12 +280,11 @@ class StackOperand : public Operand {
      * @param reservedReg The reserved register of the operand.
      */
     explicit StackOperand(int offset,
-                          std::shared_ptr<ReservedRegister> reservedReg);
+                          std::unique_ptr<ReservedRegister> reservedReg);
 
     [[nodiscard]] int getOffset() const override;
 
-    [[nodiscard]] std::shared_ptr<ReservedRegister>
-    getReservedRegister() const override;
+    [[nodiscard]] ReservedRegister *getReservedRegister() const override;
 
     [[nodiscard]] std::string getReservedRegisterInStr() const;
 };
@@ -445,12 +443,12 @@ class MovInstruction : public Instruction {
     /**
      * The type of the instruction.
      */
-    std::shared_ptr<AssemblyType> type;
+    std::unique_ptr<AssemblyType> type;
 
     /**
      * The source and destination operands of the instruction.
      */
-    std::shared_ptr<Operand> src, dst;
+    std::unique_ptr<Operand> src, dst;
 
   public:
     /**
@@ -460,21 +458,21 @@ class MovInstruction : public Instruction {
      * @param src The source operand of the instruction.
      * @param dst The destination operand of the instruction.
      */
-    explicit MovInstruction(std::shared_ptr<AssemblyType> type,
-                            std::shared_ptr<Operand> src,
-                            std::shared_ptr<Operand> dst);
+    explicit MovInstruction(std::unique_ptr<AssemblyType> type,
+                            std::unique_ptr<Operand> src,
+                            std::unique_ptr<Operand> dst);
 
-    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+    [[nodiscard]] const AssemblyType *getType() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getSrc();
+    [[nodiscard]] const Operand *getSrc() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getDst();
+    [[nodiscard]] const Operand *getDst() const;
 
-    void setType(std::shared_ptr<AssemblyType> newType);
+    void setType(std::unique_ptr<AssemblyType> newType);
 
-    void setSrc(std::shared_ptr<Operand> newSrc);
+    void setSrc(std::unique_ptr<Operand> newSrc);
 
-    void setDst(std::shared_ptr<Operand> newDst);
+    void setDst(std::unique_ptr<Operand> newDst);
 };
 
 /**
@@ -485,7 +483,7 @@ class MovsxInstruction : public Instruction {
     /**
      * The source and destination operands of the instruction.
      */
-    std::shared_ptr<Operand> src, dst;
+    std::unique_ptr<Operand> src, dst;
 
   public:
     /**
@@ -494,16 +492,16 @@ class MovsxInstruction : public Instruction {
      * @param src The source operand of the instruction.
      * @param dst The destination operand of the instruction.
      */
-    explicit MovsxInstruction(std::shared_ptr<Operand> src,
-                              std::shared_ptr<Operand> dst);
+    explicit MovsxInstruction(std::unique_ptr<Operand> src,
+                              std::unique_ptr<Operand> dst);
 
-    [[nodiscard]] std::shared_ptr<Operand> getSrc();
+    [[nodiscard]] const Operand *getSrc() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getDst();
+    [[nodiscard]] const Operand *getDst() const;
 
-    void setSrc(std::shared_ptr<Operand> newSrc);
+    void setSrc(std::unique_ptr<Operand> newSrc);
 
-    void setDst(std::shared_ptr<Operand> newDst);
+    void setDst(std::unique_ptr<Operand> newDst);
 };
 
 /**
@@ -514,17 +512,17 @@ class UnaryInstruction : public Instruction {
     /**
      * The unary operator of the instruction.
      */
-    std::shared_ptr<UnaryOperator> unaryOperator;
+    std::unique_ptr<UnaryOperator> unaryOperator;
 
     /**
      * The type of the instruction.
      */
-    std::shared_ptr<AssemblyType> type;
+    std::unique_ptr<AssemblyType> type;
 
     /**
      * The operand of the instruction.
      */
-    std::shared_ptr<Operand> operand;
+    std::unique_ptr<Operand> operand;
 
   public:
     /**
@@ -534,21 +532,21 @@ class UnaryInstruction : public Instruction {
      * @param type The type of the instruction.
      * @param operand The operand of the instruction.
      */
-    explicit UnaryInstruction(std::shared_ptr<UnaryOperator> unaryOperator,
-                              std::shared_ptr<AssemblyType> type,
-                              std::shared_ptr<Operand> operand);
+    explicit UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
+                              std::unique_ptr<AssemblyType> type,
+                              std::unique_ptr<Operand> operand);
 
-    [[nodiscard]] std::shared_ptr<UnaryOperator> getUnaryOperator();
+    [[nodiscard]] const UnaryOperator *getUnaryOperator() const;
 
-    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+    [[nodiscard]] const AssemblyType *getType() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+    [[nodiscard]] const Operand *getOperand() const;
 
-    void setUnaryOperator(std::shared_ptr<UnaryOperator> newUnaryOperator);
+    void setUnaryOperator(std::unique_ptr<UnaryOperator> newUnaryOperator);
 
-    void setType(std::shared_ptr<AssemblyType> newType);
+    void setType(std::unique_ptr<AssemblyType> newType);
 
-    void setOperand(std::shared_ptr<Operand> newOperand);
+    void setOperand(std::unique_ptr<Operand> newOperand);
 };
 
 /**
@@ -559,17 +557,17 @@ class BinaryInstruction : public Instruction {
     /**
      * The binary operator of the instruction.
      */
-    std::shared_ptr<BinaryOperator> binaryOperator;
+    std::unique_ptr<BinaryOperator> binaryOperator;
 
     /**
      * The type of the instruction.
      */
-    std::shared_ptr<AssemblyType> type;
+    std::unique_ptr<AssemblyType> type;
 
     /**
      * The first and second operands of the instruction.
      */
-    std::shared_ptr<Operand> operand1, operand2;
+    std::unique_ptr<Operand> operand1, operand2;
 
   public:
     /**
@@ -580,26 +578,26 @@ class BinaryInstruction : public Instruction {
      * @param operand1 The first operand of the instruction.
      * @param operand2 The second operand of the instruction.
      */
-    explicit BinaryInstruction(std::shared_ptr<BinaryOperator> binaryOperator,
-                               std::shared_ptr<AssemblyType> type,
-                               std::shared_ptr<Operand> operand1,
-                               std::shared_ptr<Operand> operand2);
+    explicit BinaryInstruction(std::unique_ptr<BinaryOperator> binaryOperator,
+                               std::unique_ptr<AssemblyType> type,
+                               std::unique_ptr<Operand> operand1,
+                               std::unique_ptr<Operand> operand2);
 
-    [[nodiscard]] std::shared_ptr<BinaryOperator> getBinaryOperator();
+    [[nodiscard]] const BinaryOperator *getBinaryOperator() const;
 
-    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+    [[nodiscard]] const AssemblyType *getType() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand1();
+    [[nodiscard]] const Operand *getOperand1() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand2();
+    [[nodiscard]] const Operand *getOperand2() const;
 
-    void setBinaryOperator(std::shared_ptr<BinaryOperator> newBinaryOperator);
+    void setBinaryOperator(std::unique_ptr<BinaryOperator> newBinaryOperator);
 
-    void setType(std::shared_ptr<AssemblyType> newType);
+    void setType(std::unique_ptr<AssemblyType> newType);
 
-    void setOperand1(std::shared_ptr<Operand> newOperand1);
+    void setOperand1(std::unique_ptr<Operand> newOperand1);
 
-    void setOperand2(std::shared_ptr<Operand> newOperand2);
+    void setOperand2(std::unique_ptr<Operand> newOperand2);
 };
 
 /**
@@ -610,12 +608,12 @@ class CmpInstruction : public Instruction {
     /**
      * The type of the instruction.
      */
-    std::shared_ptr<AssemblyType> type;
+    std::unique_ptr<AssemblyType> type;
 
     /**
      * The first and second operands of the instruction.
      */
-    std::shared_ptr<Operand> operand1, operand2;
+    std::unique_ptr<Operand> operand1, operand2;
 
   public:
     /**
@@ -625,21 +623,21 @@ class CmpInstruction : public Instruction {
      * @param operand1 The first operand of the instruction.
      * @param operand2 The second operand of the instruction.
      */
-    explicit CmpInstruction(std::shared_ptr<AssemblyType> type,
-                            std::shared_ptr<Operand> operand1,
-                            std::shared_ptr<Operand> operand2);
+    explicit CmpInstruction(std::unique_ptr<AssemblyType> type,
+                            std::unique_ptr<Operand> operand1,
+                            std::unique_ptr<Operand> operand2);
 
-    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+    [[nodiscard]] const AssemblyType *getType() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand1();
+    [[nodiscard]] const Operand *getOperand1() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand2();
+    [[nodiscard]] const Operand *getOperand2() const;
 
-    void setType(std::shared_ptr<AssemblyType> newType);
+    void setType(std::unique_ptr<AssemblyType> newType);
 
-    void setOperand1(std::shared_ptr<Operand> newOperand1);
+    void setOperand1(std::unique_ptr<Operand> newOperand1);
 
-    void setOperand2(std::shared_ptr<Operand> newOperand2);
+    void setOperand2(std::unique_ptr<Operand> newOperand2);
 };
 
 /**
@@ -650,12 +648,12 @@ class IdivInstruction : public Instruction {
     /**
      * The type of the instruction.
      */
-    std::shared_ptr<AssemblyType> type;
+    std::unique_ptr<AssemblyType> type;
 
     /**
      * The operand of the instruction.
      */
-    std::shared_ptr<Operand> operand;
+    std::unique_ptr<Operand> operand;
 
   public:
     /**
@@ -664,16 +662,16 @@ class IdivInstruction : public Instruction {
      * @param type The type of the instruction.
      * @param operand The operand of the instruction.
      */
-    explicit IdivInstruction(std::shared_ptr<AssemblyType> type,
-                             std::shared_ptr<Operand> operand);
+    explicit IdivInstruction(std::unique_ptr<AssemblyType> type,
+                             std::unique_ptr<Operand> operand);
 
-    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+    [[nodiscard]] const AssemblyType *getType() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+    [[nodiscard]] const Operand *getOperand() const;
 
-    void setType(std::shared_ptr<AssemblyType> newType);
+    void setType(std::unique_ptr<AssemblyType> newType);
 
-    void setOperand(std::shared_ptr<Operand> newOperand);
+    void setOperand(std::unique_ptr<Operand> newOperand);
 };
 
 /**
@@ -684,7 +682,7 @@ class CdqInstruction : public Instruction {
     /**
      * The type of the instruction.
      */
-    std::shared_ptr<AssemblyType> type;
+    std::unique_ptr<AssemblyType> type;
 
   public:
     /**
@@ -692,11 +690,11 @@ class CdqInstruction : public Instruction {
      *
      * @param type The type of the instruction.
      */
-    explicit CdqInstruction(std::shared_ptr<AssemblyType> type);
+    explicit CdqInstruction(std::unique_ptr<AssemblyType> type);
 
-    [[nodiscard]] std::shared_ptr<AssemblyType> getType();
+    [[nodiscard]] const AssemblyType *getType() const;
 
-    void setType(std::shared_ptr<AssemblyType> newType);
+    void setType(std::unique_ptr<AssemblyType> newType);
 };
 
 /**
@@ -717,7 +715,7 @@ class JmpInstruction : public Instruction {
      */
     explicit JmpInstruction(std::string label);
 
-    [[nodiscard]] std::string getLabel();
+    [[nodiscard]] std::string getLabel() const;
 
     void setLabel(std::string newLabel);
 };
@@ -730,7 +728,7 @@ class JmpCCInstruction : public Instruction {
     /**
      * The condition code of the instruction.
      */
-    std::shared_ptr<CondCode> condCode;
+    std::unique_ptr<CondCode> condCode;
 
     /**
      * The label of the instruction.
@@ -744,14 +742,14 @@ class JmpCCInstruction : public Instruction {
      * @param condCode The condition code of the instruction.
      * @param label The label of the instruction.
      */
-    explicit JmpCCInstruction(std::shared_ptr<CondCode> condCode,
+    explicit JmpCCInstruction(std::unique_ptr<CondCode> condCode,
                               std::string label);
 
-    [[nodiscard]] std::shared_ptr<CondCode> getCondCode();
+    [[nodiscard]] const CondCode *getCondCode() const;
 
-    [[nodiscard]] std::string getLabel();
+    [[nodiscard]] std::string getLabel() const;
 
-    void setCondCode(std::shared_ptr<CondCode> newCondCode);
+    void setCondCode(std::unique_ptr<CondCode> newCondCode);
 
     void setLabel(std::string newLabel);
 };
@@ -764,12 +762,12 @@ class SetCCInstruction : public Instruction {
     /**
      * The condition code of the instruction.
      */
-    std::shared_ptr<CondCode> condCode;
+    std::unique_ptr<CondCode> condCode;
 
     /**
      * The operand of the instruction.
      */
-    std::shared_ptr<Operand> operand;
+    std::unique_ptr<Operand> operand;
 
   public:
     /**
@@ -778,16 +776,16 @@ class SetCCInstruction : public Instruction {
      * @param condCode The condition code of the instruction.
      * @param operand The operand of the instruction.
      */
-    explicit SetCCInstruction(std::shared_ptr<CondCode> condCode,
-                              std::shared_ptr<Operand> operand);
+    explicit SetCCInstruction(std::unique_ptr<CondCode> condCode,
+                              std::unique_ptr<Operand> operand);
 
-    [[nodiscard]] std::shared_ptr<CondCode> getCondCode();
+    [[nodiscard]] const CondCode *getCondCode() const;
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+    [[nodiscard]] const Operand *getOperand() const;
 
-    void setCondCode(std::shared_ptr<CondCode> newCondCode);
+    void setCondCode(std::unique_ptr<CondCode> newCondCode);
 
-    void setOperand(std::shared_ptr<Operand> newOperand);
+    void setOperand(std::unique_ptr<Operand> newOperand);
 };
 
 /**
@@ -808,7 +806,7 @@ class LabelInstruction : public Instruction {
      */
     explicit LabelInstruction(std::string label);
 
-    [[nodiscard]] std::string getLabel();
+    [[nodiscard]] std::string getLabel() const;
 
     void setLabel(std::string newLabel);
 };
@@ -821,7 +819,7 @@ class PushInstruction : public Instruction {
     /**
      * The operand of the instruction.
      */
-    std::shared_ptr<Operand> operand;
+    std::unique_ptr<Operand> operand;
 
   public:
     /**
@@ -829,11 +827,11 @@ class PushInstruction : public Instruction {
      *
      * @param operand The operand of the instruction.
      */
-    explicit PushInstruction(std::shared_ptr<Operand> operand);
+    explicit PushInstruction(std::unique_ptr<Operand> operand);
 
-    [[nodiscard]] std::shared_ptr<Operand> getOperand();
+    [[nodiscard]] const Operand *getOperand() const;
 
-    void setOperand(std::shared_ptr<Operand> newOperand);
+    void setOperand(std::unique_ptr<Operand> newOperand);
 };
 
 /**
@@ -854,7 +852,7 @@ class CallInstruction : public Instruction {
      */
     explicit CallInstruction(std::string functionIdentifier);
 
-    [[nodiscard]] std::string getFunctionIdentifier();
+    [[nodiscard]] std::string getFunctionIdentifier() const;
 };
 
 /**
@@ -891,7 +889,7 @@ class FunctionDefinition : public TopLevel {
     /**
      * The function body of the function definition.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
+    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody;
 
     /**
      * The stack size of the function definition.
@@ -911,21 +909,23 @@ class FunctionDefinition : public TopLevel {
      */
     explicit FunctionDefinition(
         std::string functionIdentifier, bool global,
-        std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody,
+        std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody,
         size_t stackSize);
 
-    [[nodiscard]] std::string getFunctionIdentifier();
+    [[nodiscard]] std::string getFunctionIdentifier() const;
 
-    [[nodiscard]] bool isGlobal();
+    [[nodiscard]] bool isGlobal() const;
 
-    [[nodiscard]] std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-    getFunctionBody();
+    [[nodiscard]] const std::vector<std::unique_ptr<Instruction>> &
+    getFunctionBody() const;
+
+    [[nodiscard]] std::vector<std::unique_ptr<Instruction>> &getFunctionBody();
 
     void
-    setFunctionBody(std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
+    setFunctionBody(std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
                         newFunctionBody);
 
-    [[nodiscard]] size_t getStackSize();
+    [[nodiscard]] size_t getStackSize() const;
 
     void setStackSize(size_t newStackSize);
 };
@@ -953,7 +953,7 @@ class StaticVariable : public TopLevel {
     /**
      * The static initialization of the static variable.
      */
-    std::shared_ptr<AST::StaticInit> staticInit;
+    std::unique_ptr<AST::StaticInit> staticInit;
 
   public:
     /**
@@ -965,19 +965,19 @@ class StaticVariable : public TopLevel {
      * @param staticInit The static initialization of the static variable.
      */
     explicit StaticVariable(std::string identifier, bool global, int alignment,
-                            std::shared_ptr<AST::StaticInit> staticInit);
+                            std::unique_ptr<AST::StaticInit> staticInit);
 
-    [[nodiscard]] std::string getIdentifier();
+    [[nodiscard]] std::string getIdentifier() const;
 
-    [[nodiscard]] bool isGlobal();
+    [[nodiscard]] bool isGlobal() const;
 
-    [[nodiscard]] int getAlignment();
+    [[nodiscard]] int getAlignment() const;
 
     void setAlignment(int newAlignment);
 
-    [[nodiscard]] std::shared_ptr<AST::StaticInit> getStaticInit();
+    [[nodiscard]] const AST::StaticInit *getStaticInit() const;
 
-    void setStaticInit(std::shared_ptr<AST::StaticInit> newStaticInit);
+    void setStaticInit(std::unique_ptr<AST::StaticInit> newStaticInit);
 };
 
 /**
@@ -988,7 +988,7 @@ class Program {
     /**
      * The top-levels of the program.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels;
+    std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels;
 
   public:
     /**
@@ -997,13 +997,15 @@ class Program {
      * @param topLevels The top-levels of the program.
      */
     explicit Program(
-        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels);
+        std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels);
 
-    [[nodiscard]] std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>>
-    getTopLevels();
+    [[nodiscard]] const std::vector<std::unique_ptr<TopLevel>> &
+    getTopLevels() const;
+
+    [[nodiscard]] std::vector<std::unique_ptr<TopLevel>> &getTopLevels();
 
     void setTopLevels(
-        std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> newTopLevels);
+        std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> newTopLevels);
 };
 } // namespace Assembly
 
