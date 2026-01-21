@@ -21,8 +21,8 @@ class AssemblyGenerator {
      * @param frontendSymbolTable The frontend symbol table.
      */
     explicit AssemblyGenerator(
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            irStaticVariables,
+        const std::vector<std::unique_ptr<IR::StaticVariable>>
+            &irStaticVariables,
         const AST::FrontendSymbolTable &frontendSymbolTable);
 
     /**
@@ -31,15 +31,14 @@ class AssemblyGenerator {
      * @param irProgram The IR program to generate assembly from.
      * @return The generated assembly.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::Program>
-    generateAssembly(std::shared_ptr<IR::Program> irProgram);
+    [[nodiscard]] std::unique_ptr<Assembly::Program>
+    generateAssembly(const IR::Program &irProgram);
 
   private:
     /**
      * The IR static variables.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        irStaticVariables;
+    const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables;
 
     /**
      * The frontend symbol table.
@@ -49,10 +48,10 @@ class AssemblyGenerator {
     /**
      * Convert an IR function definition to assembly.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::FunctionDefinition>
+    [[nodiscard]] std::unique_ptr<Assembly::FunctionDefinition>
     convertIRFunctionDefinitionToAssy(
-        std::shared_ptr<IR::FunctionDefinition> irFunctionDefinition,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
+        const IR::FunctionDefinition &irFunctionDefinition,
+        std::unique_ptr<std::vector<std::unique_ptr<Assembly::Instruction>>>
             instructions);
 
     /**
@@ -61,9 +60,8 @@ class AssemblyGenerator {
      * @param irStaticVariable The IR static variable to convert.
      * @return The converted assembly static variable.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::StaticVariable>
-    convertIRStaticVariableToAssy(
-        std::shared_ptr<IR::StaticVariable> irStaticVariable);
+    [[nodiscard]] std::unique_ptr<Assembly::StaticVariable>
+    convertIRStaticVariableToAssy(const IR::StaticVariable &irStaticVariable);
 
     /**
      * Convert an IR instruction to assembly.
@@ -72,9 +70,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRInstructionToAssy(
-        std::shared_ptr<IR::Instruction> irInstruction,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::Instruction &irInstruction,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR return instruction to assembly.
@@ -83,9 +80,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRReturnInstructionToAssy(
-        std::shared_ptr<IR::ReturnInstruction> returnInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::ReturnInstruction &returnInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR unary instruction to assembly.
@@ -94,9 +90,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRUnaryInstructionToAssy(
-        std::shared_ptr<IR::UnaryInstruction> unaryInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::UnaryInstruction &unaryInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR binary instruction to assembly.
@@ -105,9 +100,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRBinaryInstructionToAssy(
-        std::shared_ptr<IR::BinaryInstruction> binaryInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::BinaryInstruction &binaryInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR label instruction to assembly.
@@ -116,9 +110,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRLabelInstructionToAssy(
-        std::shared_ptr<IR::LabelInstruction> labelInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::LabelInstruction &labelInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR jump instruction to assembly.
@@ -127,9 +120,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRJumpInstructionToAssy(
-        std::shared_ptr<IR::JumpInstruction> jumpInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::JumpInstruction &jumpInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR jump-if-zero instruction to assembly.
@@ -138,9 +130,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRJumpIfZeroInstructionToAssy(
-        std::shared_ptr<IR::JumpIfZeroInstruction> jumpIfZeroInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::JumpIfZeroInstruction &jumpIfZeroInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR jump-if-not-zero instruction to assembly.
@@ -149,9 +140,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRJumpIfNotZeroInstructionToAssy(
-        std::shared_ptr<IR::JumpIfNotZeroInstruction> jumpIfNotZeroInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::JumpIfNotZeroInstruction &jumpIfNotZeroInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR copy instruction to assembly.
@@ -160,9 +150,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRCopyInstructionToAssy(
-        std::shared_ptr<IR::CopyInstruction> copyInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::CopyInstruction &copyInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR sign-extend instruction to assembly.
@@ -171,9 +160,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRSignExtendInstructionToAssy(
-        std::shared_ptr<IR::SignExtendInstruction> signExtendInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::SignExtendInstruction &signExtendInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR truncate instruction to assembly.
@@ -182,9 +170,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRTruncateInstructionToAssy(
-        std::shared_ptr<IR::TruncateInstruction> truncateInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::TruncateInstruction &truncateInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR function-call instruction to assembly.
@@ -193,9 +180,8 @@ class AssemblyGenerator {
      * @param instructions The assembly instructions.
      */
     void convertIRFunctionCallInstructionToAssy(
-        std::shared_ptr<IR::FunctionCallInstruction> functionCallInstr,
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions);
+        const IR::FunctionCallInstruction &functionCallInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
      * Convert an IR value to an assembly operand.
@@ -203,8 +189,8 @@ class AssemblyGenerator {
      * @param value The IR value to convert.
      * @return The converted assembly operand.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::Operand>
-    convertValue(std::shared_ptr<IR::Value> value);
+    [[nodiscard]] std::unique_ptr<Assembly::Operand>
+    convertValue(const IR::Value *value);
 
     /**
      * Determine the assembly type of an IR value.
@@ -212,8 +198,8 @@ class AssemblyGenerator {
      * @param value The IR value to determine the assembly type of.
      * @return The assembly type of the IR value.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::AssemblyType>
-    determineAssemblyType(std::shared_ptr<IR::Value> value);
+    [[nodiscard]] std::unique_ptr<Assembly::AssemblyType>
+    determineAssemblyType(const IR::Value *value);
 
     /**
      * Determine the assembly type of a mov instruction.
@@ -224,11 +210,9 @@ class AssemblyGenerator {
      * @param irDst The IR destination value of the move instruction.
      * @return The assembly type of the move instruction.
      */
-    [[nodiscard]] std::shared_ptr<Assembly::AssemblyType>
-    determineMovType(std::shared_ptr<Assembly::Operand> src,
-                     std::shared_ptr<Assembly::Operand> dst,
-                     std::shared_ptr<IR::Value> irSrc,
-                     std::shared_ptr<IR::Value> irDst);
+    [[nodiscard]] std::unique_ptr<Assembly::AssemblyType>
+    determineMovType(const Assembly::Operand *src, const Assembly::Operand *dst,
+                     const IR::Value *irSrc, const IR::Value *irDst);
 
   public:
     /**
@@ -237,8 +221,8 @@ class AssemblyGenerator {
      * @param astType The AST type to convert.
      * @return The converted assembly type.
      */
-    [[nodiscard]] static std::shared_ptr<Assembly::AssemblyType>
-    convertASTTypeToAssemblyType(std::shared_ptr<AST::Type> astType);
+    [[nodiscard]] static std::unique_ptr<Assembly::AssemblyType>
+    convertASTTypeToAssemblyType(const AST::Type *astType);
 };
 } // namespace Assembly
 

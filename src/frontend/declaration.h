@@ -10,6 +10,9 @@
 #include <string_view>
 
 namespace AST {
+// Forward declaration for `Block` (used by `FunctionDeclaration`).
+class Block;
+
 /**
  * Base class for declarations in the AST.
  *
@@ -30,20 +33,19 @@ class VariableDeclaration : public Declaration {
      * @param varType The type of the variable.
      */
     explicit VariableDeclaration(std::string_view identifier,
-                                 std::shared_ptr<Type> varType);
+                                 std::unique_ptr<Type> varType);
     /**
      * Constructor for the `VariableDeclaration` class with an optional
      * initializer and without an optional storage class.
      *
      * @param identifier The identifier of the variable.
      * @param optInitializer The optional initializer expression for the
-     * variable.
+     * variable (can be `nullptr`).
      * @param varType The type of the variable.
      */
-    explicit VariableDeclaration(
-        std::string_view identifier,
-        std::optional<std::shared_ptr<Expression>> optInitializer,
-        std::shared_ptr<Type> varType);
+    explicit VariableDeclaration(std::string_view identifier,
+                                 std::unique_ptr<Expression> optInitializer,
+                                 std::unique_ptr<Type> varType);
 
     /**
      * Constructor for the `VariableDeclaration` class without an optional
@@ -51,11 +53,12 @@ class VariableDeclaration : public Declaration {
      *
      * @param identifier The identifier of the variable.
      * @param varType The type of the variable.
-     * @param optStorageClass The optional storage class of the variable.
+     * @param optStorageClass The optional storage class of the variable (can be
+     * `nullptr`).
      */
-    explicit VariableDeclaration(
-        std::string_view identifier, std::shared_ptr<Type> varType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+    explicit VariableDeclaration(std::string_view identifier,
+                                 std::unique_ptr<Type> varType,
+                                 std::unique_ptr<StorageClass> optStorageClass);
 
     /**
      * Constructor for the `VariableDeclaration` class with an optional
@@ -63,30 +66,29 @@ class VariableDeclaration : public Declaration {
      *
      * @param identifier The identifier of the variable.
      * @param optInitializer The optional initializer expression for the
-     * variable.
+     * variable (can be `nullptr`).
      * @param varType The type of the variable.
-     * @param optStorageClass The optional storage class of the variable.
+     * @param optStorageClass The optional storage class of the variable (can be
+     * `nullptr`).
      */
-    explicit VariableDeclaration(
-        std::string_view identifier,
-        std::optional<std::shared_ptr<Expression>> optInitializer,
-        std::shared_ptr<Type> varType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+    explicit VariableDeclaration(std::string_view identifier,
+                                 std::unique_ptr<Expression> optInitializer,
+                                 std::unique_ptr<Type> varType,
+                                 std::unique_ptr<StorageClass> optStorageClass);
 
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
-    getOptInitializer() const;
+    void setIdentifier(std::string_view identifier);
 
-    void setOptInitializer(
-        std::optional<std::shared_ptr<Expression>> newOptInitializer);
+    [[nodiscard]] Expression *getOptInitializer() const;
 
-    [[nodiscard]] std::shared_ptr<Type> getVarType() const;
+    void setOptInitializer(std::unique_ptr<Expression> newOptInitializer);
 
-    [[nodiscard]] std::optional<std::shared_ptr<StorageClass>>
-    getOptStorageClass() const;
+    [[nodiscard]] Type *getVarType() const;
+
+    [[nodiscard]] StorageClass *getOptStorageClass() const;
 
   private:
     /**
@@ -95,19 +97,19 @@ class VariableDeclaration : public Declaration {
     std::string identifier;
 
     /**
-     * The optional initializer expression of the variable.
+     * The optional initializer expression of the variable (can be `nullptr`).
      */
-    std::optional<std::shared_ptr<Expression>> optInitializer;
+    std::unique_ptr<Expression> optInitializer;
 
     /**
      * The type of the variable.
      */
-    std::shared_ptr<Type> varType;
+    std::unique_ptr<Type> varType;
 
     /**
-     * The optional storage class of the variable.
+     * The optional storage class of the variable (can be `nullptr`).
      */
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass;
+    std::unique_ptr<StorageClass> optStorageClass;
 };
 
 class FunctionDeclaration : public Declaration {
@@ -122,8 +124,8 @@ class FunctionDeclaration : public Declaration {
      */
     explicit FunctionDeclaration(
         std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::shared_ptr<Type> funType);
+        std::unique_ptr<std::vector<std::string>> parameters,
+        std::unique_ptr<Type> funType);
 
     /**
      * Constructor for the `FunctionDeclaration` class with an optional body
@@ -131,14 +133,13 @@ class FunctionDeclaration : public Declaration {
      *
      * @param identifier The identifier of the function.
      * @param parameters The parameter identifiers of the function.
-     * @param optBody The optional body of the function.
+     * @param optBody The optional body of the function (can be `nullptr`).
      * @param funType The function type of the function.
      */
     explicit FunctionDeclaration(
         std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::optional<std::shared_ptr<Block>> optBody,
-        std::shared_ptr<Type> funType);
+        std::unique_ptr<std::vector<std::string>> parameters,
+        std::unique_ptr<Block> optBody, std::unique_ptr<Type> funType);
 
     /**
      * Constructor for the `FunctionDeclaration` class without an optional body
@@ -147,13 +148,14 @@ class FunctionDeclaration : public Declaration {
      * @param identifier The identifier of the function.
      * @param parameters The parameter identifiers of the function.
      * @param funType The function type of the function.
-     * @param optStorageClass The optional storage class of the function.
+     * @param optStorageClass The optional storage class of the function (can be
+     * nullptr).
      */
     explicit FunctionDeclaration(
         std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::shared_ptr<Type> funType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+        std::unique_ptr<std::vector<std::string>> parameters,
+        std::unique_ptr<Type> funType,
+        std::unique_ptr<StorageClass> optStorageClass);
 
     /**
      * Constructor for the `FunctionDeclaration` class with an optional body
@@ -161,39 +163,45 @@ class FunctionDeclaration : public Declaration {
      *
      * @param identifier The identifier of the function.
      * @param parameters The parameter identifiers of the function.
-     * @param optBody The optional body of the function.
+     * @param optBody The optional body of the function (can be `nullptr`).
      * @param funType The function type of the function.
-     * @param optStorageClass The optional storage class of the function.
+     * @param optStorageClass The optional storage class of the function (can be
+     * `nullptr`).
      */
     explicit FunctionDeclaration(
         std::string_view identifier,
-        std::shared_ptr<std::vector<std::string>> parameters,
-        std::optional<std::shared_ptr<Block>> optBody,
-        std::shared_ptr<Type> funType,
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+        std::unique_ptr<std::vector<std::string>> parameters,
+        std::unique_ptr<Block> optBody, std::unique_ptr<Type> funType,
+        std::unique_ptr<StorageClass> optStorageClass);
+
+    /**
+     * Destructor for the `FunctionDeclaration` class.
+     *
+     * Declared here, defined in `declaration.cpp` to allow incomplete type
+     * `Block` in header.
+     */
+    ~FunctionDeclaration();
 
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
-    [[nodiscard]] const std::shared_ptr<std::vector<std::string>> &
+    [[nodiscard]] const std::vector<std::string> &
     getParameterIdentifiers() const;
 
-    [[nodiscard]] std::shared_ptr<Type> getFunType() const;
+    [[nodiscard]] Type *getFunType() const;
 
-    [[nodiscard]] std::optional<std::shared_ptr<Block>> getOptBody() const;
+    [[nodiscard]] Block *getOptBody() const;
 
-    [[nodiscard]] std::optional<std::shared_ptr<StorageClass>>
-    getOptStorageClass() const;
+    [[nodiscard]] StorageClass *getOptStorageClass() const;
 
-    void setParameters(std::shared_ptr<std::vector<std::string>> parameters);
+    void setParameters(std::unique_ptr<std::vector<std::string>> parameters);
 
-    void setOptBody(std::optional<std::shared_ptr<Block>> optBody);
+    void setOptBody(std::unique_ptr<Block> optBody);
 
-    void setFunType(std::shared_ptr<Type> funType);
+    void setFunType(std::unique_ptr<Type> funType);
 
-    void setOptStorageClass(
-        std::optional<std::shared_ptr<StorageClass>> optStorageClass);
+    void setOptStorageClass(std::unique_ptr<StorageClass> optStorageClass);
 
   private:
     /**
@@ -204,22 +212,22 @@ class FunctionDeclaration : public Declaration {
     /**
      * The parameter identifiers of the function.
      */
-    std::shared_ptr<std::vector<std::string>> parameters;
+    std::unique_ptr<std::vector<std::string>> parameters;
 
     /**
-     * The optional body of the function.
+     * The optional body of the function (can be `nullptr`).
      */
-    std::optional<std::shared_ptr<Block>> optBody;
+    std::unique_ptr<Block> optBody;
 
     /**
      * The function type of the function.
      */
-    std::shared_ptr<Type> funType;
+    std::unique_ptr<Type> funType;
 
     /**
-     * The optional storage class of the function.
+     * The optional storage class of the function (can be `nullptr`).
      */
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass;
+    std::unique_ptr<StorageClass> optStorageClass;
 };
 } // Namespace AST
 

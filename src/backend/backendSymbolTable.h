@@ -30,16 +30,16 @@ class ObjEntry : public BackendSymbolTableEntry {
      * @param assemblyType The assembly type of the object.
      * @param isStatic Whether the object is static.
      */
-    explicit ObjEntry(std::shared_ptr<AssemblyType> assemblyType, bool isStatic)
-        : assemblyType(assemblyType), isStatic(isStatic) {}
+    explicit ObjEntry(std::unique_ptr<AssemblyType> assemblyType, bool isStatic)
+        : assemblyType(std::move(assemblyType)), isStatic(isStatic) {}
 
     /**
      * Get the assembly type of the object.
      *
      * @return The assembly type of the object.
      */
-    [[nodiscard]] std::shared_ptr<AssemblyType> getAssemblyType() const {
-        return assemblyType;
+    [[nodiscard]] const AssemblyType *getAssemblyType() const {
+        return assemblyType.get();
     }
 
     /**
@@ -53,7 +53,7 @@ class ObjEntry : public BackendSymbolTableEntry {
     /**
      * The assembly type of the object.
      */
-    std::shared_ptr<AssemblyType> assemblyType;
+    std::unique_ptr<AssemblyType> assemblyType;
 
     /**
      * Boolean indicating whether the object is static storage.
@@ -91,10 +91,10 @@ class FunEntry : public BackendSymbolTableEntry {
  * Type alias for the backend symbol table.
  *
  * The key is the identifier (variable or function name), and the value is a
- * shared pointer to the backend symbol table entry.
+ * unique pointer to the backend symbol table entry.
  */
 using BackendSymbolTable =
-    std::unordered_map<std::string, std::shared_ptr<BackendSymbolTableEntry>>;
+    std::unordered_map<std::string, std::unique_ptr<BackendSymbolTableEntry>>;
 
 /**
  * Convert a frontend symbol table to a backend symbol table.

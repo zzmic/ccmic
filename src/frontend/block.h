@@ -16,29 +16,28 @@ class Block : public AST {
      * @param blockItems The list of block items in the block.
      */
     explicit Block(
-        std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
+        std::unique_ptr<std::vector<std::unique_ptr<BlockItem>>> blockItems);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<BlockItem>>> &
+    [[nodiscard]] const std::vector<std::unique_ptr<BlockItem>> &
     getBlockItems() const;
 
     void setBlockItems(
-        std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems);
+        std::unique_ptr<std::vector<std::unique_ptr<BlockItem>>> blockItems);
 
     /**
      * Adds a block item to the block.
      *
      * @param blockItem The block item to add.
      */
-    void addBlockItem(std::shared_ptr<BlockItem> blockItem);
+    void addBlockItem(std::unique_ptr<BlockItem> blockItem);
 
   private:
     /**
      * The list of block items in the block.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems;
+    std::unique_ptr<std::vector<std::unique_ptr<BlockItem>>> blockItems;
 };
 } // namespace AST
 

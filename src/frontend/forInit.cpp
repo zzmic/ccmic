@@ -1,20 +1,18 @@
 #include "forInit.h"
 
 namespace AST {
-InitDecl::InitDecl(std::shared_ptr<VariableDeclaration> decl) : decl(decl) {}
+InitDecl::InitDecl(std::unique_ptr<VariableDeclaration> decl)
+    : decl(std::move(decl)) {}
 
 void InitDecl::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<VariableDeclaration> InitDecl::getVariableDeclaration() const {
-    return decl;
+VariableDeclaration *InitDecl::getVariableDeclaration() const {
+    return decl.get();
 }
 
-InitExpr::InitExpr(std::optional<std::shared_ptr<Expression>> expr)
-    : expr(expr) {}
+InitExpr::InitExpr(std::unique_ptr<Expression> expr) : expr(std::move(expr)) {}
 
 void InitExpr::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::optional<std::shared_ptr<Expression>> InitExpr::getExpression() const {
-    return expr;
-}
+Expression *InitExpr::getExpression() const { return expr.get(); }
 } // Namespace AST

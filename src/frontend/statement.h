@@ -3,13 +3,15 @@
 
 #include "ast.h"
 #include "expression.h"
-#include "forInit.h"
 #include <memory>
 #include <optional>
 #include <string_view>
 
 namespace AST {
-class Block; // Forward declaration.
+// Forward declaration of `Block` to avoid circular dependencies.
+class Block;
+// Forward declaration of `ForInit` to avoid circular dependencies.
+class ForInit;
 
 /**
  * Base class for statements in the AST.
@@ -32,19 +34,19 @@ class ReturnStatement : public Statement {
      *
      * @param expr The expression to return.
      */
-    explicit ReturnStatement(std::shared_ptr<Expression> expr);
+    explicit ReturnStatement(std::unique_ptr<Expression> expr);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
+    [[nodiscard]] Expression *getExpression() const;
 
-    void setExpression(std::shared_ptr<Expression> expr);
+    void setExpression(std::unique_ptr<Expression> expr);
 
   private:
     /**
      * The expression to return.
      */
-    std::shared_ptr<Expression> expr;
+    std::unique_ptr<Expression> expr;
 };
 
 /**
@@ -57,17 +59,17 @@ class ExpressionStatement : public Statement {
      *
      * @param expr The expression in the statement.
      */
-    explicit ExpressionStatement(std::shared_ptr<Expression> expr);
+    explicit ExpressionStatement(std::unique_ptr<Expression> expr);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expression> getExpression() const;
+    [[nodiscard]] Expression *getExpression() const;
 
   private:
     /**
      * The expression in the statement.
      */
-    std::shared_ptr<Expression> expr;
+    std::unique_ptr<Expression> expr;
 };
 
 /**
@@ -83,10 +85,9 @@ class IfStatement : public Statement {
      * @param elseOptStatement An optional statement to execute if the condition
      * is false.
      */
-    explicit IfStatement(
-        std::shared_ptr<Expression> condition,
-        std::shared_ptr<Statement> thenStatement,
-        std::optional<std::shared_ptr<Statement>> elseOptStatement);
+    explicit IfStatement(std::unique_ptr<Expression> condition,
+                         std::unique_ptr<Statement> thenStatement,
+                         std::unique_ptr<Statement> elseOptStatement);
 
     /**
      * Constructor of the if-statement class without an (optional) else
@@ -95,33 +96,33 @@ class IfStatement : public Statement {
      * @param condition The condition expression of the if statement.
      * @param thenStatement The statement to execute if the condition is true.
      */
-    explicit IfStatement(std::shared_ptr<Expression> condition,
-                         std::shared_ptr<Statement> thenStatement);
+    explicit IfStatement(std::unique_ptr<Expression> condition,
+                         std::unique_ptr<Statement> thenStatement);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] Expression *getCondition() const;
 
-    [[nodiscard]] std::shared_ptr<Statement> getThenStatement() const;
+    [[nodiscard]] Statement *getThenStatement() const;
 
-    [[nodiscard]] std::optional<std::shared_ptr<Statement>>
-    getElseOptStatement() const;
+    [[nodiscard]] Statement *getElseOptStatement() const;
 
   private:
     /**
      * The condition expression of the if statement.
      */
-    std::shared_ptr<Expression> condition;
+    std::unique_ptr<Expression> condition;
 
     /**
      * The statement to execute if the condition is true.
      */
-    std::shared_ptr<Statement> thenStatement;
+    std::unique_ptr<Statement> thenStatement;
 
     /**
-     * An optional statement to execute if the condition is false.
+     * An optional statement to execute if the condition is false (can be
+     * `nullptr`).
      */
-    std::optional<std::shared_ptr<Statement>> elseOptStatement;
+    std::unique_ptr<Statement> elseOptStatement;
 };
 
 /**
@@ -134,17 +135,24 @@ class CompoundStatement : public Statement {
      *
      * @param block The block of statements.
      */
-    explicit CompoundStatement(std::shared_ptr<Block> block);
+    explicit CompoundStatement(std::unique_ptr<Block> block);
+
+    /**
+     * Destructor for the `CompoundStatement` class.
+     *
+     * Defined in `statement.cpp` to allow incomplete type `Block` in header.
+     */
+    ~CompoundStatement();
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Block> getBlock() const;
+    [[nodiscard]] Block *getBlock() const;
 
   private:
     /**
      * The block of statements.
      */
-    std::shared_ptr<Block> block;
+    std::unique_ptr<Block> block;
 };
 
 /**
@@ -204,14 +212,14 @@ class WhileStatement : public Statement {
      * @param condition The condition expression of the while statement.
      * @param body The body statement of the while loop.
      */
-    explicit WhileStatement(std::shared_ptr<Expression> condition,
-                            std::shared_ptr<Statement> body);
+    explicit WhileStatement(std::unique_ptr<Expression> condition,
+                            std::unique_ptr<Statement> body);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] Expression *getCondition() const;
 
-    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
+    [[nodiscard]] Statement *getBody() const;
 
     [[nodiscard]] const std::string &getLabel() const;
 
@@ -221,12 +229,12 @@ class WhileStatement : public Statement {
     /**
      * The condition expression of the while statement.
      */
-    std::shared_ptr<Expression> condition;
+    std::unique_ptr<Expression> condition;
 
     /**
      * The body statement of the while loop.
      */
-    std::shared_ptr<Statement> body;
+    std::unique_ptr<Statement> body;
 
     /**
      * The label of the loop.
@@ -245,14 +253,14 @@ class DoWhileStatement : public Statement {
      * @param condition The condition expression of the do-while statement.
      * @param body The body statement of the do-while loop.
      */
-    explicit DoWhileStatement(std::shared_ptr<Expression> condition,
-                              std::shared_ptr<Statement> body);
+    explicit DoWhileStatement(std::unique_ptr<Expression> condition,
+                              std::unique_ptr<Statement> body);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Expression> getCondition() const;
+    [[nodiscard]] Expression *getCondition() const;
 
-    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
+    [[nodiscard]] Statement *getBody() const;
 
     [[nodiscard]] const std::string &getLabel() const;
 
@@ -262,12 +270,12 @@ class DoWhileStatement : public Statement {
     /**
      * The condition expression of the do-while statement.
      */
-    std::shared_ptr<Expression> condition;
+    std::unique_ptr<Expression> condition;
 
     /**
      * The body statement of the do-while loop.
      */
-    std::shared_ptr<Statement> body;
+    std::unique_ptr<Statement> body;
 
     /**
      * The label of the loop.
@@ -285,25 +293,32 @@ class ForStatement : public Statement {
      *
      * @param forInit The initialization part of the for statement.
      * @param condition The (optional) condition expression of the for
-     * statement.
-     * @param post The (optional) post-expression of the for statement.
+     * statement (can be `nullptr`).
+     * @param post The (optional) post-expression of the for statement (can be
+     * `nullptr`).
      * @param body The body statement of the for loop.
      */
-    explicit ForStatement(std::shared_ptr<ForInit> forInit,
-                          std::optional<std::shared_ptr<Expression>> condition,
-                          std::optional<std::shared_ptr<Expression>> post,
-                          std::shared_ptr<Statement> body);
+    explicit ForStatement(std::unique_ptr<ForInit> forInit,
+                          std::unique_ptr<Expression> condition,
+                          std::unique_ptr<Expression> post,
+                          std::unique_ptr<Statement> body);
+
+    /**
+     * Destructor for the `ForStatement` class.
+     *
+     * Defined in `statement.cpp` to allow incomplete type `ForInit` in header.
+     */
+    ~ForStatement();
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<ForInit> getForInit() const;
+    [[nodiscard]] ForInit *getForInit() const;
 
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
-    getOptCondition() const;
+    [[nodiscard]] Expression *getOptCondition() const;
 
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>> getOptPost() const;
+    [[nodiscard]] Expression *getOptPost() const;
 
-    [[nodiscard]] std::shared_ptr<Statement> getBody() const;
+    [[nodiscard]] Statement *getBody() const;
 
     [[nodiscard]] const std::string &getLabel() const;
 
@@ -313,22 +328,23 @@ class ForStatement : public Statement {
     /**
      * The initialization part of the for statement.
      */
-    std::shared_ptr<ForInit> forInit;
+    std::unique_ptr<ForInit> forInit;
 
     /**
-     * The (optional) condition expression of the for statement.
+     * The (optional) condition expression of the for statement (can be
+     * `nullptr`).
      */
-    std::optional<std::shared_ptr<Expression>> optCondition;
+    std::unique_ptr<Expression> optCondition;
 
     /**
-     * The (optional) post-expression of the for statement.
+     * The (optional) post-expression of the for statement (can be `nullptr`).
      */
-    std::optional<std::shared_ptr<Expression>> optPost;
+    std::unique_ptr<Expression> optPost;
 
     /**
      * The body statement of the for loop.
      */
-    std::shared_ptr<Statement> body;
+    std::unique_ptr<Statement> body;
 
     /**
      * The label of the loop.

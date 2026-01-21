@@ -197,7 +197,7 @@ int main(int argc, char *argv[]) {
         AST::FrontendSymbolTable frontendSymbolTable;
         auto variableResolutionCounter =
             PipelineStagesExecutors::semanticAnalysisExecutor(
-                astProgram, frontendSymbolTable);
+                *astProgram, frontendSymbolTable);
 
         if (tillValidate) {
             std::cout << "Semantic analysis completed.\n";
@@ -207,30 +207,31 @@ int main(int argc, char *argv[]) {
         // Generate the IR from the AST program and return the IR program.
         auto irProgramAndIRStaticVariables =
             PipelineStagesExecutors::irGeneratorExecutor(
-                astProgram, variableResolutionCounter, frontendSymbolTable);
-        auto irProgram = irProgramAndIRStaticVariables.first;
-        auto irStaticVariables = irProgramAndIRStaticVariables.second;
+                *astProgram, variableResolutionCounter, frontendSymbolTable);
+        auto irProgram = std::move(irProgramAndIRStaticVariables.first);
+        auto irStaticVariables =
+            std::move(irProgramAndIRStaticVariables.second);
 
         if (foldConstantsPass || propagateCopiesPass ||
             eliminateUnreachableCodePass || eliminateDeadStoresPass) {
             // Print the IR program to stdout.
             std::cout << "<<< Before optimization passes: >>>\n";
-            PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+            PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
 
             // Perform the optimization passes on the IR program (if any of the
             // flags is set to true).
             PipelineStagesExecutors::irOptimizationExecutor(
-                irProgram, foldConstantsPass, propagateCopiesPass,
+                *irProgram, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
 
             // Print the optimized IR program to stdout (after the
             // optimization passes).
             std::cout << "<<< After optimization passes: >>>\n";
-            PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+            PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
         }
         else {
             // Print the IR program to stdout.
-            PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+            PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
         }
 
         if (tillIR) {
@@ -242,13 +243,12 @@ int main(int argc, char *argv[]) {
 
         // Generate the assembly program from the IR program and the IR static
         // variables.
-        std::shared_ptr<Assembly::Program> assemblyProgram =
-            PipelineStagesExecutors::codegenExecutor(
-                irProgram, irStaticVariables, frontendSymbolTable);
+        auto assemblyProgram = PipelineStagesExecutors::codegenExecutor(
+            *irProgram, *irStaticVariables, frontendSymbolTable);
 
         // Print out the (assembly) instructions that would be emitted from the
         // assembly program.
-        PrettyPrinters::printAssemblyProgram(assemblyProgram);
+        PrettyPrinters::printAssemblyProgram(*assemblyProgram);
 
         if (tillCodegen) {
             std::cout << "Code generation completed.\n";
@@ -256,7 +256,7 @@ int main(int argc, char *argv[]) {
         }
 
         // Emit the generated assembly code to the assembly file.
-        PipelineStagesExecutors::codeEmissionExecutor(assemblyProgram,
+        PipelineStagesExecutors::codeEmissionExecutor(*assemblyProgram,
                                                       assemblyFileName);
 
         if (tillEmitAssembly) {

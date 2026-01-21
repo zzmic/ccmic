@@ -3,19 +3,19 @@
 
 namespace AST {
 Program::Program(
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations)
-    : declarations(declarations) {}
+    std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> declarations)
+    : declarations(std::move(declarations)) {}
 
 void Program::accept(Visitor &visitor) { visitor.visit(*this); }
 
-const std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> &
+const std::vector<std::unique_ptr<Declaration>> &
 Program::getDeclarations() const {
-    return declarations;
+    return *declarations;
 }
 
 void Program::setDeclarations(
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+    std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>
         newDeclarations) {
-    this->declarations = newDeclarations;
+    this->declarations = std::move(newDeclarations);
 }
 } // Namespace AST

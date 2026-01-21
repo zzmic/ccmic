@@ -15,8 +15,7 @@ class FixupPass {
      *
      * @param topLevels The top-levels of the assembly program.
      */
-    void
-    fixup(std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels);
+    void fixup(std::vector<std::unique_ptr<TopLevel>> &topLevels);
 
   private:
     /**
@@ -29,8 +28,7 @@ class FixupPass {
      * @param stackSize The stack size of the function.
      */
     void insertAllocateStackInstruction(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
         int stackSize);
 
     /**
@@ -41,8 +39,7 @@ class FixupPass {
      *
      * @param functionDefinition The function definition to rewrite.
      */
-    void rewriteFunctionDefinition(
-        std::shared_ptr<FunctionDefinition> functionDefinition);
+    void rewriteFunctionDefinition(FunctionDefinition &functionDefinition);
 
     /**
      * Check if a mov instruction is invalid.
@@ -50,8 +47,7 @@ class FixupPass {
      * @param movInstr The mov instruction to check.
      * @return True if the mov instruction is invalid, false otherwise.
      */
-    [[nodiscard]] bool
-    isInvalidMov(std::shared_ptr<Assembly::MovInstruction> movInstr);
+    [[nodiscard]] bool isInvalidMov(const Assembly::MovInstruction &movInstr);
 
     /**
      * Check if a mov instruction has a large immediate value.
@@ -60,8 +56,8 @@ class FixupPass {
      * @return True if the mov instruction has a large immediate value, false
      * otherwise.
      */
-    [[nodiscard]] bool isInvalidLargeImmediateMov(
-        std::shared_ptr<Assembly::MovInstruction> movInstr);
+    [[nodiscard]] bool
+    isInvalidLargeImmediateMov(const Assembly::MovInstruction &movInstr);
 
     /**
      * Check if a mov instruction is an invalid longword immediate mov
@@ -71,8 +67,8 @@ class FixupPass {
      * @return True if the mov instruction is an invalid longword immediate mov
      * instruction, false otherwise.
      */
-    [[nodiscard]] bool isInvalidLongwordImmediateMov(
-        std::shared_ptr<Assembly::MovInstruction> movInstr);
+    [[nodiscard]] bool
+    isInvalidLongwordImmediateMov(const Assembly::MovInstruction &movInstr);
 
     /**
      * Check if a movsx instruction is invalid.
@@ -81,7 +77,7 @@ class FixupPass {
      * @return True if the movsx instruction is invalid, false otherwise.
      */
     [[nodiscard]] bool
-    isInvalidMovsx(std::shared_ptr<Assembly::MovsxInstruction> movsxInstr);
+    isInvalidMovsx(const Assembly::MovsxInstruction &movsxInstr);
 
     /**
      * Check if a binary instruction is invalid.
@@ -90,7 +86,7 @@ class FixupPass {
      * @return True if the binary instruction is invalid, false otherwise.
      */
     [[nodiscard]] bool
-    isInvalidBinary(std::shared_ptr<Assembly::BinaryInstruction> binInstr);
+    isInvalidBinary(const Assembly::BinaryInstruction &binInstr);
 
     /**
      * Check if a binary instruction has a large immediate value.
@@ -99,8 +95,8 @@ class FixupPass {
      * @return True if the binary instruction has a large immediate value, false
      * otherwise.
      */
-    [[nodiscard]] bool isInvalidLargeImmediateBinary(
-        std::shared_ptr<Assembly::BinaryInstruction> binInstr);
+    [[nodiscard]] bool
+    isInvalidLargeImmediateBinary(const Assembly::BinaryInstruction &binInstr);
 
     /**
      * Check if an idiv instruction is invalid.
@@ -109,7 +105,7 @@ class FixupPass {
      * @return True if the idiv instruction is invalid, false otherwise.
      */
     [[nodiscard]] bool
-    isInvalidIdiv(std::shared_ptr<Assembly::IdivInstruction> idivInstr);
+    isInvalidIdiv(const Assembly::IdivInstruction &idivInstr);
 
     /**
      * Check if a cmp instruction is invalid.
@@ -117,8 +113,7 @@ class FixupPass {
      * @param cmpInstr The cmp instruction to check.
      * @return True if the cmp instruction is invalid, false otherwise.
      */
-    [[nodiscard]] bool
-    isInvalidCmp(std::shared_ptr<Assembly::CmpInstruction> cmpInstr);
+    [[nodiscard]] bool isInvalidCmp(const Assembly::CmpInstruction &cmpInstr);
 
     /**
      * Check if a cmp instruction has a large immediate value.
@@ -127,8 +122,8 @@ class FixupPass {
      * @return True if the cmp instruction has a large immediate value, false
      * otherwise.
      */
-    [[nodiscard]] bool isInvalidLargeImmediateCmp(
-        std::shared_ptr<Assembly::CmpInstruction> cmpInstr);
+    [[nodiscard]] bool
+    isInvalidLargeImmediateCmp(const Assembly::CmpInstruction &cmpInstr);
 
     /**
      * Check if a push instruction has a large immediate value.
@@ -137,8 +132,8 @@ class FixupPass {
      * @return True if the push instruction has a large immediate value, false
      * otherwise.
      */
-    [[nodiscard]] bool isInvalidLargeImmediatePush(
-        std::shared_ptr<Assembly::PushInstruction> pushInstr);
+    [[nodiscard]] bool
+    isInvalidLargeImmediatePush(const Assembly::PushInstruction &pushInstr);
 
     /**
      * Rewrite an invalid mov instruction.
@@ -152,12 +147,12 @@ class FixupPass {
      * @param movInst The mov instruction to rewrite.
      * @return The iterator to the new mov instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidMov(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::MovInstruction> movInst);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::MovInstruction &movInst);
 
     /**
      * Rewrite an invalid large immediate mov instruction.
@@ -171,12 +166,12 @@ class FixupPass {
      * @param movInst The mov instruction to rewrite.
      * @return The iterator to the new mov instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidLargeImmediateMov(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::MovInstruction> movInst);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::MovInstruction &movInst);
 
     /**
      * Rewrite an invalid longword immediate mov instruction.
@@ -189,12 +184,12 @@ class FixupPass {
      * @param movInst The mov instruction to rewrite.
      * @return The iterator to the new mov instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidLongwordImmediateMov(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::MovInstruction> movInst);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::MovInstruction &movInst);
 
     /**
      * Rewrite an invalid movsx instruction.
@@ -208,12 +203,12 @@ class FixupPass {
      * @param movsxInst The movsx instruction to rewrite.
      * @return The iterator to the new movsx instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidMovsx(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::MovsxInstruction> movsxInst);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::MovsxInstruction &movsxInst);
 
     /**
      * Rewrite an invalid binary instruction.
@@ -227,12 +222,12 @@ class FixupPass {
      * @param binInstr The binary instruction to rewrite.
      * @return The iterator to the new binary instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidBinary(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::BinaryInstruction> binInstr);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::BinaryInstruction &binInstr);
 
     /**
      * Rewrite an invalid large immediate binary instruction.
@@ -246,12 +241,12 @@ class FixupPass {
      * @param binInstr The binary instruction to rewrite.
      * @return The iterator to the new binary instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidLargeImmediateBinary(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::BinaryInstruction> binInstr);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::BinaryInstruction &binInstr);
 
     /**
      * Rewrite an invalid idiv instruction.
@@ -264,12 +259,12 @@ class FixupPass {
      * @param idivInst The idiv instruction to rewrite.
      * @return The iterator to the new idiv instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidIdiv(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::IdivInstruction> idivInstr);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::IdivInstruction &idivInstr);
 
     /**
      * Rewrite an invalid cmp instruction.
@@ -283,12 +278,12 @@ class FixupPass {
      * @param cmpInst The cmp instruction to rewrite.
      * @return The iterator to the new cmp instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidCmp(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::CmpInstruction> cmpInstr);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::CmpInstruction &cmpInstr);
 
     /**
      * Rewrite an invalid large immediate cmp instruction.
@@ -301,12 +296,12 @@ class FixupPass {
      * @param cmpInst The cmp instruction to rewrite.
      * @return The iterator to the new cmp instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidLargeImmediateCmp(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::CmpInstruction> cmpInstr);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::CmpInstruction &cmpInstr);
 
     /**
      * Rewrite an invalid large immediate push instruction.
@@ -319,12 +314,12 @@ class FixupPass {
      * @param pushInst The push instruction to rewrite.
      * @return The iterator to the new push instruction.
      */
-    [[nodiscard]] std::vector<std::shared_ptr<Assembly::Instruction>>::iterator
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
     rewriteInvalidLargeImmediatePush(
-        std::shared_ptr<std::vector<std::shared_ptr<Assembly::Instruction>>>
-            instructions,
-        std::vector<std::shared_ptr<Assembly::Instruction>>::iterator it,
-        std::shared_ptr<Assembly::PushInstruction> pushInstr);
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::PushInstruction &pushInstr);
 };
 } // Namespace Assembly
 

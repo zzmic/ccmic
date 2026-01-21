@@ -13,12 +13,12 @@ class IdentifierAttribute;
  * Type alias for the frontend symbol table.
  *
  * The key is the identifier (variable or function name), and the value is a
- * pair consisting of (a shared pointer to) the type and (a shared pointer to)
+ * pair consisting of (a unique pointer to) the type and (a unique pointer to)
  * the identifier attribute.
  */
 using FrontendSymbolTable = std::unordered_map<
     std::string,
-    std::pair<std::shared_ptr<Type>, std::shared_ptr<IdentifierAttribute>>>;
+    std::pair<std::unique_ptr<Type>, std::unique_ptr<IdentifierAttribute>>>;
 } // namespace AST
 
 #endif // FRONTEND_SYMBOL_TABLE_H

@@ -4,6 +4,7 @@
  */
 #include "printVisitor.h"
 #include "expression.h"
+#include "forInit.h"
 #include "function.h"
 #include "program.h"
 #include "statement.h"
@@ -12,22 +13,17 @@ namespace AST {
 void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
-    if (program.getDeclarations()) {
-        auto &declarations = *program.getDeclarations();
-        for (auto it = declarations.begin(); it != declarations.end(); it++) {
-            auto &functionDeclaration = *it;
-            functionDeclaration->accept(*this);
-            bool isLast = (std::next(it) == declarations.end());
-            if (!isLast) {
-                std::cout << ",\n";
-            }
-            else {
-                std::cout << "\n";
-            }
+    auto &declarations = program.getDeclarations();
+    for (auto it = declarations.begin(); it != declarations.end(); it++) {
+        auto &functionDeclaration = *it;
+        functionDeclaration->accept(*this);
+        bool isLast = (std::next(it) == declarations.end());
+        if (!isLast) {
+            std::cout << ",\n";
         }
-    }
-    else {
-        throw std::logic_error("Null declarations in program");
+        else {
+            std::cout << "\n";
+        }
     }
 
     std::cout << ")\n";
@@ -49,8 +45,8 @@ void PrintVisitor::visit(Function &function) {
 
     auto functionBody = function.getBody();
     if (functionBody) {
-        auto blockItems = functionBody->getBlockItems();
-        for (auto &blockItem : *blockItems) {
+        auto &blockItems = functionBody->getBlockItems();
+        for (auto &blockItem : blockItems) {
             blockItem->accept(*this);
         }
     }
@@ -64,7 +60,7 @@ void PrintVisitor::visit(Function &function) {
 void PrintVisitor::visit(Block &block) {
     std::cout << "Block(";
 
-    for (auto &blockItem : *block.getBlockItems()) {
+    for (auto &blockItem : block.getBlockItems()) {
         blockItem->accept(*this);
     }
 
@@ -109,9 +105,9 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         throw std::logic_error("Null identifier in declaration");
     }
 
-    if (declaration.getOptInitializer().has_value()) {
+    if (declaration.getOptInitializer()) {
         std::cout << "\ninitializer = ";
-        declaration.getOptInitializer().value()->accept(*this);
+        declaration.getOptInitializer()->accept(*this);
     }
 
     if (declaration.getVarType()) {
@@ -122,9 +118,9 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         throw std::logic_error("Null type in declaration");
     }
 
-    if (declaration.getOptStorageClass().has_value()) {
+    if (declaration.getOptStorageClass()) {
         std::cout << "\nstorageClass = ";
-        declaration.getOptStorageClass().value()->accept(*this);
+        declaration.getOptStorageClass()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -144,7 +140,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << "\nparameters = (";
 
-    auto &parameters = *functionDeclaration.getParameterIdentifiers();
+    auto &parameters = functionDeclaration.getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         std::cout << parameter;
@@ -155,9 +151,9 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << ")";
 
-    if (functionDeclaration.getOptBody().has_value()) {
+    if (functionDeclaration.getOptBody()) {
         std::cout << "\nbody = ";
-        functionDeclaration.getOptBody().value()->accept(*this);
+        functionDeclaration.getOptBody()->accept(*this);
     }
 
     std::cout << "\nfuntionType = ";
@@ -168,9 +164,9 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
         throw std::logic_error("Null function type in function declaration");
     }
 
-    if (functionDeclaration.getOptStorageClass().has_value()) {
+    if (functionDeclaration.getOptStorageClass()) {
         std::cout << "\nstorageClass = ";
-        functionDeclaration.getOptStorageClass().value()->accept(*this);
+        functionDeclaration.getOptStorageClass()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -191,7 +187,7 @@ void PrintVisitor::visit(FunctionType &functionType) {
 
     std::cout << "parameters = (";
 
-    auto &parameters = *functionType.getParameterTypes();
+    auto &parameters = functionType.getParameterTypes();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         parameter->accept(*this);
@@ -203,7 +199,8 @@ void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << ")";
 
     std::cout << "\nreturnType = ";
-    functionType.getReturnType()->accept(*this);
+    // getReturnType() now returns const Type&
+    const_cast<Type &>(functionType.getReturnType()).accept(*this);
 
     std::cout << "\n)";
 }
@@ -234,8 +231,8 @@ void PrintVisitor::visit(InitDecl &initDecl) {
 void PrintVisitor::visit(InitExpr &initExpr) {
     std::cout << "InitExpr(\n";
 
-    if (initExpr.getExpression().has_value()) {
-        initExpr.getExpression().value()->accept(*this);
+    if (initExpr.getExpression()) {
+        initExpr.getExpression()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -288,9 +285,9 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
         throw std::logic_error("Null then-statement in if-statement");
     }
 
-    if (ifStatement.getElseOptStatement().has_value()) {
+    if (ifStatement.getElseOptStatement()) {
         std::cout << "\nelse = ";
-        ifStatement.getElseOptStatement().value()->accept(*this);
+        ifStatement.getElseOptStatement()->accept(*this);
     }
 
     std::cout << "\n)";
@@ -379,18 +376,14 @@ void PrintVisitor::visit(ForStatement &forStatement) {
         throw std::logic_error("Null init in for-statement");
     }
 
-    if (forStatement.getOptCondition().has_value()) {
+    if (forStatement.getOptCondition()) {
         std::cout << "\ncondition = ";
-        if (forStatement.getOptCondition().value()) {
-            forStatement.getOptCondition().value()->accept(*this);
-        }
+        forStatement.getOptCondition()->accept(*this);
     }
 
-    if (forStatement.getOptPost().has_value()) {
+    if (forStatement.getOptPost()) {
         std::cout << "\npost = ";
-        if (forStatement.getOptPost().value()) {
-            forStatement.getOptPost().value()->accept(*this);
-        }
+        forStatement.getOptPost()->accept(*this);
     }
 
     std::cout << "\nbody = ";
@@ -414,11 +407,10 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
     std::cout << "ConstantExpression(";
 
     auto constant = constantExpression.getConstant();
-    if (auto intConst = std::dynamic_pointer_cast<ConstantInt>(constant)) {
+    if (auto *intConst = dynamic_cast<ConstantInt *>(constant)) {
         std::cout << intConst->getValue();
     }
-    else if (auto longConst =
-                 std::dynamic_pointer_cast<ConstantLong>(constant)) {
+    else if (auto *longConst = dynamic_cast<ConstantLong *>(constant)) {
         std::cout << longConst->getValue();
     }
     else {
@@ -589,7 +581,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
 
     std::cout << "\nargs = ";
 
-    auto &args = *functionCallExpression.getArguments();
+    auto &args = functionCallExpression.getArguments();
     for (auto it = args.begin(); it != args.end(); it++) {
         auto &arg = *it;
         arg->accept(*this);

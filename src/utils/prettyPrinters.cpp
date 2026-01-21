@@ -7,15 +7,12 @@
  * Start: Functions to print the IR program to stdout.
  */
 void PrettyPrinters::printIRProgram(
-    const std::shared_ptr<IR::Program> &irProgram,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        &irStaticVariables) {
-    auto topLevels = irProgram->getTopLevels();
-
-    for (auto topLevel : *topLevels) {
-        if (auto functionDefinition =
-                std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
-            printIRFunctionDefinition(functionDefinition);
+    const IR::Program &irProgram,
+    const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables) {
+    for (const auto &topLevel : irProgram.getTopLevels()) {
+        if (auto *functionDefinition =
+                dynamic_cast<IR::FunctionDefinition *>(topLevel.get())) {
+            printIRFunctionDefinition(*functionDefinition);
         }
         else {
             throw std::logic_error(
@@ -23,19 +20,19 @@ void PrettyPrinters::printIRProgram(
         }
     }
 
-    for (auto irStaticVariable : *irStaticVariables) {
-        printIRStaticVariable(irStaticVariable);
+    for (const auto &irStaticVariable : irStaticVariables) {
+        printIRStaticVariable(*irStaticVariable);
     }
 }
 
 void PrettyPrinters::printIRFunctionDefinition(
-    const std::shared_ptr<IR::FunctionDefinition> &functionDefinition) {
-    std::cout << functionDefinition->getFunctionIdentifier();
+    const IR::FunctionDefinition &functionDefinition) {
+    std::cout << functionDefinition.getFunctionIdentifier();
     std::cout << std::boolalpha;
-    std::cout << "[isGlobal: " << functionDefinition->isGlobal() << "]";
+    std::cout << "[isGlobal: " << functionDefinition.isGlobal() << "]";
     std::cout << "(";
 
-    auto &parameters = *functionDefinition->getParameterIdentifiers();
+    auto &parameters = functionDefinition.getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); it++) {
         auto &parameter = *it;
         std::cout << parameter;
@@ -46,21 +43,20 @@ void PrettyPrinters::printIRFunctionDefinition(
     }
 
     std::cout << "):\n";
-    for (auto instruction : *functionDefinition->getFunctionBody()) {
-        printIRInstruction(instruction);
+    for (const auto &instruction : functionDefinition.getFunctionBody()) {
+        printIRInstruction(*instruction);
     }
 }
 
 void PrettyPrinters::printIRStaticVariable(
-    const std::shared_ptr<IR::StaticVariable> &staticVariable) {
-    auto staticInit = staticVariable->getStaticInit();
-    std::cout << "[static] " << staticVariable->getIdentifier() << " = ";
+    const IR::StaticVariable &staticVariable) {
+    auto staticInit = staticVariable.getStaticInit();
+    std::cout << "[static] " << staticVariable.getIdentifier() << " = ";
 
-    if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+    if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
         std::cout << std::get<int>(intInit->getValue());
     }
-    else if (auto longInit =
-                 std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+    else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         std::cout << std::get<long>(longInit->getValue());
     }
     else {
@@ -71,57 +67,54 @@ void PrettyPrinters::printIRStaticVariable(
     std::cout << "\n";
 }
 
-void PrettyPrinters::printIRInstruction(
-    const std::shared_ptr<IR::Instruction> &instruction) {
+void PrettyPrinters::printIRInstruction(const IR::Instruction &instruction) {
     if (auto returnInstruction =
-            std::dynamic_pointer_cast<IR::ReturnInstruction>(instruction)) {
-        printIRReturnInstruction(returnInstruction);
+            dynamic_cast<const IR::ReturnInstruction *>(&instruction)) {
+        printIRReturnInstruction(*returnInstruction);
     }
     else if (auto unaryInstruction =
-                 std::dynamic_pointer_cast<IR::UnaryInstruction>(instruction)) {
-        printIRUnaryInstruction(unaryInstruction);
+                 dynamic_cast<const IR::UnaryInstruction *>(&instruction)) {
+        printIRUnaryInstruction(*unaryInstruction);
     }
     else if (auto binaryInstruction =
-                 std::dynamic_pointer_cast<IR::BinaryInstruction>(
-                     instruction)) {
-        printIRBinaryInstruction(binaryInstruction);
+                 dynamic_cast<const IR::BinaryInstruction *>(&instruction)) {
+        printIRBinaryInstruction(*binaryInstruction);
     }
     else if (auto copyInstruction =
-                 std::dynamic_pointer_cast<IR::CopyInstruction>(instruction)) {
-        printIRCopyInstruction(copyInstruction);
+                 dynamic_cast<const IR::CopyInstruction *>(&instruction)) {
+        printIRCopyInstruction(*copyInstruction);
     }
     else if (auto jumpInstruction =
-                 std::dynamic_pointer_cast<IR::JumpInstruction>(instruction)) {
-        printIRJumpInstruction(jumpInstruction);
+                 dynamic_cast<const IR::JumpInstruction *>(&instruction)) {
+        printIRJumpInstruction(*jumpInstruction);
     }
     else if (auto jumpIfZeroInstruction =
-                 std::dynamic_pointer_cast<IR::JumpIfZeroInstruction>(
-                     instruction)) {
-        printIRJumpIfZeroInstruction(jumpIfZeroInstruction);
+                 dynamic_cast<const IR::JumpIfZeroInstruction *>(
+                     &instruction)) {
+        printIRJumpIfZeroInstruction(*jumpIfZeroInstruction);
     }
     else if (auto jumpIfNotZeroInstruction =
-                 std::dynamic_pointer_cast<IR::JumpIfNotZeroInstruction>(
-                     instruction)) {
-        printIRJumpIfNotZeroInstruction(jumpIfNotZeroInstruction);
+                 dynamic_cast<const IR::JumpIfNotZeroInstruction *>(
+                     &instruction)) {
+        printIRJumpIfNotZeroInstruction(*jumpIfNotZeroInstruction);
     }
     else if (auto labelInstruction =
-                 std::dynamic_pointer_cast<IR::LabelInstruction>(instruction)) {
-        printIRLabelInstruction(labelInstruction);
+                 dynamic_cast<const IR::LabelInstruction *>(&instruction)) {
+        printIRLabelInstruction(*labelInstruction);
     }
     else if (auto functionCallInstruction =
-                 std::dynamic_pointer_cast<IR::FunctionCallInstruction>(
-                     instruction)) {
-        printIRFunctionCallInstruction(functionCallInstruction);
+                 dynamic_cast<const IR::FunctionCallInstruction *>(
+                     &instruction)) {
+        printIRFunctionCallInstruction(*functionCallInstruction);
     }
     else if (auto signExtendInstruction =
-                 std::dynamic_pointer_cast<IR::SignExtendInstruction>(
-                     instruction)) {
-        printIRSignExtendInstruction(signExtendInstruction);
+                 dynamic_cast<const IR::SignExtendInstruction *>(
+                     &instruction)) {
+        printIRSignExtendInstruction(*signExtendInstruction);
     }
     else if (auto truncateInstruction =
-                 std::dynamic_pointer_cast<IR::TruncateInstruction>(
-                     instruction)) {
-        printIRTruncateInstruction(truncateInstruction);
+                 dynamic_cast<const IR::TruncateInstruction *>(&instruction)) {
+        printIRTruncateInstruction(*truncateInstruction);
     }
     else {
         throw std::logic_error(
@@ -130,18 +123,17 @@ void PrettyPrinters::printIRInstruction(
 }
 
 void PrettyPrinters::printIRReturnInstruction(
-    const std::shared_ptr<IR::ReturnInstruction> &returnInstruction) {
+    const IR::ReturnInstruction &returnInstruction) {
     std::cout << "    return ";
 
-    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-            returnInstruction->getReturnValue())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+            returnInstruction.getReturnValue())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -149,8 +141,8 @@ void PrettyPrinters::printIRReturnInstruction(
                 "Unknown constant type while printing IR return instruction");
         }
     }
-    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-                 returnInstruction->getReturnValue())) {
+    else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+                 returnInstruction.getReturnValue())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -162,10 +154,10 @@ void PrettyPrinters::printIRReturnInstruction(
 }
 
 void PrettyPrinters::printIRSignExtendInstruction(
-    const std::shared_ptr<IR::SignExtendInstruction> &signExtendInstruction) {
+    const IR::SignExtendInstruction &signExtendInstruction) {
     std::cout << "    ";
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            signExtendInstruction->getDst())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            signExtendInstruction.getDst())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -175,15 +167,14 @@ void PrettyPrinters::printIRSignExtendInstruction(
 
     std::cout << " = sign_extend(";
 
-    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-            signExtendInstruction->getSrc())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+            signExtendInstruction.getSrc())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -191,8 +182,8 @@ void PrettyPrinters::printIRSignExtendInstruction(
                                    "sign extend instruction");
         }
     }
-    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-                 signExtendInstruction->getSrc())) {
+    else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+                 signExtendInstruction.getSrc())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -204,10 +195,10 @@ void PrettyPrinters::printIRSignExtendInstruction(
 }
 
 void PrettyPrinters::printIRTruncateInstruction(
-    const std::shared_ptr<IR::TruncateInstruction> &truncateInstruction) {
+    const IR::TruncateInstruction &truncateInstruction) {
     std::cout << "    ";
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            truncateInstruction->getDst())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            truncateInstruction.getDst())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -217,15 +208,14 @@ void PrettyPrinters::printIRTruncateInstruction(
 
     std::cout << " = truncate(";
 
-    if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-            truncateInstruction->getSrc())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+            truncateInstruction.getSrc())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -233,8 +223,8 @@ void PrettyPrinters::printIRTruncateInstruction(
                 "Unknown constant type while printing IR truncate instruction");
         }
     }
-    else if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-                 truncateInstruction->getSrc())) {
+    else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+                 truncateInstruction.getSrc())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -246,11 +236,11 @@ void PrettyPrinters::printIRTruncateInstruction(
 }
 
 void PrettyPrinters::printIRUnaryInstruction(
-    const std::shared_ptr<IR::UnaryInstruction> &unaryInstruction) {
+    const IR::UnaryInstruction &unaryInstruction) {
     std::cout << "    ";
 
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            unaryInstruction->getDst())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            unaryInstruction.getDst())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -258,18 +248,16 @@ void PrettyPrinters::printIRUnaryInstruction(
                                "IR unary instruction");
     }
 
-    if (auto complementOperator =
-            std::dynamic_pointer_cast<IR::ComplementOperator>(
-                unaryInstruction->getUnaryOperator())) {
+    if (dynamic_cast<const IR::ComplementOperator *>(
+            unaryInstruction.getUnaryOperator())) {
         std::cout << " = ~";
     }
-    else if (auto negateOperator =
-                 std::dynamic_pointer_cast<IR::NegateOperator>(
-                     unaryInstruction->getUnaryOperator())) {
+    else if (dynamic_cast<const IR::NegateOperator *>(
+                 unaryInstruction.getUnaryOperator())) {
         std::cout << " = -";
     }
-    else if (auto notOperator = std::dynamic_pointer_cast<IR::NotOperator>(
-                 unaryInstruction->getUnaryOperator())) {
+    else if (dynamic_cast<const IR::NotOperator *>(
+                 unaryInstruction.getUnaryOperator())) {
         std::cout << " = !";
     }
     else {
@@ -277,20 +265,19 @@ void PrettyPrinters::printIRUnaryInstruction(
             "Unknown unary operator while printing IR unary instruction");
     }
 
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            unaryInstruction->getSrc())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            unaryInstruction.getSrc())) {
         std::cout << variableValue->getIdentifier();
     }
-    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 unaryInstruction->getSrc())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    else if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+                 unaryInstruction.getSrc())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
             std::cout << "\n";
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
             std::cout << "\n";
         }
@@ -308,27 +295,26 @@ void PrettyPrinters::printIRUnaryInstruction(
 }
 
 void PrettyPrinters::printIRBinaryInstruction(
-    const std::shared_ptr<IR::BinaryInstruction> &binaryInstruction) {
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            binaryInstruction->getDst())) {
+    const IR::BinaryInstruction &binaryInstruction) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            binaryInstruction.getDst())) {
         std::cout << "    " << variableValue->getIdentifier();
     }
 
     std::cout << " = ";
 
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            binaryInstruction->getSrc1())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            binaryInstruction.getSrc1())) {
         std::cout << variableValue->getIdentifier();
     }
-    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 binaryInstruction->getSrc1())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    else if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+                 binaryInstruction.getSrc1())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -341,58 +327,48 @@ void PrettyPrinters::printIRBinaryInstruction(
             "Unknown source value type while printing IR binary instruction");
     }
 
-    if (auto binaryOperator = std::dynamic_pointer_cast<IR::AddOperator>(
-            binaryInstruction->getBinaryOperator())) {
+    if (dynamic_cast<const IR::AddOperator *>(
+            binaryInstruction.getBinaryOperator())) {
         std::cout << " + ";
     }
-    else if (auto binaryOperator1 =
-                 std::dynamic_pointer_cast<IR::SubtractOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::SubtractOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " - ";
     }
-    else if (auto binaryOperator2 =
-                 std::dynamic_pointer_cast<IR::MultiplyOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::MultiplyOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " * ";
     }
-    else if (auto binaryOperator3 =
-                 std::dynamic_pointer_cast<IR::DivideOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::DivideOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " / ";
     }
-    else if (auto binaryOperator4 =
-                 std::dynamic_pointer_cast<IR::RemainderOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::RemainderOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " % ";
     }
-    else if (auto binaryOperator5 =
-                 std::dynamic_pointer_cast<IR::EqualOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::EqualOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " == ";
     }
-    else if (auto binaryOperator6 =
-                 std::dynamic_pointer_cast<IR::NotEqualOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::NotEqualOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " != ";
     }
-    else if (auto binaryOperator7 =
-                 std::dynamic_pointer_cast<IR::LessThanOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::LessThanOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " < ";
     }
-    else if (auto binaryOperator8 =
-                 std::dynamic_pointer_cast<IR::LessThanOrEqualOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " <= ";
     }
-    else if (auto binaryOperator9 =
-                 std::dynamic_pointer_cast<IR::GreaterThanOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::GreaterThanOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " > ";
     }
-    else if (auto binaryOperator10 =
-                 std::dynamic_pointer_cast<IR::GreaterThanOrEqualOperator>(
-                     binaryInstruction->getBinaryOperator())) {
+    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(
+                 binaryInstruction.getBinaryOperator())) {
         std::cout << " >= ";
     }
     else {
@@ -400,19 +376,18 @@ void PrettyPrinters::printIRBinaryInstruction(
             "Unknown binary operator while printing IR binary instruction");
     }
 
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            binaryInstruction->getSrc2())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            binaryInstruction.getSrc2())) {
         std::cout << variableValue->getIdentifier();
     }
-    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 binaryInstruction->getSrc2())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    else if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+                 binaryInstruction.getSrc2())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -429,10 +404,10 @@ void PrettyPrinters::printIRBinaryInstruction(
 }
 
 void PrettyPrinters::printIRCopyInstruction(
-    const std::shared_ptr<IR::CopyInstruction> &copyInstruction) {
+    const IR::CopyInstruction &copyInstruction) {
     std::cout << "    ";
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            copyInstruction->getDst())) {
+    if (auto variableValue =
+            dynamic_cast<const IR::VariableValue *>(copyInstruction.getDst())) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -442,21 +417,19 @@ void PrettyPrinters::printIRCopyInstruction(
 
     std::cout << " = ";
 
-    auto src = copyInstruction->getSrc();
+    auto src = copyInstruction.getSrc();
     if (!src) {
         throw std::logic_error(
             "Source value is null while printing IR copy instruction");
     }
 
-    if (auto constantValue =
-            std::dynamic_pointer_cast<IR::ConstantValue>(src)) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(src)) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -465,7 +438,7 @@ void PrettyPrinters::printIRCopyInstruction(
         }
     }
     else if (auto variableValue =
-                 std::dynamic_pointer_cast<IR::VariableValue>(src)) {
+                 dynamic_cast<const IR::VariableValue *>(src)) {
         std::cout << variableValue->getIdentifier();
     }
     else {
@@ -477,27 +450,26 @@ void PrettyPrinters::printIRCopyInstruction(
 }
 
 void PrettyPrinters::printIRJumpInstruction(
-    const std::shared_ptr<IR::JumpInstruction> &jumpInstruction) {
-    std::cout << "    Jump(" << jumpInstruction->getTarget() << ")\n";
+    const IR::JumpInstruction &jumpInstruction) {
+    std::cout << "    Jump(" << jumpInstruction.getTarget() << ")\n";
 }
 
 void PrettyPrinters::printIRJumpIfZeroInstruction(
-    const std::shared_ptr<IR::JumpIfZeroInstruction> &jumpIfZeroInstruction) {
+    const IR::JumpIfZeroInstruction &jumpIfZeroInstruction) {
     std::cout << "    JumpIfZero(";
 
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            jumpIfZeroInstruction->getCondition())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            jumpIfZeroInstruction.getCondition())) {
         std::cout << variableValue->getIdentifier();
     }
-    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 jumpIfZeroInstruction->getCondition())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    else if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+                 jumpIfZeroInstruction.getCondition())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -506,27 +478,25 @@ void PrettyPrinters::printIRJumpIfZeroInstruction(
         }
     }
 
-    std::cout << ", " << jumpIfZeroInstruction->getTarget() << ")\n";
+    std::cout << ", " << jumpIfZeroInstruction.getTarget() << ")\n";
 }
 
 void PrettyPrinters::printIRJumpIfNotZeroInstruction(
-    const std::shared_ptr<IR::JumpIfNotZeroInstruction>
-        &jumpIfNotZeroInstruction) {
+    const IR::JumpIfNotZeroInstruction &jumpIfNotZeroInstruction) {
     std::cout << "    JumpIfNotZero(";
 
-    if (auto variableValue = std::dynamic_pointer_cast<IR::VariableValue>(
-            jumpIfNotZeroInstruction->getCondition())) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            jumpIfNotZeroInstruction.getCondition())) {
         std::cout << variableValue->getIdentifier();
     }
-    else if (auto constantValue = std::dynamic_pointer_cast<IR::ConstantValue>(
-                 jumpIfNotZeroInstruction->getCondition())) {
-        if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+    else if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+                 jumpIfNotZeroInstruction.getCondition())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                 constantValue->getASTConstant())) {
             std::cout << constantInt->getValue();
         }
-        else if (auto constantLong =
-                     std::dynamic_pointer_cast<AST::ConstantLong>(
-                         constantValue->getASTConstant())) {
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
         else {
@@ -539,21 +509,19 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
                                "jump if not zero instruction");
     }
 
-    std::cout << ", " << jumpIfNotZeroInstruction->getTarget() << ")\n";
+    std::cout << ", " << jumpIfNotZeroInstruction.getTarget() << ")\n";
 }
 
 void PrettyPrinters::printIRLabelInstruction(
-    const std::shared_ptr<IR::LabelInstruction> &labelInstruction) {
-    std::cout << "    Label(" << labelInstruction->getLabel() << ")\n";
+    const IR::LabelInstruction &labelInstruction) {
+    std::cout << "    Label(" << labelInstruction.getLabel() << ")\n";
 }
 
 void PrettyPrinters::printIRFunctionCallInstruction(
-    const std::shared_ptr<IR::FunctionCallInstruction>
-        &functionCallInstruction) {
-    auto dst = functionCallInstruction->getDst();
+    const IR::FunctionCallInstruction &functionCallInstruction) {
+    auto dst = functionCallInstruction.getDst();
 
-    if (auto variableValue =
-            std::dynamic_pointer_cast<IR::VariableValue>(dst)) {
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(dst)) {
         std::cout << "    " << variableValue->getIdentifier() << " = ";
     }
     else {
@@ -561,24 +529,24 @@ void PrettyPrinters::printIRFunctionCallInstruction(
                                "IR function call instruction");
     }
 
-    auto functionIdentifier = functionCallInstruction->getFunctionIdentifier();
+    auto functionIdentifier = functionCallInstruction.getFunctionIdentifier();
     std::cout << functionIdentifier << "(";
 
-    auto &args = *functionCallInstruction->getArgs();
+    auto &args = functionCallInstruction.getArgs();
     for (auto it = args.begin(); it != args.end(); it++) {
         auto &arg = *it;
         if (auto variableValue =
-                std::dynamic_pointer_cast<IR::VariableValue>(arg)) {
+                dynamic_cast<const IR::VariableValue *>(arg.get())) {
             std::cout << variableValue->getIdentifier();
         }
         else if (auto constantValue =
-                     std::dynamic_pointer_cast<IR::ConstantValue>(arg)) {
-            if (auto constantInt = std::dynamic_pointer_cast<AST::ConstantInt>(
+                     dynamic_cast<const IR::ConstantValue *>(arg.get())) {
+            if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
                     constantValue->getASTConstant())) {
                 std::cout << constantInt->getValue();
             }
             else if (auto constantLong =
-                         std::dynamic_pointer_cast<AST::ConstantLong>(
+                         dynamic_cast<const AST::ConstantLong *>(
                              constantValue->getASTConstant())) {
                 std::cout << constantLong->getValue();
             }
@@ -603,19 +571,17 @@ void PrettyPrinters::printIRFunctionCallInstruction(
  * Start: Functions to print the assembly program to stdout.
  */
 void PrettyPrinters::printAssemblyProgram(
-    const std::shared_ptr<Assembly::Program> &assemblyProgram) {
-    auto topLevels = assemblyProgram->getTopLevels();
+    const Assembly::Program &assemblyProgram) {
+    auto &topLevels = assemblyProgram.getTopLevels();
 
-    for (auto topLevel : *topLevels) {
-        if (auto functionDefinition =
-                std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
-                    topLevel)) {
-            printAssyFunctionDefinition(functionDefinition);
+    for (const auto &topLevel : topLevels) {
+        if (auto *functionDefinition =
+                dynamic_cast<Assembly::FunctionDefinition *>(topLevel.get())) {
+            printAssyFunctionDefinition(*functionDefinition);
         }
-        else if (auto staticVariable =
-                     std::dynamic_pointer_cast<Assembly::StaticVariable>(
-                         topLevel)) {
-            printAssyStaticVariable(staticVariable);
+        else if (auto *staticVariable =
+                     dynamic_cast<Assembly::StaticVariable *>(topLevel.get())) {
+            printAssyStaticVariable(*staticVariable);
         }
     }
 
@@ -628,10 +594,10 @@ void PrettyPrinters::printAssemblyProgram(
 }
 
 void PrettyPrinters::printAssyFunctionDefinition(
-    const std::shared_ptr<Assembly::FunctionDefinition> &functionDefinition) {
-    std::string functionName = functionDefinition->getFunctionIdentifier();
+    const Assembly::FunctionDefinition &functionDefinition) {
+    std::string functionName = functionDefinition.getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
-    auto global = functionDefinition->isGlobal();
+    auto global = functionDefinition.isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
     if (!global) {
         globalDirective = "";
@@ -644,14 +610,14 @@ void PrettyPrinters::printAssyFunctionDefinition(
     std::cout << "    pushq %rbp\n";
     std::cout << "    movq %rsp, %rbp\n";
 
-    for (auto instruction : *functionDefinition->getFunctionBody()) {
-        printAssyInstruction(instruction);
+    for (const auto &instruction : functionDefinition.getFunctionBody()) {
+        printAssyInstruction(*instruction);
     }
 }
 
 void PrettyPrinters::printAssyStaticVariable(
-    const std::shared_ptr<Assembly::StaticVariable> &staticVariable) {
-    auto alignment = staticVariable->getAlignment();
+    const Assembly::StaticVariable &staticVariable) {
+    auto alignment = staticVariable.getAlignment();
     auto alignmentInStr = std::to_string(alignment);
     auto alignDirective = ".align " + alignmentInStr;
 // If the underlying OS is macOS, use the `.balign 4` directive instead of the
@@ -660,22 +626,21 @@ void PrettyPrinters::printAssyStaticVariable(
     alignDirective = ".balign " + alignmentInStr;
 #endif
 
-    auto variableIdentifier = staticVariable->getIdentifier();
+    auto variableIdentifier = staticVariable.getIdentifier();
     prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
 
-    auto global = staticVariable->isGlobal();
+    auto global = staticVariable.isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
     if (!global) {
         globalDirective = "";
     }
 
-    auto staticInit = staticVariable->getStaticInit();
+    auto staticInit = staticVariable.getStaticInit();
     bool isZeroInit = false;
-    if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+    if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
         isZeroInit = std::get<int>(intInit->getValue()) == 0;
     }
-    else if (auto longInit =
-                 std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+    else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         isZeroInit = std::get<long>(longInit->getValue()) == 0L;
     }
     else {
@@ -689,13 +654,12 @@ void PrettyPrinters::printAssyStaticVariable(
         std::cout << "    .data\n";
         std::cout << "    " << alignDirective << "\n";
         std::cout << variableIdentifier << ":\n";
-        if (auto intInit =
-                std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
             std::cout << "    .long " << std::get<int>(intInit->getValue())
                       << "\n";
         }
         else if (auto longInit =
-                     std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+                     dynamic_cast<const AST::LongInit *>(staticInit)) {
             std::cout << "    .quad " << std::get<long>(longInit->getValue())
                       << "\n";
         }
@@ -705,87 +669,81 @@ void PrettyPrinters::printAssyStaticVariable(
         std::cout << "    .bss\n";
         std::cout << "    " << alignDirective << "\n";
         std::cout << variableIdentifier << ":\n";
-        if (auto intInit =
-                std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        if (dynamic_cast<const AST::IntInit *>(staticInit)) {
             std::cout << "    .zero 4\n";
         }
-        else if (auto longInit =
-                     std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+        else if (dynamic_cast<const AST::LongInit *>(staticInit)) {
             std::cout << "    .zero 8\n";
         }
     }
 }
 
 void PrettyPrinters::printAssyInstruction(
-    const std::shared_ptr<Assembly::Instruction> &instruction) {
+    const Assembly::Instruction &instruction) {
     if (auto movInstruction =
-            std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
-        printAssyMovInstruction(movInstruction);
+            dynamic_cast<const Assembly::MovInstruction *>(&instruction)) {
+        printAssyMovInstruction(*movInstruction);
     }
     else if (auto retInstruction =
-                 std::dynamic_pointer_cast<Assembly::RetInstruction>(
-                     instruction)) {
-        printAssyRetInstruction(retInstruction);
+                 dynamic_cast<const Assembly::RetInstruction *>(&instruction)) {
+        printAssyRetInstruction(*retInstruction);
     }
     else if (auto pushInstruction =
-                 std::dynamic_pointer_cast<Assembly::PushInstruction>(
-                     instruction)) {
-        printAssyPushInstruction(pushInstruction);
+                 dynamic_cast<const Assembly::PushInstruction *>(
+                     &instruction)) {
+        printAssyPushInstruction(*pushInstruction);
     }
     else if (auto callInstruction =
-                 std::dynamic_pointer_cast<Assembly::CallInstruction>(
-                     instruction)) {
-        printAssyCallInstruction(callInstruction);
+                 dynamic_cast<const Assembly::CallInstruction *>(
+                     &instruction)) {
+        printAssyCallInstruction(*callInstruction);
     }
     else if (auto unaryInstruction =
-                 std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
-                     instruction)) {
-        printAssyUnaryInstruction(unaryInstruction);
+                 dynamic_cast<const Assembly::UnaryInstruction *>(
+                     &instruction)) {
+        printAssyUnaryInstruction(*unaryInstruction);
     }
     else if (auto binaryInstruction =
-                 std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
-                     instruction)) {
-        printAssyBinaryInstruction(binaryInstruction);
+                 dynamic_cast<const Assembly::BinaryInstruction *>(
+                     &instruction)) {
+        printAssyBinaryInstruction(*binaryInstruction);
     }
     else if (auto cmpInstruction =
-                 std::dynamic_pointer_cast<Assembly::CmpInstruction>(
-                     instruction)) {
-        printAssyCmpInstruction(cmpInstruction);
+                 dynamic_cast<const Assembly::CmpInstruction *>(&instruction)) {
+        printAssyCmpInstruction(*cmpInstruction);
     }
     else if (auto idivInstruction =
-                 std::dynamic_pointer_cast<Assembly::IdivInstruction>(
-                     instruction)) {
-        printAssyIdivInstruction(idivInstruction);
+                 dynamic_cast<const Assembly::IdivInstruction *>(
+                     &instruction)) {
+        printAssyIdivInstruction(*idivInstruction);
     }
     else if (auto movsxInstruction =
-                 std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
-                     instruction)) {
-        printAssyMovsxInstruction(movsxInstruction);
+                 dynamic_cast<const Assembly::MovsxInstruction *>(
+                     &instruction)) {
+        printAssyMovsxInstruction(*movsxInstruction);
     }
     else if (auto cdqInstruction =
-                 std::dynamic_pointer_cast<Assembly::CdqInstruction>(
-                     instruction)) {
-        printAssyCdqInstruction(cdqInstruction);
+                 dynamic_cast<const Assembly::CdqInstruction *>(&instruction)) {
+        printAssyCdqInstruction(*cdqInstruction);
     }
     else if (auto jmpInstruction =
-                 std::dynamic_pointer_cast<Assembly::JmpInstruction>(
-                     instruction)) {
-        printAssyJmpInstruction(jmpInstruction);
+                 dynamic_cast<const Assembly::JmpInstruction *>(&instruction)) {
+        printAssyJmpInstruction(*jmpInstruction);
     }
     else if (auto jmpCCInstruction =
-                 std::dynamic_pointer_cast<Assembly::JmpCCInstruction>(
-                     instruction)) {
-        printAssyJmpCCInstruction(jmpCCInstruction);
+                 dynamic_cast<const Assembly::JmpCCInstruction *>(
+                     &instruction)) {
+        printAssyJmpCCInstruction(*jmpCCInstruction);
     }
     else if (auto setCCInstruction =
-                 std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
-                     instruction)) {
-        printAssySetCCInstruction(setCCInstruction);
+                 dynamic_cast<const Assembly::SetCCInstruction *>(
+                     &instruction)) {
+        printAssySetCCInstruction(*setCCInstruction);
     }
     else if (auto labelInstruction =
-                 std::dynamic_pointer_cast<Assembly::LabelInstruction>(
-                     instruction)) {
-        printAssyLabelInstruction(labelInstruction);
+                 dynamic_cast<const Assembly::LabelInstruction *>(
+                     &instruction)) {
+        printAssyLabelInstruction(*labelInstruction);
     }
     else {
         throw std::logic_error(
@@ -794,17 +752,16 @@ void PrettyPrinters::printAssyInstruction(
 }
 
 void PrettyPrinters::printAssyMovInstruction(
-    const std::shared_ptr<Assembly::MovInstruction> &movInstruction) {
-    auto type = movInstruction->getType();
+    const Assembly::MovInstruction &movInstruction) {
+    auto type = movInstruction.getType();
 
     std::string instructionName;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         instructionName = "movl";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         instructionName = "movq";
         registerSize = 8;
     }
@@ -813,18 +770,16 @@ void PrettyPrinters::printAssyMovInstruction(
             "Invalid type while printing assembly mov instruction");
     }
 
-    auto src = movInstruction->getSrc();
+    auto src = movInstruction.getSrc();
     std::string srcStr;
-    if (auto srcReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
+    if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
         srcStr = srcReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto srcImm =
-                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+                 dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
         // Use long values for quadword instructions and int values for longword
         // instructions in order to avoid (potential) overflow issues.
-        if (auto quadword =
-                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        if (dynamic_cast<const Assembly::Quadword *>(type)) {
             srcStr = "$" + std::to_string(srcImm->getImmediateLong());
         }
         else {
@@ -832,12 +787,11 @@ void PrettyPrinters::printAssyMovInstruction(
         }
     }
     else if (auto srcStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
+                 dynamic_cast<const Assembly::StackOperand *>(src)) {
         srcStr = std::to_string(srcStack->getOffset()) + "(" +
                  srcStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto srcData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+    else if (auto srcData = dynamic_cast<const Assembly::DataOperand *>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         srcStr = identifier + "(%rip)";
@@ -847,19 +801,17 @@ void PrettyPrinters::printAssyMovInstruction(
             "Invalid source type while printing assembly mov instruction");
     }
 
-    auto dst = movInstruction->getDst();
+    auto dst = movInstruction.getDst();
     std::string dstStr;
-    if (auto dstReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
+    if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
         dstStr = dstReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto dstStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
+                 dynamic_cast<const Assembly::StackOperand *>(dst)) {
         dstStr = std::to_string(dstStack->getOffset()) + "(" +
                  dstStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto dstData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+    else if (auto dstData = dynamic_cast<const Assembly::DataOperand *>(dst)) {
         auto identifier = dstData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         dstStr = identifier + "(%rip)";
@@ -874,24 +826,22 @@ void PrettyPrinters::printAssyMovInstruction(
 }
 
 void PrettyPrinters::printAssyMovsxInstruction(
-    const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction) {
-    auto src = movsxInstruction->getSrc();
+    const Assembly::MovsxInstruction &movsxInstruction) {
+    auto src = movsxInstruction.getSrc();
     std::string srcStr;
-    if (auto srcReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
+    if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
         srcStr = srcReg->getRegisterInBytesInStr(4);
     }
     else if (auto srcImm =
-                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+                 dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
         srcStr = "$" + std::to_string(srcImm->getImmediateLong());
     }
     else if (auto srcStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
+                 dynamic_cast<const Assembly::StackOperand *>(src)) {
         srcStr = std::to_string(srcStack->getOffset()) + "(" +
                  srcStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto srcData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+    else if (auto srcData = dynamic_cast<const Assembly::DataOperand *>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         srcStr = identifier + "(%rip)";
@@ -908,19 +858,17 @@ void PrettyPrinters::printAssyMovsxInstruction(
         throw std::logic_error(msg.str());
     }
 
-    auto dst = movsxInstruction->getDst();
+    auto dst = movsxInstruction.getDst();
     std::string dstStr;
-    if (auto dstReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
+    if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
         dstStr = dstReg->getRegisterInBytesInStr(8);
     }
     else if (auto dstStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
+                 dynamic_cast<const Assembly::StackOperand *>(dst)) {
         dstStr = std::to_string(dstStack->getOffset()) + "(" +
                  dstStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto dstData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+    else if (auto dstData = dynamic_cast<const Assembly::DataOperand *>(dst)) {
         auto identifier = dstData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         dstStr = identifier + "(%rip)";
@@ -934,8 +882,7 @@ void PrettyPrinters::printAssyMovsxInstruction(
 }
 
 void PrettyPrinters::printAssyRetInstruction(
-    [[maybe_unused]] const std::shared_ptr<Assembly::RetInstruction>
-        &retInstruction) {
+    [[maybe_unused]] const Assembly::RetInstruction &retInstruction) {
     // Print the function epilogue before printing the return
     // instruction.
     std::cout << "    movq %rbp, %rsp\n";
@@ -944,27 +891,25 @@ void PrettyPrinters::printAssyRetInstruction(
 }
 
 void PrettyPrinters::printAssyPushInstruction(
-    const std::shared_ptr<Assembly::PushInstruction> &pushInstruction) {
-    auto operand = pushInstruction->getOperand();
+    const Assembly::PushInstruction &pushInstruction) {
+    auto operand = pushInstruction.getOperand();
     if (auto stackOperand =
-            std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+            dynamic_cast<const Assembly::StackOperand *>(operand)) {
         std::cout << "    pushq" << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto regOperand =
-                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                     operand)) {
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         std::cout << "    pushq" << " "
                   << regOperand->getRegisterInBytesInStr(8) << "\n";
     }
     else if (auto immOperand =
-                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
-                     operand)) {
+                 dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         std::cout << "    pushq" << " $" << immOperand->getImmediateLong()
                   << "\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << "    pushq" << " " << identifier << "(%rip)\n";
@@ -976,8 +921,8 @@ void PrettyPrinters::printAssyPushInstruction(
 }
 
 void PrettyPrinters::printAssyCallInstruction(
-    const std::shared_ptr<Assembly::CallInstruction> &callInstruction) {
-    std::string functionName = callInstruction->getFunctionIdentifier();
+    const Assembly::CallInstruction &callInstruction) {
+    std::string functionName = callInstruction.getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
     std::cout << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
@@ -989,24 +934,19 @@ void PrettyPrinters::printAssyCallInstruction(
 }
 
 void PrettyPrinters::printAssyUnaryInstruction(
-    const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction) {
-    auto unaryOperator = unaryInstruction->getUnaryOperator();
-    auto type = unaryInstruction->getType();
+    const Assembly::UnaryInstruction &unaryInstruction) {
+    auto unaryOperator = unaryInstruction.getUnaryOperator();
+    auto type = unaryInstruction.getType();
 
     std::string instructionName;
-    if (auto negateOperator =
-            std::dynamic_pointer_cast<Assembly::NegateOperator>(
-                unaryOperator)) {
+    if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator)) {
         instructionName = "neg";
     }
-    else if (auto complementOperator =
-                 std::dynamic_pointer_cast<Assembly::ComplementOperator>(
-                     unaryOperator)) {
+    else if (dynamic_cast<const Assembly::ComplementOperator *>(
+                 unaryOperator)) {
         instructionName = "not";
     }
-    else if (auto notOperator =
-                 std::dynamic_pointer_cast<Assembly::NotOperator>(
-                     unaryOperator)) {
+    else if (dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) {
         instructionName = "not";
     }
     else {
@@ -1016,12 +956,11 @@ void PrettyPrinters::printAssyUnaryInstruction(
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -1032,19 +971,19 @@ void PrettyPrinters::printAssyUnaryInstruction(
 
     std::cout << "    " << instructionName << typeSuffix;
 
-    auto operand = unaryInstruction->getOperand();
+    auto operand = unaryInstruction.getOperand();
     if (auto regOperand =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         std::cout << " " << regOperand->getRegisterInBytesInStr(registerSize)
                   << "\n";
     }
     else if (auto stackOperand =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         std::cout << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
@@ -1056,23 +995,18 @@ void PrettyPrinters::printAssyUnaryInstruction(
 }
 
 void PrettyPrinters::printAssyBinaryInstruction(
-    const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction) {
-    auto binaryOperator = binaryInstruction->getBinaryOperator();
-    auto type = binaryInstruction->getType();
+    const Assembly::BinaryInstruction &binaryInstruction) {
+    auto binaryOperator = binaryInstruction.getBinaryOperator();
+    auto type = binaryInstruction.getType();
 
     std::string instructionName;
-    if (auto addOperator =
-            std::dynamic_pointer_cast<Assembly::AddOperator>(binaryOperator)) {
+    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator)) {
         instructionName = "add";
     }
-    else if (auto subtractOperator =
-                 std::dynamic_pointer_cast<Assembly::SubtractOperator>(
-                     binaryOperator)) {
+    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
         instructionName = "sub";
     }
-    else if (auto multiplyOperator =
-                 std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
-                     binaryOperator)) {
+    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
         instructionName = "imul";
     }
     else {
@@ -1082,12 +1016,11 @@ void PrettyPrinters::printAssyBinaryInstruction(
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -1098,11 +1031,10 @@ void PrettyPrinters::printAssyBinaryInstruction(
 
     std::cout << "    " << instructionName << typeSuffix;
 
-    auto operand1 = binaryInstruction->getOperand1();
+    auto operand1 = binaryInstruction.getOperand1();
     if (auto operand1Imm =
-            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
-        if (auto quadword =
-                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            dynamic_cast<const Assembly::ImmediateOperand *>(operand1)) {
+        if (dynamic_cast<const Assembly::Quadword *>(type)) {
             std::cout << " $" << operand1Imm->getImmediateLong() << ",";
         }
         else {
@@ -1110,36 +1042,35 @@ void PrettyPrinters::printAssyBinaryInstruction(
         }
     }
     else if (auto operand1Reg =
-                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                     operand1)) {
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand1)) {
         std::cout << " " << operand1Reg->getRegisterInBytesInStr(registerSize)
                   << ",";
     }
     else if (auto operand1Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand1)) {
         std::cout << " " << operand1Stack->getOffset() << "("
                   << operand1Stack->getReservedRegisterInStr() << "),";
     }
     else if (auto operand1Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip),";
     }
 
-    auto operand2 = binaryInstruction->getOperand2();
+    auto operand2 = binaryInstruction.getOperand2();
     if (auto operand2Reg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand2)) {
         std::cout << " " << operand2Reg->getRegisterInBytesInStr(registerSize)
                   << "\n";
     }
     else if (auto operand2Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand2)) {
         std::cout << " " << operand2Stack->getOffset() << "("
                   << operand2Stack->getReservedRegisterInStr() << ")\n";
     }
     else if (auto operand2Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
@@ -1151,17 +1082,16 @@ void PrettyPrinters::printAssyBinaryInstruction(
 }
 
 void PrettyPrinters::printAssyCmpInstruction(
-    const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction) {
-    auto type = cmpInstruction->getType();
+    const Assembly::CmpInstruction &cmpInstruction) {
+    auto type = cmpInstruction.getType();
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -1172,11 +1102,10 @@ void PrettyPrinters::printAssyCmpInstruction(
 
     std::cout << "    cmp" << typeSuffix;
 
-    auto operand1 = cmpInstruction->getOperand1();
+    auto operand1 = cmpInstruction.getOperand1();
     if (auto operand1Imm =
-            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
-        if (auto quadword =
-                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            dynamic_cast<const Assembly::ImmediateOperand *>(operand1)) {
+        if (dynamic_cast<const Assembly::Quadword *>(type)) {
             std::cout << " $" << operand1Imm->getImmediateLong();
         }
         else {
@@ -1184,17 +1113,16 @@ void PrettyPrinters::printAssyCmpInstruction(
         }
     }
     else if (auto operand1Reg =
-                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                     operand1)) {
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand1)) {
         std::cout << " " << operand1Reg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto operand1Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand1)) {
         std::cout << " " << operand1Stack->getOffset() << "("
                   << operand1Stack->getReservedRegisterInStr() << ")";
     }
     else if (auto operand1Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)";
@@ -1202,19 +1130,19 @@ void PrettyPrinters::printAssyCmpInstruction(
 
     std::cout << ",";
 
-    auto operand2 = cmpInstruction->getOperand2();
+    auto operand2 = cmpInstruction.getOperand2();
     if (auto operand2Reg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand2)) {
         std::cout << " " << operand2Reg->getRegisterInBytesInStr(registerSize)
                   << "\n";
     }
     else if (auto operand2Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand2)) {
         std::cout << " " << operand2Stack->getOffset() << "("
                   << operand2Stack->getReservedRegisterInStr() << ")\n";
     }
     else if (auto operand2Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
@@ -1222,17 +1150,16 @@ void PrettyPrinters::printAssyCmpInstruction(
 }
 
 void PrettyPrinters::printAssyIdivInstruction(
-    const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction) {
-    auto type = idivInstruction->getType();
+    const Assembly::IdivInstruction &idivInstruction) {
+    auto type = idivInstruction.getType();
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -1243,19 +1170,19 @@ void PrettyPrinters::printAssyIdivInstruction(
 
     std::cout << "    idiv" << typeSuffix;
 
-    auto operand = idivInstruction->getOperand();
+    auto operand = idivInstruction.getOperand();
     if (auto regOperand =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         std::cout << " " << regOperand->getRegisterInBytesInStr(registerSize)
                   << "\n";
     }
     else if (auto stackOperand =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         std::cout << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
@@ -1267,14 +1194,13 @@ void PrettyPrinters::printAssyIdivInstruction(
 }
 
 void PrettyPrinters::printAssyCdqInstruction(
-    const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction) {
-    auto type = cdqInstruction->getType();
+    const Assembly::CdqInstruction &cdqInstruction) {
+    auto type = cdqInstruction.getType();
 
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         std::cout << "    cdq\n";
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         std::cout << "    cqo\n";
     }
     else {
@@ -1284,30 +1210,30 @@ void PrettyPrinters::printAssyCdqInstruction(
 }
 
 void PrettyPrinters::printAssyJmpInstruction(
-    const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction) {
-    auto label = jmpInstruction->getLabel();
+    const Assembly::JmpInstruction &jmpInstruction) {
+    auto label = jmpInstruction.getLabel();
     std::cout << "    jmp .L" << label << "\n";
 }
 
 void PrettyPrinters::printAssyJmpCCInstruction(
-    const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction) {
-    auto condCode = jmpCCInstruction->getCondCode();
-    if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
+    const Assembly::JmpCCInstruction &jmpCCInstruction) {
+    auto condCode = jmpCCInstruction.getCondCode();
+    if (dynamic_cast<const Assembly::E *>(condCode)) {
         std::cout << "    je";
     }
-    else if (auto ne = std::dynamic_pointer_cast<Assembly::NE>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
         std::cout << "    jne";
     }
-    else if (auto g = std::dynamic_pointer_cast<Assembly::G>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode)) {
         std::cout << "    jg";
     }
-    else if (auto ge = std::dynamic_pointer_cast<Assembly::GE>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
         std::cout << "    jge";
     }
-    else if (auto l = std::dynamic_pointer_cast<Assembly::L>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode)) {
         std::cout << "    jl";
     }
-    else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
         std::cout << "    jle";
     }
     else {
@@ -1315,29 +1241,29 @@ void PrettyPrinters::printAssyJmpCCInstruction(
                                "assembly jmpcc instruction");
     }
 
-    auto label = jmpCCInstruction->getLabel();
+    auto label = jmpCCInstruction.getLabel();
     std::cout << " .L" << label << "\n";
 }
 
 void PrettyPrinters::printAssySetCCInstruction(
-    const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction) {
-    auto condCode = setCCInstruction->getCondCode();
-    if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
+    const Assembly::SetCCInstruction &setCCInstruction) {
+    auto condCode = setCCInstruction.getCondCode();
+    if (dynamic_cast<const Assembly::E *>(condCode)) {
         std::cout << "    sete";
     }
-    else if (auto ne = std::dynamic_pointer_cast<Assembly::NE>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
         std::cout << "    setne";
     }
-    else if (auto g = std::dynamic_pointer_cast<Assembly::G>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode)) {
         std::cout << "    setg";
     }
-    else if (auto ge = std::dynamic_pointer_cast<Assembly::GE>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
         std::cout << "    setge";
     }
-    else if (auto l = std::dynamic_pointer_cast<Assembly::L>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode)) {
         std::cout << "    setl";
     }
-    else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
         std::cout << "    setle";
     }
     else {
@@ -1345,18 +1271,18 @@ void PrettyPrinters::printAssySetCCInstruction(
                                "assembly setcc instruction");
     }
 
-    auto operand = setCCInstruction->getOperand();
+    auto operand = setCCInstruction.getOperand();
     if (auto regOperand =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         std::cout << " " << regOperand->getRegisterInBytesInStr(1) << "\n";
     }
     else if (auto stackOperand =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         std::cout << " " << stackOperand->getOffset() << "("
                   << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         std::cout << " " << identifier << "(%rip)\n";
@@ -1368,8 +1294,8 @@ void PrettyPrinters::printAssySetCCInstruction(
 }
 
 void PrettyPrinters::printAssyLabelInstruction(
-    const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction) {
-    auto label = labelInstruction->getLabel();
+    const Assembly::LabelInstruction &labelInstruction) {
+    auto label = labelInstruction.getLabel();
     std::cout << ".L" << label << ":\n";
 }
 

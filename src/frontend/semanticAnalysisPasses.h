@@ -79,7 +79,7 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      * @param program The program to resolve.
      * @return The number of resolved identifiers.
      */
-    int resolveProgram(std::shared_ptr<Program> program);
+    int resolveProgram(Program &program);
 
   private:
     /**
@@ -110,10 +110,9 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      *
      * @param declaration The variable declaration to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved variable declaration.
      */
-    std::shared_ptr<Declaration> resolveFileScopeVariableDeclaration(
-        std::shared_ptr<Declaration> declaration,
+    void resolveFileScopeVariableDeclaration(
+        VariableDeclaration *declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -121,10 +120,9 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      *
      * @param declaration The variable declaration to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved variable declaration.
      */
-    std::shared_ptr<VariableDeclaration> resolveLocalVariableDeclaration(
-        std::shared_ptr<VariableDeclaration> declaration,
+    void resolveLocalVariableDeclaration(
+        VariableDeclaration *declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -132,10 +130,9 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      *
      * @param statement The statement to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved statement.
      */
-    std::shared_ptr<Statement>
-    resolveStatement(std::shared_ptr<Statement> statement,
+    void
+    resolveStatement(Statement *statement,
                      std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -143,10 +140,9 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      *
      * @param expression The expression to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved expression.
      */
-    std::shared_ptr<Expression>
-    resolveExpression(std::shared_ptr<Expression> expression,
+    void
+    resolveExpression(Expression *expression,
                       std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -154,21 +150,18 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      *
      * @param block The block to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved block.
      */
-    std::shared_ptr<Block>
-    resolveBlock(std::shared_ptr<Block> block,
-                 std::unordered_map<std::string, MapEntry> &identifierMap);
+    void resolveBlock(Block *block,
+                      std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
      * Resolve a for-init.
      *
      * @param forInit The for-init to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved for-init.
      */
-    std::shared_ptr<ForInit>
-    resolveForInit(std::shared_ptr<ForInit> forInit,
+    void
+    resolveForInit(ForInit *forInit,
                    std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -176,10 +169,9 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      *
      * @param declaration The function declaration to resolve.
      * @param identifierMap The current identifier map.
-     * @return The resolved function declaration.
      */
-    std::shared_ptr<FunctionDeclaration> resolveFunctionDeclaration(
-        std::shared_ptr<FunctionDeclaration> declaration,
+    void resolveFunctionDeclaration(
+        FunctionDeclaration *declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -207,7 +199,7 @@ class StaticInit {
     /**
      * Pure virtual method to get the value of the static initializer.
      */
-    virtual std::variant<int, long> getValue() = 0;
+    virtual std::variant<int, long> getValue() const = 0;
 };
 
 /**
@@ -222,7 +214,7 @@ class IntInit : public StaticInit {
      */
     constexpr IntInit(int value) : value(value) {}
 
-    std::variant<int, long> getValue() override { return value; }
+    std::variant<int, long> getValue() const override { return value; }
 
   private:
     /**
@@ -240,7 +232,7 @@ class LongInit : public StaticInit {
      */
     constexpr LongInit(long value) : value(value) {}
 
-    std::variant<int, long> getValue() override { return value; }
+    std::variant<int, long> getValue() const override { return value; }
 
   private:
     /**
@@ -275,29 +267,30 @@ class Initial : public InitialValue {
      *
      * @param value The integer or long value of the static initializer.
      */
-    Initial(int value) : staticInit(std::make_shared<IntInit>(value)) {}
+    Initial(int value) : staticInit(std::make_unique<IntInit>(value)) {}
 
     /**
      * Constructors for the initial class with a long parameter.
      *
      * @param value The long value of the static initializer.
      */
-    Initial(long value) : staticInit(std::make_shared<LongInit>(value)) {}
+    Initial(long value) : staticInit(std::make_unique<LongInit>(value)) {}
 
     /**
      * Constructor for the initial class with a static initializer parameter.
      *
      * @param staticInit The static initializer.
      */
-    Initial(std::shared_ptr<StaticInit> staticInit) : staticInit(staticInit) {}
+    explicit Initial(std::unique_ptr<StaticInit> staticInit)
+        : staticInit(std::move(staticInit)) {}
 
-    std::shared_ptr<StaticInit> getStaticInit() { return staticInit; }
+    StaticInit *getStaticInit() const { return staticInit.get(); }
 
   private:
     /**
      * The static initializer.
      */
-    std::shared_ptr<StaticInit> staticInit;
+    std::unique_ptr<StaticInit> staticInit;
 };
 
 /**
@@ -357,10 +350,10 @@ class StaticAttribute : public IdentifierAttribute {
      * @param initialValue The initial value of the static variable.
      * @param global Whether the static variable is global.
      */
-    StaticAttribute(std::shared_ptr<InitialValue> initialValue, bool global)
-        : initialValue(initialValue), global(global) {}
+    StaticAttribute(std::unique_ptr<InitialValue> initialValue, bool global)
+        : initialValue(std::move(initialValue)), global(global) {}
 
-    std::shared_ptr<InitialValue> getInitialValue() { return initialValue; }
+    InitialValue *getInitialValue() { return initialValue.get(); }
 
     constexpr bool isGlobal() { return global; }
 
@@ -368,7 +361,7 @@ class StaticAttribute : public IdentifierAttribute {
     /**
      * The initial value of the static variable.
      */
-    std::shared_ptr<InitialValue> initialValue;
+    std::unique_ptr<InitialValue> initialValue;
 
     /**
      * Whether the static variable is global.
@@ -398,7 +391,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      *
      * @param program The program to type check.
      */
-    void typeCheckProgram(std::shared_ptr<Program> program);
+    void typeCheckProgram(Program &program);
 
   private:
     /**
@@ -412,9 +405,9 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param varType The type of the variable.
      * @param constantExpr The constant expression to
      */
-    std::shared_ptr<StaticInit> convertStaticConstantToStaticInit(
-        std::shared_ptr<Type> varType,
-        std::shared_ptr<ConstantExpression> constantExpr);
+    std::unique_ptr<StaticInit>
+    convertStaticConstantToStaticInit(const Type *varType,
+                                      const ConstantExpression *constantExpr);
 
     /**
      * Get the common type between two types.
@@ -422,8 +415,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param type1 The first type.
      * @param type2 The second type.
      */
-    std::shared_ptr<Type> getCommonType(std::shared_ptr<Type> type1,
-                                        std::shared_ptr<Type> type2);
+    std::unique_ptr<Type> getCommonType(const Type *type1, const Type *type2);
 
     /**
      * Convert an expression to a target type.
@@ -431,40 +423,37 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param expression The expression to convert.
      * @param targetType The target type.
      */
-    std::shared_ptr<Expression>
-    convertTo(std::shared_ptr<Expression> expression,
-              std::shared_ptr<Type> targetType);
+    std::unique_ptr<Expression> convertTo(const Expression *expression,
+                                          const Type *targetType);
 
     /**
      * Type check a function declaration.
      *
      * @param declaration The function declaration to type check.
      */
-    void typeCheckFunctionDeclaration(
-        std::shared_ptr<FunctionDeclaration> declaration);
+    void typeCheckFunctionDeclaration(FunctionDeclaration *declaration);
 
     /**
      * Type check a file-scope variable declaration.
      *
      * @param declaration The variable declaration to type check.
      */
-    void typeCheckFileScopeVariableDeclaration(
-        std::shared_ptr<VariableDeclaration> declaration);
+    void
+    typeCheckFileScopeVariableDeclaration(VariableDeclaration *declaration);
 
     /**
      * Type check a local variable declaration.
      *
      * @param declaration The variable declaration to type check.
      */
-    void typeCheckLocalVariableDeclaration(
-        std::shared_ptr<VariableDeclaration> declaration);
+    void typeCheckLocalVariableDeclaration(VariableDeclaration *declaration);
 
     /**
      * Type check an expression.
      *
      * @param expression The expression to type check.
      */
-    void typeCheckExpression(std::shared_ptr<Expression> expression);
+    void typeCheckExpression(Expression *expression);
 
     /**
      * Type check a block.
@@ -473,8 +462,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param enclosingFunctionIdentifier The identifier of the enclosing
      * function.
      */
-    void typeCheckBlock(std::shared_ptr<Block> block,
-                        std::string enclosingFunctionIdentifier);
+    void typeCheckBlock(Block *block, std::string enclosingFunctionIdentifier);
 
     /**
      * Type check a statement.
@@ -483,7 +471,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param enclosingFunctionIdentifier The identifier of the enclosing
      * function.
      */
-    void typeCheckStatement(std::shared_ptr<Statement> statement,
+    void typeCheckStatement(Statement *statement,
                             std::string enclosingFunctionIdentifier);
 
     /**
@@ -491,7 +479,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      *
      * @param forInit The for-init to type check.
      */
-    void typeCheckForInit(std::shared_ptr<ForInit> forInit);
+    void typeCheckForInit(ForInit *forInit);
 };
 
 /**
@@ -504,7 +492,7 @@ class LoopLabelingPass : public SemanticAnalysisPass {
      *
      * @param program The program to label loops in.
      */
-    void labelLoops(std::shared_ptr<Program> program);
+    void labelLoops(Program &program);
 
   private:
     /**
@@ -524,30 +512,24 @@ class LoopLabelingPass : public SemanticAnalysisPass {
      *
      * @param statement The statement to annotate.
      * @param label The label to annotate with.
-     * @return The annotated statement.
      */
-    std::shared_ptr<Statement>
-    annotateStatement(std::shared_ptr<Statement> statement, std::string label);
+    void annotateStatement(Statement *statement, std::string_view label);
 
     /**
      * Label a statement with a label.
      *
      * @param statement The statement to label.
      * @param label The label to use.
-     * @return The labeled statement.
      */
-    std::shared_ptr<Statement>
-    labelStatement(std::shared_ptr<Statement> statement, std::string label);
+    void labelStatement(Statement *statement, std::string_view label);
 
     /**
      * Label a block with a label.
      *
      * @param block The block to label.
      * @param label The label to use.
-     * @return The labeled block.
      */
-    std::shared_ptr<Block> labelBlock(std::shared_ptr<Block> block,
-                                      std::string label);
+    void labelBlock(Block *block, std::string_view label);
 };
 } // namespace AST
 

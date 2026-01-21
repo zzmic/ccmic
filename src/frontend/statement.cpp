@@ -1,62 +1,56 @@
 #include "statement.h"
 #include "block.h"
+#include "forInit.h"
 #include "visitor.h"
 
 namespace AST {
-ReturnStatement::ReturnStatement(std::shared_ptr<Expression> expr)
-    : expr(expr) {}
+ReturnStatement::ReturnStatement(std::unique_ptr<Expression> expr)
+    : expr(std::move(expr)) {}
 
 void ReturnStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Expression> ReturnStatement::getExpression() const {
-    return expr;
+Expression *ReturnStatement::getExpression() const { return expr.get(); }
+
+void ReturnStatement::setExpression(std::unique_ptr<Expression> newExpr) {
+    this->expr = std::move(newExpr);
 }
 
-void ReturnStatement::setExpression(std::shared_ptr<Expression> newExpr) {
-    this->expr = newExpr;
-}
-
-ExpressionStatement::ExpressionStatement(std::shared_ptr<Expression> expr)
-    : expr(expr) {}
+ExpressionStatement::ExpressionStatement(std::unique_ptr<Expression> expr)
+    : expr(std::move(expr)) {}
 
 void ExpressionStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Expression> ExpressionStatement::getExpression() const {
-    return expr;
-}
+Expression *ExpressionStatement::getExpression() const { return expr.get(); }
 
-IfStatement::IfStatement(
-    std::shared_ptr<Expression> condition,
-    std::shared_ptr<Statement> thenStatement,
-    std::optional<std::shared_ptr<Statement>> elseOptStatement)
-    : condition(condition), thenStatement(thenStatement),
-      elseOptStatement(elseOptStatement) {}
+IfStatement::IfStatement(std::unique_ptr<Expression> condition,
+                         std::unique_ptr<Statement> thenStatement,
+                         std::unique_ptr<Statement> elseOptStatement)
+    : condition(std::move(condition)), thenStatement(std::move(thenStatement)),
+      elseOptStatement(std::move(elseOptStatement)) {}
 
-IfStatement::IfStatement(std::shared_ptr<Expression> condition,
-                         std::shared_ptr<Statement> thenStatement)
-    : condition(condition), thenStatement(thenStatement) {}
+IfStatement::IfStatement(std::unique_ptr<Expression> condition,
+                         std::unique_ptr<Statement> thenStatement)
+    : condition(std::move(condition)), thenStatement(std::move(thenStatement)),
+      elseOptStatement(nullptr) {}
 
 void IfStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Expression> IfStatement::getCondition() const {
-    return condition;
+Expression *IfStatement::getCondition() const { return condition.get(); }
+
+Statement *IfStatement::getThenStatement() const { return thenStatement.get(); }
+
+Statement *IfStatement::getElseOptStatement() const {
+    return elseOptStatement.get();
 }
 
-std::shared_ptr<Statement> IfStatement::getThenStatement() const {
-    return thenStatement;
-}
+CompoundStatement::CompoundStatement(std::unique_ptr<Block> block)
+    : block(std::move(block)) {}
 
-std::optional<std::shared_ptr<Statement>>
-IfStatement::getElseOptStatement() const {
-    return elseOptStatement;
-}
-
-CompoundStatement::CompoundStatement(std::shared_ptr<Block> block)
-    : block(block) {}
+CompoundStatement::~CompoundStatement() = default;
 
 void CompoundStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Block> CompoundStatement::getBlock() const { return block; }
+Block *CompoundStatement::getBlock() const { return block.get(); }
 
 void BreakStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -74,17 +68,15 @@ void ContinueStatement::setLabel(std::string_view newLabel) {
     this->label = newLabel;
 }
 
-WhileStatement::WhileStatement(std::shared_ptr<Expression> condition,
-                               std::shared_ptr<Statement> body)
-    : condition(condition), body(body) {}
+WhileStatement::WhileStatement(std::unique_ptr<Expression> condition,
+                               std::unique_ptr<Statement> body)
+    : condition(std::move(condition)), body(std::move(body)) {}
 
 void WhileStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Expression> WhileStatement::getCondition() const {
-    return condition;
-}
+Expression *WhileStatement::getCondition() const { return condition.get(); }
 
-std::shared_ptr<Statement> WhileStatement::getBody() const { return body; }
+Statement *WhileStatement::getBody() const { return body.get(); }
 
 const std::string &WhileStatement::getLabel() const { return label; }
 
@@ -92,17 +84,15 @@ void WhileStatement::setLabel(std::string_view newLabel) {
     this->label = newLabel;
 }
 
-DoWhileStatement::DoWhileStatement(std::shared_ptr<Expression> condition,
-                                   std::shared_ptr<Statement> body)
-    : condition(condition), body(body) {}
+DoWhileStatement::DoWhileStatement(std::unique_ptr<Expression> condition,
+                                   std::unique_ptr<Statement> body)
+    : condition(std::move(condition)), body(std::move(body)) {}
 
 void DoWhileStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Expression> DoWhileStatement::getCondition() const {
-    return condition;
-}
+Expression *DoWhileStatement::getCondition() const { return condition.get(); }
 
-std::shared_ptr<Statement> DoWhileStatement::getBody() const { return body; }
+Statement *DoWhileStatement::getBody() const { return body.get(); }
 
 const std::string &DoWhileStatement::getLabel() const { return label; }
 
@@ -110,26 +100,24 @@ void DoWhileStatement::setLabel(std::string_view newLabel) {
     this->label = newLabel;
 }
 
-ForStatement::ForStatement(std::shared_ptr<ForInit> forInit,
-                           std::optional<std::shared_ptr<Expression>> condition,
-                           std::optional<std::shared_ptr<Expression>> post,
-                           std::shared_ptr<Statement> body)
-    : forInit(forInit), optCondition(condition), optPost(post), body(body) {}
+ForStatement::ForStatement(std::unique_ptr<ForInit> forInit,
+                           std::unique_ptr<Expression> condition,
+                           std::unique_ptr<Expression> post,
+                           std::unique_ptr<Statement> body)
+    : forInit(std::move(forInit)), optCondition(std::move(condition)),
+      optPost(std::move(post)), body(std::move(body)) {}
+
+ForStatement::~ForStatement() = default;
 
 void ForStatement::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<ForInit> ForStatement::getForInit() const { return forInit; }
+ForInit *ForStatement::getForInit() const { return forInit.get(); }
 
-std::optional<std::shared_ptr<Expression>>
-ForStatement::getOptCondition() const {
-    return optCondition;
-}
+Expression *ForStatement::getOptCondition() const { return optCondition.get(); }
 
-std::optional<std::shared_ptr<Expression>> ForStatement::getOptPost() const {
-    return optPost;
-}
+Expression *ForStatement::getOptPost() const { return optPost.get(); }
 
-std::shared_ptr<Statement> ForStatement::getBody() const { return body; }
+Statement *ForStatement::getBody() const { return body.get(); }
 
 const std::string &ForStatement::getLabel() const { return label; }
 

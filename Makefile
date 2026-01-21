@@ -32,9 +32,20 @@ HEADERS = $(wildcard $(FRONTEND_DIR)/*.h) \
 
 OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 
+# Frontend-only sources and objects for compilation checking.
+FRONTEND_SOURCES_ALL = $(wildcard $(FRONTEND_DIR)/*.cpp)
+FRONTEND_SOURCES = $(FRONTEND_SOURCES_ALL)
+FRONTEND_HEADERS = $(wildcard $(FRONTEND_DIR)/*.h)
+FRONTEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(FRONTEND_SOURCES))
+
+# Frontend + midend compilation check target.
+MIDEND_SOURCES = $(wildcard $(FRONTEND_DIR)/*.cpp) \
+  $(wildcard $(MIDEND_DIR)/*.cpp)
+MIDEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(MIDEND_SOURCES))
+
 EXECUTABLE = $(BIN_DIR)/main
 
-.PHONY: all debug release format clean help
+.PHONY: all debug release format clean help frontend-check midend-check
 
 all: $(BIN_DIR) $(EXECUTABLE)
 
@@ -74,13 +85,25 @@ format:
 clean:
 	rm -rf $(BIN_DIR)/* $(BIN_DIR)/**/*.d
 
+# Frontend-only compilation check target.
+# This compiles only the frontend sources to verify they compile independently.
+frontend-check: $(BIN_DIR) $(FRONTEND_OBJECTS)
+	@echo "Frontend compilation check passed!"
+
+# Frontend + midend compilation check target.
+# This compiles the frontend and midend sources (no linking).
+midend-check: $(BIN_DIR) $(MIDEND_OBJECTS)
+	@echo "Frontend + midend compilation check passed!"
+
 help:
 	@echo 'Usage: make <target>'
 	@echo
 	@echo 'Targets:'
-	@printf '  %-10s %s\n' 'all' 'Build the main executable ($(EXECUTABLE)).'
-	@printf '  %-10s %s\n' 'debug' 'Build with debug info, sanitizers, and hardening.'
-	@printf '  %-10s %s\n' 'release' 'Build with optimizations for release.'
-	@printf '  %-10s %s\n' 'format' 'Format the code using clang-format.'
-	@printf '  %-10s %s\n' 'clean' 'Remove build artifacts.'
-	@printf '  %-10s %s\n' 'help' 'Show this help message.'
+	@printf '  %-15s %s\n' 'all' 'Build the main executable ($(EXECUTABLE)).'
+	@printf '  %-15s %s\n' 'debug' 'Build with debug info, sanitizers, and hardening.'
+	@printf '  %-15s %s\n' 'release' 'Build with optimizations for release.'
+	@printf '  %-15s %s\n' 'frontend-check' 'Compile frontend sources only (no linking).'
+	@printf '  %-15s %s\n' 'midend-check' 'Compile frontend + midend sources (no linking).'
+	@printf '  %-15s %s\n' 'format' 'Format the code using clang-format.'
+	@printf '  %-15s %s\n' 'clean' 'Remove build artifacts.'
+	@printf '  %-15s %s\n' 'help' 'Show this help message.'

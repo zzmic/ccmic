@@ -37,9 +37,9 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFileName) {
     return tokens;
 }
 
-std::shared_ptr<AST::Program>
+std::unique_ptr<AST::Program>
 PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
-    std::shared_ptr<AST::Program> program;
+    std::unique_ptr<AST::Program> program;
     try {
         AST::Parser parser(tokens);
         // Parse the tokens to generate the AST program.
@@ -58,8 +58,7 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
 }
 
 int PipelineStagesExecutors::semanticAnalysisExecutor(
-    const std::shared_ptr<AST::Program> &astProgram,
-    AST::FrontendSymbolTable &frontendSymbolTable) {
+    AST::Program &astProgram, AST::FrontendSymbolTable &frontendSymbolTable) {
     AST::IdentifierResolutionPass IdentifierResolutionPass;
     AST::TypeCheckingPass typeCheckingPass(frontendSymbolTable);
     AST::LoopLabelingPass loopLabelingPass;
@@ -94,7 +93,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         // Visit and print the AST program after semantic analysis.
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
-        astProgram->accept(printVisitor);
+        astProgram.accept(printVisitor);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Printing AST error (in semantic analysis): " << e.what();
@@ -104,15 +103,14 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     return variableResolutionCounter;
 }
 
-std::pair<std::shared_ptr<IR::Program>,
-          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+std::pair<std::unique_ptr<IR::Program>,
+          std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
-    const std::shared_ptr<AST::Program> &astProgram,
-    int variableResolutionCounter,
+    const AST::Program &astProgram, int variableResolutionCounter,
     AST::FrontendSymbolTable &frontendSymbolTable) {
     std::cout << "\n";
-    std::pair<std::shared_ptr<IR::Program>,
-              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+    std::pair<std::unique_ptr<IR::Program>,
+              std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
         irProgramAndIRStaticVariables;
     try {
         IR::IRGenerator irGenerator(variableResolutionCounter,
@@ -128,31 +126,29 @@ PipelineStagesExecutors::irGeneratorExecutor(
 }
 
 void PipelineStagesExecutors::irOptimizationExecutor(
-    const std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
-    bool propagateCopiesPass, bool eliminateUnreachableCodePass,
-    bool eliminateDeadStoresPass) {
-    auto topLevels = irProgram->getTopLevels();
-    for (auto topLevel : *topLevels) {
-        if (auto functionDefinition =
-                std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
+    IR::Program &irProgram, bool foldConstantsPass, bool propagateCopiesPass,
+    bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {
+    for (auto &topLevel : irProgram.getTopLevels()) {
+        if (auto *functionDefinition =
+                dynamic_cast<IR::FunctionDefinition *>(topLevel.get())) {
             // Extract the function body from the function definition, optimize
             // the function body, and set the optimized function body back to
             // the function definition.
-            auto functionBody = functionDefinition->getFunctionBody();
+            auto &functionBody = functionDefinition->getFunctionBody();
             auto optimizedFunctionBody = IR::IROptimizer::irOptimize(
                 functionBody, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
-            functionDefinition->setFunctionBody(optimizedFunctionBody);
+            functionDefinition->setFunctionBody(
+                std::move(optimizedFunctionBody));
         }
     }
 }
 
-std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
-    const std::shared_ptr<IR::Program> &irProgram,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        &irStaticVariables,
+std::unique_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
+    const IR::Program &irProgram,
+    const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables,
     const AST::FrontendSymbolTable &frontendSymbolTable) {
-    std::shared_ptr<Assembly::Program> assemblyProgram;
+    std::unique_ptr<Assembly::Program> assemblyProgram;
     try {
         // Convert the frontend symbol table to backend symbol table before
         // assembly generation so all variables (including temporaries) are
@@ -168,17 +164,13 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
 
         Assembly::PseudoToStackPass pseudoToStackPass;
         // Associate the stack size with each top-level element.
-        auto topLevels = assemblyProgram->getTopLevels();
+        auto &topLevels = assemblyProgram->getTopLevels();
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
             topLevels, backendSymbolTable);
 
         Assembly::FixupPass fixupPass;
         // Fix up the assembly program.
         fixupPass.fixup(topLevels);
-
-        // Set the top-level elements of the assembly program after all the
-        // passes.
-        assemblyProgram->setTopLevels(topLevels);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Code generation error: " << e.what();
@@ -190,7 +182,7 @@ std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
 }
 
 void PipelineStagesExecutors::codeEmissionExecutor(
-    const std::shared_ptr<Assembly::Program> &assemblyProgram,
+    const Assembly::Program &assemblyProgram,
     std::string_view assemblyFileName) {
     std::ofstream assemblyFileStream(std::string{assemblyFileName});
     if (!assemblyFileStream.is_open()) {
@@ -199,17 +191,15 @@ void PipelineStagesExecutors::codeEmissionExecutor(
         throw std::ios_base::failure(msg.str());
     }
 
-    auto assyTopLevels = assemblyProgram->getTopLevels();
-    for (auto topLevel : *assyTopLevels) {
-        if (auto functionDefinition =
-                std::dynamic_pointer_cast<Assembly::FunctionDefinition>(
-                    topLevel)) {
-            emitAssyFunctionDefinition(functionDefinition, assemblyFileStream);
+    auto &assyTopLevels = assemblyProgram.getTopLevels();
+    for (const auto &topLevel : assyTopLevels) {
+        if (auto *functionDefinition =
+                dynamic_cast<Assembly::FunctionDefinition *>(topLevel.get())) {
+            emitAssyFunctionDefinition(*functionDefinition, assemblyFileStream);
         }
-        else if (auto staticVariable =
-                     std::dynamic_pointer_cast<Assembly::StaticVariable>(
-                         topLevel)) {
-            emitAssyStaticVariable(staticVariable, assemblyFileStream);
+        else if (auto *staticVariable =
+                     dynamic_cast<Assembly::StaticVariable *>(topLevel.get())) {
+            emitAssyStaticVariable(*staticVariable, assemblyFileStream);
         }
     }
 
@@ -224,11 +214,11 @@ void PipelineStagesExecutors::codeEmissionExecutor(
 }
 
 void PipelineStagesExecutors::emitAssyFunctionDefinition(
-    const std::shared_ptr<Assembly::FunctionDefinition> &functionDefinition,
+    const Assembly::FunctionDefinition &functionDefinition,
     std::ofstream &assemblyFileStream) {
-    auto functionName = functionDefinition->getFunctionIdentifier();
+    auto functionName = functionDefinition.getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
-    auto global = functionDefinition->isGlobal();
+    auto global = functionDefinition.isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
     if (!global) {
         globalDirective = "";
@@ -241,15 +231,15 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
     assemblyFileStream << "    pushq %rbp\n";
     assemblyFileStream << "    movq %rsp, %rbp\n";
 
-    for (auto instruction : *functionDefinition->getFunctionBody()) {
-        emitAssyInstruction(instruction, assemblyFileStream);
+    for (const auto &instruction : functionDefinition.getFunctionBody()) {
+        emitAssyInstruction(*instruction, assemblyFileStream);
     }
 }
 
 void PipelineStagesExecutors::emitAssyStaticVariable(
-    const std::shared_ptr<Assembly::StaticVariable> &staticVariable,
+    const Assembly::StaticVariable &staticVariable,
     std::ofstream &assemblyFileStream) {
-    auto alignment = staticVariable->getAlignment();
+    auto alignment = staticVariable.getAlignment();
     auto alignmentInStr = std::to_string(alignment);
     auto alignDirective = ".align " + alignmentInStr;
 // If the underlying OS is macOS, use the `.balign 4` directive instead of the
@@ -258,22 +248,21 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     alignDirective = ".balign " + alignmentInStr;
 #endif
 
-    auto variableIdentifier = staticVariable->getIdentifier();
+    auto variableIdentifier = staticVariable.getIdentifier();
     prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
 
-    auto global = staticVariable->isGlobal();
+    auto global = staticVariable.isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
     if (!global) {
         globalDirective = "";
     }
 
     bool isZeroInit = false;
-    auto staticInit = staticVariable->getStaticInit();
-    if (auto intInit = std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+    auto staticInit = staticVariable.getStaticInit();
+    if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
         isZeroInit = (std::get<int>(intInit->getValue()) == 0);
     }
-    else if (auto longInit =
-                 std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+    else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         isZeroInit = (std::get<long>(longInit->getValue()) == 0L);
     }
     else {
@@ -287,8 +276,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         assemblyFileStream << "    .data\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
-        if (auto intInit =
-                std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
             if (std::get<int>(intInit->getValue()) == 0) {
                 assemblyFileStream << "    .zero 4\n";
             }
@@ -299,7 +287,7 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
             }
         }
         else if (auto longInit =
-                     std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+                     dynamic_cast<const AST::LongInit *>(staticInit)) {
             if (std::get<long>(longInit->getValue()) == 0) {
                 assemblyFileStream << "    .zero 8\n";
             }
@@ -315,88 +303,81 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         assemblyFileStream << "    .bss\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
-        if (auto intInit =
-                std::dynamic_pointer_cast<AST::IntInit>(staticInit)) {
+        if (dynamic_cast<const AST::IntInit *>(staticInit)) {
             assemblyFileStream << "    .zero 4\n";
         }
-        else if (auto longInit =
-                     std::dynamic_pointer_cast<AST::LongInit>(staticInit)) {
+        else if (dynamic_cast<const AST::LongInit *>(staticInit)) {
             assemblyFileStream << "    .zero 8\n";
         }
     }
 }
 
 void PipelineStagesExecutors::emitAssyInstruction(
-    const std::shared_ptr<Assembly::Instruction> &instruction,
+    const Assembly::Instruction &instruction,
     std::ofstream &assemblyFileStream) {
     if (auto movInstruction =
-            std::dynamic_pointer_cast<Assembly::MovInstruction>(instruction)) {
-        emitAssyMovInstruction(movInstruction, assemblyFileStream);
+            dynamic_cast<const Assembly::MovInstruction *>(&instruction)) {
+        emitAssyMovInstruction(*movInstruction, assemblyFileStream);
     }
-    else if (auto retInstruction =
-                 std::dynamic_pointer_cast<Assembly::RetInstruction>(
-                     instruction)) {
+    else if (dynamic_cast<const Assembly::RetInstruction *>(&instruction)) {
         emitAssyRetInstruction(assemblyFileStream);
     }
     else if (auto pushInstruction =
-                 std::dynamic_pointer_cast<Assembly::PushInstruction>(
-                     instruction)) {
-        emitAssyPushInstruction(pushInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::PushInstruction *>(
+                     &instruction)) {
+        emitAssyPushInstruction(*pushInstruction, assemblyFileStream);
     }
     else if (auto callInstruction =
-                 std::dynamic_pointer_cast<Assembly::CallInstruction>(
-                     instruction)) {
-        emitAssyCallInstruction(callInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::CallInstruction *>(
+                     &instruction)) {
+        emitAssyCallInstruction(*callInstruction, assemblyFileStream);
     }
     else if (auto unaryInstruction =
-                 std::dynamic_pointer_cast<Assembly::UnaryInstruction>(
-                     instruction)) {
-        emitAssyUnaryInstruction(unaryInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::UnaryInstruction *>(
+                     &instruction)) {
+        emitAssyUnaryInstruction(*unaryInstruction, assemblyFileStream);
     }
     else if (auto binaryInstruction =
-                 std::dynamic_pointer_cast<Assembly::BinaryInstruction>(
-                     instruction)) {
-        emitAssyBinaryInstruction(binaryInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::BinaryInstruction *>(
+                     &instruction)) {
+        emitAssyBinaryInstruction(*binaryInstruction, assemblyFileStream);
     }
     else if (auto cmpInstruction =
-                 std::dynamic_pointer_cast<Assembly::CmpInstruction>(
-                     instruction)) {
-        emitAssyCmpInstruction(cmpInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::CmpInstruction *>(&instruction)) {
+        emitAssyCmpInstruction(*cmpInstruction, assemblyFileStream);
     }
     else if (auto idivInstruction =
-                 std::dynamic_pointer_cast<Assembly::IdivInstruction>(
-                     instruction)) {
-        emitAssyIdivInstruction(idivInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::IdivInstruction *>(
+                     &instruction)) {
+        emitAssyIdivInstruction(*idivInstruction, assemblyFileStream);
     }
     else if (auto movsxInstruction =
-                 std::dynamic_pointer_cast<Assembly::MovsxInstruction>(
-                     instruction)) {
-        emitAssyMovsxInstruction(movsxInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::MovsxInstruction *>(
+                     &instruction)) {
+        emitAssyMovsxInstruction(*movsxInstruction, assemblyFileStream);
     }
     else if (auto cdqInstruction =
-                 std::dynamic_pointer_cast<Assembly::CdqInstruction>(
-                     instruction)) {
-        emitAssyCdqInstruction(cdqInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::CdqInstruction *>(&instruction)) {
+        emitAssyCdqInstruction(*cdqInstruction, assemblyFileStream);
     }
     else if (auto jmpInstruction =
-                 std::dynamic_pointer_cast<Assembly::JmpInstruction>(
-                     instruction)) {
-        emitAssyJmpInstruction(jmpInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::JmpInstruction *>(&instruction)) {
+        emitAssyJmpInstruction(*jmpInstruction, assemblyFileStream);
     }
     else if (auto jmpCCInstruction =
-                 std::dynamic_pointer_cast<Assembly::JmpCCInstruction>(
-                     instruction)) {
-        emitAssyJmpCCInstruction(jmpCCInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::JmpCCInstruction *>(
+                     &instruction)) {
+        emitAssyJmpCCInstruction(*jmpCCInstruction, assemblyFileStream);
     }
     else if (auto setCCInstruction =
-                 std::dynamic_pointer_cast<Assembly::SetCCInstruction>(
-                     instruction)) {
-        emitAssySetCCInstruction(setCCInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::SetCCInstruction *>(
+                     &instruction)) {
+        emitAssySetCCInstruction(*setCCInstruction, assemblyFileStream);
     }
     else if (auto labelInstruction =
-                 std::dynamic_pointer_cast<Assembly::LabelInstruction>(
-                     instruction)) {
-        emitAssyLabelInstruction(labelInstruction, assemblyFileStream);
+                 dynamic_cast<const Assembly::LabelInstruction *>(
+                     &instruction)) {
+        emitAssyLabelInstruction(*labelInstruction, assemblyFileStream);
     }
     else {
         throw std::logic_error(
@@ -405,18 +386,17 @@ void PipelineStagesExecutors::emitAssyInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyMovInstruction(
-    const std::shared_ptr<Assembly::MovInstruction> &movInstruction,
+    const Assembly::MovInstruction &movInstruction,
     std::ofstream &assemblyFileStream) {
-    auto type = movInstruction->getType();
+    auto type = movInstruction.getType();
 
     std::string instructionName;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         instructionName = "movl";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         instructionName = "movq";
         registerSize = 8;
     }
@@ -425,18 +405,16 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
             "Invalid type while printing assembly mov instruction");
     }
 
-    auto src = movInstruction->getSrc();
+    auto src = movInstruction.getSrc();
     std::string srcStr;
-    if (auto srcReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
+    if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
         srcStr = srcReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto srcImm =
-                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+                 dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
         // Use long values for quadword instructions and int values for longword
         // instructions in order to avoid (potential) overflow issues.
-        if (auto quadword =
-                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+        if (dynamic_cast<const Assembly::Quadword *>(type)) {
             srcStr = "$" + std::to_string(srcImm->getImmediateLong());
         }
         else {
@@ -444,12 +422,11 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
         }
     }
     else if (auto srcStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
+                 dynamic_cast<const Assembly::StackOperand *>(src)) {
         srcStr = std::to_string(srcStack->getOffset()) + "(" +
                  srcStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto srcData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+    else if (auto srcData = dynamic_cast<const Assembly::DataOperand *>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         srcStr = identifier + "(%rip)";
@@ -459,19 +436,17 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
             "Invalid source type while printing assembly mov instruction");
     }
 
-    auto dst = movInstruction->getDst();
+    auto dst = movInstruction.getDst();
     std::string dstStr;
-    if (auto dstReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
+    if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
         dstStr = dstReg->getRegisterInBytesInStr(registerSize);
     }
     else if (auto dstStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
+                 dynamic_cast<const Assembly::StackOperand *>(dst)) {
         dstStr = std::to_string(dstStack->getOffset()) + "(" +
                  dstStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto dstData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+    else if (auto dstData = dynamic_cast<const Assembly::DataOperand *>(dst)) {
         auto identifier = dstData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         dstStr = identifier + "(%rip)";
@@ -486,25 +461,23 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyMovsxInstruction(
-    const std::shared_ptr<Assembly::MovsxInstruction> &movsxInstruction,
+    const Assembly::MovsxInstruction &movsxInstruction,
     std::ofstream &assemblyFileStream) {
-    auto src = movsxInstruction->getSrc();
+    auto src = movsxInstruction.getSrc();
     std::string srcStr;
-    if (auto srcReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(src)) {
+    if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
         srcStr = srcReg->getRegisterInBytesInStr(4);
     }
     else if (auto srcImm =
-                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(src)) {
+                 dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
         srcStr = "$" + std::to_string(srcImm->getImmediateLong());
     }
     else if (auto srcStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(src)) {
+                 dynamic_cast<const Assembly::StackOperand *>(src)) {
         srcStr = std::to_string(srcStack->getOffset()) + "(" +
                  srcStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto srcData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(src)) {
+    else if (auto srcData = dynamic_cast<const Assembly::DataOperand *>(src)) {
         auto identifier = srcData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         srcStr = identifier + "(%rip)";
@@ -521,19 +494,17 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
         throw std::logic_error(msg.str());
     }
 
-    auto dst = movsxInstruction->getDst();
+    auto dst = movsxInstruction.getDst();
     std::string dstStr;
-    if (auto dstReg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(dst)) {
+    if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
         dstStr = dstReg->getRegisterInBytesInStr(8);
     }
     else if (auto dstStack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(dst)) {
+                 dynamic_cast<const Assembly::StackOperand *>(dst)) {
         dstStr = std::to_string(dstStack->getOffset()) + "(" +
                  dstStack->getReservedRegisterInStr() + ")";
     }
-    else if (auto dstData =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(dst)) {
+    else if (auto dstData = dynamic_cast<const Assembly::DataOperand *>(dst)) {
         auto identifier = dstData->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         dstStr = identifier + "(%rip)";
@@ -556,29 +527,27 @@ void PipelineStagesExecutors::emitAssyRetInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyPushInstruction(
-    const std::shared_ptr<Assembly::PushInstruction> &pushInstruction,
+    const Assembly::PushInstruction &pushInstruction,
     std::ofstream &assemblyFileStream) {
-    auto operand = pushInstruction->getOperand();
+    auto operand = pushInstruction.getOperand();
 
     if (auto stackOperand =
-            std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+            dynamic_cast<const Assembly::StackOperand *>(operand)) {
         assemblyFileStream << "    pushq " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto regOperand =
-                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                     operand)) {
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         assemblyFileStream << "    pushq "
                            << regOperand->getRegisterInBytesInStr(8) << "\n";
     }
     else if (auto immOperand =
-                 std::dynamic_pointer_cast<Assembly::ImmediateOperand>(
-                     operand)) {
+                 dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         assemblyFileStream << "    pushq $" << immOperand->getImmediateLong()
                            << "\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << "    pushq " << identifier << "(%rip)\n";
@@ -590,9 +559,9 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyCallInstruction(
-    const std::shared_ptr<Assembly::CallInstruction> &callInstruction,
+    const Assembly::CallInstruction &callInstruction,
     std::ofstream &assemblyFileStream) {
-    auto functionName = callInstruction->getFunctionIdentifier();
+    auto functionName = callInstruction.getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
     assemblyFileStream << "    call " << functionName;
 // If the underlying OS is Linux, add the `@PLT` suffix (PLT modifier) to the
@@ -604,25 +573,20 @@ void PipelineStagesExecutors::emitAssyCallInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyUnaryInstruction(
-    const std::shared_ptr<Assembly::UnaryInstruction> &unaryInstruction,
+    const Assembly::UnaryInstruction &unaryInstruction,
     std::ofstream &assemblyFileStream) {
-    auto unaryOperator = unaryInstruction->getUnaryOperator();
-    auto type = unaryInstruction->getType();
+    auto unaryOperator = unaryInstruction.getUnaryOperator();
+    auto type = unaryInstruction.getType();
 
     std::string instructionName;
-    if (auto negateOperator =
-            std::dynamic_pointer_cast<Assembly::NegateOperator>(
-                unaryOperator)) {
+    if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator)) {
         instructionName = "neg";
     }
-    else if (auto complementOperator =
-                 std::dynamic_pointer_cast<Assembly::ComplementOperator>(
-                     unaryOperator)) {
+    else if (dynamic_cast<const Assembly::ComplementOperator *>(
+                 unaryOperator)) {
         instructionName = "not";
     }
-    else if (auto notOperator =
-                 std::dynamic_pointer_cast<Assembly::NotOperator>(
-                     unaryOperator)) {
+    else if (dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) {
         instructionName = "not";
     }
     else {
@@ -632,12 +596,11 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -648,20 +611,20 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
 
     assemblyFileStream << "    " << instructionName << typeSuffix;
 
-    auto operand = unaryInstruction->getOperand();
+    auto operand = unaryInstruction.getOperand();
     if (auto regOperand =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         assemblyFileStream << " "
                            << regOperand->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto stackOperand =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         assemblyFileStream << " " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
@@ -673,24 +636,19 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyBinaryInstruction(
-    const std::shared_ptr<Assembly::BinaryInstruction> &binaryInstruction,
+    const Assembly::BinaryInstruction &binaryInstruction,
     std::ofstream &assemblyFileStream) {
-    auto binaryOperator = binaryInstruction->getBinaryOperator();
-    auto type = binaryInstruction->getType();
+    auto binaryOperator = binaryInstruction.getBinaryOperator();
+    auto type = binaryInstruction.getType();
 
     std::string instructionName;
-    if (auto addOperator =
-            std::dynamic_pointer_cast<Assembly::AddOperator>(binaryOperator)) {
+    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator)) {
         instructionName = "add";
     }
-    else if (auto subtractOperator =
-                 std::dynamic_pointer_cast<Assembly::SubtractOperator>(
-                     binaryOperator)) {
+    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
         instructionName = "sub";
     }
-    else if (auto multiplyOperator =
-                 std::dynamic_pointer_cast<Assembly::MultiplyOperator>(
-                     binaryOperator)) {
+    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
         instructionName = "imul";
     }
     else {
@@ -700,12 +658,11 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -716,11 +673,10 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
 
     assemblyFileStream << "    " << instructionName << typeSuffix;
 
-    auto operand1 = binaryInstruction->getOperand1();
+    auto operand1 = binaryInstruction.getOperand1();
     if (auto operand1Imm =
-            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
-        if (auto quadword =
-                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            dynamic_cast<const Assembly::ImmediateOperand *>(operand1)) {
+        if (dynamic_cast<const Assembly::Quadword *>(type)) {
             assemblyFileStream << " $" << operand1Imm->getImmediateLong()
                                << ",";
         }
@@ -729,39 +685,38 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
         }
     }
     else if (auto operand1Reg =
-                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                     operand1)) {
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand1)) {
         assemblyFileStream << " "
                            << operand1Reg->getRegisterInBytesInStr(registerSize)
                            << ",";
     }
     else if (auto operand1Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand1)) {
         assemblyFileStream << " " << operand1Stack->getOffset() << "("
                            << operand1Stack->getReservedRegisterInStr() << "),";
     }
     else if (auto operand1Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip),";
     }
 
-    auto operand2 = binaryInstruction->getOperand2();
+    auto operand2 = binaryInstruction.getOperand2();
     if (auto operand2Reg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand2)) {
         assemblyFileStream << " "
                            << operand2Reg->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto operand2Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand2)) {
         assemblyFileStream << " " << operand2Stack->getOffset() << "("
                            << operand2Stack->getReservedRegisterInStr()
                            << ")\n";
     }
     else if (auto operand2Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
@@ -773,18 +728,17 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyCmpInstruction(
-    const std::shared_ptr<Assembly::CmpInstruction> &cmpInstruction,
+    const Assembly::CmpInstruction &cmpInstruction,
     std::ofstream &assemblyFileStream) {
-    auto type = cmpInstruction->getType();
+    auto type = cmpInstruction.getType();
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -795,11 +749,10 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
 
     assemblyFileStream << "    cmp" << typeSuffix;
 
-    auto operand1 = cmpInstruction->getOperand1();
+    auto operand1 = cmpInstruction.getOperand1();
     if (auto operand1Imm =
-            std::dynamic_pointer_cast<Assembly::ImmediateOperand>(operand1)) {
-        if (auto quadword =
-                std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+            dynamic_cast<const Assembly::ImmediateOperand *>(operand1)) {
+        if (dynamic_cast<const Assembly::Quadword *>(type)) {
             assemblyFileStream << " $" << operand1Imm->getImmediateLong();
         }
         else {
@@ -807,19 +760,18 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
         }
     }
     else if (auto operand1Reg =
-                 std::dynamic_pointer_cast<Assembly::RegisterOperand>(
-                     operand1)) {
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand1)) {
         assemblyFileStream << " "
                            << operand1Reg->getRegisterInBytesInStr(
                                   registerSize);
     }
     else if (auto operand1Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand1)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand1)) {
         assemblyFileStream << " " << operand1Stack->getOffset() << "("
                            << operand1Stack->getReservedRegisterInStr() << ")";
     }
     else if (auto operand1Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand1)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand1)) {
         auto identifier = operand1Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)";
@@ -827,21 +779,21 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
 
     assemblyFileStream << ",";
 
-    auto operand2 = cmpInstruction->getOperand2();
+    auto operand2 = cmpInstruction.getOperand2();
     if (auto operand2Reg =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand2)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand2)) {
         assemblyFileStream << " "
                            << operand2Reg->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto operand2Stack =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand2)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand2)) {
         assemblyFileStream << " " << operand2Stack->getOffset() << "("
                            << operand2Stack->getReservedRegisterInStr()
                            << ")\n";
     }
     else if (auto operand2Data =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand2)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand2)) {
         auto identifier = operand2Data->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
@@ -853,18 +805,17 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyIdivInstruction(
-    const std::shared_ptr<Assembly::IdivInstruction> &idivInstruction,
+    const Assembly::IdivInstruction &idivInstruction,
     std::ofstream &assemblyFileStream) {
-    auto type = idivInstruction->getType();
+    auto type = idivInstruction.getType();
 
     std::string typeSuffix;
     int registerSize;
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
         registerSize = 4;
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
         registerSize = 8;
     }
@@ -875,20 +826,20 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
 
     assemblyFileStream << "    idiv" << typeSuffix;
 
-    auto operand = idivInstruction->getOperand();
+    auto operand = idivInstruction.getOperand();
     if (auto regOperand =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         assemblyFileStream << " "
                            << regOperand->getRegisterInBytesInStr(registerSize)
                            << "\n";
     }
     else if (auto stackOperand =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         assemblyFileStream << " " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
@@ -900,15 +851,14 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyCdqInstruction(
-    const std::shared_ptr<Assembly::CdqInstruction> &cdqInstruction,
+    const Assembly::CdqInstruction &cdqInstruction,
     std::ofstream &assemblyFileStream) {
-    auto type = cdqInstruction->getType();
+    auto type = cdqInstruction.getType();
 
-    if (auto longword = std::dynamic_pointer_cast<Assembly::Longword>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
         assemblyFileStream << "    cdq\n";
     }
-    else if (auto quadword =
-                 std::dynamic_pointer_cast<Assembly::Quadword>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         assemblyFileStream << "    cqo\n";
     }
     else {
@@ -918,32 +868,32 @@ void PipelineStagesExecutors::emitAssyCdqInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyJmpInstruction(
-    const std::shared_ptr<Assembly::JmpInstruction> &jmpInstruction,
+    const Assembly::JmpInstruction &jmpInstruction,
     std::ofstream &assemblyFileStream) {
-    auto label = jmpInstruction->getLabel();
+    auto label = jmpInstruction.getLabel();
     assemblyFileStream << "    jmp .L" << label << "\n";
 }
 
 void PipelineStagesExecutors::emitAssyJmpCCInstruction(
-    const std::shared_ptr<Assembly::JmpCCInstruction> &jmpCCInstruction,
+    const Assembly::JmpCCInstruction &jmpCCInstruction,
     std::ofstream &assemblyFileStream) {
-    auto condCode = jmpCCInstruction->getCondCode();
-    if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
+    auto condCode = jmpCCInstruction.getCondCode();
+    if (dynamic_cast<const Assembly::E *>(condCode)) {
         assemblyFileStream << "    je";
     }
-    else if (auto ne = std::dynamic_pointer_cast<Assembly::NE>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
         assemblyFileStream << "    jne";
     }
-    else if (auto g = std::dynamic_pointer_cast<Assembly::G>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode)) {
         assemblyFileStream << "    jg";
     }
-    else if (auto ge = std::dynamic_pointer_cast<Assembly::GE>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
         assemblyFileStream << "    jge";
     }
-    else if (auto l = std::dynamic_pointer_cast<Assembly::L>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode)) {
         assemblyFileStream << "    jl";
     }
-    else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
         assemblyFileStream << "    jle";
     }
     else {
@@ -951,30 +901,30 @@ void PipelineStagesExecutors::emitAssyJmpCCInstruction(
                                "assembly jmpcc instruction");
     }
 
-    auto label = jmpCCInstruction->getLabel();
+    auto label = jmpCCInstruction.getLabel();
     assemblyFileStream << " .L" << label << "\n";
 }
 
 void PipelineStagesExecutors::emitAssySetCCInstruction(
-    const std::shared_ptr<Assembly::SetCCInstruction> &setCCInstruction,
+    const Assembly::SetCCInstruction &setCCInstruction,
     std::ofstream &assemblyFileStream) {
-    auto condCode = setCCInstruction->getCondCode();
-    if (auto e = std::dynamic_pointer_cast<Assembly::E>(condCode)) {
+    auto condCode = setCCInstruction.getCondCode();
+    if (dynamic_cast<const Assembly::E *>(condCode)) {
         assemblyFileStream << "    sete";
     }
-    else if (auto ne = std::dynamic_pointer_cast<Assembly::NE>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
         assemblyFileStream << "    setne";
     }
-    else if (auto g = std::dynamic_pointer_cast<Assembly::G>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode)) {
         assemblyFileStream << "    setg";
     }
-    else if (auto ge = std::dynamic_pointer_cast<Assembly::GE>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
         assemblyFileStream << "    setge";
     }
-    else if (auto l = std::dynamic_pointer_cast<Assembly::L>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode)) {
         assemblyFileStream << "    setl";
     }
-    else if (auto le = std::dynamic_pointer_cast<Assembly::LE>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
         assemblyFileStream << "    setle";
     }
     else {
@@ -982,19 +932,19 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
                                "assembly setcc instruction");
     }
 
-    auto operand = setCCInstruction->getOperand();
+    auto operand = setCCInstruction.getOperand();
     if (auto regOperand =
-            std::dynamic_pointer_cast<Assembly::RegisterOperand>(operand)) {
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         assemblyFileStream << " " << regOperand->getRegisterInBytesInStr(1)
                            << "\n";
     }
     else if (auto stackOperand =
-                 std::dynamic_pointer_cast<Assembly::StackOperand>(operand)) {
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         assemblyFileStream << " " << stackOperand->getOffset() << "("
                            << stackOperand->getReservedRegisterInStr() << ")\n";
     }
     else if (auto dataOperand =
-                 std::dynamic_pointer_cast<Assembly::DataOperand>(operand)) {
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         auto identifier = dataOperand->getIdentifier();
         prependUnderscoreToIdentifierIfMacOS(identifier);
         assemblyFileStream << " " << identifier << "(%rip)\n";
@@ -1006,9 +956,9 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
 }
 
 void PipelineStagesExecutors::emitAssyLabelInstruction(
-    const std::shared_ptr<Assembly::LabelInstruction> &labelInstruction,
+    const Assembly::LabelInstruction &labelInstruction,
     std::ofstream &assemblyFileStream) {
-    auto label = labelInstruction->getLabel();
+    auto label = labelInstruction.getLabel();
     assemblyFileStream << ".L" << label << ":\n";
 }
 

@@ -15,28 +15,27 @@ namespace AST {
 class Program : public AST {
   public:
     /**
-     * Constructor for the Program class.
+     * Constructor for the `Program` class.
      *
      * @param declaration The list of declarations in the program.
      */
-    explicit Program(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+    explicit Program(std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>
                          declarations);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<Declaration>>> &
+    [[nodiscard]] const std::vector<std::unique_ptr<Declaration>> &
     getDeclarations() const;
 
     void
-    setDeclarations(std::shared_ptr<std::vector<std::shared_ptr<Declaration>>>
+    setDeclarations(std::unique_ptr<std::vector<std::unique_ptr<Declaration>>>
                         declarations);
 
   private:
     /**
      * The list of declarations that make up the program.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<Declaration>>> declarations;
+    std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> declarations;
 };
 } // Namespace AST
 
