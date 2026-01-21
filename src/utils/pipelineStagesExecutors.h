@@ -63,12 +63,12 @@ class PipelineStagesExecutors {
      * @param variableResolutionCounter An integer counter for variable
      * resolution.
      * @param frontendSymbolTable The frontend symbol table.
-     * @return A pair consisting of (a shared pointer to) the IR program and (a
-     * shared pointer to) the vector of static variables in IR.
+     * @return A pair consisting of the IR program and the vector of static
+     * variables in IR.
      */
     [[nodiscard]] static std::pair<
-        std::shared_ptr<IR::Program>,
-        std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+        std::unique_ptr<IR::Program>,
+        std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
     irGeneratorExecutor(const std::shared_ptr<AST::Program> &astProgram,
                         int variableResolutionCounter,
                         AST::FrontendSymbolTable &frontendSymbolTable);
@@ -84,11 +84,11 @@ class PipelineStagesExecutors {
      * @param eliminateDeadStoresPass Whether to perform the dead-store
      * elimination pass.
      */
-    static void
-    irOptimizationExecutor(const std::shared_ptr<IR::Program> &irProgram,
-                           bool foldConstantsPass, bool propagateCopiesPass,
-                           bool eliminateUnreachableCodePass,
-                           bool eliminateDeadStoresPass);
+    static void irOptimizationExecutor(IR::Program &irProgram,
+                                       bool foldConstantsPass,
+                                       bool propagateCopiesPass,
+                                       bool eliminateUnreachableCodePass,
+                                       bool eliminateDeadStoresPass);
 
     /**
      * Generate (but not yet emit) the assembly program from the IR program.
@@ -98,11 +98,11 @@ class PipelineStagesExecutors {
      * @param frontendSymbolTable The frontend symbol table.
      * @return The assembly program generated from the IR.
      */
-    [[nodiscard]] static std::shared_ptr<Assembly::Program> codegenExecutor(
-        const std::shared_ptr<IR::Program> &irProgram,
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            &irStaticVariables,
-        const AST::FrontendSymbolTable &frontendSymbolTable);
+    [[nodiscard]] static std::shared_ptr<Assembly::Program>
+    codegenExecutor(const IR::Program &irProgram,
+                    const std::vector<std::unique_ptr<IR::StaticVariable>>
+                        &irStaticVariables,
+                    const AST::FrontendSymbolTable &frontendSymbolTable);
 
     /**
      * Emit the generated assembly code to the assembly file.

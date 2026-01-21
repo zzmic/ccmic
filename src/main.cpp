@@ -208,29 +208,30 @@ int main(int argc, char *argv[]) {
         auto irProgramAndIRStaticVariables =
             PipelineStagesExecutors::irGeneratorExecutor(
                 astProgram, variableResolutionCounter, frontendSymbolTable);
-        auto irProgram = irProgramAndIRStaticVariables.first;
-        auto irStaticVariables = irProgramAndIRStaticVariables.second;
+        auto irProgram = std::move(irProgramAndIRStaticVariables.first);
+        auto irStaticVariables =
+            std::move(irProgramAndIRStaticVariables.second);
 
         if (foldConstantsPass || propagateCopiesPass ||
             eliminateUnreachableCodePass || eliminateDeadStoresPass) {
             // Print the IR program to stdout.
             std::cout << "<<< Before optimization passes: >>>\n";
-            PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+            PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
 
             // Perform the optimization passes on the IR program (if any of the
             // flags is set to true).
             PipelineStagesExecutors::irOptimizationExecutor(
-                irProgram, foldConstantsPass, propagateCopiesPass,
+                *irProgram, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
 
             // Print the optimized IR program to stdout (after the
             // optimization passes).
             std::cout << "<<< After optimization passes: >>>\n";
-            PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+            PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
         }
         else {
             // Print the IR program to stdout.
-            PrettyPrinters::printIRProgram(irProgram, irStaticVariables);
+            PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
         }
 
         if (tillIR) {
@@ -244,7 +245,7 @@ int main(int argc, char *argv[]) {
         // variables.
         std::shared_ptr<Assembly::Program> assemblyProgram =
             PipelineStagesExecutors::codegenExecutor(
-                irProgram, irStaticVariables, frontendSymbolTable);
+                *irProgram, *irStaticVariables, frontendSymbolTable);
 
         // Print out the (assembly) instructions that would be emitted from the
         // assembly program.

@@ -104,21 +104,21 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     return variableResolutionCounter;
 }
 
-std::pair<std::shared_ptr<IR::Program>,
-          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+std::pair<std::unique_ptr<IR::Program>,
+          std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
 PipelineStagesExecutors::irGeneratorExecutor(
     const std::shared_ptr<AST::Program> &astProgram,
     int variableResolutionCounter,
     AST::FrontendSymbolTable &frontendSymbolTable) {
     std::cout << "\n";
-    std::pair<std::shared_ptr<IR::Program>,
-              std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
+    std::pair<std::unique_ptr<IR::Program>,
+              std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
         irProgramAndIRStaticVariables;
     try {
         IR::IRGenerator irGenerator(variableResolutionCounter,
                                     frontendSymbolTable);
         // Generate the IR program from the AST program.
-        irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
+        irProgramAndIRStaticVariables = irGenerator.generateIR(*astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "IR generation error: " << e.what();
@@ -128,29 +128,27 @@ PipelineStagesExecutors::irGeneratorExecutor(
 }
 
 void PipelineStagesExecutors::irOptimizationExecutor(
-    const std::shared_ptr<IR::Program> &irProgram, bool foldConstantsPass,
-    bool propagateCopiesPass, bool eliminateUnreachableCodePass,
-    bool eliminateDeadStoresPass) {
-    auto topLevels = irProgram->getTopLevels();
-    for (auto topLevel : *topLevels) {
-        if (auto functionDefinition =
-                std::dynamic_pointer_cast<IR::FunctionDefinition>(topLevel)) {
+    IR::Program &irProgram, bool foldConstantsPass, bool propagateCopiesPass,
+    bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass) {
+    for (auto &topLevel : irProgram.getTopLevels()) {
+        if (auto *functionDefinition =
+                dynamic_cast<IR::FunctionDefinition *>(topLevel.get())) {
             // Extract the function body from the function definition, optimize
             // the function body, and set the optimized function body back to
             // the function definition.
-            auto functionBody = functionDefinition->getFunctionBody();
+            auto &functionBody = functionDefinition->getFunctionBody();
             auto optimizedFunctionBody = IR::IROptimizer::irOptimize(
                 functionBody, foldConstantsPass, propagateCopiesPass,
                 eliminateUnreachableCodePass, eliminateDeadStoresPass);
-            functionDefinition->setFunctionBody(optimizedFunctionBody);
+            functionDefinition->setFunctionBody(
+                std::move(optimizedFunctionBody));
         }
     }
 }
 
 std::shared_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
-    const std::shared_ptr<IR::Program> &irProgram,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-        &irStaticVariables,
+    const IR::Program &irProgram,
+    const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables,
     const AST::FrontendSymbolTable &frontendSymbolTable) {
     std::shared_ptr<Assembly::Program> assemblyProgram;
     try {

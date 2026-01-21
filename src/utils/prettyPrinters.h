@@ -16,10 +16,10 @@ class PrettyPrinters {
      * @param irProgram The IR program to print.
      * @param irStaticVariables The list of IR static variables.
      */
-    static void printIRProgram(
-        const std::shared_ptr<IR::Program> &irProgram,
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
-            &irStaticVariables);
+    static void
+    printIRProgram(const IR::Program &irProgram,
+                   const std::vector<std::unique_ptr<IR::StaticVariable>>
+                       &irStaticVariables);
 
     /**
      * Print the assembly program to stdout.
@@ -35,32 +35,30 @@ class PrettyPrinters {
      *
      * @param functionDefinition The IR function definition to print.
      */
-    static void printIRFunctionDefinition(
-        const std::shared_ptr<IR::FunctionDefinition> &functionDefinition);
+    static void
+    printIRFunctionDefinition(const IR::FunctionDefinition &functionDefinition);
 
     /**
      * Print an IR static variable to stdout.
      *
      * @param staticVariable The IR static variable to print.
      */
-    static void printIRStaticVariable(
-        const std::shared_ptr<IR::StaticVariable> &staticVariable);
+    static void printIRStaticVariable(const IR::StaticVariable &staticVariable);
 
     /**
      * Print an IR instruction to stdout.
      *
      * @param instruction The IR instruction to print.
      */
-    static void
-    printIRInstruction(const std::shared_ptr<IR::Instruction> &instruction);
+    static void printIRInstruction(const IR::Instruction &instruction);
 
     /**
      * Print an IR return instruction to stdout.
      *
      * @param returnInstruction The IR return instruction to print.
      */
-    static void printIRReturnInstruction(
-        const std::shared_ptr<IR::ReturnInstruction> &returnInstruction);
+    static void
+    printIRReturnInstruction(const IR::ReturnInstruction &returnInstruction);
 
     /**
      * Print an IR sign-extend instruction to stdout.
@@ -68,8 +66,7 @@ class PrettyPrinters {
      * @param signExtendInstruction The IR sign-extend instruction to print.
      */
     static void printIRSignExtendInstruction(
-        const std::shared_ptr<IR::SignExtendInstruction>
-            &signExtendInstruction);
+        const IR::SignExtendInstruction &signExtendInstruction);
 
     /**
      * Print an IR truncate instruction to stdout.
@@ -77,39 +74,39 @@ class PrettyPrinters {
      * @param truncateInstruction The IR truncate instruction to print.
      */
     static void printIRTruncateInstruction(
-        const std::shared_ptr<IR::TruncateInstruction> &truncateInstruction);
+        const IR::TruncateInstruction &truncateInstruction);
 
     /**
      * Print an IR unary instruction to stdout.
      *
      * @param unaryInstruction The IR unary instruction to print.
      */
-    static void printIRUnaryInstruction(
-        const std::shared_ptr<IR::UnaryInstruction> &unaryInstruction);
+    static void
+    printIRUnaryInstruction(const IR::UnaryInstruction &unaryInstruction);
 
     /**
      * Print an IR binary instruction to stdout.
      *
      * @param binaryInstruction The IR binary instruction to print.
      */
-    static void printIRBinaryInstruction(
-        const std::shared_ptr<IR::BinaryInstruction> &binaryInstruction);
+    static void
+    printIRBinaryInstruction(const IR::BinaryInstruction &binaryInstruction);
 
     /**
      * Print an IR copy instruction to stdout.
      *
      * @param copyInstruction The IR copy instruction to print.
      */
-    static void printIRCopyInstruction(
-        const std::shared_ptr<IR::CopyInstruction> &copyInstruction);
+    static void
+    printIRCopyInstruction(const IR::CopyInstruction &copyInstruction);
 
     /**
      * Print an IR jump instruction to stdout.
      *
      * @param jumpInstruction The IR jump instruction to print.
      */
-    static void printIRJumpInstruction(
-        const std::shared_ptr<IR::JumpInstruction> &jumpInstruction);
+    static void
+    printIRJumpInstruction(const IR::JumpInstruction &jumpInstruction);
 
     /**
      * Print an IR jump-if-zero instruction to stdout.
@@ -117,8 +114,7 @@ class PrettyPrinters {
      * @param jumpIfZeroInstruction The IR jump-if-zero instruction to print.
      */
     static void printIRJumpIfZeroInstruction(
-        const std::shared_ptr<IR::JumpIfZeroInstruction>
-            &jumpIfZeroInstruction);
+        const IR::JumpIfZeroInstruction &jumpIfZeroInstruction);
 
     /**
      * Print an IR jump-if-not-zero instruction to stdout.
@@ -127,16 +123,15 @@ class PrettyPrinters {
      * print.
      */
     static void printIRJumpIfNotZeroInstruction(
-        const std::shared_ptr<IR::JumpIfNotZeroInstruction>
-            &jumpIfNotZeroInstruction);
+        const IR::JumpIfNotZeroInstruction &jumpIfNotZeroInstruction);
 
     /**
      * Print an IR label instruction to stdout.
      *
      * @param labelInstruction The IR label instruction to print.
      */
-    static void printIRLabelInstruction(
-        const std::shared_ptr<IR::LabelInstruction> &labelInstruction);
+    static void
+    printIRLabelInstruction(const IR::LabelInstruction &labelInstruction);
 
     /**
      * Print an IR function call instruction to stdout.
@@ -144,8 +139,7 @@ class PrettyPrinters {
      * @param functionCallInstruction The IR function call instruction to print.
      */
     static void printIRFunctionCallInstruction(
-        const std::shared_ptr<IR::FunctionCallInstruction>
-            &functionCallInstruction);
+        const IR::FunctionCallInstruction &functionCallInstruction);
 
     /**
      * Print an assembly function definition to stdout.

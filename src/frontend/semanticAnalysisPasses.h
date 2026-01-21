@@ -199,7 +199,7 @@ class StaticInit {
     /**
      * Pure virtual method to get the value of the static initializer.
      */
-    virtual std::variant<int, long> getValue() = 0;
+    virtual std::variant<int, long> getValue() const = 0;
 };
 
 /**
@@ -214,7 +214,7 @@ class IntInit : public StaticInit {
      */
     constexpr IntInit(int value) : value(value) {}
 
-    std::variant<int, long> getValue() override { return value; }
+    std::variant<int, long> getValue() const override { return value; }
 
   private:
     /**
@@ -232,7 +232,7 @@ class LongInit : public StaticInit {
      */
     constexpr LongInit(long value) : value(value) {}
 
-    std::variant<int, long> getValue() override { return value; }
+    std::variant<int, long> getValue() const override { return value; }
 
   private:
     /**

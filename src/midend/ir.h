@@ -125,7 +125,7 @@ class ConstantValue : public Value {
     /**
      * The AST constant encapsulated by this IR constant value.
      */
-    std::shared_ptr<AST::Constant> astConstant;
+    std::unique_ptr<AST::Constant> astConstant;
 
   public:
     /**
@@ -134,8 +134,8 @@ class ConstantValue : public Value {
      * @param astConstant The AST constant to encapsulate.
      * @throws std::logic_error if `astConstant` is null.
      */
-    explicit ConstantValue(const std::shared_ptr<AST::Constant> &astConstant)
-        : astConstant(astConstant) {
+    explicit ConstantValue(std::unique_ptr<AST::Constant> astConstant)
+        : astConstant(std::move(astConstant)) {
         if (!astConstant) {
             throw std::logic_error(
                 "Creating ConstantValue with null astConstant");
@@ -147,15 +147,15 @@ class ConstantValue : public Value {
      */
     ~ConstantValue() = default;
 
-    [[nodiscard]] std::shared_ptr<AST::Constant> getASTConstant() const {
-        return astConstant;
+    [[nodiscard]] const AST::Constant *getASTConstant() const {
+        return astConstant.get();
     }
 
-    void setASTConstant(const std::shared_ptr<AST::Constant> &newAstConstant) {
+    void setASTConstant(std::unique_ptr<AST::Constant> newAstConstant) {
         if (!newAstConstant) {
             throw std::logic_error("Setting ConstantValue astConstant to null");
         }
-        this->astConstant = newAstConstant;
+        this->astConstant = std::move(newAstConstant);
     }
 };
 
@@ -212,7 +212,7 @@ class ReturnInstruction : public Instruction {
     /**
      * The return value of the instruction.
      */
-    std::shared_ptr<Value> returnValue;
+    std::unique_ptr<Value> returnValue;
 
   public:
     /**
@@ -221,24 +221,22 @@ class ReturnInstruction : public Instruction {
      * @param returnValue The return value of the instruction.
      * @throws std::logic_error if `returnValue` is null.
      */
-    explicit ReturnInstruction(const std::shared_ptr<Value> &returnValue)
-        : returnValue(returnValue) {
+    explicit ReturnInstruction(std::unique_ptr<Value> returnValue)
+        : returnValue(std::move(returnValue)) {
         if (!returnValue) {
             throw std::logic_error(
                 "Creating ReturnInstruction with null returnValue");
         }
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getReturnValue() const {
-        return returnValue;
-    }
+    [[nodiscard]] Value *getReturnValue() const { return returnValue.get(); }
 
-    void setReturnValue(const std::shared_ptr<Value> &newReturnValue) {
+    void setReturnValue(std::unique_ptr<Value> newReturnValue) {
         if (!newReturnValue) {
             throw std::logic_error(
                 "Setting ReturnInstruction returnValue to null");
         }
-        this->returnValue = newReturnValue;
+        this->returnValue = std::move(newReturnValue);
     }
 };
 
@@ -250,7 +248,7 @@ class SignExtendInstruction : public Instruction {
     /**
      * The source and destination values of the instruction.
      */
-    std::shared_ptr<Value> src, dst;
+    std::unique_ptr<Value> src, dst;
 
   public:
     /**
@@ -261,9 +259,9 @@ class SignExtendInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    SignExtendInstruction(const std::shared_ptr<Value> &src,
-                          const std::shared_ptr<Value> &dst)
-        : src(src), dst(dst) {
+    SignExtendInstruction(std::unique_ptr<Value> src,
+                          std::unique_ptr<Value> dst)
+        : src(std::move(src)), dst(std::move(dst)) {
         if (!src) {
             throw std::logic_error("Creating SignExtendInstruction with null "
                                    "src");
@@ -274,22 +272,22 @@ class SignExtendInstruction : public Instruction {
         }
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getSrc() const { return src; }
+    [[nodiscard]] Value *getSrc() const { return src.get(); }
 
-    [[nodiscard]] std::shared_ptr<Value> getDst() const { return dst; }
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
 
-    void setSrc(const std::shared_ptr<Value> &newSrc) {
+    void setSrc(std::unique_ptr<Value> newSrc) {
         if (!newSrc) {
             throw std::logic_error("Setting SignExtendInstruction src to null");
         }
-        this->src = newSrc;
+        this->src = std::move(newSrc);
     }
 
-    void setDst(const std::shared_ptr<Value> &newDst) {
+    void setDst(std::unique_ptr<Value> newDst) {
         if (!newDst) {
             throw std::logic_error("Setting SignExtendInstruction dst to null");
         }
-        this->dst = newDst;
+        this->dst = std::move(newDst);
     }
 };
 
@@ -301,7 +299,7 @@ class TruncateInstruction : public Instruction {
     /**
      * The source and destination values of the instruction.
      */
-    std::shared_ptr<Value> src, dst;
+    std::unique_ptr<Value> src, dst;
 
   public:
     /**
@@ -312,9 +310,8 @@ class TruncateInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    TruncateInstruction(const std::shared_ptr<Value> &src,
-                        const std::shared_ptr<Value> &dst)
-        : src(src), dst(dst) {
+    TruncateInstruction(std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
+        : src(std::move(src)), dst(std::move(dst)) {
         if (!src) {
             throw std::logic_error(
                 "Creating TruncateInstruction with null src");
@@ -325,22 +322,22 @@ class TruncateInstruction : public Instruction {
         }
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getSrc() const { return src; }
+    [[nodiscard]] Value *getSrc() const { return src.get(); }
 
-    [[nodiscard]] std::shared_ptr<Value> getDst() const { return dst; }
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
 
-    void setSrc(const std::shared_ptr<Value> &newSrc) {
+    void setSrc(std::unique_ptr<Value> newSrc) {
         if (!newSrc) {
             throw std::logic_error("Setting TruncateInstruction src to null");
         }
-        this->src = newSrc;
+        this->src = std::move(newSrc);
     }
 
-    void setDst(const std::shared_ptr<Value> &newDst) {
+    void setDst(std::unique_ptr<Value> newDst) {
         if (!newDst) {
             throw std::logic_error("Setting TruncateInstruction dst to null");
         }
-        this->dst = newDst;
+        this->dst = std::move(newDst);
     }
 };
 
@@ -352,11 +349,11 @@ class UnaryInstruction : public Instruction {
     /**
      * The unary operator of the instruction.
      */
-    std::shared_ptr<UnaryOperator> unaryOperator;
+    std::unique_ptr<UnaryOperator> unaryOperator;
     /**
      * The source and destination values of the instruction.
      */
-    std::shared_ptr<Value> src, dst;
+    std::unique_ptr<Value> src, dst;
 
   public:
     /**
@@ -368,10 +365,10 @@ class UnaryInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `unaryOperator`, `src`, or `dst` is null.
      */
-    UnaryInstruction(const std::shared_ptr<UnaryOperator> &unaryOperator,
-                     const std::shared_ptr<Value> &src,
-                     const std::shared_ptr<Value> &dst)
-        : unaryOperator(unaryOperator), src(src), dst(dst) {
+    UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
+                     std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
+        : unaryOperator(std::move(unaryOperator)), src(std::move(src)),
+          dst(std::move(dst)) {
         if (!unaryOperator) {
             throw std::logic_error(
                 "Creating UnaryInstruction with null unaryOperator");
@@ -384,35 +381,34 @@ class UnaryInstruction : public Instruction {
         }
     }
 
-    [[nodiscard]] std::shared_ptr<UnaryOperator> getUnaryOperator() const {
-        return unaryOperator;
+    [[nodiscard]] UnaryOperator *getUnaryOperator() const {
+        return unaryOperator.get();
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getSrc() const { return src; }
+    [[nodiscard]] Value *getSrc() const { return src.get(); }
 
-    [[nodiscard]] std::shared_ptr<Value> getDst() const { return dst; }
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
 
-    void
-    setUnaryOperator(const std::shared_ptr<UnaryOperator> &newUnaryOperator) {
+    void setUnaryOperator(std::unique_ptr<UnaryOperator> newUnaryOperator) {
         if (!newUnaryOperator) {
             throw std::logic_error(
                 "Setting UnaryInstruction unaryOperator to null");
         }
-        this->unaryOperator = newUnaryOperator;
+        this->unaryOperator = std::move(newUnaryOperator);
     }
 
-    void setSrc(const std::shared_ptr<Value> &newSrc) {
+    void setSrc(std::unique_ptr<Value> newSrc) {
         if (!newSrc) {
             throw std::logic_error("Setting UnaryInstruction src to null");
         }
-        this->src = newSrc;
+        this->src = std::move(newSrc);
     }
 
-    void setDst(const std::shared_ptr<Value> &newDst) {
+    void setDst(std::unique_ptr<Value> newDst) {
         if (!newDst) {
             throw std::logic_error("Setting UnaryInstruction dst to null");
         }
-        this->dst = newDst;
+        this->dst = std::move(newDst);
     }
 };
 
@@ -424,11 +420,11 @@ class BinaryInstruction : public Instruction {
     /**
      * The binary operator of the instruction.
      */
-    std::shared_ptr<BinaryOperator> binaryOperator;
+    std::unique_ptr<BinaryOperator> binaryOperator;
     /**
      * The source and destination values of the instruction.
      */
-    std::shared_ptr<Value> src1, src2, dst;
+    std::unique_ptr<Value> src1, src2, dst;
 
   public:
     /**
@@ -442,11 +438,11 @@ class BinaryInstruction : public Instruction {
      * @throws std::logic_error if `binaryOperator`, `src1`, `src2`, or `dst`
      * is null.
      */
-    BinaryInstruction(const std::shared_ptr<BinaryOperator> &binaryOperator,
-                      const std::shared_ptr<Value> &src1,
-                      const std::shared_ptr<Value> &src2,
-                      const std::shared_ptr<Value> &dst)
-        : binaryOperator(binaryOperator), src1(src1), src2(src2), dst(dst) {
+    BinaryInstruction(std::unique_ptr<BinaryOperator> binaryOperator,
+                      std::unique_ptr<Value> src1, std::unique_ptr<Value> src2,
+                      std::unique_ptr<Value> dst)
+        : binaryOperator(std::move(binaryOperator)), src1(std::move(src1)),
+          src2(std::move(src2)), dst(std::move(dst)) {
         if (!binaryOperator) {
             throw std::logic_error(
                 "Creating BinaryInstruction with null binaryOperator");
@@ -462,44 +458,43 @@ class BinaryInstruction : public Instruction {
         }
     }
 
-    [[nodiscard]] std::shared_ptr<BinaryOperator> getBinaryOperator() const {
-        return binaryOperator;
+    [[nodiscard]] BinaryOperator *getBinaryOperator() const {
+        return binaryOperator.get();
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getSrc1() const { return src1; }
+    [[nodiscard]] Value *getSrc1() const { return src1.get(); }
 
-    [[nodiscard]] std::shared_ptr<Value> getSrc2() const { return src2; }
+    [[nodiscard]] Value *getSrc2() const { return src2.get(); }
 
-    [[nodiscard]] std::shared_ptr<Value> getDst() const { return dst; }
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
 
-    void setBinaryOperator(
-        const std::shared_ptr<BinaryOperator> &newBinaryOperator) {
+    void setBinaryOperator(std::unique_ptr<BinaryOperator> newBinaryOperator) {
         if (!newBinaryOperator) {
             throw std::logic_error(
                 "Setting BinaryInstruction binaryOperator to null");
         }
-        this->binaryOperator = newBinaryOperator;
+        this->binaryOperator = std::move(newBinaryOperator);
     }
 
-    void setSrc1(const std::shared_ptr<Value> &newSrc1) {
+    void setSrc1(std::unique_ptr<Value> newSrc1) {
         if (!newSrc1) {
             throw std::logic_error("Setting BinaryInstruction src1 to null");
         }
-        this->src1 = newSrc1;
+        this->src1 = std::move(newSrc1);
     }
 
-    void setSrc2(const std::shared_ptr<Value> &newSrc2) {
+    void setSrc2(std::unique_ptr<Value> newSrc2) {
         if (!newSrc2) {
             throw std::logic_error("Setting BinaryInstruction src2 to null");
         }
-        this->src2 = newSrc2;
+        this->src2 = std::move(newSrc2);
     }
 
-    void setDst(const std::shared_ptr<Value> &newDst) {
+    void setDst(std::unique_ptr<Value> newDst) {
         if (!newDst) {
             throw std::logic_error("Setting BinaryInstruction dst to null");
         }
-        this->dst = newDst;
+        this->dst = std::move(newDst);
     }
 };
 
@@ -511,7 +506,7 @@ class CopyInstruction : public Instruction {
     /**
      * The source and destination values of the instruction.
      */
-    std::shared_ptr<Value> src, dst;
+    std::unique_ptr<Value> src, dst;
 
   public:
     /**
@@ -522,9 +517,8 @@ class CopyInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    CopyInstruction(const std::shared_ptr<Value> &src,
-                    const std::shared_ptr<Value> &dst)
-        : src(src), dst(dst) {
+    CopyInstruction(std::unique_ptr<Value> src, std::unique_ptr<Value> dst)
+        : src(std::move(src)), dst(std::move(dst)) {
         if (!src) {
             throw std::logic_error("Creating CopyInstruction with null src");
         }
@@ -533,22 +527,22 @@ class CopyInstruction : public Instruction {
         }
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getSrc() const { return src; }
+    [[nodiscard]] Value *getSrc() const { return src.get(); }
 
-    [[nodiscard]] std::shared_ptr<Value> getDst() const { return dst; }
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
 
-    void setSrc(const std::shared_ptr<Value> &newSrc) {
+    void setSrc(std::unique_ptr<Value> newSrc) {
         if (!newSrc) {
             throw std::logic_error("Setting CopyInstruction src to null");
         }
-        this->src = newSrc;
+        this->src = std::move(newSrc);
     }
 
-    void setDst(const std::shared_ptr<Value> &newDst) {
+    void setDst(std::unique_ptr<Value> newDst) {
         if (!newDst) {
             throw std::logic_error("Setting CopyInstruction dst to null");
         }
-        this->dst = newDst;
+        this->dst = std::move(newDst);
     }
 };
 
@@ -583,7 +577,7 @@ class JumpIfZeroInstruction : public Instruction {
     /**
      * The condition value of the jump instruction.
      */
-    std::shared_ptr<Value> condition;
+    std::unique_ptr<Value> condition;
     /**
      * The target label of the jump instruction.
      */
@@ -598,27 +592,25 @@ class JumpIfZeroInstruction : public Instruction {
      * @param target The target label of the jump instruction.
      * @throws std::logic_error if `condition` is null.
      */
-    JumpIfZeroInstruction(const std::shared_ptr<Value> &condition,
+    JumpIfZeroInstruction(std::unique_ptr<Value> condition,
                           std::string_view target)
-        : condition(condition), target(target) {
+        : condition(std::move(condition)), target(target) {
         if (!condition) {
             throw std::logic_error(
                 "Creating JumpIfZeroInstruction with null condition");
         }
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getCondition() const {
-        return condition;
-    }
+    [[nodiscard]] Value *getCondition() const { return condition.get(); }
 
     [[nodiscard]] const std::string &getTarget() const { return target; }
 
-    void setCondition(const std::shared_ptr<Value> &newCondition) {
+    void setCondition(std::unique_ptr<Value> newCondition) {
         if (!newCondition) {
             throw std::logic_error(
                 "Setting JumpIfZeroInstruction condition to null");
         }
-        this->condition = newCondition;
+        this->condition = std::move(newCondition);
     }
 
     void setTarget(std::string_view newTarget) { this->target = newTarget; }
@@ -632,7 +624,7 @@ class JumpIfNotZeroInstruction : public Instruction {
     /**
      * The condition value of the jump instruction.
      */
-    std::shared_ptr<Value> condition;
+    std::unique_ptr<Value> condition;
     /**
      * The target label of the jump instruction.
      */
@@ -647,27 +639,25 @@ class JumpIfNotZeroInstruction : public Instruction {
      * @param target The target label of the jump instruction.
      * @throws std::logic_error if `condition` is null.
      */
-    JumpIfNotZeroInstruction(const std::shared_ptr<Value> &condition,
+    JumpIfNotZeroInstruction(std::unique_ptr<Value> condition,
                              std::string_view target)
-        : condition(condition), target(target) {
+        : condition(std::move(condition)), target(target) {
         if (!condition) {
             throw std::logic_error(
                 "Creating JumpIfNotZeroInstruction with null condition");
         }
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getCondition() const {
-        return condition;
-    }
+    [[nodiscard]] Value *getCondition() const { return condition.get(); }
 
     [[nodiscard]] const std::string &getTarget() const { return target; }
 
-    void setCondition(const std::shared_ptr<Value> &newCondition) {
+    void setCondition(std::unique_ptr<Value> newCondition) {
         if (!newCondition) {
             throw std::logic_error(
                 "Setting JumpIfNotZeroInstruction condition to null");
         }
-        this->condition = newCondition;
+        this->condition = std::move(newCondition);
     }
 
     void setTarget(std::string_view newTarget) { this->target = newTarget; }
@@ -708,11 +698,11 @@ class FunctionCallInstruction : public Instruction {
     /**
      * The argument values of the instruction.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<Value>>> args;
+    std::unique_ptr<std::vector<std::unique_ptr<Value>>> args;
     /**
      * The destination value of the instruction.
      */
-    std::shared_ptr<Value> dst;
+    std::unique_ptr<Value> dst;
 
   public:
     /**
@@ -726,9 +716,10 @@ class FunctionCallInstruction : public Instruction {
      */
     FunctionCallInstruction(
         std::string_view functionIdentifier,
-        const std::shared_ptr<std::vector<std::shared_ptr<Value>>> &args,
-        const std::shared_ptr<Value> &dst)
-        : functionIdentifier(functionIdentifier), args(args), dst(dst) {
+        std::unique_ptr<std::vector<std::unique_ptr<Value>>> args,
+        std::unique_ptr<Value> dst)
+        : functionIdentifier(functionIdentifier), args(std::move(args)),
+          dst(std::move(dst)) {
         if (!args) {
             throw std::logic_error(
                 "Creating FunctionCallInstruction with null args");
@@ -743,32 +734,30 @@ class FunctionCallInstruction : public Instruction {
         return functionIdentifier;
     }
 
-    [[nodiscard]] const std::shared_ptr<std::vector<std::shared_ptr<Value>>> &
-    getArgs() const {
-        return args;
+    [[nodiscard]] const std::vector<std::unique_ptr<Value>> &getArgs() const {
+        return *args;
     }
 
-    [[nodiscard]] std::shared_ptr<Value> getDst() const { return dst; }
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
 
     void setFunctionIdentifier(std::string_view newFunctionIdentifier) {
         this->functionIdentifier = newFunctionIdentifier;
     }
 
-    void setArgs(
-        const std::shared_ptr<std::vector<std::shared_ptr<Value>>> &newArgs) {
+    void setArgs(std::unique_ptr<std::vector<std::unique_ptr<Value>>> newArgs) {
         if (!newArgs) {
             throw std::logic_error(
                 "Setting FunctionCallInstruction args to null");
         }
-        this->args = newArgs;
+        this->args = std::move(newArgs);
     }
 
-    void setDst(const std::shared_ptr<Value> &newDst) {
+    void setDst(std::unique_ptr<Value> newDst) {
         if (!newDst) {
             throw std::logic_error(
                 "Setting FunctionCallInstruction dst to null");
         }
-        this->dst = newDst;
+        this->dst = std::move(newDst);
     }
 };
 
@@ -799,11 +788,11 @@ class FunctionDefinition : public TopLevel {
     /**
      * The parameter identifiers of the function definition.
      */
-    std::shared_ptr<std::vector<std::string>> parameters;
+    std::unique_ptr<std::vector<std::string>> parameters;
     /**
      * The function body of the function definition.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<Instruction>>> functionBody;
+    std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody;
 
   public:
     /**
@@ -819,11 +808,11 @@ class FunctionDefinition : public TopLevel {
      */
     FunctionDefinition(
         std::string_view functionIdentifier, bool global,
-        const std::shared_ptr<std::vector<std::string>> &parameters,
-        const std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-            &functionBody)
+        std::unique_ptr<std::vector<std::string>> parameters,
+        std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody)
         : functionIdentifier(functionIdentifier), global(global),
-          parameters(parameters), functionBody(functionBody) {
+          parameters(std::move(parameters)),
+          functionBody(std::move(functionBody)) {
         if (!parameters) {
             throw std::logic_error(
                 "Creating FunctionDefinition with null parameters");
@@ -840,25 +829,24 @@ class FunctionDefinition : public TopLevel {
 
     [[nodiscard]] bool isGlobal() const { return global; }
 
-    [[nodiscard]] const std::shared_ptr<std::vector<std::string>> &
+    [[nodiscard]] const std::vector<std::string> &
     getParameterIdentifiers() const {
-        return parameters;
+        return *parameters;
     }
 
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<Instruction>>> &
+    [[nodiscard]] const std::vector<std::unique_ptr<Instruction>> &
     getFunctionBody() const {
-        return functionBody;
+        return *functionBody;
     }
 
-    void setFunctionBody(
-        const std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-            &newFunctionBody) {
+    void
+    setFunctionBody(std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
+                        newFunctionBody) {
         if (!newFunctionBody) {
             throw std::logic_error(
                 "Setting FunctionDefinition functionBody to null");
         }
-        this->functionBody = newFunctionBody;
+        this->functionBody = std::move(newFunctionBody);
     }
 };
 
@@ -878,11 +866,11 @@ class StaticVariable : public TopLevel {
     /**
      * The type of the static variable.
      */
-    std::shared_ptr<AST::Type> type;
+    std::unique_ptr<AST::Type> type;
     /**
      * The static initialization of the static variable.
      */
-    std::shared_ptr<AST::StaticInit> staticInit;
+    std::unique_ptr<AST::StaticInit> staticInit;
 
   public:
     /**
@@ -896,10 +884,10 @@ class StaticVariable : public TopLevel {
      * @throws std::logic_error if `type` or `staticInit` is null.
      */
     StaticVariable(std::string_view identifier, bool global,
-                   const std::shared_ptr<AST::Type> &type,
-                   const std::shared_ptr<AST::StaticInit> &staticInit)
-        : identifier(identifier), global(global), type(type),
-          staticInit(staticInit) {
+                   std::unique_ptr<AST::Type> type,
+                   std::unique_ptr<AST::StaticInit> staticInit)
+        : identifier(identifier), global(global), type(std::move(type)),
+          staticInit(std::move(staticInit)) {
         if (!type) {
             throw std::logic_error("Creating StaticVariable with null type");
         }
@@ -915,10 +903,10 @@ class StaticVariable : public TopLevel {
 
     [[nodiscard]] bool isGlobal() const { return global; }
 
-    [[nodiscard]] std::shared_ptr<AST::Type> getType() const { return type; }
+    [[nodiscard]] const AST::Type *getType() const { return type.get(); }
 
-    [[nodiscard]] std::shared_ptr<AST::StaticInit> getStaticInit() const {
-        return staticInit;
+    [[nodiscard]] const AST::StaticInit *getStaticInit() const {
+        return staticInit.get();
     }
 };
 
@@ -930,7 +918,7 @@ class Program {
     /**
      * The top-level constructs of the program.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>> topLevels;
+    std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels;
 
   public:
     /**
@@ -940,18 +928,20 @@ class Program {
      * @throws std::logic_error if `topLevels` is null.
      */
     explicit Program(
-        const std::shared_ptr<std::vector<std::shared_ptr<TopLevel>>>
-            &topLevels)
-        : topLevels(topLevels) {
+        std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels)
+        : topLevels(std::move(topLevels)) {
         if (!topLevels) {
             throw std::logic_error("Creating Program with null topLevels");
         }
     }
 
-    [[nodiscard]] const std::shared_ptr<
-        std::vector<std::shared_ptr<TopLevel>>> &
+    [[nodiscard]] const std::vector<std::unique_ptr<TopLevel>> &
     getTopLevels() const {
-        return topLevels;
+        return *topLevels;
+    }
+
+    [[nodiscard]] std::vector<std::unique_ptr<TopLevel>> &getTopLevels() {
+        return *topLevels;
     }
 };
 } // namespace IR

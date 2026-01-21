@@ -9,19 +9,17 @@ void convertFrontendToBackendSymbolTable(
     // Convert each entry from a frontend symbol table to a backend symbol
     // table.
     for (const auto &[identifier, entry] : frontendSymbolTable) {
-        auto astType = entry.first;
-        auto identifierAttribute = entry.second;
+        auto astType = entry.first.get();
+        auto identifierAttribute = entry.second.get();
 
         if (auto functionAttribute =
-                std::dynamic_pointer_cast<AST::FunctionAttribute>(
-                    identifierAttribute)) {
+                dynamic_cast<AST::FunctionAttribute *>(identifierAttribute)) {
             auto funEntry =
                 std::make_shared<FunEntry>(functionAttribute->isDefined());
             backendSymbolTable[identifier] = funEntry;
         }
-        else if (auto staticAttribute =
-                     std::dynamic_pointer_cast<AST::StaticAttribute>(
-                         identifierAttribute)) {
+        else if (auto staticAttribute = dynamic_cast<AST::StaticAttribute *>(
+                     identifierAttribute)) {
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
             auto objEntry = std::make_shared<ObjEntry>(
@@ -29,8 +27,7 @@ void convertFrontendToBackendSymbolTable(
             backendSymbolTable[identifier] = objEntry;
         }
         else if (auto localAttribute =
-                     std::dynamic_pointer_cast<AST::LocalAttribute>(
-                         identifierAttribute)) {
+                     dynamic_cast<AST::LocalAttribute *>(identifierAttribute)) {
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
             auto objEntry = std::make_shared<ObjEntry>(

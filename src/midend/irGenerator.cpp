@@ -1,5 +1,57 @@
 #include "irGenerator.h"
+#include "../frontend/forInit.h"
 #include "../frontend/frontendSymbolTable.h"
+
+namespace {
+/**
+ * Clone a type.
+ *
+ * @param type The type to clone.
+ * @return The cloned type.
+ */
+std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
+    if (!type) {
+        return nullptr;
+    }
+    if (dynamic_cast<const AST::IntType *>(type)) {
+        return std::make_unique<AST::IntType>();
+    }
+    if (dynamic_cast<const AST::LongType *>(type)) {
+        return std::make_unique<AST::LongType>();
+    }
+    if (auto functionType = dynamic_cast<const AST::FunctionType *>(type)) {
+        auto parameterTypes =
+            std::make_unique<std::vector<std::unique_ptr<AST::Type>>>();
+        parameterTypes->reserve(functionType->getParameterTypes().size());
+        for (const auto &parameter : functionType->getParameterTypes()) {
+            parameterTypes->emplace_back(cloneType(parameter.get()));
+        }
+        return std::make_unique<AST::FunctionType>(
+            std::move(parameterTypes),
+            cloneType(&functionType->getReturnType()));
+    }
+    throw std::logic_error("Unsupported type in cloneType");
+}
+
+/**
+ * Clone a static initializer.
+ *
+ * @param staticInit The static initializer to clone.
+ * @return The cloned static initializer.
+ */
+std::unique_ptr<AST::StaticInit>
+cloneStaticInit(const AST::StaticInit *staticInit) {
+    if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
+        auto value = intInit->getValue();
+        return std::make_unique<AST::IntInit>(std::get<int>(value));
+    }
+    if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
+        auto value = longInit->getValue();
+        return std::make_unique<AST::LongInit>(std::get<long>(value));
+    }
+    throw std::logic_error("Unsupported static initializer");
+}
+} // namespace
 
 namespace IR {
 IRGenerator::IRGenerator(int variableResolutionCounter,
@@ -7,44 +59,45 @@ IRGenerator::IRGenerator(int variableResolutionCounter,
     : irTemporariesCounter(variableResolutionCounter),
       frontendSymbolTable(frontendSymbolTable) {}
 
-std::pair<std::shared_ptr<IR::Program>,
-          std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>>
-IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
+std::pair<std::unique_ptr<IR::Program>,
+          std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
+IRGenerator::generateIR(const AST::Program &astProgram) {
     // Initialize the vector of IR top-levels (top-level elements).
     auto topLevels =
-        std::make_shared<std::vector<std::shared_ptr<IR::TopLevel>>>();
+        std::make_unique<std::vector<std::unique_ptr<IR::TopLevel>>>();
 
     // Generate IR instructions for each AST top-level element.
-    auto astDeclarations = astProgram->getDeclarations();
-    for (const auto &astDeclaration : *astDeclarations) {
-        if (auto functionDeclaration =
-                std::dynamic_pointer_cast<AST::FunctionDeclaration>(
-                    astDeclaration)) {
+    for (const auto &astDeclaration : astProgram.getDeclarations()) {
+        if (auto *functionDeclaration =
+                dynamic_cast<AST::FunctionDeclaration *>(
+                    astDeclaration.get())) {
             // Get the body of the function declaration.
             auto optBody = functionDeclaration->getOptBody();
 
             // Skip generating IR instructions for forward declarations.
-            if (!optBody.has_value()) {
+            if (!optBody) {
                 continue;
             }
 
             // Create a new vector of IR instructions for the function.
-            auto instructions = std::make_shared<
-                std::vector<std::shared_ptr<IR::Instruction>>>();
+            auto instructions = std::make_unique<
+                std::vector<std::unique_ptr<IR::Instruction>>>();
 
             // Get the identifier and the parameters of the function
             // declaration.
             auto identifier = functionDeclaration->getIdentifier();
-            auto parameters = functionDeclaration->getParameterIdentifiers();
+            auto parameters = std::make_unique<std::vector<std::string>>(
+                functionDeclaration->getParameterIdentifiers());
 
             // Find the global attribute of the function declaration in the
             // frontend symbol table and set the global flag.
             bool global = false;
             if (frontendSymbolTable.find(identifier) !=
                 frontendSymbolTable.end()) {
-                if (auto functionAttribute =
-                        std::dynamic_pointer_cast<AST::FunctionAttribute>(
-                            frontendSymbolTable[identifier].second)) {
+                auto &symbolEntry = frontendSymbolTable[identifier];
+                if (auto *functionAttribute =
+                        dynamic_cast<AST::FunctionAttribute *>(
+                            symbolEntry.second.get())) {
                     global = functionAttribute->isGlobal();
                 }
                 else {
@@ -62,13 +115,12 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
             }
 
             // Generate IR instructions for the function body.
-            generateIRBlock(optBody.value(), instructions);
+            generateIRBlock(optBody, *instructions);
 
             // Check if the function has any return statements.
             bool hasReturnStatement = false;
             for (const auto &instruction : *instructions) {
-                if (std::dynamic_pointer_cast<IR::ReturnInstruction>(
-                        instruction)) {
+                if (dynamic_cast<IR::ReturnInstruction *>(instruction.get())) {
                     hasReturnStatement = true;
                     break;
                 }
@@ -81,8 +133,8 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
             if (hasReturnStatement) {
                 // Check if the last instruction is a return statement.
                 if (instructions->empty() ||
-                    !std::dynamic_pointer_cast<IR::ReturnInstruction>(
-                        instructions->back())) {
+                    !dynamic_cast<IR::ReturnInstruction *>(
+                        instructions->back().get())) {
                     needsImplicitReturn = true;
                 }
             }
@@ -94,57 +146,58 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
             // If the function needs an implicit return, add it.
             if (needsImplicitReturn) {
                 // Get the function's return type from the symbol table.
-                auto functionType = frontendSymbolTable[identifier].first;
+                auto functionType = frontendSymbolTable[identifier].first.get();
                 auto functionTypePtr =
-                    std::dynamic_pointer_cast<AST::FunctionType>(functionType);
+                    dynamic_cast<AST::FunctionType *>(functionType);
                 if (functionTypePtr) {
-                    auto returnType = functionTypePtr->getReturnType();
+                    const auto &returnType = functionTypePtr->getReturnType();
 
                     // Create a constant value based on the return type.
-                    std::shared_ptr<IR::Value> returnValue;
-                    if (std::dynamic_pointer_cast<AST::IntType>(returnType)) {
-                        returnValue = std::make_shared<IR::ConstantValue>(
-                            std::make_shared<AST::ConstantInt>(0));
+                    std::unique_ptr<IR::Value> returnValue;
+                    if (dynamic_cast<const AST::IntType *>(&returnType)) {
+                        returnValue = std::make_unique<IR::ConstantValue>(
+                            std::make_unique<AST::ConstantInt>(0));
                     }
-                    else if (std::dynamic_pointer_cast<AST::LongType>(
-                                 returnType)) {
-                        returnValue = std::make_shared<IR::ConstantValue>(
-                            std::make_shared<AST::ConstantLong>(0L));
+                    else if (dynamic_cast<const AST::LongType *>(&returnType)) {
+                        returnValue = std::make_unique<IR::ConstantValue>(
+                            std::make_unique<AST::ConstantLong>(0L));
                     }
                     else {
                         // For void functions, we don't need to return anything,
                         // but we still need a return instruction for proper
                         // function termination.
-                        returnValue = std::make_shared<IR::ConstantValue>(
-                            std::make_shared<AST::ConstantInt>(0));
+                        returnValue = std::make_unique<IR::ConstantValue>(
+                            std::make_unique<AST::ConstantInt>(0));
                     }
 
                     // Add the implicit return instruction.
                     instructions->emplace_back(
-                        std::make_shared<IR::ReturnInstruction>(returnValue));
+                        std::make_unique<IR::ReturnInstruction>(
+                            std::move(returnValue)));
                 }
             }
 
             // Create a new IR function definition with the function identifier,
             // the global flag, the parameters, and the instructions.
             auto irFunctionDefinition =
-                std::make_shared<IR::FunctionDefinition>(
-                    identifier, global, parameters, instructions);
+                std::make_unique<IR::FunctionDefinition>(
+                    identifier, global, std::move(parameters),
+                    std::move(instructions));
 
             // Add the IR function definition to the vector of IR top-levels.
-            topLevels->emplace_back(irFunctionDefinition);
+            topLevels->emplace_back(std::move(irFunctionDefinition));
         }
-        else if (auto variableDeclaration =
-                     std::dynamic_pointer_cast<AST::VariableDeclaration>(
-                         astDeclaration)) {
+        else if (auto *variableDeclaration =
+                     dynamic_cast<AST::VariableDeclaration *>(
+                         astDeclaration.get())) {
             // Continue: Do not generate IR instructions for file-scope variable
             // declarations or for local variable declarations with `static` or
             // `extern` storage-class specifiers (for now).
-            if (variableDeclaration->getOptStorageClass().has_value()) {
-                if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
-                        variableDeclaration->getOptStorageClass().value()) ||
-                    std::dynamic_pointer_cast<AST::ExternStorageClass>(
-                        variableDeclaration->getOptStorageClass().value())) {
+            if (variableDeclaration->getOptStorageClass()) {
+                if (dynamic_cast<AST::StaticStorageClass *>(
+                        variableDeclaration->getOptStorageClass()) ||
+                    dynamic_cast<AST::ExternStorageClass *>(
+                        variableDeclaration->getOptStorageClass())) {
                     continue;
                 }
             }
@@ -156,37 +209,32 @@ IRGenerator::generateIR(const std::shared_ptr<AST::Program> &astProgram) {
     auto irStaticVariables = convertFrontendSymbolTableToIRStaticVariables();
 
     // Return the generated IR program along with the static variables.
-    return std::make_pair(std::make_shared<IR::Program>(topLevels),
-                          irStaticVariables);
+    return std::make_pair(std::make_unique<IR::Program>(std::move(topLevels)),
+                          std::move(irStaticVariables));
 }
 
 void IRGenerator::generateIRBlock(
-    const std::shared_ptr<AST::Block> &astBlock,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::Block *astBlock,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the block items from the block.
-    auto blockItems = astBlock->getBlockItems();
-
     // Generate IR instructions for each block item.
-    for (const auto &blockItem : *blockItems) {
+    for (const auto &blockItem : astBlock->getBlockItems()) {
         // If the block item is a `DBlockItem` (i.e., a declaration), ...
-        if (auto dBlockItem =
-                std::dynamic_pointer_cast<AST::DBlockItem>(blockItem)) {
+        if (auto *dBlockItem =
+                dynamic_cast<AST::DBlockItem *>(blockItem.get())) {
             // Generate IR instructions for the variable declaration (that has
             // an initializer).
-            if (auto variableDeclaration =
-                    std::dynamic_pointer_cast<AST::VariableDeclaration>(
+            if (auto *variableDeclaration =
+                    dynamic_cast<AST::VariableDeclaration *>(
                         dBlockItem->getDeclaration())) {
                 // Continue: Do not generate IR instructions for file-scope
                 // variable declarations or for local variable declarations with
                 // `static` or `extern` storage-class specifiers (for now).
-                if (variableDeclaration->getOptStorageClass().has_value()) {
-                    if (std::dynamic_pointer_cast<AST::StaticStorageClass>(
-                            variableDeclaration->getOptStorageClass()
-                                .value()) ||
-                        std::dynamic_pointer_cast<AST::ExternStorageClass>(
-                            variableDeclaration->getOptStorageClass()
-                                .value())) {
+                if (variableDeclaration->getOptStorageClass()) {
+                    if (dynamic_cast<AST::StaticStorageClass *>(
+                            variableDeclaration->getOptStorageClass()) ||
+                        dynamic_cast<AST::ExternStorageClass *>(
+                            variableDeclaration->getOptStorageClass())) {
                         continue;
                     }
                 }
@@ -198,16 +246,16 @@ void IRGenerator::generateIRBlock(
 
             // Generate IR instructions for the function declaration (that has a
             // body).
-            else if (auto functionDeclaration =
-                         std::dynamic_pointer_cast<AST::FunctionDeclaration>(
+            else if (auto *functionDeclaration =
+                         dynamic_cast<AST::FunctionDeclaration *>(
                              dBlockItem->getDeclaration())) {
                 generateIRFunctionDefinition(functionDeclaration, instructions);
             }
         }
 
         // If the block item is a `SBockItem` (i.e., a statement), ...
-        else if (auto sBlockItem =
-                     std::dynamic_pointer_cast<AST::SBlockItem>(blockItem)) {
+        else if (auto *sBlockItem =
+                     dynamic_cast<AST::SBlockItem *>(blockItem.get())) {
             // Generate IR instructions for the statement.
             generateIRStatement(sBlockItem->getStatement(), instructions);
         }
@@ -215,89 +263,81 @@ void IRGenerator::generateIRBlock(
 }
 
 void IRGenerator::generateIRFunctionDefinition(
-    const std::shared_ptr<AST::FunctionDeclaration> &astFunctionDeclaration,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::FunctionDeclaration *astFunctionDeclaration,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the body of the function.
     auto optBody = astFunctionDeclaration->getOptBody();
-    if (optBody.has_value()) {
+    if (optBody) {
         // Generate IR instructions for the body of the function.
-        generateIRBlock(optBody.value(), instructions);
+        generateIRBlock(optBody, instructions);
     }
     // Otherwise (i.e., if the function does not have a body), we do not need
     // to generate any IR instructions for now.
 }
 
 void IRGenerator::generateIRVariableDefinition(
-    const std::shared_ptr<AST::VariableDeclaration> &astVariableDeclaration,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::VariableDeclaration *astVariableDeclaration,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     auto identifier = astVariableDeclaration->getIdentifier();
     auto initializer = astVariableDeclaration->getOptInitializer();
     // If the declaration has an initializer, ...
-    if (initializer.has_value()) {
+    if (initializer) {
         // Generate IR instructions for the initializer.
-        auto result = generateIRInstruction(initializer.value(), instructions);
+        auto result = generateIRInstruction(initializer, instructions);
 
         // Create a variable value for the identifier.
-        auto dst = std::make_shared<IR::VariableValue>(identifier);
+        auto dst = std::make_unique<IR::VariableValue>(identifier);
 
         // Generate a copy instruction with the result value and the
         // destination value.
-        instructions->emplace_back(
-            std::make_shared<IR::CopyInstruction>(result, dst));
+        instructions.emplace_back(std::make_unique<IR::CopyInstruction>(
+            std::move(result), std::move(dst)));
     }
     // Otherwise (i.e., if the declaration does not have an initializer),
     // we do not need to generate any IR instructions.
 }
 
 void IRGenerator::generateIRStatement(
-    const std::shared_ptr<AST::Statement> &astStatement,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
-    if (auto returnStmt =
-            std::dynamic_pointer_cast<AST::ReturnStatement>(astStatement)) {
+    const AST::Statement *astStatement,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
+    if (auto *returnStmt =
+            dynamic_cast<const AST::ReturnStatement *>(astStatement)) {
         generateIRReturnStatement(returnStmt, instructions);
     }
-    else if (auto expressionStmt =
-                 std::dynamic_pointer_cast<AST::ExpressionStatement>(
-                     astStatement)) {
+    else if (auto *expressionStmt =
+                 dynamic_cast<const AST::ExpressionStatement *>(astStatement)) {
         generateIRExpressionStatement(expressionStmt, instructions);
     }
-    else if (auto compoundStmt =
-                 std::dynamic_pointer_cast<AST::CompoundStatement>(
-                     astStatement)) {
+    else if (auto *compoundStmt =
+                 dynamic_cast<const AST::CompoundStatement *>(astStatement)) {
         // If the statement is a compound statement, generate a block.
         generateIRBlock(compoundStmt->getBlock(), instructions);
     }
-    else if (auto ifStmt =
-                 std::dynamic_pointer_cast<AST::IfStatement>(astStatement)) {
+    else if (auto *ifStmt =
+                 dynamic_cast<const AST::IfStatement *>(astStatement)) {
         generateIRIfStatement(ifStmt, instructions);
     }
-    else if (auto breakStmt =
-                 std::dynamic_pointer_cast<AST::BreakStatement>(astStatement)) {
+    else if (auto *breakStmt =
+                 dynamic_cast<const AST::BreakStatement *>(astStatement)) {
         generateIRBreakStatement(breakStmt, instructions);
     }
-    else if (auto continueStmt =
-                 std::dynamic_pointer_cast<AST::ContinueStatement>(
-                     astStatement)) {
+    else if (auto *continueStmt =
+                 dynamic_cast<const AST::ContinueStatement *>(astStatement)) {
         generateIRContinueStatement(continueStmt, instructions);
     }
-    else if (auto whileStmt =
-                 std::dynamic_pointer_cast<AST::WhileStatement>(astStatement)) {
+    else if (auto *whileStmt =
+                 dynamic_cast<const AST::WhileStatement *>(astStatement)) {
         generateIRWhileStatement(whileStmt, instructions);
     }
-    else if (auto doWhileStmt =
-                 std::dynamic_pointer_cast<AST::DoWhileStatement>(
-                     astStatement)) {
+    else if (auto *doWhileStmt =
+                 dynamic_cast<const AST::DoWhileStatement *>(astStatement)) {
         generateIRDoWhileStatement(doWhileStmt, instructions);
     }
-    else if (auto forStmt =
-                 std::dynamic_pointer_cast<AST::ForStatement>(astStatement)) {
+    else if (auto *forStmt =
+                 dynamic_cast<const AST::ForStatement *>(astStatement)) {
         generateIRForStatement(forStmt, instructions);
     }
-    else if (auto nullStmt =
-                 std::dynamic_pointer_cast<AST::NullStatement>(astStatement)) {
+    else if (dynamic_cast<const AST::NullStatement *>(astStatement)) {
         // If the statement is a null statement, do nothing.
     }
     else {
@@ -307,9 +347,8 @@ void IRGenerator::generateIRStatement(
 }
 
 void IRGenerator::generateIRReturnStatement(
-    const std::shared_ptr<AST::ReturnStatement> &returnStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::ReturnStatement *returnStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the expression from the return statement.
     auto exp = returnStmt->getExpression();
 
@@ -318,13 +357,13 @@ void IRGenerator::generateIRReturnStatement(
     auto result = generateIRInstruction(exp, instructions);
 
     // Generate a return instruction with the result value.
-    instructions->emplace_back(std::make_shared<IR::ReturnInstruction>(result));
+    instructions.emplace_back(
+        std::make_unique<IR::ReturnInstruction>(std::move(result)));
 }
 
 void IRGenerator::generateIRExpressionStatement(
-    const std::shared_ptr<AST::ExpressionStatement> &expressionStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::ExpressionStatement *expressionStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the expression from the expression statement.
     auto exp = expressionStmt->getExpression();
 
@@ -335,9 +374,8 @@ void IRGenerator::generateIRExpressionStatement(
 }
 
 void IRGenerator::generateIRIfStatement(
-    const std::shared_ptr<AST::IfStatement> &ifStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::IfStatement *ifStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the condition from the if-statement.
     auto condition = ifStmt->getCondition();
     // Process the condition and generate the corresponding IR instructions.
@@ -347,11 +385,11 @@ void IRGenerator::generateIRIfStatement(
     // Generate a new else label.
     auto elseLabel = generateIRElseLabel();
 
-    if (ifStmt->getElseOptStatement().has_value()) {
+    if (ifStmt->getElseOptStatement()) {
         // Generate a jump-if-zero instruction with the condition value and the
         // else label.
-        instructions->emplace_back(std::make_shared<IR::JumpIfZeroInstruction>(
-            conditionValue, elseLabel));
+        instructions.emplace_back(std::make_unique<IR::JumpIfZeroInstruction>(
+            std::move(conditionValue), elseLabel));
         // Get the then-statement from the if-statement.
         auto thenStatement = ifStmt->getThenStatement();
         // Process the then-statement and generate the corresponding IR
@@ -362,7 +400,7 @@ void IRGenerator::generateIRIfStatement(
         // Generate a label instruction with the same (new) else label.
         generateIRLabelInstruction(elseLabel, instructions);
         // Get the (optional) else-statement from the if-statement.
-        auto elseOptStatement = ifStmt->getElseOptStatement().value();
+        auto elseOptStatement = ifStmt->getElseOptStatement();
         // Process the else-statement and generate the corresponding IR
         // instructions.
         generateIRStatement(elseOptStatement, instructions);
@@ -370,8 +408,8 @@ void IRGenerator::generateIRIfStatement(
     else {
         // Generate a jump-if-zero instruction with the condition value and the
         // end label.
-        instructions->emplace_back(std::make_shared<IR::JumpIfZeroInstruction>(
-            conditionValue, endLabel));
+        instructions.emplace_back(std::make_unique<IR::JumpIfZeroInstruction>(
+            std::move(conditionValue), endLabel));
         // Get the then-statement from the if-statement.
         auto thenStatement = ifStmt->getThenStatement();
         // Process the then-statement and generate the corresponding IR
@@ -384,27 +422,24 @@ void IRGenerator::generateIRIfStatement(
 }
 
 void IRGenerator::generateIRBreakStatement(
-    const std::shared_ptr<AST::BreakStatement> &breakStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::BreakStatement *breakStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a jump instruction with the extended break label.
     auto breakLabel = generateIRBreakLoopLabel(breakStmt->getLabel());
     generateIRJumpInstruction(breakLabel, instructions);
 }
 
 void IRGenerator::generateIRContinueStatement(
-    const std::shared_ptr<AST::ContinueStatement> &continueStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::ContinueStatement *continueStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a jump instruction with the extended continue label.
     auto continueLabel = generateIRContinueLoopLabel(continueStmt->getLabel());
     generateIRJumpInstruction(continueLabel, instructions);
 }
 
 void IRGenerator::generateIRDoWhileStatement(
-    const std::shared_ptr<AST::DoWhileStatement> &doWhileStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::DoWhileStatement *doWhileStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a new start label.
     auto startLabel = generateIRStartLabel();
     // Generate a label instruction with the start label.
@@ -421,7 +456,7 @@ void IRGenerator::generateIRDoWhileStatement(
     auto conditionValue = generateIRInstruction(condition, instructions);
     // Generate a jump-if-not-zero instruction with the condition value and the
     // start label.
-    generateIRJumpIfNotZeroInstruction(conditionValue, startLabel,
+    generateIRJumpIfNotZeroInstruction(std::move(conditionValue), startLabel,
                                        instructions);
     // Generate a new break label (based on the label of the do-while).
     auto breakLabel = generateIRBreakLoopLabel(doWhileStmt->getLabel());
@@ -430,9 +465,8 @@ void IRGenerator::generateIRDoWhileStatement(
 }
 
 void IRGenerator::generateIRWhileStatement(
-    const std::shared_ptr<AST::WhileStatement> &whileStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::WhileStatement *whileStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a new continue label (based on the label of the while).
     auto continueLabel = generateIRContinueLoopLabel(whileStmt->getLabel());
     // Generate a label instruction with the continue label.
@@ -444,7 +478,8 @@ void IRGenerator::generateIRWhileStatement(
     auto breakLabel = generateIRBreakLoopLabel(whileStmt->getLabel());
     // Generate a jump-if-zero instruction with the condition value and the
     // break label.
-    generateIRJumpIfZeroInstruction(conditionValue, breakLabel, instructions);
+    generateIRJumpIfZeroInstruction(std::move(conditionValue), breakLabel,
+                                    instructions);
     // Generate instructions for the body of the while-statement.
     auto body = whileStmt->getBody();
     generateIRStatement(body, instructions);
@@ -455,20 +490,16 @@ void IRGenerator::generateIRWhileStatement(
 }
 
 void IRGenerator::generateIRForStatement(
-    const std::shared_ptr<AST::ForStatement> &forStmt,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::ForStatement *forStmt,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate instructions for the for-init of the for-statement.
     auto forInit = forStmt->getForInit();
-    if (auto initExpr = std::dynamic_pointer_cast<AST::InitExpr>(forInit)) {
-        auto optExpr = initExpr->getExpression();
-        if (optExpr.has_value()) {
-            auto resolvedExpr =
-                generateIRInstruction(optExpr.value(), instructions);
+    if (auto initExpr = dynamic_cast<const AST::InitExpr *>(forInit)) {
+        if (auto optExpr = initExpr->getExpression()) {
+            auto resolvedExpr = generateIRInstruction(optExpr, instructions);
         }
     }
-    else if (auto initDecl =
-                 std::dynamic_pointer_cast<AST::InitDecl>(forInit)) {
+    else if (auto initDecl = dynamic_cast<const AST::InitDecl *>(forInit)) {
         generateIRVariableDefinition(initDecl->getVariableDeclaration(),
                                      instructions);
     }
@@ -481,12 +512,11 @@ void IRGenerator::generateIRForStatement(
     // Optionally generate instructions for the (optional) condition of the
     // for-statement.
     auto optCondition = forStmt->getOptCondition();
-    if (optCondition.has_value()) {
+    if (optCondition) {
         // Generate a jump-if-zero instruction with the condition value and the
         // break label.
-        auto conditionValue =
-            generateIRInstruction(optCondition.value(), instructions);
-        generateIRJumpIfZeroInstruction(conditionValue, breakLabel,
+        auto conditionValue = generateIRInstruction(optCondition, instructions);
+        generateIRJumpIfZeroInstruction(std::move(conditionValue), breakLabel,
                                         instructions);
     }
     // Generate instructions for the body of the for-statement.
@@ -499,8 +529,8 @@ void IRGenerator::generateIRForStatement(
     // Optionally generate instructions for the (optional) post of the
     // for-statement.
     auto optPost = forStmt->getOptPost();
-    if (optPost.has_value()) {
-        auto postValue = generateIRInstruction(optPost.value(), instructions);
+    if (optPost) {
+        auto postValue = generateIRInstruction(optPost, instructions);
     }
     // Generate a jump instruction with the start label.
     generateIRJumpInstruction(startLabel, instructions);
@@ -508,21 +538,19 @@ void IRGenerator::generateIRForStatement(
     generateIRLabelInstruction(breakLabel, instructions);
 }
 
-std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
-    const std::shared_ptr<AST::Expression> &e,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
-    if (auto constantExpr =
-            std::dynamic_pointer_cast<AST::ConstantExpression>(e)) {
+std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
+    const AST::Expression *e,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
+    if (auto constantExpr = dynamic_cast<const AST::ConstantExpression *>(e)) {
         auto variantValue = constantExpr->getConstantInIntOrLongVariant();
         if (std::holds_alternative<int>(variantValue)) {
-            return std::make_shared<IR::ConstantValue>(
-                std::make_shared<AST::ConstantInt>(
+            return std::make_unique<IR::ConstantValue>(
+                std::make_unique<AST::ConstantInt>(
                     std::get<int>(variantValue)));
         }
         else if (std::holds_alternative<long>(variantValue)) {
-            return std::make_shared<IR::ConstantValue>(
-                std::make_shared<AST::ConstantLong>(
+            return std::make_unique<IR::ConstantValue>(
+                std::make_unique<AST::ConstantLong>(
                     std::get<long>(variantValue)));
         }
         else {
@@ -531,25 +559,19 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
                 "for expression");
         }
     }
-    else if (auto unaryExpr =
-                 std::dynamic_pointer_cast<AST::UnaryExpression>(e)) {
+    else if (auto unaryExpr = dynamic_cast<const AST::UnaryExpression *>(e)) {
         return generateIRUnaryInstruction(unaryExpr, instructions);
     }
-    else if (auto binaryExpr =
-                 std::dynamic_pointer_cast<AST::BinaryExpression>(e)) {
+    else if (auto binaryExpr = dynamic_cast<const AST::BinaryExpression *>(e)) {
         // If the binary operator in the AST binary expression is a
         // logical-and operator, ...
-        if (auto astBinaryOperator =
-                std::dynamic_pointer_cast<AST::AndOperator>(
-                    binaryExpr->getOperator())) {
+        if (dynamic_cast<AST::AndOperator *>(binaryExpr->getOperator())) {
             return generateIRInstructionWithLogicalAnd(binaryExpr,
                                                        instructions);
         }
         // If the binary operator in the AST binary expression is a
         // logical-or operator, ...
-        else if (auto astBinaryOperator1 =
-                     std::dynamic_pointer_cast<AST::OrOperator>(
-                         binaryExpr->getOperator())) {
+        else if (dynamic_cast<AST::OrOperator *>(binaryExpr->getOperator())) {
             return generateIRInstructionWithLogicalOr(binaryExpr, instructions);
         }
         // Otherwise (i.e., if the binary operator in the AST binary
@@ -560,22 +582,21 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         }
     }
     else if (auto variableExpr =
-                 std::dynamic_pointer_cast<AST::VariableExpression>(e)) {
-        return std::make_shared<IR::VariableValue>(
+                 dynamic_cast<const AST::VariableExpression *>(e)) {
+        return std::make_unique<IR::VariableValue>(
             variableExpr->getIdentifier());
     }
     else if (auto assignmentExpr =
-                 std::dynamic_pointer_cast<AST::AssignmentExpression>(e)) {
-        if (auto variableExpr1 =
-                std::dynamic_pointer_cast<AST::VariableExpression>(
-                    assignmentExpr->getLeft())) {
-            std::shared_ptr<IR::VariableValue> variableValue =
-                std::make_shared<IR::VariableValue>(
-                    variableExpr1->getIdentifier());
+                 dynamic_cast<const AST::AssignmentExpression *>(e)) {
+        if (auto variableExpr1 = dynamic_cast<AST::VariableExpression *>(
+                assignmentExpr->getLeft())) {
+            auto variableValue = std::make_unique<IR::VariableValue>(
+                variableExpr1->getIdentifier());
             auto result =
                 generateIRInstruction(assignmentExpr->getRight(), instructions);
-            instructions->emplace_back(
-                std::make_shared<IR::CopyInstruction>(result, variableValue));
+            instructions.emplace_back(std::make_unique<IR::CopyInstruction>(
+                std::move(result), std::make_unique<IR::VariableValue>(
+                                       variableExpr1->getIdentifier())));
             return variableValue;
         }
         else {
@@ -585,11 +606,12 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         }
     }
     else if (auto conditionalExpr =
-                 std::dynamic_pointer_cast<AST::ConditionalExpression>(e)) {
+                 dynamic_cast<const AST::ConditionalExpression *>(e)) {
         auto conditionValue = generateIRInstruction(
             conditionalExpr->getCondition(), instructions);
         auto e2Label = generateIRE2Label();
-        generateIRJumpIfZeroInstruction(conditionValue, e2Label, instructions);
+        generateIRJumpIfZeroInstruction(std::move(conditionValue), e2Label,
+                                        instructions);
         auto e1Value = generateIRInstruction(
             conditionalExpr->getThenExpression(), instructions);
         auto resultLabel = generateIRResultLabel();
@@ -601,43 +623,45 @@ std::shared_ptr<IR::Value> IRGenerator::generateIRInstruction(
         }
         // Add the result variable to the frontend symbol table with the type of
         // the conditional expression's result.
-        frontendSymbolTable[resultLabel] =
-            std::make_pair(resultType, std::make_shared<AST::LocalAttribute>());
+        frontendSymbolTable[resultLabel] = std::make_pair(
+            cloneType(resultType), std::make_unique<AST::LocalAttribute>());
 
-        auto resultValue = std::make_shared<IR::VariableValue>(resultLabel);
-        generateIRCopyInstruction(e1Value, resultValue, instructions);
+        auto resultValue = std::make_unique<IR::VariableValue>(resultLabel);
+        generateIRCopyInstruction(
+            std::move(e1Value),
+            std::make_unique<IR::VariableValue>(resultLabel), instructions);
         auto endLabel = generateIREndLabel();
         generateIRJumpInstruction(endLabel, instructions);
         generateIRLabelInstruction(e2Label, instructions);
         auto e2Value = generateIRInstruction(
             conditionalExpr->getElseExpression(), instructions);
-        generateIRCopyInstruction(e2Value, resultValue, instructions);
+        generateIRCopyInstruction(
+            std::move(e2Value),
+            std::make_unique<IR::VariableValue>(resultLabel), instructions);
         generateIRLabelInstruction(endLabel, instructions);
         return resultValue;
     }
     else if (auto functionCallExpr =
-                 std::dynamic_pointer_cast<AST::FunctionCallExpression>(e)) {
+                 dynamic_cast<const AST::FunctionCallExpression *>(e)) {
         auto functionIdentifier = functionCallExpr->getIdentifier();
-        auto args = std::make_shared<std::vector<std::shared_ptr<IR::Value>>>();
-        for (auto &arg : *functionCallExpr->getArguments()) {
-            args->emplace_back(generateIRInstruction(arg, instructions));
+        auto args = std::make_unique<std::vector<std::unique_ptr<IR::Value>>>();
+        for (auto &arg : functionCallExpr->getArguments()) {
+            args->emplace_back(generateIRInstruction(arg.get(), instructions));
         }
         auto resultValue = generateIRFunctionCallInstruction(
-            functionIdentifier, args, instructions);
+            functionIdentifier, std::move(args), instructions);
         return resultValue;
     }
-    else if (auto castExpr =
-                 std::dynamic_pointer_cast<AST::CastExpression>(e)) {
+    else if (auto castExpr = dynamic_cast<const AST::CastExpression *>(e)) {
         return generateIRCastInstruction(castExpr, instructions);
     }
     throw std::logic_error("Unsupported expression type while generating IR "
                            "instructions for expression");
 }
 
-std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
-    const std::shared_ptr<AST::UnaryExpression> &unaryExpr,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+std::unique_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
+    const AST::UnaryExpression *unaryExpr,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Recursively generate the expression in the unary expression.
     auto src = generateIRInstruction(unaryExpr->getExpression(), instructions);
 
@@ -647,11 +671,12 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
 
     // Add the temporary variable to the frontend symbol table with the type
     // of the expression and local attribute.
-    frontendSymbolTable[tmpName] = std::make_pair(
-        unaryExpr->getExpType(), std::make_shared<AST::LocalAttribute>());
+    frontendSymbolTable[tmpName] =
+        std::make_pair(cloneType(unaryExpr->getExpType()),
+                       std::make_unique<AST::LocalAttribute>());
 
     // Create a variable value for the temporary variable.
-    auto dst = std::make_shared<IR::VariableValue>(tmpName);
+    auto dst = std::make_unique<IR::VariableValue>(tmpName);
 
     // Convert the unary operator in the unary expression to a IR
     // unary operator.
@@ -659,17 +684,17 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
 
     // Generate a unary instruction with the IR unary operator, the
     // source value, and the destination value.
-    instructions->emplace_back(
-        std::make_shared<IR::UnaryInstruction>(IROp, src, dst));
+    instructions.emplace_back(std::make_unique<IR::UnaryInstruction>(
+        std::move(IROp), std::move(src),
+        std::make_unique<IR::VariableValue>(tmpName)));
 
     // Return the destination value.
     return dst;
 }
 
-std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
-    const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+std::unique_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
+    const AST::BinaryExpression *binaryExpr,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Recursively generate the left and right expressions in the binary
     // expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
@@ -686,32 +711,32 @@ std::shared_ptr<IR::VariableValue> IRGenerator::generateIRBinaryInstruction(
     // Generate a binary instruction with the IR binary operator, the
     // left-hand side value, the right-hand side value, and the
     // destination value.
-    instructions->emplace_back(
-        std::make_shared<IR::BinaryInstruction>(IROp, lhs, rhs, dst));
+    instructions.emplace_back(std::make_unique<IR::BinaryInstruction>(
+        std::move(IROp), std::move(lhs), std::move(rhs),
+        std::make_unique<IR::VariableValue>(dst->getIdentifier())));
 
     // Return the destination value.
     return dst;
 }
 
-std::shared_ptr<IR::VariableValue>
+std::unique_ptr<IR::VariableValue>
 IRGenerator::generateIRInstructionWithLogicalAnd(
-    const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::BinaryExpression *binaryExpr,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Recursively generate the left expression in the binary expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
 
     // Generate a JumpIfZero instruction with the left-hand side value and a
     // (new) false label.
     auto falseLabel = generateIRFalseLabel();
-    generateIRJumpIfZeroInstruction(lhs, falseLabel, instructions);
+    generateIRJumpIfZeroInstruction(std::move(lhs), falseLabel, instructions);
 
     // Recursively generate the right expression in the binary expression.
     auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
 
     // Generate a JumpIfZero instruction with the right-hand side value and
     // the same (new) false label.
-    generateIRJumpIfZeroInstruction(rhs, falseLabel, instructions);
+    generateIRJumpIfZeroInstruction(std::move(rhs), falseLabel, instructions);
 
     // Generate a copy instruction with 1 being copied to a (new) result
     // label.
@@ -719,13 +744,14 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
 
     // Add the result variable to the frontend symbol table with type int.
     frontendSymbolTable[resultLabel] =
-        std::make_pair(std::make_shared<AST::IntType>(),
-                       std::make_shared<AST::LocalAttribute>());
+        std::make_pair(std::make_unique<AST::IntType>(),
+                       std::make_unique<AST::LocalAttribute>());
 
-    auto dst = std::make_shared<IR::VariableValue>(resultLabel);
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
-                                  std::make_shared<AST::ConstantInt>(1)),
-                              dst, instructions);
+    auto dst = std::make_unique<IR::VariableValue>(resultLabel);
+    generateIRCopyInstruction(std::make_unique<IR::ConstantValue>(
+                                  std::make_unique<AST::ConstantInt>(1)),
+                              std::make_unique<IR::VariableValue>(resultLabel),
+                              instructions);
 
     // Generate a jump instruction with a new end label.
     auto endLabel = generateIREndLabel();
@@ -735,9 +761,10 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     generateIRLabelInstruction(falseLabel, instructions);
 
     // Generate a copy instruction with 0 being copied to the result.
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
-                                  std::make_shared<AST::ConstantInt>(0)),
-                              dst, instructions);
+    generateIRCopyInstruction(std::make_unique<IR::ConstantValue>(
+                                  std::make_unique<AST::ConstantInt>(0)),
+                              std::make_unique<IR::VariableValue>(resultLabel),
+                              instructions);
 
     // Generate a label instruction with the same (new) end label.
     generateIRLabelInstruction(endLabel, instructions);
@@ -746,26 +773,24 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     return dst;
 }
 
-std::shared_ptr<IR::VariableValue>
+std::unique_ptr<IR::VariableValue>
 IRGenerator::generateIRInstructionWithLogicalOr(
-    const std::shared_ptr<AST::BinaryExpression> &binaryExpr,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    const AST::BinaryExpression *binaryExpr,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Recursively generate the left expression in the binary expression.
     auto lhs = generateIRInstruction(binaryExpr->getLeft(), instructions);
 
     // Generate a JumpIfNotZero instruction with the left-hand side value
     // and a (new) true label.
     auto trueLabel = generateIRTrueLabel();
-    generateIRJumpIfNotZeroInstruction(lhs, trueLabel, instructions);
+    generateIRJumpIfNotZeroInstruction(std::move(lhs), trueLabel, instructions);
 
     // Recursively generate the right expression in the binary expression.
     auto rhs = generateIRInstruction(binaryExpr->getRight(), instructions);
 
     // Generate a JumpIfNotZero instruction with the right-hand side value
     // and the same (new) true label.
-    auto trueLabelRight = generateIRTrueLabel();
-    generateIRJumpIfNotZeroInstruction(rhs, trueLabel, instructions);
+    generateIRJumpIfNotZeroInstruction(std::move(rhs), trueLabel, instructions);
 
     // Generate a copy instruction with 0 being copied to a (new) result
     // label.
@@ -773,13 +798,14 @@ IRGenerator::generateIRInstructionWithLogicalOr(
 
     // Add the result variable to the frontend symbol table with type int.
     frontendSymbolTable[resultLabel] =
-        std::make_pair(std::make_shared<AST::IntType>(),
-                       std::make_shared<AST::LocalAttribute>());
+        std::make_pair(std::make_unique<AST::IntType>(),
+                       std::make_unique<AST::LocalAttribute>());
 
-    auto dst = std::make_shared<IR::VariableValue>(resultLabel);
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
-                                  std::make_shared<AST::ConstantInt>(0)),
-                              dst, instructions);
+    auto dst = std::make_unique<IR::VariableValue>(resultLabel);
+    generateIRCopyInstruction(std::make_unique<IR::ConstantValue>(
+                                  std::make_unique<AST::ConstantInt>(0)),
+                              std::make_unique<IR::VariableValue>(resultLabel),
+                              instructions);
 
     // Generate a jump instruction with a new end label.
     auto endLabel = generateIREndLabel();
@@ -789,9 +815,10 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     generateIRLabelInstruction(trueLabel, instructions);
 
     // Generate a copy instruction with 1 being copied to the result.
-    generateIRCopyInstruction(std::make_shared<IR::ConstantValue>(
-                                  std::make_shared<AST::ConstantInt>(1)),
-                              dst, instructions);
+    generateIRCopyInstruction(std::make_unique<IR::ConstantValue>(
+                                  std::make_unique<AST::ConstantInt>(1)),
+                              std::make_unique<IR::VariableValue>(resultLabel),
+                              instructions);
 
     // Generate a label instruction with the same (new) end label.
     generateIRLabelInstruction(endLabel, instructions);
@@ -801,145 +828,116 @@ IRGenerator::generateIRInstructionWithLogicalOr(
 }
 
 void IRGenerator::generateIRCopyInstruction(
-    const std::shared_ptr<IR::Value> &src,
-    const std::shared_ptr<IR::Value> &dst,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    std::unique_ptr<IR::Value> src, std::unique_ptr<IR::Value> dst,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a copy instruction with the source value and the
     // destination value.
-    instructions->emplace_back(std::make_shared<IR::CopyInstruction>(src, dst));
+    instructions.emplace_back(
+        std::make_unique<IR::CopyInstruction>(std::move(src), std::move(dst)));
 }
 
 void IRGenerator::generateIRJumpInstruction(
     std::string_view target,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a jump instruction with the target label.
-    instructions->emplace_back(std::make_shared<IR::JumpInstruction>(target));
+    instructions.emplace_back(std::make_unique<IR::JumpInstruction>(target));
 }
 
 void IRGenerator::generateIRJumpIfZeroInstruction(
-    const std::shared_ptr<IR::Value> &condition, std::string_view target,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    std::unique_ptr<IR::Value> condition, std::string_view target,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a jump if zero instruction with the condition value and
     // the target label.
-    instructions->emplace_back(
-        std::make_shared<IR::JumpIfZeroInstruction>(condition, target));
+    instructions.emplace_back(std::make_unique<IR::JumpIfZeroInstruction>(
+        std::move(condition), target));
 }
 
 void IRGenerator::generateIRJumpIfNotZeroInstruction(
-    const std::shared_ptr<IR::Value> &condition, std::string_view target,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    std::unique_ptr<IR::Value> condition, std::string_view target,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a jump if not zero instruction with the condition value
     // and the target label.
-    instructions->emplace_back(
-        std::make_shared<IR::JumpIfNotZeroInstruction>(condition, target));
+    instructions.emplace_back(std::make_unique<IR::JumpIfNotZeroInstruction>(
+        std::move(condition), target));
 }
 
 void IRGenerator::generateIRLabelInstruction(
     std::string_view identifier,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate a label instruction with the label identifier.
-    instructions->emplace_back(
-        std::make_shared<IR::LabelInstruction>(identifier));
+    instructions.emplace_back(
+        std::make_unique<IR::LabelInstruction>(identifier));
 }
 
-std::shared_ptr<IR::VariableValue>
+std::unique_ptr<IR::VariableValue>
 IRGenerator::generateIRFunctionCallInstruction(
     std::string_view functionIdentifier,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Value>>> &arguments,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+    std::unique_ptr<std::vector<std::unique_ptr<IR::Value>>> arguments,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Create a temporary variable (in string) to store the result of
     // the function call.
     auto tmpName = generateIRTemporary();
 
     // Look up the function's return type in the frontend symbol table.
     auto functionType =
-        frontendSymbolTable[std::string(functionIdentifier)].first;
-    auto functionTypePtr =
-        std::dynamic_pointer_cast<AST::FunctionType>(functionType);
+        frontendSymbolTable[std::string(functionIdentifier)].first.get();
+    auto functionTypePtr = dynamic_cast<AST::FunctionType *>(functionType);
     if (!functionTypePtr) {
         throw std::logic_error("Function type not found in symbol table: " +
                                std::string(functionIdentifier));
     }
-    auto returnType = functionTypePtr->getReturnType();
+    const auto &returnType = functionTypePtr->getReturnType();
 
     // Add the temporary variable to the frontend symbol table with the type
     // of the function's return type and local attribute.
-    frontendSymbolTable[tmpName] =
-        std::make_pair(returnType, std::make_shared<AST::LocalAttribute>());
+    frontendSymbolTable[tmpName] = std::make_pair(
+        cloneType(&returnType), std::make_unique<AST::LocalAttribute>());
 
     // Create a variable value for the temporary variable.
-    auto dst = std::make_shared<IR::VariableValue>(tmpName);
+    auto dst = std::make_unique<IR::VariableValue>(tmpName);
     // Generate a function call instruction with the function identifier,
     // the arguments, and the destination value.
-    instructions->emplace_back(std::make_shared<IR::FunctionCallInstruction>(
-        functionIdentifier, arguments, dst));
+    instructions.emplace_back(std::make_unique<IR::FunctionCallInstruction>(
+        functionIdentifier, std::move(arguments),
+        std::make_unique<IR::VariableValue>(tmpName)));
     // Return the destination value.
     return dst;
 }
 
-std::shared_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
-    const std::shared_ptr<AST::CastExpression> &castExpr,
-    const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-        &instructions) {
+std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
+    const AST::CastExpression *castExpr,
+    std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Recursively generate the expression in the cast expression.
     auto result =
         generateIRInstruction(castExpr->getExpression(), instructions);
     auto sourceType = castExpr->getExpression()->getExpType();
     auto targetType = castExpr->getTargetType();
-    // If the target type is the same as the source type, just copy or forward
-    // the value.
-    if (*targetType == *sourceType) {
-        if (auto variableValue =
-                std::dynamic_pointer_cast<IR::VariableValue>(result)) {
-            return variableValue;
-        }
-        else if (auto constantValue =
-                     std::dynamic_pointer_cast<IR::ConstantValue>(result)) {
-            auto dstName = generateIRTemporary();
-            frontendSymbolTable[dstName] = std::make_pair(
-                targetType, std::make_shared<AST::LocalAttribute>());
-            auto dst = std::make_shared<IR::VariableValue>(dstName);
-            instructions->emplace_back(
-                std::make_shared<IR::CopyInstruction>(result, dst));
-            return dst;
-        }
-        else {
-            throw std::logic_error(
-                "Unknown result value type in cast instruction");
-        }
-    }
     // Create a temporary variable (in string) to store the result of
     // the cast operation.
     auto dstName = generateIRTemporary();
     // Add the temporary variable to the frontend symbol table with the type
     // of the target type and local attribute.
-    frontendSymbolTable[dstName] =
-        std::make_pair(targetType, std::make_shared<AST::LocalAttribute>());
+    frontendSymbolTable[dstName] = std::make_pair(
+        cloneType(targetType), std::make_unique<AST::LocalAttribute>());
     // Create a variable value for the temporary variable.
-    auto dst = std::make_shared<IR::VariableValue>(dstName);
+    auto dst = std::make_unique<IR::VariableValue>(dstName);
     // Check the types and emit the correct instruction.
-    if (std::dynamic_pointer_cast<AST::IntType>(sourceType) &&
-        std::dynamic_pointer_cast<AST::LongType>(targetType)) {
+    if (dynamic_cast<AST::IntType *>(sourceType) &&
+        dynamic_cast<AST::LongType *>(targetType)) {
         // Casting from int to long.
-        instructions->emplace_back(
-            std::make_shared<IR::SignExtendInstruction>(result, dst));
+        instructions.emplace_back(std::make_unique<IR::SignExtendInstruction>(
+            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
     }
-    else if (std::dynamic_pointer_cast<AST::LongType>(sourceType) &&
-             std::dynamic_pointer_cast<AST::IntType>(targetType)) {
+    else if (dynamic_cast<AST::LongType *>(sourceType) &&
+             dynamic_cast<AST::IntType *>(targetType)) {
         // Casting from long to int.
-        instructions->emplace_back(
-            std::make_shared<IR::TruncateInstruction>(result, dst));
+        instructions.emplace_back(std::make_unique<IR::TruncateInstruction>(
+            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
     }
     else {
         // Fallback to copy if types are not int/long.
-        instructions->emplace_back(
-            std::make_shared<IR::CopyInstruction>(result, dst));
+        instructions.emplace_back(std::make_unique<IR::CopyInstruction>(
+            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
     }
     // Return the destination value.
     return dst;
@@ -1000,65 +998,48 @@ std::string IRGenerator::generateIRStartLabel() const {
     return "start" + std::to_string(counter++);
 }
 
-std::shared_ptr<std::vector<std::shared_ptr<IR::StaticVariable>>>
+std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>
 IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
     auto irDefs =
-        std::make_shared<std::vector<std::shared_ptr<IR::StaticVariable>>>();
+        std::make_unique<std::vector<std::unique_ptr<IR::StaticVariable>>>();
     for (const auto &symbol : frontendSymbolTable) {
         auto name = symbol.first;
-        auto type = symbol.second.first;
-        auto attribute = symbol.second.second;
+        auto *type = symbol.second.first.get();
+        auto *attribute = symbol.second.second.get();
         if (auto staticAttribute =
-                std::dynamic_pointer_cast<AST::StaticAttribute>(attribute)) {
+                dynamic_cast<AST::StaticAttribute *>(attribute)) {
             auto initialValue = staticAttribute->getInitialValue();
             auto global = staticAttribute->isGlobal();
-            if (auto initial =
-                    std::dynamic_pointer_cast<AST::Initial>(initialValue)) {
-                auto valueVariant = initial->getStaticInit()->getValue();
-                if (std::holds_alternative<int>(valueVariant)) {
-                    irDefs->emplace_back(std::make_shared<StaticVariable>(
-                        name, global, type,
-                        std::make_shared<AST::IntInit>(
-                            std::get<int>(valueVariant))));
-                }
-                else if (std::holds_alternative<long>(valueVariant)) {
-                    irDefs->emplace_back(std::make_shared<StaticVariable>(
-                        name, global, type,
-                        std::make_shared<AST::LongInit>(
-                            std::get<long>(valueVariant))));
-                }
-                else {
-                    throw std::logic_error(
-                        "Unsupported static initializer type while converting "
-                        "frontendSymbolTable to IR static variables");
-                }
+            if (auto initial = dynamic_cast<AST::Initial *>(initialValue)) {
+                irDefs->emplace_back(std::make_unique<StaticVariable>(
+                    name, global, cloneType(type),
+                    cloneStaticInit(initial->getStaticInit())));
+                continue;
             }
-            else if (auto tentative = std::dynamic_pointer_cast<AST::Tentative>(
-                         initialValue)) {
-                if (std::dynamic_pointer_cast<AST::IntType>(type)) {
-                    irDefs->emplace_back(std::make_shared<StaticVariable>(
-                        name, global, type, std::make_shared<AST::IntInit>(0)));
+            if (dynamic_cast<AST::NoInitializer *>(initialValue)) {
+                continue;
+            }
+            if (dynamic_cast<AST::Tentative *>(initialValue)) {
+                if (dynamic_cast<AST::IntType *>(type)) {
+                    irDefs->emplace_back(std::make_unique<StaticVariable>(
+                        name, global, cloneType(type),
+                        std::make_unique<AST::IntInit>(0)));
                 }
-                else if (std::dynamic_pointer_cast<AST::LongType>(type)) {
-                    irDefs->emplace_back(std::make_shared<StaticVariable>(
-                        name, global, type,
-                        std::make_shared<AST::LongInit>(0L)));
+                else if (dynamic_cast<AST::LongType *>(type)) {
+                    irDefs->emplace_back(std::make_unique<StaticVariable>(
+                        name, global, cloneType(type),
+                        std::make_unique<AST::LongInit>(0L)));
                 }
                 else {
                     throw std::logic_error("Unsupported tentative type while "
                                            "converting frontendSymbolTable "
                                            "to IR static variables");
                 }
-            }
-            else if (std::dynamic_pointer_cast<AST::NoInitializer>(
-                         initialValue)) {
                 continue;
             }
-            else {
-                throw std::logic_error("Unsupported initial value type while "
-                                       "converting frontendSymbolTable "
-                                       "to IR static variables");
-            }
+            throw std::logic_error("Unsupported initial value type while "
+                                   "converting frontendSymbolTable "
+                                   "to IR static variables");
         }
         else {
             continue;
@@ -1067,16 +1048,16 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
     return irDefs;
 }
 
-std::shared_ptr<IR::UnaryOperator>
-IRGenerator::convertUnop(const std::shared_ptr<AST::UnaryOperator> &op) {
-    if (std::dynamic_pointer_cast<AST::NegateOperator>(op)) {
-        return std::make_shared<IR::NegateOperator>();
+std::unique_ptr<IR::UnaryOperator>
+IRGenerator::convertUnop(const AST::UnaryOperator *op) {
+    if (dynamic_cast<const AST::NegateOperator *>(op)) {
+        return std::make_unique<IR::NegateOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::ComplementOperator>(op)) {
-        return std::make_shared<IR::ComplementOperator>();
+    else if (dynamic_cast<const AST::ComplementOperator *>(op)) {
+        return std::make_unique<IR::ComplementOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::NotOperator>(op)) {
-        return std::make_shared<IR::NotOperator>();
+    else if (dynamic_cast<const AST::NotOperator *>(op)) {
+        return std::make_unique<IR::NotOperator>();
     }
     throw std::logic_error("Unsupported unary operator while converting "
                            "unary operator to IR unary operator");
@@ -1085,57 +1066,58 @@ IRGenerator::convertUnop(const std::shared_ptr<AST::UnaryOperator> &op) {
 // Note: The logical-and and logical-or operators in the AST are NOT binary
 // operators in the IR (and should NOT be converted to binary operators in
 // the IR).
-std::shared_ptr<IR::BinaryOperator>
-IRGenerator::convertBinop(const std::shared_ptr<AST::BinaryOperator> &op) {
-    if (std::dynamic_pointer_cast<AST::AddOperator>(op)) {
-        return std::make_shared<IR::AddOperator>();
+std::unique_ptr<IR::BinaryOperator>
+IRGenerator::convertBinop(const AST::BinaryOperator *op) {
+    if (dynamic_cast<const AST::AddOperator *>(op)) {
+        return std::make_unique<IR::AddOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::SubtractOperator>(op)) {
-        return std::make_shared<IR::SubtractOperator>();
+    else if (dynamic_cast<const AST::SubtractOperator *>(op)) {
+        return std::make_unique<IR::SubtractOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::MultiplyOperator>(op)) {
-        return std::make_shared<IR::MultiplyOperator>();
+    else if (dynamic_cast<const AST::MultiplyOperator *>(op)) {
+        return std::make_unique<IR::MultiplyOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::DivideOperator>(op)) {
-        return std::make_shared<IR::DivideOperator>();
+    else if (dynamic_cast<const AST::DivideOperator *>(op)) {
+        return std::make_unique<IR::DivideOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::RemainderOperator>(op)) {
-        return std::make_shared<IR::RemainderOperator>();
+    else if (dynamic_cast<const AST::RemainderOperator *>(op)) {
+        return std::make_unique<IR::RemainderOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::EqualOperator>(op)) {
-        return std::make_shared<IR::EqualOperator>();
+    else if (dynamic_cast<const AST::EqualOperator *>(op)) {
+        return std::make_unique<IR::EqualOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::NotEqualOperator>(op)) {
-        return std::make_shared<IR::NotEqualOperator>();
+    else if (dynamic_cast<const AST::NotEqualOperator *>(op)) {
+        return std::make_unique<IR::NotEqualOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::LessThanOperator>(op)) {
-        return std::make_shared<IR::LessThanOperator>();
+    else if (dynamic_cast<const AST::LessThanOperator *>(op)) {
+        return std::make_unique<IR::LessThanOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::LessThanOrEqualOperator>(op)) {
-        return std::make_shared<IR::LessThanOrEqualOperator>();
+    else if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op)) {
+        return std::make_unique<IR::LessThanOrEqualOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::GreaterThanOperator>(op)) {
-        return std::make_shared<IR::GreaterThanOperator>();
+    else if (dynamic_cast<const AST::GreaterThanOperator *>(op)) {
+        return std::make_unique<IR::GreaterThanOperator>();
     }
-    else if (std::dynamic_pointer_cast<AST::GreaterThanOrEqualOperator>(op)) {
-        return std::make_shared<IR::GreaterThanOrEqualOperator>();
+    else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op)) {
+        return std::make_unique<IR::GreaterThanOrEqualOperator>();
     }
     throw std::logic_error("Unsupported binary operator while converting "
                            "binary operator to IR binary operator");
 }
 
-std::shared_ptr<IR::VariableValue> IRGenerator::generateIRVariable(
-    const std::shared_ptr<AST::BinaryExpression> &binaryExpr) {
+std::unique_ptr<IR::VariableValue>
+IRGenerator::generateIRVariable(const AST::BinaryExpression *binaryExpr) {
     // Create a temporary variable (in string) to store the result of
     // the binary operation.
     auto tmpName = generateIRTemporary();
 
     // Add the temporary variable to the frontend symbol table with the
     // appropriate type and local attribute.
-    frontendSymbolTable[tmpName] = std::make_pair(
-        binaryExpr->getExpType(), std::make_shared<AST::LocalAttribute>());
+    frontendSymbolTable[tmpName] =
+        std::make_pair(cloneType(binaryExpr->getExpType()),
+                       std::make_unique<AST::LocalAttribute>());
 
     // Create a variable value for the temporary variable and return it.
-    return std::make_shared<IR::VariableValue>(tmpName);
+    return std::make_unique<IR::VariableValue>(tmpName);
 }
 } // namespace IR

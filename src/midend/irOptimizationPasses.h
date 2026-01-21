@@ -33,10 +33,9 @@ class IROptimizer {
      * store elimination.
      * @return The optimized IR function body.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
-    irOptimize(const std::shared_ptr<std::vector<std::shared_ptr<Instruction>>>
-                   &functionBody,
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
+    irOptimize(const std::vector<std::unique_ptr<Instruction>> &functionBody,
                bool foldConstantsPass, bool propagateCopiesPass,
                bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
 };
@@ -63,18 +62,17 @@ class ConstantFoldingPass : public OptimizationPass {
      * @param functionBody The IR function body to optimize.
      * @return The optimized IR function body with constants folded.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
     foldConstants(
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            &functionBody);
+        const std::vector<std::unique_ptr<IR::Instruction>> &functionBody);
 };
 
 /**
  * Class for constructing control flow graphs (CFGs) from IR instructions.
  *
  * TODO(zzmic): CFGs are temporarily of type
- * `std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>`.
+ * `std::unique_ptr<std::vector<std::unique_ptr<IR::Instruction>>>`.
  */
 class CFG {
   public:
@@ -84,11 +82,10 @@ class CFG {
      * @param functionBody The IR function body to convert.
      * @return The control flow graph (CFG) representation of the function body.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
     makeControlFlowGraph(
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            &functionBody);
+        const std::vector<std::unique_ptr<IR::Instruction>> &functionBody);
 
     /**
      * Convert the given control flow graph (CFG) back into a linear sequence
@@ -97,11 +94,9 @@ class CFG {
      * @param cfg The control flow graph (CFG) to convert.
      * @return The linear sequence of IR instructions.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
-    cfgToInstructions(
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            &cfg);
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
+    cfgToInstructions(const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
 };
 
 /**
@@ -117,11 +112,10 @@ class UnreachableCodeEliminationPass : public OptimizationPass {
      * body.
      * @return The optimized IR function body with unreachable code removed.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
     eliminateUnreachableCode(
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            &cfg);
+        const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
 };
 
 /**
@@ -136,11 +130,9 @@ class CopyPropagationPass : public OptimizationPass {
      * body.
      * @return The optimized IR function body with copies propagated.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
-    propagateCopies(
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            &cfg);
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
+    propagateCopies(const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
 };
 
 /**
@@ -156,11 +148,10 @@ class DeadStoreEliminationPass : public OptimizationPass {
      * body.
      * @return The optimized IR function body with dead stores removed.
      */
-    [[nodiscard]] static std::shared_ptr<
-        std::vector<std::shared_ptr<IR::Instruction>>>
+    [[nodiscard]] static std::unique_ptr<
+        std::vector<std::unique_ptr<IR::Instruction>>>
     eliminateDeadStores(
-        const std::shared_ptr<std::vector<std::shared_ptr<IR::Instruction>>>
-            &cfg);
+        const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
 };
 } // namespace IR
 
