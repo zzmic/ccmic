@@ -27,18 +27,17 @@ class InitDecl : public ForInit {
      *
      * @param decl The variable declaration used for initialization.
      */
-    explicit InitDecl(std::shared_ptr<VariableDeclaration> decl);
+    explicit InitDecl(std::unique_ptr<VariableDeclaration> decl);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<VariableDeclaration>
-    getVariableDeclaration() const;
+    [[nodiscard]] VariableDeclaration *getVariableDeclaration() const;
 
   private:
     /**
      * The variable declaration used for initialization.
      */
-    std::shared_ptr<VariableDeclaration> decl;
+    std::unique_ptr<VariableDeclaration> decl;
 };
 
 /**
@@ -54,20 +53,20 @@ class InitExpr : public ForInit {
     /**
      * Constructor for the init-expr class with an expression.
      *
-     * @param expr The optional expression used for initialization.
+     * @param expr The optional expression used for initialization (can be
+     * `nullptr`).
      */
-    explicit InitExpr(std::optional<std::shared_ptr<Expression>> expr);
+    explicit InitExpr(std::unique_ptr<Expression> expr);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::optional<std::shared_ptr<Expression>>
-    getExpression() const;
+    [[nodiscard]] Expression *getExpression() const;
 
   private:
     /**
-     * The optional expression used for initialization.
+     * The optional expression used for initialization (can be `nullptr`).
      */
-    std::optional<std::shared_ptr<Expression>> expr;
+    std::unique_ptr<Expression> expr;
 };
 } // Namespace AST
 

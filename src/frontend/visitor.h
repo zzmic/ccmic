@@ -2,9 +2,6 @@
 #define FRONTEND_VISITOR_H
 
 namespace AST {
-/**
- * Forward declarations of all AST node classes to avoid circular dependencies.
- */
 class Program;
 class Function;
 class Block;
@@ -91,9 +88,6 @@ class Visitor {
      */
     virtual ~Visitor() = default;
 
-    /**
-     * Pure virtual visit methods for each AST node.
-     */
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
     virtual void visit(Block &block) = 0;

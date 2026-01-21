@@ -1,31 +1,31 @@
 #include "declaration.h"
+#include "block.h"
 #include "visitor.h"
 
 namespace AST {
 VariableDeclaration::VariableDeclaration(std::string_view identifier,
-                                         std::shared_ptr<Type> varType)
-    : identifier(identifier), varType(varType) {}
+                                         std::unique_ptr<Type> varType)
+    : identifier(identifier), varType(std::move(varType)) {}
+
+VariableDeclaration::VariableDeclaration(std::string_view identifier,
+                                         std::unique_ptr<Expression> optInit,
+                                         std::unique_ptr<Type> varType)
+    : identifier(identifier), optInitializer(std::move(optInit)),
+      varType(std::move(varType)) {}
 
 VariableDeclaration::VariableDeclaration(
-    std::string_view identifier,
-    std::optional<std::shared_ptr<Expression>> optInitializer,
-    std::shared_ptr<Type> varType)
-    : identifier(identifier), optInitializer(optInitializer), varType(varType) {
+    std::string_view identifier, std::unique_ptr<Type> varType,
+    std::unique_ptr<StorageClass> optStorageClass)
+    : identifier(identifier), varType(std::move(varType)),
+      optStorageClass(std::move(optStorageClass)) {}
+
+VariableDeclaration::VariableDeclaration(
+    std::string_view identifier, std::unique_ptr<Expression> optInit,
+    std::unique_ptr<Type> varType,
+    std::unique_ptr<StorageClass> optStorageClass)
+    : identifier(identifier), optInitializer(std::move(optInit)),
+      varType(std::move(varType)), optStorageClass(std::move(optStorageClass)) {
 }
-
-VariableDeclaration::VariableDeclaration(
-    std::string_view identifier, std::shared_ptr<Type> varType,
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
-    : identifier(identifier), varType(varType),
-      optStorageClass(optStorageClass) {}
-
-VariableDeclaration::VariableDeclaration(
-    std::string_view identifier,
-    std::optional<std::shared_ptr<Expression>> optInitializer,
-    std::shared_ptr<Type> varType,
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
-    : identifier(identifier), optInitializer(optInitializer), varType(varType),
-      optStorageClass(optStorageClass) {}
 
 void VariableDeclaration::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -33,55 +33,55 @@ const std::string &VariableDeclaration::getIdentifier() const {
     return identifier;
 }
 
-std::optional<std::shared_ptr<Expression>>
-VariableDeclaration::getOptInitializer() const {
-    return optInitializer;
+Expression *VariableDeclaration::getOptInitializer() const {
+    return optInitializer.get();
 }
 
 void VariableDeclaration::setOptInitializer(
-    std::optional<std::shared_ptr<Expression>> newOptInitializer) {
-    optInitializer = newOptInitializer;
+    std::unique_ptr<Expression> newOptInitializer) {
+    optInitializer = std::move(newOptInitializer);
 }
 
-std::shared_ptr<Type> VariableDeclaration::getVarType() const {
-    return varType;
-}
+Type *VariableDeclaration::getVarType() const { return varType.get(); }
 
-std::optional<std::shared_ptr<StorageClass>>
-VariableDeclaration::getOptStorageClass() const {
-    return optStorageClass;
+StorageClass *VariableDeclaration::getOptStorageClass() const {
+    return optStorageClass.get();
 }
 
 FunctionDeclaration::FunctionDeclaration(
     std::string_view identifier,
-    std::shared_ptr<std::vector<std::string>> parameters,
-    std::shared_ptr<Type> funType)
-    : identifier(identifier), parameters(parameters), funType(funType) {}
+    std::unique_ptr<std::vector<std::string>> parameters,
+    std::unique_ptr<Type> funType)
+    : identifier(identifier), parameters(std::move(parameters)),
+      funType(std::move(funType)) {}
 
 FunctionDeclaration::FunctionDeclaration(
     std::string_view identifier,
-    std::shared_ptr<std::vector<std::string>> parameters,
-    std::optional<std::shared_ptr<Block>> optBody,
-    std::shared_ptr<Type> funType)
-    : identifier(identifier), parameters(parameters), optBody(optBody),
-      funType(funType) {}
+    std::unique_ptr<std::vector<std::string>> parameters,
+    std::unique_ptr<Block> optBody, std::unique_ptr<Type> funType)
+    : identifier(identifier), parameters(std::move(parameters)),
+      optBody(std::move(optBody)), funType(std::move(funType)) {}
 
 FunctionDeclaration::FunctionDeclaration(
     std::string_view identifier,
-    std::shared_ptr<std::vector<std::string>> parameters,
-    std::shared_ptr<Type> funType,
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
-    : identifier(identifier), parameters(parameters), funType(funType),
-      optStorageClass(optStorageClass) {}
+    std::unique_ptr<std::vector<std::string>> parameters,
+    std::unique_ptr<Type> funType,
+    std::unique_ptr<StorageClass> optStorageClass)
+    : identifier(identifier), parameters(std::move(parameters)),
+      funType(std::move(funType)), optStorageClass(std::move(optStorageClass)) {
+}
 
 FunctionDeclaration::FunctionDeclaration(
     std::string_view identifier,
-    std::shared_ptr<std::vector<std::string>> parameters,
-    std::optional<std::shared_ptr<Block>> optBody,
-    std::shared_ptr<Type> funType,
-    std::optional<std::shared_ptr<StorageClass>> optStorageClass)
-    : identifier(identifier), parameters(parameters), optBody(optBody),
-      funType(funType), optStorageClass(optStorageClass) {}
+    std::unique_ptr<std::vector<std::string>> parameters,
+    std::unique_ptr<Block> optBody, std::unique_ptr<Type> funType,
+    std::unique_ptr<StorageClass> optStorageClass)
+    : identifier(identifier), parameters(std::move(parameters)),
+      optBody(std::move(optBody)), funType(std::move(funType)),
+      optStorageClass(std::move(optStorageClass)) {}
+
+// Destructor defined here where Block is complete.
+FunctionDeclaration::~FunctionDeclaration() = default;
 
 void FunctionDeclaration::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -89,40 +89,34 @@ const std::string &FunctionDeclaration::getIdentifier() const {
     return identifier;
 }
 
-const std::shared_ptr<std::vector<std::string>> &
+const std::vector<std::string> &
 FunctionDeclaration::getParameterIdentifiers() const {
-    return parameters;
+    return *parameters;
 }
 
-std::shared_ptr<Type> FunctionDeclaration::getFunType() const {
-    return funType;
-}
+Type *FunctionDeclaration::getFunType() const { return funType.get(); }
 
-std::optional<std::shared_ptr<Block>> FunctionDeclaration::getOptBody() const {
-    return optBody;
-}
+Block *FunctionDeclaration::getOptBody() const { return optBody.get(); }
 
-std::optional<std::shared_ptr<StorageClass>>
-FunctionDeclaration::getOptStorageClass() const {
-    return optStorageClass;
+StorageClass *FunctionDeclaration::getOptStorageClass() const {
+    return optStorageClass.get();
 }
 
 void FunctionDeclaration::setParameters(
-    std::shared_ptr<std::vector<std::string>> newParameters) {
-    this->parameters = newParameters;
+    std::unique_ptr<std::vector<std::string>> newParameters) {
+    this->parameters = std::move(newParameters);
 }
 
-void FunctionDeclaration::setOptBody(
-    std::optional<std::shared_ptr<Block>> newOptBody) {
-    this->optBody = newOptBody;
+void FunctionDeclaration::setOptBody(std::unique_ptr<Block> newOptBody) {
+    this->optBody = std::move(newOptBody);
 }
 
-void FunctionDeclaration::setFunType(std::shared_ptr<Type> newFunType) {
-    this->funType = newFunType;
+void FunctionDeclaration::setFunType(std::unique_ptr<Type> newFunType) {
+    this->funType = std::move(newFunType);
 }
 
 void FunctionDeclaration::setOptStorageClass(
-    std::optional<std::shared_ptr<StorageClass>> newOptStorageClass) {
-    this->optStorageClass = newOptStorageClass;
+    std::unique_ptr<StorageClass> newOptStorageClass) {
+    this->optStorageClass = std::move(newOptStorageClass);
 }
 } // Namespace AST

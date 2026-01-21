@@ -29,19 +29,19 @@ class SBlockItem : public BlockItem {
      *
      * @param statement The statement encapsulated by the block item.
      */
-    explicit SBlockItem(std::shared_ptr<Statement> statement);
+    explicit SBlockItem(std::unique_ptr<Statement> statement);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Statement> getStatement() const;
+    [[nodiscard]] Statement *getStatement() const;
 
-    void setStatement(std::shared_ptr<Statement> statement);
+    void setStatement(std::unique_ptr<Statement> statement);
 
   private:
     /**
      * The statement encapsulated by the block item.
      */
-    std::shared_ptr<Statement> statement;
+    std::unique_ptr<Statement> statement;
 };
 
 /**
@@ -54,19 +54,19 @@ class DBlockItem : public BlockItem {
      *
      * @param declaration The declaration encapsulated by the block item.
      */
-    explicit DBlockItem(std::shared_ptr<Declaration> declaration);
+    explicit DBlockItem(std::unique_ptr<Declaration> declaration);
 
     void accept(Visitor &visitor) override;
 
-    [[nodiscard]] std::shared_ptr<Declaration> getDeclaration() const;
+    [[nodiscard]] Declaration *getDeclaration() const;
 
-    void setDeclaration(std::shared_ptr<Declaration> declaration);
+    void setDeclaration(std::unique_ptr<Declaration> declaration);
 
   private:
     /**
      * The declaration encapsulated by the block item.
      */
-    std::shared_ptr<Declaration> declaration;
+    std::unique_ptr<Declaration> declaration;
 };
 } // namespace AST
 

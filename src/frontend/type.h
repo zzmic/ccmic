@@ -16,10 +16,12 @@ class Type : public AST {
      * Default constructor of the type class.
      */
     constexpr Type() = default;
+
     /**
      * Default virtual destructor for the type class.
      */
     virtual ~Type() = default;
+
     /**
      * Virtual function to check if two types are equal.
      *
@@ -87,6 +89,7 @@ class LongType : public Type {
     constexpr LongType() = default;
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
+
     /**
      * Overriden `isEqual` function to check if the other type is a
      * long type.
@@ -111,9 +114,10 @@ class FunctionType : public Type {
      * @param returnType The return type of the function.
      */
     explicit FunctionType(
-        std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameterTypes,
-        std::shared_ptr<Type> returnType)
-        : parameterTypes(parameterTypes), returnType(returnType) {}
+        std::unique_ptr<std::vector<std::unique_ptr<Type>>> parameterTypes,
+        std::unique_ptr<Type> returnType)
+        : parameterTypes(std::move(parameterTypes)),
+          returnType(std::move(returnType)) {}
 
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
@@ -141,25 +145,23 @@ class FunctionType : public Type {
         return *returnType == *otherFn->returnType;
     }
 
-    [[nodiscard]] const std::shared_ptr<std::vector<std::shared_ptr<Type>>> &
+    [[nodiscard]] const std::vector<std::unique_ptr<Type>> &
     getParameterTypes() const {
-        return parameterTypes;
+        return *parameterTypes;
     }
 
-    [[nodiscard]] std::shared_ptr<Type> getReturnType() const {
-        return returnType;
-    }
+    [[nodiscard]] const Type &getReturnType() const { return *returnType; }
 
   private:
     /**
      * Parameter types of the function.
      */
-    std::shared_ptr<std::vector<std::shared_ptr<Type>>> parameterTypes;
+    std::unique_ptr<std::vector<std::unique_ptr<Type>>> parameterTypes;
 
     /**
      * Return type of the function.
      */
-    std::shared_ptr<Type> returnType;
+    std::unique_ptr<Type> returnType;
 };
 } // namespace AST
 

@@ -2,29 +2,25 @@
 #include "visitor.h"
 
 namespace AST {
-SBlockItem::SBlockItem(std::shared_ptr<Statement> statement)
-    : statement(statement) {}
+SBlockItem::SBlockItem(std::unique_ptr<Statement> statement)
+    : statement(std::move(statement)) {}
 
 void SBlockItem::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Statement> SBlockItem::getStatement() const {
-    return statement;
+Statement *SBlockItem::getStatement() const { return statement.get(); }
+
+void SBlockItem::setStatement(std::unique_ptr<Statement> newStatement) {
+    this->statement = std::move(newStatement);
 }
 
-void SBlockItem::setStatement(std::shared_ptr<Statement> newStatement) {
-    this->statement = newStatement;
-}
-
-DBlockItem::DBlockItem(std::shared_ptr<Declaration> declaration)
-    : declaration(declaration) {}
+DBlockItem::DBlockItem(std::unique_ptr<Declaration> declaration)
+    : declaration(std::move(declaration)) {}
 
 void DBlockItem::accept(Visitor &visitor) { visitor.visit(*this); }
 
-std::shared_ptr<Declaration> DBlockItem::getDeclaration() const {
-    return declaration;
-}
+Declaration *DBlockItem::getDeclaration() const { return declaration.get(); }
 
-void DBlockItem::setDeclaration(std::shared_ptr<Declaration> newDeclaration) {
-    this->declaration = newDeclaration;
+void DBlockItem::setDeclaration(std::unique_ptr<Declaration> newDeclaration) {
+    this->declaration = std::move(newDeclaration);
 }
 } // Namespace AST

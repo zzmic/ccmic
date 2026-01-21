@@ -28,9 +28,9 @@ class Parser {
     /**
      * Parse the tokens and return the root of the AST (`Program` node).
      *
-     * @return The root of the AST (as a shared pointer to a `Program` node).
+     * @return The root of the AST (as a unique pointer to a `Program` node).
      */
-    std::shared_ptr<Program> parse();
+    std::unique_ptr<Program> parse();
 
   private:
     /**
@@ -85,7 +85,7 @@ class Parser {
      *
      * @return The declaration node.
      */
-    std::shared_ptr<Declaration> parseDeclaration();
+    std::unique_ptr<Declaration> parseDeclaration();
 
     /**
      * Parse type specifiers in function parameters.
@@ -99,42 +99,42 @@ class Parser {
      *
      * @return The block item node.
      */
-    std::shared_ptr<BlockItem> parseBlockItem();
+    std::unique_ptr<BlockItem> parseBlockItem();
 
     /**
      * Parse a block.
      *
      * @return The block node.
      */
-    std::shared_ptr<Block> parseBlock();
+    std::unique_ptr<Block> parseBlock();
 
     /**
      * Parse a function definition.
      *
      * @return The function definition node.
      */
-    std::shared_ptr<ForInit> parseForInit();
+    std::unique_ptr<ForInit> parseForInit();
 
     /**
      * Parse a statement.
      *
      * @return The statement node.
      */
-    std::shared_ptr<Statement> parseStatement();
+    std::unique_ptr<Statement> parseStatement();
 
     /**
      * Parse a factor.
      *
      * @return The expression node representing the factor.
      */
-    std::shared_ptr<Expression> parseFactor();
+    std::unique_ptr<Expression> parseFactor();
 
     /**
      * Parse a constant.
      *
      * @return The constant node.
      */
-    std::shared_ptr<Constant> parseConstant();
+    std::unique_ptr<Constant> parseConstant();
 
     /**
      * Parse an expression with the given minimum precedence.
@@ -142,7 +142,7 @@ class Parser {
      * @param minPrecedence The minimum precedence for parsing the expression.
      * @return The expression node.
      */
-    std::shared_ptr<Expression> parseExpression(int minPrecedence = 0);
+    std::unique_ptr<Expression> parseExpression(int minPrecedence = 0);
 
     /**
      * Parse the middle part of a conditional expression (between '?' and ':').
@@ -150,16 +150,16 @@ class Parser {
      * @return The expression node representing the
      * conditional middle.
      */
-    std::shared_ptr<Expression> parseConditionalMiddle();
+    std::unique_ptr<Expression> parseConditionalMiddle();
 
     /**
      * Parse a type and storage class from a list of specifiers.
      *
      * @param specifierList A vector of specifier strings.
-     * @return A pair consisting of (a shared pointer to) the type and a (shared
+     * @return A pair consisting of (a unique pointer to) the type and a (unique
      * pointer) to the storage class.
      */
-    std::pair<std::shared_ptr<Type>, std::shared_ptr<StorageClass>>
+    std::pair<std::unique_ptr<Type>, std::unique_ptr<StorageClass>>
     parseTypeAndStorageClass(const std::vector<std::string> &specifierList);
 
     /**
@@ -168,7 +168,7 @@ class Parser {
      * @param specifierList A vector of specifier strings.
      * @return The type.
      */
-    std::shared_ptr<Type>
+    std::unique_ptr<Type>
     parseType(const std::vector<std::string> &specifierList);
 
     /**
@@ -177,7 +177,7 @@ class Parser {
      * @param specifier A specifier string.
      * @return The storage class.
      */
-    std::shared_ptr<StorageClass>
+    std::unique_ptr<StorageClass>
     parseStorageClass(const std::string &specifier);
 
     /**

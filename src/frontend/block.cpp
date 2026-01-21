@@ -2,22 +2,21 @@
 
 namespace AST {
 Block::Block(
-    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> blockItems)
-    : blockItems(blockItems) {}
+    std::unique_ptr<std::vector<std::unique_ptr<BlockItem>>> blockItems)
+    : blockItems(std::move(blockItems)) {}
 
 void Block::accept(Visitor &visitor) { visitor.visit(*this); }
 
-const std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> &
-Block::getBlockItems() const {
-    return blockItems;
+const std::vector<std::unique_ptr<BlockItem>> &Block::getBlockItems() const {
+    return *blockItems;
 }
 
 void Block::setBlockItems(
-    std::shared_ptr<std::vector<std::shared_ptr<BlockItem>>> newBlockItems) {
-    this->blockItems = newBlockItems;
+    std::unique_ptr<std::vector<std::unique_ptr<BlockItem>>> newBlockItems) {
+    this->blockItems = std::move(newBlockItems);
 }
 
-void Block::addBlockItem(std::shared_ptr<BlockItem> blockItem) {
-    blockItems->push_back(blockItem);
+void Block::addBlockItem(std::unique_ptr<BlockItem> blockItem) {
+    blockItems->push_back(std::move(blockItem));
 }
 } // namespace AST
