@@ -21,15 +21,15 @@ class Function : public AST {
      * @param identifier The identifier of the function.
      * @param body The body block of the function.
      */
-    explicit Function(std::string_view identifier, std::shared_ptr<Block> body);
+    explicit Function(std::string_view identifier, std::unique_ptr<Block> body);
 
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
-    [[nodiscard]] std::shared_ptr<Block> getBody() const;
+    [[nodiscard]] Block *getBody() const;
 
-    void setBody(std::shared_ptr<Block> body);
+    void setBody(std::unique_ptr<Block> body);
 
   private:
     /**
@@ -40,7 +40,7 @@ class Function : public AST {
     /**
      * The body block of the function.
      */
-    std::shared_ptr<Block> body;
+    std::unique_ptr<Block> body;
 };
 } // Namespace AST
 

@@ -80,6 +80,8 @@ class VariableDeclaration : public Declaration {
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
+    void setIdentifier(std::string_view identifier);
+
     [[nodiscard]] Expression *getOptInitializer() const;
 
     void setOptInitializer(std::unique_ptr<Expression> newOptInitializer);

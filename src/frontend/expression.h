@@ -124,6 +124,8 @@ class VariableExpression : public Factor {
 
     [[nodiscard]] const std::string &getIdentifier() const;
 
+    void setIdentifier(std::string_view identifier);
+
     [[nodiscard]] Type *getExpType() const override;
 
     void setExpType(std::unique_ptr<Type> expType) override;
@@ -530,6 +532,8 @@ class FunctionCallExpression : public Expression {
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] const std::string &getIdentifier() const;
+
+    void setIdentifier(std::string_view identifier);
 
     [[nodiscard]] const std::vector<std::unique_ptr<Expression>> &
     getArguments() const;

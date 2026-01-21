@@ -50,6 +50,10 @@ const std::string &VariableExpression::getIdentifier() const {
     return identifier;
 }
 
+void VariableExpression::setIdentifier(std::string_view newIdentifier) {
+    identifier = newIdentifier;
+}
+
 Type *VariableExpression::getExpType() const { return expType.get(); }
 
 void VariableExpression::setExpType(std::unique_ptr<Type> newExpType) {
@@ -382,6 +386,10 @@ void FunctionCallExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 const std::string &FunctionCallExpression::getIdentifier() const {
     return identifier;
+}
+
+void FunctionCallExpression::setIdentifier(std::string_view newIdentifier) {
+    identifier = newIdentifier;
 }
 
 const std::vector<std::unique_ptr<Expression>> &

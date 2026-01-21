@@ -33,6 +33,10 @@ const std::string &VariableDeclaration::getIdentifier() const {
     return identifier;
 }
 
+void VariableDeclaration::setIdentifier(std::string_view newIdentifier) {
+    identifier = newIdentifier;
+}
+
 Expression *VariableDeclaration::getOptInitializer() const {
     return optInitializer.get();
 }

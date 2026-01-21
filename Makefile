@@ -34,7 +34,7 @@ OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(SOURCES))
 
 # Frontend-only sources and objects for compilation checking.
 FRONTEND_SOURCES_ALL = $(wildcard $(FRONTEND_DIR)/*.cpp)
-FRONTEND_SOURCES = $(filter-out $(FRONTEND_DIR)/semanticAnalysisPasses.cpp, $(FRONTEND_SOURCES_ALL))
+FRONTEND_SOURCES = $(FRONTEND_SOURCES_ALL)
 FRONTEND_HEADERS = $(wildcard $(FRONTEND_DIR)/*.h)
 FRONTEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(FRONTEND_SOURCES))
 

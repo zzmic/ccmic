@@ -68,7 +68,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     try {
         // Perform the identifier-resolution pass.
         variableResolutionCounter =
-            IdentifierResolutionPass.resolveProgram(astProgram);
+            IdentifierResolutionPass.resolveProgram(*astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Identifier resolution error: " << e.what();
@@ -76,7 +76,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     }
     try {
         // Perform the type-checking pass.
-        typeCheckingPass.typeCheckProgram(astProgram);
+        typeCheckingPass.typeCheckProgram(*astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Type-checking error: " << e.what();
@@ -84,7 +84,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     }
     try {
         // Perform the loop-labeling pass.
-        loopLabelingPass.labelLoops(astProgram);
+        loopLabelingPass.labelLoops(*astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Loop-labeling error: " << e.what();
