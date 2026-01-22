@@ -1,13 +1,32 @@
-CXX = /usr/bin/clang++
+CXX ?= clang++
+UNAME_S := $(shell uname -s)
 
+.PHONY: all clean debug format frontend-check help midend-check release
+
+ifeq ($(UNAME_S),Darwin)
+  BREW_LLVM_PREFIX := $(firstword \
+  $(wildcard /opt/homebrew/opt/llvm/) \
+  $(wildcard /usr/local/opt/llvm/))
+  BREW_LLVM_CLANG := $(BREW_LLVM_PREFIX)bin/clang++
+  ifneq ($(wildcard $(BREW_LLVM_CLANG)),)
+    ifneq (,$(filter $(CXX),c++ clang++))
+      CXX := $(BREW_LLVM_CLANG)
+    endif
+  endif
+endif
 STDFLAGS = -std=c++23
-STDLIBFLAGS = -stdlib=libc++
+STDLIBFLAGS :=
+ifeq ($(UNAME_S),Darwin)
+  ifneq ($(findstring clang,$(notdir $(CXX))),)
+    STDLIBFLAGS := -stdlib=libc++
+  endif
+endif
+LDFLAGS = $(STDLIBFLAGS) $(if $(filter -stdlib=libc++,$(STDLIBFLAGS)),-L$(BREW_LLVM_PREFIX)lib/c++)
 WARNFLAGS = -Werror -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wnull-dereference \
   -Wsign-conversion -Wimplicit-fallthrough -Wrange-loop-analysis
 CXXFLAGS = $(STDFLAGS) $(WARNFLAGS) $(STDLIBFLAGS) -O2
-LDFLAGS = $(STDLIBFLAGS)
 LDLIBS =
-SAN_FLAGS = -fsanitize=address,undefined,vptr -fno-omit-frame-pointer -fno-sanitize-recover=all
+SAN_FLAGS = -fsanitize=address,undefined,vptr,leak -fno-omit-frame-pointer -fno-sanitize-recover=all
 
 SRC_DIR = src
 FRONTEND_DIR = $(SRC_DIR)/frontend
@@ -46,8 +65,6 @@ MIDEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(MIDEND_SOURCES))
 
 # Main executable path.
 EXECUTABLE = $(BIN_DIR)/main
-
-.PHONY: all debug release format clean help frontend-check midend-check
 
 all: $(BIN_DIR) $(EXECUTABLE)
 
