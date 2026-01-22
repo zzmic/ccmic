@@ -22,8 +22,14 @@ ifeq ($(UNAME_S),Darwin)
   endif
 endif
 LDFLAGS = $(STDLIBFLAGS) $(if $(filter -stdlib=libc++,$(STDLIBFLAGS)),-L$(BREW_LLVM_PREFIX)lib/c++)
-WARNFLAGS = -Werror -Wall -Wextra -Wpedantic -Wconversion -Wshadow -Wnull-dereference \
-  -Wsign-conversion -Wimplicit-fallthrough -Wrange-loop-analysis
+# References:
+# 1. <https://github.com/cpp-best-practices/cppbestpractices/blob/master/02-Use_the_Tools_Available.md#gcc--clang>>.
+# 2. <https://clang.llvm.org/docs/DiagnosticsReference.html>.
+WARNFLAGS = -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic \
+  -Wold-style-cast -Wcast-align -Wunused -Woverloaded-virtual -Wpedantic \
+  -Wconversion -Wsign-conversion -Wmisleading-indentation -Wnull-dereference \
+  -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough \
+  -Wfor-loop-analysis -Wrange-loop-analysis
 CXXFLAGS = $(STDFLAGS) $(WARNFLAGS) $(STDLIBFLAGS) -O2
 LDLIBS =
 SAN_FLAGS = -fsanitize=address,undefined,vptr,leak -fno-omit-frame-pointer -fno-sanitize-recover=all
