@@ -189,15 +189,6 @@ class PrettyPrinters {
         const Assembly::MovsxInstruction &movsxInstruction);
 
     /**
-     * Print an assembly move-zero-extend instruction to stdout.
-     *
-     * @param movZeroExtendInstruction The assembly move-zero-extend instruction
-     * to print.
-     */
-    static void printAssyMovZeroExtendInstruction(
-        const Assembly::MovZeroExtendInstruction &movZeroExtendInstruction);
-
-    /**
      * Print an assembly return instruction to stdout.
      *
      * @param retInstruction The assembly return instruction to print.

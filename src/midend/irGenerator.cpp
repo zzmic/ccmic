@@ -45,7 +45,7 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
 /**
  * Get the size of a type in bytes.
  *
- * For x64 System V ABI:
+ * For X86-64 System V ABI:
  * - `int` and `unsigned int` are 4 bytes (32-bit).
  * - `long` and `unsigned long` are 8 bytes (64-bit).
  *

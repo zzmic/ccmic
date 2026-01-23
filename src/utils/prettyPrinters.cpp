@@ -864,11 +864,6 @@ void PrettyPrinters::printAssyInstruction(
                      &instruction)) {
         printAssyMovsxInstruction(*movsxInstruction);
     }
-    else if (auto movZeroExtendInstruction =
-                 dynamic_cast<const Assembly::MovZeroExtendInstruction *>(
-                     &instruction)) {
-        printAssyMovZeroExtendInstruction(*movZeroExtendInstruction);
-    }
     else if (auto retInstruction =
                  dynamic_cast<const Assembly::RetInstruction *>(&instruction)) {
         printAssyRetInstruction(*retInstruction);
@@ -1058,56 +1053,6 @@ void PrettyPrinters::printAssyMovsxInstruction(
     }
 
     std::cout << "    movslq " << srcStr << ", " << dstStr << "\n";
-}
-
-void PrettyPrinters::printAssyMovZeroExtendInstruction(
-    const Assembly::MovZeroExtendInstruction &movZeroExtendInstruction) {
-    auto src = movZeroExtendInstruction.getSrc();
-    std::string srcStr;
-    if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
-        srcStr = srcReg->getRegisterInBytesInStr(4);
-    }
-    else if (auto srcImm =
-                 dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
-        srcStr =
-            "$" + std::to_string(static_cast<long>(srcImm->getImmediate()));
-    }
-    else if (auto srcStack =
-                 dynamic_cast<const Assembly::StackOperand *>(src)) {
-        srcStr = std::to_string(srcStack->getOffset()) + "(" +
-                 srcStack->getReservedRegisterInStr() + ")";
-    }
-    else if (auto srcData = dynamic_cast<const Assembly::DataOperand *>(src)) {
-        auto identifier = srcData->getIdentifier();
-        prependUnderscoreToIdentifierIfMacOS(identifier);
-        srcStr = identifier + "(%rip)";
-    }
-    else {
-        throw std::logic_error("Unsupported source type while printing "
-                               "assembly movzeroextend instruction");
-    }
-
-    auto dst = movZeroExtendInstruction.getDst();
-    std::string dstStr;
-    if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
-        dstStr = dstReg->getRegisterInBytesInStr(8);
-    }
-    else if (auto dstStack =
-                 dynamic_cast<const Assembly::StackOperand *>(dst)) {
-        dstStr = std::to_string(dstStack->getOffset()) + "(" +
-                 dstStack->getReservedRegisterInStr() + ")";
-    }
-    else if (auto dstData = dynamic_cast<const Assembly::DataOperand *>(dst)) {
-        auto identifier = dstData->getIdentifier();
-        prependUnderscoreToIdentifierIfMacOS(identifier);
-        dstStr = identifier + "(%rip)";
-    }
-    else {
-        throw std::logic_error("Unsupported destination type while printing "
-                               "assembly movzeroextend instruction");
-    }
-
-    std::cout << "    movl " << srcStr << ", " << dstStr << "\n";
 }
 
 void PrettyPrinters::printAssyRetInstruction(

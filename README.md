@@ -4,15 +4,15 @@
 
 **`ccmic`** is a C++ implementation of a C compiler for a non-trivial subset of the C programming language, adhering to the C17 standard. The compiler's design is based on the principles and practices outlined in [_Writing a C Compiler_ by Nora Sandler](https://nostarch.com/writing-c-compiler). It is continuously developed and tested against the [the book's companion test suite (hosted by Nora Sandler)](https://github.com/nlsandler/writing-a-c-compiler-tests.git) (also included in the repository as a submodule (`tests/`)). As new features and optimizations are integrated into the codebase, the compiler's capabilities continue to expand modularly.
 
-The compiler transforms C source code into x86-64 assembly through a multi-stage pipeline:
+The compiler transforms C source code into X86-64 assembly through a multi-stage pipeline:
 
 - **Lexing (Lexical Analysis)**: Regex-based tokenization of C source.
 - **Parsing (Syntactic Analysis)**: Recursive descent parsing with precedence climbing for abstract syntax tree (AST) construction.
   - Leverages the [Visitor design pattern](https://en.wikipedia.org/wiki/Visitor_pattern) for AST traversal.
 - **Semantic Analysis**: Type checking, symbol resolution, and loop labeling for AST validation.
 - **IR Generation**: AST lowering to a custom intermediate representation (IR).
-- **Code Generation (Assembly Generation)**: IR-to-assembly translation, stack allocation, and fixup passes for x86-64.
-- **Assembly Emission**: Final x86-64 assembly output ready for assembling and linking to an executable.
+- **Code Generation (Assembly Generation)**: IR-to-assembly translation, stack allocation, and fixup passes for X86-64.
+- **Assembly Emission**: Final X86-64 assembly output ready for assembling and linking to an executable.
 
 ```
 ╭────────────────────────╮
@@ -98,7 +98,7 @@ git clone --recurse-submodules https://github.com/zzmic/ccmic.git
 ### Installing Dependencies
 
 - [Clang](https://clang.llvm.org) that supports C++23 (or above) for building the compiler, although most of the codebase is compatible with C++17 at this point.
-- [GCC](https://gcc.gnu.org) that supports x86-64 and C17 for preprocessing, assembling, and linking.
+- [GCC](https://gcc.gnu.org) that supports X86-64 and C17 for preprocessing, assembling, and linking.
 
 ### Building the Compiler
 

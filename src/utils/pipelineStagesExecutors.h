@@ -165,16 +165,6 @@ class PipelineStagesExecutors {
                              std::ofstream &assemblyFileStream);
 
     /**
-     * Emit the assembly code for a zero-extend move instruction.
-     *
-     * @param movZeroExtendInstruction The zero-extend move instruction to emit.
-     * @param assemblyFileStream The output assembly file stream.
-     */
-    static void emitAssyMovZeroExtendInstruction(
-        const Assembly::MovZeroExtendInstruction &movZeroExtendInstruction,
-        std::ofstream &assemblyFileStream);
-
-    /**
      * Emit the assembly code for a return instruction.
      *
      * @param assemblyFileStream The output assembly file stream.
