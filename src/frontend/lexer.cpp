@@ -32,6 +32,10 @@ Token matchToken(std::string_view input) {
         return {TokenType::intKeyword, tokenMatches.str(0)};
     else if (std::regex_search(inputStr, tokenMatches, longKeyword_regex))
         return {TokenType::longKeyword, tokenMatches.str(0)};
+    else if (std::regex_search(inputStr, tokenMatches, signedKeyword_regex))
+        return {TokenType::signedKeyword, tokenMatches.str(0)};
+    else if (std::regex_search(inputStr, tokenMatches, unsignedKeyword_regex))
+        return {TokenType::unsignedKeyword, tokenMatches.str(0)};
     else if (std::regex_search(inputStr, tokenMatches, voidKeyword_regex))
         return {TokenType::voidKeyword, tokenMatches.str(0)};
     else if (std::regex_search(inputStr, tokenMatches, returnKeyword_regex))
@@ -54,6 +58,11 @@ Token matchToken(std::string_view input) {
         return {TokenType::staticKeyword, tokenMatches.str(0)};
     else if (std::regex_search(inputStr, tokenMatches, externKeyword_regex))
         return {TokenType::externKeyword, tokenMatches.str(0)};
+    // Lower down the precedence of token-matching `identifier_regex`
+    // to avoid the conflict with the other token matchings (e.g.,
+    // `intKeyword_regex`)
+    else if (std::regex_search(inputStr, tokenMatches, identifier_regex))
+        return {TokenType::Identifier, tokenMatches.str(0)};
     else if (std::regex_search(inputStr, tokenMatches, comma_regex))
         return {TokenType::Comma, tokenMatches.str(0)};
     else if (std::regex_search(inputStr, tokenMatches, questionMark_regex))
@@ -110,11 +119,12 @@ Token matchToken(std::string_view input) {
     // conflict with the token matching of `equal_regex`.
     else if (std::regex_search(inputStr, tokenMatches, assign_regex))
         return {TokenType::Assign, tokenMatches.str(0)};
-    // Lower down the precedence of token-matching `identifier_regex`
-    // to avoid the conflict with the other token matchings (e.g.,
-    // `intKeyword_regex`)
-    else if (std::regex_search(inputStr, tokenMatches, identifier_regex))
-        return {TokenType::Identifier, tokenMatches.str(0)};
+    else if (std::regex_search(inputStr, tokenMatches,
+                               unsignedLongIntegerConstant_regex))
+        return {TokenType::UnsignedLongIntegerConstant, tokenMatches.str(0)};
+    else if (std::regex_search(inputStr, tokenMatches,
+                               unsignedIntegerConstant_regex))
+        return {TokenType::UnsignedIntegerConstant, tokenMatches.str(0)};
     else {
         // If no token matches, throw an error.
         std::stringstream msg;
@@ -208,6 +218,12 @@ void printTokens(const std::vector<Token> &tokens) {
             break;
         case TokenType::longKeyword:
             typeStr = "longKeyword";
+            break;
+        case TokenType::signedKeyword:
+            typeStr = "signedKeyword";
+            break;
+        case TokenType::unsignedKeyword:
+            typeStr = "unsignedKeyword";
             break;
         case TokenType::voidKeyword:
             typeStr = "voidKeyword";
@@ -317,6 +333,12 @@ void printTokens(const std::vector<Token> &tokens) {
         case TokenType::GreaterThan:
             typeStr = "GreaterThan";
             break;
+        case TokenType::UnsignedIntegerConstant:
+            typeStr = "UnsignedIntegerConstant";
+            break;
+        case TokenType::UnsignedLongIntegerConstant:
+            typeStr = "UnsignedLongIntegerConstant";
+            break;
         case TokenType::SingleLineComment:
             typeStr = "SingleLineComment";
             break;
@@ -354,6 +376,12 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::longKeyword:
         typeStr = "longKeyword";
+        break;
+    case TokenType::signedKeyword:
+        typeStr = "signedKeyword";
+        break;
+    case TokenType::unsignedKeyword:
+        typeStr = "unsignedKeyword";
         break;
     case TokenType::voidKeyword:
         typeStr = "voidKeyword";
@@ -462,6 +490,12 @@ std::string tokenTypeToString(TokenType type) {
         break;
     case TokenType::GreaterThan:
         typeStr = "GreaterThan";
+        break;
+    case TokenType::UnsignedIntegerConstant:
+        typeStr = "UnsignedIntegerConstant";
+        break;
+    case TokenType::UnsignedLongIntegerConstant:
+        typeStr = "UnsignedLongIntegerConstant";
         break;
     case TokenType::SingleLineComment:
         typeStr = "SingleLineComment";
