@@ -406,6 +406,50 @@ class TruncateInstruction : public Instruction {
     }
 };
 
+class ZeroExtendInstruction : public Instruction {
+  private:
+    /**
+     * The source and destination values of the instruction.
+     */
+    std::unique_ptr<Value> src, dst;
+
+  public:
+    /**
+     * Constructor for creating a zero-extend instruction with source and
+     * destination values.
+     *
+     * @param src The source value of the instruction.
+     * @param dst The destination value of the instruction.
+     * @throws std::logic_error if `src` or `dst` is null.
+     */
+    ZeroExtendInstruction(std::unique_ptr<Value> src,
+                          std::unique_ptr<Value> dst)
+        : src(std::move(src)), dst(std::move(dst)) {
+        if (!this->src) {
+            throw std::logic_error(
+                "Creating ZeroExtendInstruction with null src");
+        }
+    }
+
+    [[nodiscard]] Value *getSrc() const { return src.get(); }
+
+    [[nodiscard]] Value *getDst() const { return dst.get(); }
+
+    void setSrc(std::unique_ptr<Value> newSrc) {
+        if (!newSrc) {
+            throw std::logic_error("Setting ZeroExtendInstruction src to null");
+        }
+        this->src = std::move(newSrc);
+    }
+
+    void setDst(std::unique_ptr<Value> newDst) {
+        if (!newDst) {
+            throw std::logic_error("Setting ZeroExtendInstruction dst to null");
+        }
+        this->dst = std::move(newDst);
+    }
+};
+
 /**
  * Class representing a unary instruction in the IR.
  */

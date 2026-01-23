@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
                 eliminateDeadStoresPass = true;
             }
             else {
-                std::cerr << "Unknown/invalid flag: " << flag << "\n";
+                std::cerr << "Unsupported command-line flag: " << flag << "\n";
                 return EXIT_FAILURE;
             }
         }

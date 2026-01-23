@@ -59,9 +59,17 @@ void PrettyPrinters::printIRStaticVariable(
     else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         std::cout << std::get<long>(longInit->getValue());
     }
+    else if (auto uintInit = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        std::cout << std::get<unsigned int>(uintInit->getValue());
+    }
+    else if (auto ulongInit =
+                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        std::cout << std::get<unsigned long>(ulongInit->getValue());
+    }
     else {
-        throw std::logic_error("Unknown static variable initializer type while "
-                               "printing IR static variable");
+        throw std::logic_error(
+            "Unsupported static variable initializer type while "
+            "printing IR static variable");
     }
 
     std::cout << "\n";
@@ -116,9 +124,14 @@ void PrettyPrinters::printIRInstruction(const IR::Instruction &instruction) {
                  dynamic_cast<const IR::TruncateInstruction *>(&instruction)) {
         printIRTruncateInstruction(*truncateInstruction);
     }
+    else if (auto zeroExtendInstruction =
+                 dynamic_cast<const IR::ZeroExtendInstruction *>(
+                     &instruction)) {
+        printIRZeroExtendInstruction(*zeroExtendInstruction);
+    }
     else {
         throw std::logic_error(
-            "Unknown instruction type while printing IR instruction");
+            "Unsupported instruction type while printing IR instruction");
     }
 }
 
@@ -136,9 +149,17 @@ void PrettyPrinters::printIRReturnInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error(
-                "Unknown constant type while printing IR return instruction");
+            throw std::logic_error("Unsupported constant type while printing "
+                                   "IR return instruction");
         }
     }
     else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -146,8 +167,8 @@ void PrettyPrinters::printIRReturnInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown return value type while printing IR return instruction");
+        throw std::logic_error("Unsupported return value type while printing "
+                               "IR return instruction");
     }
 
     std::cout << "\n";
@@ -161,11 +182,12 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unknown destination value type while printing "
-                               "IR sign extend instruction");
+        throw std::logic_error(
+            "Unsupported destination value type while printing "
+            "IR sign extend instruction");
     }
 
-    std::cout << " = sign_extend(";
+    std::cout << " = SignExtend(";
 
     if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
             signExtendInstruction.getSrc())) {
@@ -177,9 +199,18 @@ void PrettyPrinters::printIRSignExtendInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error("Unknown constant type while printing IR "
-                                   "sign extend instruction");
+            throw std::logic_error(
+                "Unsupported constant type while printing IR "
+                "sign extend instruction");
         }
     }
     else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -187,8 +218,9 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unknown source value type while printing IR "
-                               "sign extend instruction");
+        throw std::logic_error(
+            "Unsupported source value type while printing IR "
+            "sign extend instruction");
     }
 
     std::cout << ")\n";
@@ -202,11 +234,12 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unknown destination value type while printing "
-                               "IR truncate instruction");
+        throw std::logic_error(
+            "Unsupported destination value type while printing "
+            "IR truncate instruction");
     }
 
-    std::cout << " = truncate(";
+    std::cout << " = Truncate(";
 
     if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
             truncateInstruction.getSrc())) {
@@ -218,9 +251,17 @@ void PrettyPrinters::printIRTruncateInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error(
-                "Unknown constant type while printing IR truncate instruction");
+            throw std::logic_error("Unsupported constant type while printing "
+                                   "IR truncate instruction");
         }
     }
     else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -228,10 +269,61 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error(
-            "Unknown source value type while printing IR truncate instruction");
+        throw std::logic_error("Unsupported source value type while printing "
+                               "IR truncate instruction");
     }
 
+    std::cout << ")\n";
+}
+
+void PrettyPrinters::printIRZeroExtendInstruction(
+    const IR::ZeroExtendInstruction &zeroExtendInstruction) {
+    std::cout << "    ";
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            zeroExtendInstruction.getDst())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else {
+        throw std::logic_error(
+            "Unsupported destination value type while printing "
+            "IR zero extend instruction");
+    }
+
+    std::cout << " = ZeroExtend(";
+
+    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
+            zeroExtendInstruction.getSrc())) {
+        std::cout << variableValue->getIdentifier();
+    }
+    else if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(
+                 zeroExtendInstruction.getSrc())) {
+        if (auto constantInt = dynamic_cast<const AST::ConstantInt *>(
+                constantValue->getASTConstant())) {
+            std::cout << constantInt->getValue();
+        }
+        else if (auto constantLong = dynamic_cast<const AST::ConstantLong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantLong->getValue();
+        }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
+        else {
+            throw std::logic_error(
+                "Unsupported constant type while printing IR "
+                "zero extend instruction");
+        }
+    }
+    else {
+        throw std::logic_error(
+            "Unsupported source value type while printing IR "
+            "zero extend instruction");
+    }
     std::cout << ")\n";
 }
 
@@ -244,8 +336,9 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unknown destination value type while printing "
-                               "IR unary instruction");
+        throw std::logic_error(
+            "Unsupported destination value type while printing "
+            "IR unary instruction");
     }
 
     if (dynamic_cast<const IR::ComplementOperator *>(
@@ -262,7 +355,7 @@ void PrettyPrinters::printIRUnaryInstruction(
     }
     else {
         throw std::logic_error(
-            "Unknown unary operator while printing IR unary instruction");
+            "Unsupported unary operator while printing IR unary instruction");
     }
 
     if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -281,14 +374,22 @@ void PrettyPrinters::printIRUnaryInstruction(
             std::cout << constantLong->getValue();
             std::cout << "\n";
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error(
-                "Unknown constant type while printing IR unary instruction");
+            throw std::logic_error("Unsupported constant type while printing "
+                                   "IR unary instruction");
         }
     }
     else {
-        throw std::logic_error(
-            "Unknown source value type while printing IR unary instruction");
+        throw std::logic_error("Unsupported source value type while printing "
+                               "IR unary instruction");
     }
 
     std::cout << "\n";
@@ -317,14 +418,22 @@ void PrettyPrinters::printIRBinaryInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error(
-                "Unknown constant type while printing IR binary instruction");
+            throw std::logic_error("Unsupported constant type while printing "
+                                   "IR binary instruction");
         }
     }
     else {
-        throw std::logic_error(
-            "Unknown source value type while printing IR binary instruction");
+        throw std::logic_error("Unsupported source value type while printing "
+                               "IR binary instruction");
     }
 
     if (dynamic_cast<const IR::AddOperator *>(
@@ -373,7 +482,7 @@ void PrettyPrinters::printIRBinaryInstruction(
     }
     else {
         throw std::logic_error(
-            "Unknown binary operator while printing IR binary instruction");
+            "Unsupported binary operator while printing IR binary instruction");
     }
 
     if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -390,14 +499,22 @@ void PrettyPrinters::printIRBinaryInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error(
-                "Unknown constant type while printing IR binary instruction");
+            throw std::logic_error("Unsupported constant type while printing "
+                                   "IR binary instruction");
         }
     }
     else {
-        throw std::logic_error(
-            "Unknown source value type while printing IR binary instruction");
+        throw std::logic_error("Unsupported source value type while printing "
+                               "IR binary instruction");
     }
 
     std::cout << "\n";
@@ -411,7 +528,7 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unknown/unsupported destination value type "
+        throw std::logic_error("Unsupported destination value type "
                                "while printing IR copy instruction");
     }
 
@@ -432,9 +549,17 @@ void PrettyPrinters::printIRCopyInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
             throw std::logic_error(
-                "Unknown constant type while printing IR copy instruction");
+                "Unsupported constant type while printing IR copy instruction");
         }
     }
     else if (auto variableValue =
@@ -443,7 +568,7 @@ void PrettyPrinters::printIRCopyInstruction(
     }
     else {
         throw std::logic_error(
-            "Unknown source value type while printing IR copy instruction");
+            "Unsupported source value type while printing IR copy instruction");
     }
 
     std::cout << "\n";
@@ -472,9 +597,18 @@ void PrettyPrinters::printIRJumpIfZeroInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error("Unknown constant type while printing IR "
-                                   "jump if zero instruction");
+            throw std::logic_error(
+                "Unsupported constant type while printing IR "
+                "jump if zero instruction");
         }
     }
 
@@ -499,14 +633,24 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
                      constantValue->getASTConstant())) {
             std::cout << constantLong->getValue();
         }
+        else if (auto constantUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantUInt->getValue();
+        }
+        else if (auto constantULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantValue->getASTConstant())) {
+            std::cout << constantULong->getValue();
+        }
         else {
-            throw std::logic_error("Unknown constant type while printing IR "
-                                   "jump if not zero instruction");
+            throw std::logic_error(
+                "Unsupported constant type while printing IR "
+                "jump if not zero instruction");
         }
     }
     else {
-        throw std::logic_error("Unknown condition value type while printing IR "
-                               "jump if not zero instruction");
+        throw std::logic_error(
+            "Unsupported condition value type while printing IR "
+            "jump if not zero instruction");
     }
 
     std::cout << ", " << jumpIfNotZeroInstruction.getTarget() << ")\n";
@@ -525,8 +669,9 @@ void PrettyPrinters::printIRFunctionCallInstruction(
         std::cout << "    " << variableValue->getIdentifier() << " = ";
     }
     else {
-        throw std::logic_error("Unknown destination value type while printing "
-                               "IR function call instruction");
+        throw std::logic_error(
+            "Unsupported destination value type while printing "
+            "IR function call instruction");
     }
 
     auto functionIdentifier = functionCallInstruction.getFunctionIdentifier();
@@ -550,9 +695,20 @@ void PrettyPrinters::printIRFunctionCallInstruction(
                              constantValue->getASTConstant())) {
                 std::cout << constantLong->getValue();
             }
+            else if (auto constantUInt =
+                         dynamic_cast<const AST::ConstantUInt *>(
+                             constantValue->getASTConstant())) {
+                std::cout << constantUInt->getValue();
+            }
+            else if (auto constantULong =
+                         dynamic_cast<const AST::ConstantULong *>(
+                             constantValue->getASTConstant())) {
+                std::cout << constantULong->getValue();
+            }
             else {
-                throw std::logic_error("Unknown constant type while printing "
-                                       "IR function call argument");
+                throw std::logic_error(
+                    "Unsupported constant type while printing "
+                    "IR function call argument");
             }
         }
         bool isLast = (std::next(it) == args.end());
@@ -643,9 +799,16 @@ void PrettyPrinters::printAssyStaticVariable(
     else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         isZeroInit = std::get<long>(longInit->getValue()) == 0L;
     }
+    else if (auto uintInit = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        isZeroInit = std::get<unsigned int>(uintInit->getValue()) == 0U;
+    }
+    else if (auto ulongInit =
+                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        isZeroInit = std::get<unsigned long>(ulongInit->getValue()) == 0UL;
+    }
     else {
         throw std::logic_error(
-            "Unknown static init type while printing IR static variable");
+            "Unsupported static init type while printing IR static variable");
     }
 
     std::cout << "\n";
@@ -747,7 +910,7 @@ void PrettyPrinters::printAssyInstruction(
     }
     else {
         throw std::logic_error(
-            "Invalid instruction type while printing assembly instruction");
+            "Unsupported instruction type while printing assembly instruction");
     }
 }
 

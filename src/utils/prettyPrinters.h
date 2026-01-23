@@ -76,6 +76,14 @@ class PrettyPrinters {
         const IR::TruncateInstruction &truncateInstruction);
 
     /**
+     * Print an IR zero-extend instruction to stdout.
+     *
+     * @param zeroExtendInstruction The IR zero-extend instruction to print.
+     */
+    static void printIRZeroExtendInstruction(
+        const IR::ZeroExtendInstruction &zeroExtendInstruction);
+
+    /**
      * Print an IR unary instruction to stdout.
      *
      * @param unaryInstruction The IR unary instruction to print.

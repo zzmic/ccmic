@@ -22,6 +22,12 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
     if (dynamic_cast<const AST::LongType *>(type)) {
         return std::make_unique<AST::LongType>();
     }
+    if (dynamic_cast<const AST::UIntType *>(type)) {
+        return std::make_unique<AST::UIntType>();
+    }
+    if (dynamic_cast<const AST::ULongType *>(type)) {
+        return std::make_unique<AST::ULongType>();
+    }
     if (auto functionType = dynamic_cast<const AST::FunctionType *>(type)) {
         auto parameterTypes =
             std::make_unique<std::vector<std::unique_ptr<AST::Type>>>();
@@ -37,6 +43,39 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
 }
 
 /**
+ * Get the size of a type in bytes.
+ *
+ * For x64 System V ABI:
+ * - `int` and `unsigned int` are 4 bytes (32-bit).
+ * - `long` and `unsigned long` are 8 bytes (64-bit).
+ *
+ * @param type The type to get the size of.
+ * @return The size of the type in bytes.
+ */
+int getTypeSize(const AST::Type *type) {
+    if (dynamic_cast<const AST::IntType *>(type) ||
+        dynamic_cast<const AST::UIntType *>(type)) {
+        return 4;
+    }
+    if (dynamic_cast<const AST::LongType *>(type) ||
+        dynamic_cast<const AST::ULongType *>(type)) {
+        return 8;
+    }
+    throw std::logic_error("Unsupported type in getTypeSize");
+}
+
+/**
+ * Check if a type is a signed type (`int` or `long`).
+ *
+ * @param type The type to check.
+ * @return True if the type is a signed type, false otherwise.
+ */
+bool isSigned(const AST::Type *type) {
+    return dynamic_cast<const AST::IntType *>(type) ||
+           dynamic_cast<const AST::LongType *>(type);
+}
+
+/**
  * Clone a static initializer.
  *
  * @param staticInit The static initializer to clone.
@@ -48,9 +87,18 @@ cloneStaticInit(const AST::StaticInit *staticInit) {
         auto value = intInit->getValue();
         return std::make_unique<AST::IntInit>(std::get<int>(value));
     }
-    if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
+    else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         auto value = longInit->getValue();
         return std::make_unique<AST::LongInit>(std::get<long>(value));
+    }
+    else if (auto uintInit = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        auto value = uintInit->getValue();
+        return std::make_unique<AST::UIntInit>(std::get<unsigned int>(value));
+    }
+    else if (auto ulongInit =
+                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        auto value = ulongInit->getValue();
+        return std::make_unique<AST::ULongInit>(std::get<unsigned long>(value));
     }
     throw std::logic_error("Unsupported static initializer");
 }
@@ -556,6 +604,16 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
                 std::make_unique<AST::ConstantLong>(
                     std::get<long>(variantValue)));
         }
+        else if (std::holds_alternative<unsigned int>(variantValue)) {
+            return std::make_unique<IR::ConstantValue>(
+                std::make_unique<AST::ConstantUInt>(
+                    std::get<unsigned int>(variantValue)));
+        }
+        else if (std::holds_alternative<unsigned long>(variantValue)) {
+            return std::make_unique<IR::ConstantValue>(
+                std::make_unique<AST::ConstantULong>(
+                    std::get<unsigned long>(variantValue)));
+        }
         else {
             throw std::logic_error(
                 "Unsupported constant type while generating IR instructions "
@@ -915,8 +973,20 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
         generateIRInstruction(castExpr->getExpression(), instructions);
     auto sourceType = castExpr->getExpression()->getExpType();
     auto targetType = castExpr->getTargetType();
-    // Create a temporary variable (in string) to store the result of
-    // the cast operation.
+
+    // If the source and target types are the same, no cast is needed.
+    if (*sourceType == *targetType) {
+        // Return the result as a `VariableValue` if it's already a variable.
+        // If it's a constant, we need to copy it to a variable, which we handle
+        // later as a fallback.
+        auto *varValue = dynamic_cast<IR::VariableValue *>(result.get());
+        if (varValue) {
+            return std::make_unique<IR::VariableValue>(
+                varValue->getIdentifier());
+        }
+    }
+
+    // Create a temporary variable to store the result of the cast operation.
     auto dstName = generateIRTemporary();
     // Add the temporary variable to the frontend symbol table with the type
     // of the target type and local attribute.
@@ -924,24 +994,32 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
         cloneType(targetType), std::make_unique<AST::LocalAttribute>());
     // Create a variable value for the temporary variable.
     auto dst = std::make_unique<IR::VariableValue>(dstName);
-    // Check the types and emit the correct instruction.
-    if (dynamic_cast<AST::IntType *>(sourceType) &&
-        dynamic_cast<AST::LongType *>(targetType)) {
-        // Casting from int to long.
-        instructions.emplace_back(std::make_unique<IR::SignExtendInstruction>(
-            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
-    }
-    else if (dynamic_cast<AST::LongType *>(sourceType) &&
-             dynamic_cast<AST::IntType *>(targetType)) {
-        // Casting from long to int.
-        instructions.emplace_back(std::make_unique<IR::TruncateInstruction>(
-            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
-    }
-    else {
-        // Fallback to copy if types are not int/long.
+
+    int sourceSize = getTypeSize(sourceType);
+    int targetSize = getTypeSize(targetType);
+    if (sourceSize == targetSize) {
+        // The source and target types are the same size: just copy.
         instructions.emplace_back(std::make_unique<IR::CopyInstruction>(
             std::move(result), std::make_unique<IR::VariableValue>(dstName)));
     }
+    else if (targetSize < sourceSize) {
+        // The target type is smaller than the source type: truncate.
+        instructions.emplace_back(std::make_unique<IR::TruncateInstruction>(
+            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
+    }
+    else if (isSigned(sourceType)) {
+        // The target type is larger than the source type and the source type is
+        // signed: sign-extend.
+        instructions.emplace_back(std::make_unique<IR::SignExtendInstruction>(
+            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
+    }
+    else {
+        // The target type is larger than the source type and the source type is
+        // unsigned: zero-extend.
+        instructions.emplace_back(std::make_unique<IR::ZeroExtendInstruction>(
+            std::move(result), std::make_unique<IR::VariableValue>(dstName)));
+    }
+
     // Return the destination value.
     return dst;
 }
@@ -1032,6 +1110,16 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
                     irDefs->emplace_back(std::make_unique<StaticVariable>(
                         name, global, cloneType(type),
                         std::make_unique<AST::LongInit>(0L)));
+                }
+                else if (dynamic_cast<AST::UIntType *>(type)) {
+                    irDefs->emplace_back(std::make_unique<StaticVariable>(
+                        name, global, cloneType(type),
+                        std::make_unique<AST::UIntInit>(0U)));
+                }
+                else if (dynamic_cast<AST::ULongType *>(type)) {
+                    irDefs->emplace_back(std::make_unique<StaticVariable>(
+                        name, global, cloneType(type),
+                        std::make_unique<AST::ULongInit>(0UL)));
                 }
                 else {
                     throw std::logic_error("Unsupported tentative type while "

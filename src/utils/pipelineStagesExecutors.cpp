@@ -266,8 +266,8 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         isZeroInit = (std::get<long>(longInit->getValue()) == 0L);
     }
     else {
-        throw std::logic_error(
-            "Unknown static init type while printing assembly static variable");
+        throw std::logic_error("Unsupported static init type while printing "
+                               "assembly static variable");
     }
 
     assemblyFileStream << "\n";
