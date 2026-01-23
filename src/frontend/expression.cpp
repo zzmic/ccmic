@@ -39,7 +39,8 @@ ConstantExpression::getConstantInVariant() const {
         return static_cast<unsigned long>(ulongConstant->getValue());
     }
     else {
-        throw std::logic_error("Unknown constant type in constant expression");
+        throw std::logic_error(
+            "Unsupported constant type in constant expression");
     }
 }
 
