@@ -244,11 +244,24 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
         if (std::holds_alternative<int>(value)) {
             return std::make_unique<AST::Initial>(std::get<int>(value));
         }
-        if (std::holds_alternative<long>(value)) {
+        else if (std::holds_alternative<long>(value)) {
             return std::make_unique<AST::Initial>(std::get<long>(value));
         }
+        else if (std::holds_alternative<unsigned int>(value)) {
+            return std::make_unique<AST::Initial>(
+                std::get<unsigned int>(value));
+        }
+        else if (std::holds_alternative<unsigned long>(value)) {
+            return std::make_unique<AST::Initial>(
+                std::get<unsigned long>(value));
+        }
+        else {
+            throw std::logic_error(
+                "Unsupported initial value type in cloneInitialValue");
+        }
     }
-    throw std::logic_error("Unsupported initial value in cloneInitialValue");
+    throw std::logic_error(
+        "Unsupported initial value type in cloneInitialValue");
 }
 
 /**
@@ -691,27 +704,39 @@ std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
     // Extract the numeric value from the AST constant.
     auto variantValue = constantExpression->getConstantInVariant();
 
-    long numericValue = 0;
-    // Convert everything to 64-bit for uniform handling.
-    // `std::holds_alternative` checks the type of the variant.
+    // Convert to `unsigned long` to preserve bit patterns for all types,
+    // allowing uniform handling regardless of the source type.
+    unsigned long numericValue = 0;
     if (std::holds_alternative<int>(variantValue)) {
-        numericValue = std::get<int>(variantValue);
+        numericValue = static_cast<unsigned int>(std::get<int>(variantValue));
+    }
+    else if (std::holds_alternative<long>(variantValue)) {
+        numericValue = static_cast<unsigned long>(std::get<long>(variantValue));
+    }
+    else if (std::holds_alternative<unsigned int>(variantValue)) {
+        numericValue = std::get<unsigned int>(variantValue);
+    }
+    else if (std::holds_alternative<unsigned long>(variantValue)) {
+        numericValue = std::get<unsigned long>(variantValue);
     }
     else {
-        numericValue = std::get<long>(variantValue);
+        throw std::logic_error(
+            "Unsupported constant type in convertStaticConstantToStaticInit");
     }
 
-    // If the declared type is int, we wrap/truncate to 32-bit.
     if (*varType == IntType()) {
-        // Wrap `numericValue` via a cast.
-        // This does a 32-bit wrap-around if `numericValue` doesn't fit.
-        int wrappedNumericValue =
-            static_cast<int>(static_cast<unsigned long>(numericValue));
-        return std::make_unique<IntInit>(wrappedNumericValue);
+        return std::make_unique<IntInit>(static_cast<int>(numericValue));
     }
-    // If the declared type is long, store the full 64-bit value.
     else if (*varType == LongType()) {
-        return std::make_unique<LongInit>(numericValue);
+        return std::make_unique<LongInit>(static_cast<long>(numericValue));
+    }
+    else if (*varType == UIntType()) {
+        return std::make_unique<UIntInit>(
+            static_cast<unsigned int>(numericValue));
+    }
+    else if (*varType == ULongType()) {
+        return std::make_unique<ULongInit>(
+            static_cast<unsigned long>(numericValue));
     }
     else {
         throw std::logic_error("Unsupported type in static initializer");
@@ -852,33 +877,48 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         auto constantExpression = dynamic_cast<ConstantExpression *>(
             declaration->getOptInitializer());
         auto variantValue = constantExpression->getConstantInVariant();
-        if (dynamic_cast<LongType *>(varType)) {
-            if (std::holds_alternative<long>(variantValue)) {
-                initialValue =
-                    std::make_unique<Initial>(std::get<long>(variantValue));
-            }
-            else if (std::holds_alternative<int>(variantValue)) {
-                initialValue = std::make_unique<Initial>(
-                    static_cast<long>(std::get<int>(variantValue)));
-            }
-            else {
-                throw std::logic_error(
-                    "Unsupported type in static initializer");
-            }
+
+        // Convert to `unsigned long` to preserve bit patterns for all types,
+        // allowing uniform handling regardless of the source type.
+        unsigned long numericValue = 0;
+        if (std::holds_alternative<int>(variantValue)) {
+            numericValue = static_cast<unsigned long>(
+                static_cast<long>(std::get<int>(variantValue)));
+        }
+        else if (std::holds_alternative<long>(variantValue)) {
+            numericValue =
+                static_cast<unsigned long>(std::get<long>(variantValue));
+        }
+        else if (std::holds_alternative<unsigned int>(variantValue)) {
+            numericValue = std::get<unsigned int>(variantValue);
+        }
+        else if (std::holds_alternative<unsigned long>(variantValue)) {
+            numericValue = std::get<unsigned long>(variantValue);
         }
         else {
-            if (std::holds_alternative<long>(variantValue)) {
-                initialValue = std::make_unique<Initial>(
-                    static_cast<int>(std::get<long>(variantValue)));
-            }
-            else if (std::holds_alternative<int>(variantValue)) {
-                initialValue =
-                    std::make_unique<Initial>(std::get<int>(variantValue));
-            }
-            else {
-                throw std::logic_error(
-                    "Unsupported type in static initializer");
-            }
+            throw std::logic_error(
+                "Unsupported constant type in static initializer");
+        }
+
+        // Create the initial value with the appropriate target type.
+        if (dynamic_cast<IntType *>(varType)) {
+            initialValue =
+                std::make_unique<Initial>(static_cast<int>(numericValue));
+        }
+        else if (dynamic_cast<LongType *>(varType)) {
+            initialValue =
+                std::make_unique<Initial>(static_cast<long>(numericValue));
+        }
+        else if (dynamic_cast<UIntType *>(varType)) {
+            initialValue = std::make_unique<Initial>(
+                static_cast<unsigned int>(numericValue));
+        }
+        else if (dynamic_cast<ULongType *>(varType)) {
+            initialValue = std::make_unique<Initial>(
+                static_cast<unsigned long>(numericValue));
+        }
+        else {
+            throw std::logic_error("Unsupported type in static initializer");
         }
     }
     else if (!declaration->getOptInitializer()) {
@@ -980,13 +1020,45 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             auto constantExpression = dynamic_cast<ConstantExpression *>(
                 declaration->getOptInitializer());
             auto variantValue = constantExpression->getConstantInVariant();
-            if (std::holds_alternative<long>(variantValue)) {
-                initialValue =
-                    std::make_unique<Initial>(std::get<long>(variantValue));
+
+            // Convert to `unsigned long` to preserve bit patterns for all
+            // types, allowing uniform handling regardless of the source type.
+            unsigned long numericValue = 0;
+            if (std::holds_alternative<int>(variantValue)) {
+                numericValue = static_cast<unsigned long>(
+                    static_cast<long>(std::get<int>(variantValue)));
             }
-            else if (std::holds_alternative<int>(variantValue)) {
+            else if (std::holds_alternative<long>(variantValue)) {
+                numericValue =
+                    static_cast<unsigned long>(std::get<long>(variantValue));
+            }
+            else if (std::holds_alternative<unsigned int>(variantValue)) {
+                numericValue = std::get<unsigned int>(variantValue);
+            }
+            else if (std::holds_alternative<unsigned long>(variantValue)) {
+                numericValue = std::get<unsigned long>(variantValue);
+            }
+            else {
+                throw std::logic_error(
+                    "Unsupported constant type in static initializer");
+            }
+
+            // Create the initial value with the appropriate target type.
+            if (dynamic_cast<IntType *>(varType)) {
                 initialValue =
-                    std::make_unique<Initial>(std::get<int>(variantValue));
+                    std::make_unique<Initial>(static_cast<int>(numericValue));
+            }
+            else if (dynamic_cast<LongType *>(varType)) {
+                initialValue =
+                    std::make_unique<Initial>(static_cast<long>(numericValue));
+            }
+            else if (dynamic_cast<UIntType *>(varType)) {
+                initialValue = std::make_unique<Initial>(
+                    static_cast<unsigned int>(numericValue));
+            }
+            else if (dynamic_cast<ULongType *>(varType)) {
+                initialValue = std::make_unique<Initial>(
+                    static_cast<unsigned long>(numericValue));
             }
             else {
                 throw std::logic_error(
