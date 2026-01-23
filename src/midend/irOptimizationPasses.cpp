@@ -1,6 +1,9 @@
 #include "irOptimizationPasses.h"
 #include <optional>
 
+/**
+ * Unnamed namespace for helper functions for the IR optimization passes.
+ */
 namespace {
 /**
  * Struct representing a constant value, which can be either an int or a long.
