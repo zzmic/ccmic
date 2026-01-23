@@ -165,6 +165,16 @@ class PipelineStagesExecutors {
                              std::ofstream &assemblyFileStream);
 
     /**
+     * Emit the assembly code for a zero-extend move instruction.
+     *
+     * @param movZeroExtendInstruction The zero-extend move instruction to emit.
+     * @param assemblyFileStream The output assembly file stream.
+     */
+    static void emitAssyMovZeroExtendInstruction(
+        const Assembly::MovZeroExtendInstruction &movZeroExtendInstruction,
+        std::ofstream &assemblyFileStream);
+
+    /**
      * Emit the assembly code for a return instruction.
      *
      * @param assemblyFileStream The output assembly file stream.
@@ -230,6 +240,16 @@ class PipelineStagesExecutors {
     static void
     emitAssyIdivInstruction(const Assembly::IdivInstruction &idivInstruction,
                             std::ofstream &assemblyFileStream);
+
+    /**
+     * Emit the assembly code for an unsigned-integer-division instruction.
+     *
+     * @param divInstruction The unsigned-integer-division instruction to emit.
+     * @param assemblyFileStream The output assembly file stream.
+     */
+    static void
+    emitAssyDivInstruction(const Assembly::DivInstruction &divInstruction,
+                           std::ofstream &assemblyFileStream);
 
     /**
      * Emit the assembly code for a covert-doubleword-to-quadword instruction.

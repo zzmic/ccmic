@@ -38,7 +38,7 @@ cloneOperand(const Assembly::Operand *operand) {
     }
     if (auto imm = dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         return std::make_unique<Assembly::ImmediateOperand>(
-            imm->getImmediateLong());
+            imm->getImmediate());
     }
     if (auto regOp = dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         auto reg = regOp->getRegister();
@@ -214,6 +214,17 @@ void FixupPass::rewriteFunctionDefinition(
                 it = rewriteInvalidIdiv(instructions, it, *idivInstr);
             }
         }
+        else if (auto divInstr =
+                     dynamic_cast<Assembly::DivInstruction *>(it->get())) {
+            if (isInvalidDiv(*divInstr)) {
+                it = rewriteInvalidDiv(instructions, it, *divInstr);
+            }
+        }
+        else if (auto movZeroExtendInstr =
+                     dynamic_cast<Assembly::MovZeroExtendInstruction *>(
+                         it->get())) {
+            it = rewriteMovZeroExtend(instructions, it, *movZeroExtendInstr);
+        }
         else if (auto cmpInstr =
                      dynamic_cast<Assembly::CmpInstruction *>(it->get())) {
             if (isInvalidLargeImmediateCmp(*cmpInstr)) {
@@ -265,7 +276,8 @@ bool FixupPass::isInvalidLargeImmediateMov(
         return false;
 
     // Check if immediate value is outside 32-bit signed range.
-    long value = immediateSrc->getImmediateLong();
+    // We interpret the unsigned long as a signed long for range checking.
+    auto value = static_cast<long>(immediateSrc->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -283,9 +295,10 @@ bool FixupPass::isInvalidLongwordImmediateMov(
     if (!immediateSrc)
         return false;
 
-    // Check if immediate value is outside 32-bit range (truncation needed).
-    long value = immediateSrc->getImmediateLong();
-    return value > std::numeric_limits<unsigned int>::max() || value < 0;
+    // Check if immediate value is outside 32-bit unsigned range (truncation
+    // needed).
+    auto value = immediateSrc->getImmediate();
+    return value > std::numeric_limits<unsigned int>::max();
 }
 
 bool FixupPass::isInvalidMovsx(const Assembly::MovsxInstruction &movsxInstr) {
@@ -352,7 +365,7 @@ bool FixupPass::isInvalidLargeImmediateBinary(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    long value = immediateOp->getImmediateLong();
+    long value = static_cast<long>(immediateOp->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -360,6 +373,11 @@ bool FixupPass::isInvalidLargeImmediateBinary(
 bool FixupPass::isInvalidIdiv(const Assembly::IdivInstruction &idivInstr) {
     return dynamic_cast<const Assembly::ImmediateOperand *>(
                idivInstr.getOperand()) != nullptr;
+}
+
+bool FixupPass::isInvalidDiv(const Assembly::DivInstruction &divInstr) {
+    return dynamic_cast<const Assembly::ImmediateOperand *>(
+               divInstr.getOperand()) != nullptr;
 }
 
 bool FixupPass::isInvalidCmp(const Assembly::CmpInstruction &cmpInstr) {
@@ -403,7 +421,7 @@ bool FixupPass::isInvalidLargeImmediateCmp(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    long value = immediateOp->getImmediateLong();
+    long value = static_cast<long>(immediateOp->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -417,7 +435,7 @@ bool FixupPass::isInvalidLargeImmediatePush(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    long value = immediateOp->getImmediateLong();
+    long value = static_cast<long>(immediateOp->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -576,6 +594,58 @@ FixupPass::rewriteInvalidIdiv(
 }
 
 std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteInvalidDiv(
+    std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+    const Assembly::DivInstruction &divInstr) {
+    auto newMov = std::make_unique<Assembly::MovInstruction>(
+        cloneAssemblyType(divInstr.getType()),
+        cloneOperand(divInstr.getOperand()),
+        std::make_unique<Assembly::RegisterOperand>(
+            std::make_unique<Assembly::R10>()));
+    auto newDiv = std::make_unique<Assembly::DivInstruction>(
+        cloneAssemblyType(divInstr.getType()),
+        std::make_unique<Assembly::RegisterOperand>(
+            std::make_unique<Assembly::R10>()));
+
+    *it = std::move(newMov);
+    it = instructions.insert(it + 1, std::move(newDiv));
+    return it;
+}
+
+std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
+FixupPass::rewriteMovZeroExtend(
+    std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+    const Assembly::MovZeroExtendInstruction &movZeroExtendInstr) {
+    if (dynamic_cast<const Assembly::RegisterOperand *>(
+            movZeroExtendInstr.getDst())) {
+        auto newMov = std::make_unique<Assembly::MovInstruction>(
+            std::make_unique<Assembly::Longword>(),
+            cloneOperand(movZeroExtendInstr.getSrc()),
+            cloneOperand(movZeroExtendInstr.getDst()));
+        *it = std::move(newMov);
+        return it;
+    }
+    else {
+        auto movToR11 = std::make_unique<Assembly::MovInstruction>(
+            std::make_unique<Assembly::Longword>(),
+            cloneOperand(movZeroExtendInstr.getSrc()),
+            std::make_unique<Assembly::RegisterOperand>(
+                std::make_unique<Assembly::R11>()));
+        auto movFromR11 = std::make_unique<Assembly::MovInstruction>(
+            std::make_unique<Assembly::Quadword>(),
+            std::make_unique<Assembly::RegisterOperand>(
+                std::make_unique<Assembly::R11>()),
+            cloneOperand(movZeroExtendInstr.getDst()));
+
+        *it = std::move(movToR11);
+        it = instructions.insert(it + 1, std::move(movFromR11));
+        return it;
+    }
+}
+
+std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
 FixupPass::rewriteInvalidCmp(
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
@@ -644,12 +714,11 @@ FixupPass::rewriteInvalidLongwordImmediateMov(
     const Assembly::MovInstruction &movInst) {
     auto immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInst.getSrc());
-    long originalValue = immediateSrc->getImmediateLong();
+    auto originalValue = immediateSrc->getImmediate();
 
     // Truncate the immediate value to 32 bits.
-    long truncatedValue =
-        static_cast<long>(static_cast<unsigned long>(originalValue) &
-                          std::numeric_limits<unsigned int>::max());
+    auto truncatedValue =
+        originalValue & std::numeric_limits<unsigned int>::max();
 
     auto newImmediate =
         std::make_unique<Assembly::ImmediateOperand>(truncatedValue);

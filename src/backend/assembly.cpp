@@ -1,7 +1,7 @@
 #include "assembly.h"
 
 namespace Assembly {
-int Operand::getImmediate() const {
+unsigned long Operand::getImmediate() const {
     throw std::logic_error("Operand is not an immediate");
 }
 
@@ -25,13 +25,17 @@ std::string Operand::getIdentifier() const {
     throw std::logic_error("Operand is not a data (operand)");
 }
 
-ImmediateOperand::ImmediateOperand(int imm) : imm(static_cast<long>(imm)) {}
+ImmediateOperand::ImmediateOperand(int imm)
+    : imm(static_cast<unsigned long>(static_cast<long>(imm))) {}
 
-ImmediateOperand::ImmediateOperand(long imm) : imm(imm) {}
+ImmediateOperand::ImmediateOperand(long imm)
+    : imm(static_cast<unsigned long>(imm)) {}
 
-int ImmediateOperand::getImmediate() const { return static_cast<int>(imm); }
+ImmediateOperand::ImmediateOperand(unsigned int imm) : imm(imm) {}
 
-long ImmediateOperand::getImmediateLong() const { return imm; }
+ImmediateOperand::ImmediateOperand(unsigned long imm) : imm(imm) {}
+
+unsigned long ImmediateOperand::getImmediate() const { return imm; }
 
 RegisterOperand::RegisterOperand(std::unique_ptr<Register> reg)
     : reg(std::move(reg)) {
@@ -208,6 +212,39 @@ void MovsxInstruction::setDst(std::unique_ptr<Operand> newDst) {
     if (!newDst) {
         throw std::logic_error(
             "Setting null destination operand in MovsxInstruction");
+    }
+    this->dst = std::move(newDst);
+}
+
+MovZeroExtendInstruction::MovZeroExtendInstruction(std::unique_ptr<Operand> src,
+                                                   std::unique_ptr<Operand> dst)
+    : src(std::move(src)), dst(std::move(dst)) {
+    if (!this->src) {
+        throw std::logic_error(
+            "Creating MovZeroExtendInstruction with null src");
+    }
+    if (!this->dst) {
+        throw std::logic_error(
+            "Creating MovZeroExtendInstruction with null dst");
+    }
+}
+
+const Operand *MovZeroExtendInstruction::getSrc() const { return src.get(); }
+
+const Operand *MovZeroExtendInstruction::getDst() const { return dst.get(); }
+
+void MovZeroExtendInstruction::setSrc(std::unique_ptr<Operand> newSrc) {
+    if (!newSrc) {
+        throw std::logic_error(
+            "Setting null source operand in MovZeroExtendInstruction");
+    }
+    this->src = std::move(newSrc);
+}
+
+void MovZeroExtendInstruction::setDst(std::unique_ptr<Operand> newDst) {
+    if (!newDst) {
+        throw std::logic_error(
+            "Setting null destination operand in MovZeroExtendInstruction");
     }
     this->dst = std::move(newDst);
 }
@@ -389,6 +426,35 @@ void IdivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
 void IdivInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
         throw std::logic_error("Setting null operand in IdivInstruction");
+    }
+    this->operand = std::move(newOperand);
+}
+
+DivInstruction::DivInstruction(std::unique_ptr<AssemblyType> type,
+                               std::unique_ptr<Operand> operand)
+    : type(std::move(type)), operand(std::move(operand)) {
+    if (!this->type) {
+        throw std::logic_error("Creating DivInstruction with null type");
+    }
+    if (!this->operand) {
+        throw std::logic_error("Creating DivInstruction with null operand");
+    }
+}
+
+const AssemblyType *DivInstruction::getType() const { return type.get(); }
+
+const Operand *DivInstruction::getOperand() const { return operand.get(); }
+
+void DivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
+    if (!newType) {
+        throw std::logic_error("Setting null type in DivInstruction");
+    }
+    this->type = std::move(newType);
+}
+
+void DivInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
+    if (!newOperand) {
+        throw std::logic_error("Setting null operand in DivInstruction");
     }
     this->operand = std::move(newOperand);
 }

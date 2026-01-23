@@ -147,7 +147,7 @@ class Operand {
      *
      * @return The immediate value of the operand.
      */
-    [[nodiscard]] virtual int getImmediate() const;
+    [[nodiscard]] virtual unsigned long getImmediate() const;
 
     /**
      * Get the register of the operand.
@@ -187,13 +187,19 @@ class Operand {
 
 /**
  * Class for representing an immediate operand.
+ *
+ * The immediate value is stored as an `unsigned long` to preserve all 64-bit
+ * patterns.
+ * The signedness of the immediate value is determined by the instruction that
+ * uses it rather than the value itself.
  */
 class ImmediateOperand : public Operand {
   private:
     /**
-     * The immediate value of the operand.
+     * The immediate value of the operand (stored as unsigned to preserve bit
+     * patterns).
      */
-    long imm = 0;
+    unsigned long imm = 0;
 
   public:
     /**
@@ -210,9 +216,21 @@ class ImmediateOperand : public Operand {
      */
     explicit ImmediateOperand(long imm);
 
-    [[nodiscard]] int getImmediate() const override;
+    /**
+     * Constructor for the immediate operand class.
+     *
+     * @param imm The immediate value of the operand.
+     */
+    explicit ImmediateOperand(unsigned int imm);
 
-    [[nodiscard]] long getImmediateLong() const;
+    /**
+     * Constructor for the immediate operand class.
+     *
+     * @param imm The immediate value of the operand.
+     */
+    explicit ImmediateOperand(unsigned long imm);
+
+    [[nodiscard]] unsigned long getImmediate() const;
 };
 
 /**
@@ -397,34 +415,54 @@ class CondCode {
 };
 
 /**
- * Class for representing the E condition code.
+ * Class for representing the `E` (equal) condition code.
  */
 class E : public CondCode {};
 
 /**
- * Class for representing the NE condition code.
+ * Class for representing the `NE` (not equal) condition code.
  */
 class NE : public CondCode {};
 
 /**
- * Class for representing the G condition code.
+ * Class for representing the `G` (greater) condition code.
  */
 class G : public CondCode {};
 
 /**
- * Class for representing the GE condition code.
+ * Class for representing the `GE` (greater or equal) condition code.
  */
 class GE : public CondCode {};
 
 /**
- * Class for representing the L condition code.
+ * Class for representing the `L` (less) condition code.
  */
 class L : public CondCode {};
 
 /**
- * Class for representing the LE condition code.
+ * Class for representing the `LE` (less or equal) condition code.
  */
 class LE : public CondCode {};
+
+/**
+ * Class for representing the `A` (above) condition code.
+ */
+class A : public CondCode {};
+
+/**
+ * Class for representing the `AE` (above or equal) condition code.
+ */
+class AE : public CondCode {};
+
+/**
+ * Class for representing the `B` (below) condition code.
+ */
+class B : public CondCode {};
+
+/**
+ * Class for representing the `BE` (below or equal) condition code.
+ */
+class BE : public CondCode {};
 
 /**
  * Base class for representing an operator.
@@ -655,6 +693,35 @@ class MovsxInstruction : public Instruction {
 };
 
 /**
+ * Class for representing the movzeroextend instruction.
+ */
+class MovZeroExtendInstruction : public Instruction {
+  private:
+    /**
+     * The source and destination operands of the instruction.
+     */
+    std::unique_ptr<Operand> src, dst;
+
+  public:
+    /**
+     * Constructor for the movzeroextend instruction class.
+     *
+     * @param src The source operand of the instruction.
+     * @param dst The destination operand of the instruction.
+     */
+    explicit MovZeroExtendInstruction(std::unique_ptr<Operand> src,
+                                      std::unique_ptr<Operand> dst);
+
+    [[nodiscard]] const Operand *getSrc() const;
+
+    [[nodiscard]] const Operand *getDst() const;
+
+    void setSrc(std::unique_ptr<Operand> newSrc);
+
+    void setDst(std::unique_ptr<Operand> newDst);
+};
+
+/**
  * Class for representing the unary instruction.
  */
 class UnaryInstruction : public Instruction {
@@ -814,6 +881,40 @@ class IdivInstruction : public Instruction {
      */
     explicit IdivInstruction(std::unique_ptr<AssemblyType> type,
                              std::unique_ptr<Operand> operand);
+
+    [[nodiscard]] const AssemblyType *getType() const;
+
+    [[nodiscard]] const Operand *getOperand() const;
+
+    void setType(std::unique_ptr<AssemblyType> newType);
+
+    void setOperand(std::unique_ptr<Operand> newOperand);
+};
+
+/**
+ * Class for representing the div instruction.
+ */
+class DivInstruction : public Instruction {
+  private:
+    /**
+     * The type of the instruction.
+     */
+    std::unique_ptr<AssemblyType> type;
+
+    /**
+     * The operand of the instruction.
+     */
+    std::unique_ptr<Operand> operand;
+
+  public:
+    /**
+     * Constructor for the div instruction class.
+     *
+     * @param type The type of the instruction.
+     * @param operand The operand of the instruction.
+     */
+    explicit DivInstruction(std::unique_ptr<AssemblyType> type,
+                            std::unique_ptr<Operand> operand);
 
     [[nodiscard]] const AssemblyType *getType() const;
 

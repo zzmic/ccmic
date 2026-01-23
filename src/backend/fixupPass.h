@@ -108,6 +108,14 @@ class FixupPass {
     isInvalidIdiv(const Assembly::IdivInstruction &idivInstr);
 
     /**
+     * Check if a div instruction is invalid.
+     *
+     * @param divInstr The div instruction to check.
+     * @return True if the div instruction is invalid, false otherwise.
+     */
+    [[nodiscard]] bool isInvalidDiv(const Assembly::DivInstruction &divInstr);
+
+    /**
      * Check if a cmp instruction is invalid.
      *
      * @param cmpInstr The cmp instruction to check.
@@ -265,6 +273,46 @@ class FixupPass {
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
         std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
         const Assembly::IdivInstruction &idivInstr);
+
+    /**
+     * Rewrite an invalid div instruction.
+     *
+     * Rewrite: `Div(type, Imm(val))` ->
+     * `Mov(type, Imm(val), Reg(R10))` + `Div(type, Reg(R10))`.
+     *
+     * @param instructions The instructions of the function.
+     * @param it The iterator to the div instruction.
+     * @param divInstr The div instruction to rewrite.
+     * @return The iterator to the new div instruction.
+     */
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
+    rewriteInvalidDiv(
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::DivInstruction &divInstr);
+
+    /**
+     * Rewrite a `MovZeroExtend` instruction.
+     *
+     * If the destination is a register:
+     * Rewrite: `MovZeroExtend(src, Reg)` -> `Mov(Longword, src, Reg)`.
+     *
+     * If the destination is in memory:
+     * Rewrite: `MovZeroExtend(src, Stack/Data)` ->
+     * `Mov(Longword, src, Reg(R11))` + `Mov(Quadword, Reg(R11), Stack/Data)`.
+     *
+     * @param instructions The instructions of the function.
+     * @param it The iterator to the `MovZeroExtend` instruction.
+     * @param movZeroExtendInstr The `MovZeroExtend` instruction to rewrite.
+     * @return The iterator to the last new instruction.
+     */
+    [[nodiscard]]
+    std::vector<std::unique_ptr<Assembly::Instruction>>::iterator
+    rewriteMovZeroExtend(
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
+        std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
+        const Assembly::MovZeroExtendInstruction &movZeroExtendInstr);
 
     /**
      * Rewrite an invalid cmp instruction.

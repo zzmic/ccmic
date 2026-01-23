@@ -114,7 +114,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
 
     if (auto imm = dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         return std::make_unique<Assembly::ImmediateOperand>(
-            imm->getImmediateLong());
+            imm->getImmediate());
     }
 
     if (auto regOp = dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
@@ -208,6 +208,16 @@ void PseudoToStackPass::replacePseudoWithStack(
         movsxInstruction->setSrc(std::move(newSrc));
         movsxInstruction->setDst(std::move(newDst));
     }
+    else if (auto movZeroExtendInstruction =
+                 dynamic_cast<Assembly::MovZeroExtendInstruction *>(
+                     instruction.get())) {
+        auto newSrc = replaceOperand(movZeroExtendInstruction->getSrc(),
+                                     backendSymbolTable);
+        auto newDst = replaceOperand(movZeroExtendInstruction->getDst(),
+                                     backendSymbolTable);
+        movZeroExtendInstruction->setSrc(std::move(newSrc));
+        movZeroExtendInstruction->setDst(std::move(newDst));
+    }
     else if (auto unaryInstruction = dynamic_cast<Assembly::UnaryInstruction *>(
                  instruction.get())) {
         auto newOperand =
@@ -238,6 +248,12 @@ void PseudoToStackPass::replacePseudoWithStack(
         auto newOperand =
             replaceOperand(idivInstruction->getOperand(), backendSymbolTable);
         idivInstruction->setOperand(std::move(newOperand));
+    }
+    else if (auto divInstruction =
+                 dynamic_cast<Assembly::DivInstruction *>(instruction.get())) {
+        auto newOperand =
+            replaceOperand(divInstruction->getOperand(), backendSymbolTable);
+        divInstruction->setOperand(std::move(newOperand));
     }
     else if (auto setCCInstruction = dynamic_cast<Assembly::SetCCInstruction *>(
                  instruction.get())) {
@@ -301,6 +317,15 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movsxInstruction->getDst()));
             (void)movsxInstruction;
         }
+        else if (auto movZeroExtendInstruction =
+                     dynamic_cast<Assembly::MovZeroExtendInstruction *>(
+                         instruction.get())) {
+            assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
+                movZeroExtendInstruction->getSrc()));
+            assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
+                movZeroExtendInstruction->getDst()));
+            (void)movZeroExtendInstruction;
+        }
         else if (auto unaryInstruction =
                      dynamic_cast<Assembly::UnaryInstruction *>(
                          instruction.get())) {
@@ -331,6 +356,12 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 idivInstruction->getOperand()));
             (void)idivInstruction;
+        }
+        else if (auto divInstruction = dynamic_cast<Assembly::DivInstruction *>(
+                     instruction.get())) {
+            assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
+                divInstruction->getOperand()));
+            (void)divInstruction;
         }
         else if (auto setCCInstruction =
                      dynamic_cast<Assembly::SetCCInstruction *>(

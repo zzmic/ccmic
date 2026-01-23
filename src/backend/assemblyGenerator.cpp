@@ -4,6 +4,40 @@
 #include <algorithm>
 #include <limits>
 
+/**
+ * Unnamed namespace for helper functions for the assembly generator.
+ */
+namespace {
+/**
+ * Check if an IR value's type is signed.
+ *
+ * @param irValue The IR value to check.
+ * @param frontendSymbolTable The frontend symbol table for variable lookups.
+ * @return True if the type is signed (`int` or `long`), false otherwise.
+ */
+bool isSignedType(const IR::Value *irValue,
+                  const AST::FrontendSymbolTable &frontendSymbolTable) {
+    if (auto constantVal = dynamic_cast<const IR::ConstantValue *>(irValue)) {
+        return dynamic_cast<const AST::ConstantInt *>(
+                   constantVal->getASTConstant()) ||
+               dynamic_cast<const AST::ConstantLong *>(
+                   constantVal->getASTConstant());
+    }
+    else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
+        auto symbolIt = frontendSymbolTable.find(varVal->getIdentifier());
+        if (symbolIt != frontendSymbolTable.end()) {
+            auto varType = symbolIt->second.first.get();
+            return dynamic_cast<const AST::IntType *>(varType) ||
+                   dynamic_cast<const AST::LongType *>(varType);
+        }
+        throw std::logic_error(
+            "Identifier not found in frontend symbol table: " +
+            varVal->getIdentifier());
+    }
+    throw std::logic_error("Unsupported IR value type for signedness check");
+}
+} // namespace
+
 namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
     const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables,
@@ -71,7 +105,7 @@ AssemblyGenerator::convertIRFunctionDefinitionToAssy(
                 // symbol table.
                 IR::VariableValue irParamValue(irParam);
                 auto assemblyType = determineAssemblyType(&irParamValue);
-                // Generate a `Mov` instruction to move the
+                // Generate a `MovInstruction` to move the
                 // parameter from the register to the stack.
                 instructions->emplace_back(
                     std::make_unique<Assembly::MovInstruction>(
@@ -92,7 +126,7 @@ AssemblyGenerator::convertIRFunctionDefinitionToAssy(
                 // symbol table.
                 IR::VariableValue irParamValue(irParam);
                 auto assemblyType = determineAssemblyType(&irParamValue);
-                // Generate a `Mov` instruction to move the
+                // Generate a `MovInstruction` to move the
                 // parameter from the stack to the register.
                 instructions->emplace_back(
                     std::make_unique<Assembly::MovInstruction>(
@@ -133,6 +167,19 @@ AssemblyGenerator::convertIRStaticVariableToAssy(
     else if (auto constLong = dynamic_cast<const AST::LongInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::LongInit>(
             std::get<long>(constLong->getValue()));
+        return std::make_unique<StaticVariable>(identifier, global, 8,
+                                                std::move(assyInit));
+    }
+    else if (auto constUInt = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        auto assyInit = std::make_unique<AST::UIntInit>(
+            std::get<unsigned int>(constUInt->getValue()));
+        return std::make_unique<StaticVariable>(identifier, global, 4,
+                                                std::move(assyInit));
+    }
+    else if (auto constULong =
+                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        auto assyInit = std::make_unique<AST::ULongInit>(
+            std::get<unsigned long>(constULong->getValue()));
         return std::make_unique<StaticVariable>(identifier, global, 8,
                                                 std::move(assyInit));
     }
@@ -194,6 +241,11 @@ void AssemblyGenerator::convertIRInstructionToAssy(
                  &irInstruction)) {
         convertIRTruncateInstructionToAssy(*truncateInstr, instructions);
     }
+    else if (auto zeroExtendInstr =
+                 dynamic_cast<const IR::ZeroExtendInstruction *>(
+                     &irInstruction)) {
+        convertIRZeroExtendInstructionToAssy(*zeroExtendInstr, instructions);
+    }
     else {
         throw std::logic_error("Unsupported IR instruction type");
     }
@@ -212,7 +264,7 @@ void AssemblyGenerator::convertIRReturnInstructionToAssy(
         std::move(assemblyType), std::move(returnValue),
         std::make_unique<Assembly::RegisterOperand>("AX")));
 
-    // Generate a `Ret` instruction to return from the function.
+    // Generate a `RetInstruction` to return from the function.
     instructions.emplace_back(std::make_unique<Assembly::RetInstruction>());
 }
 
@@ -300,30 +352,74 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             convertValue(binaryInstr.getDst())));
     }
     else if (dynamic_cast<const IR::DivideOperator *>(binaryIROperator)) {
+        // Move `src1` to `AX` regardless of whether it is signed or unsigned.
         instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
             determineAssemblyType(binaryInstr.getSrc1()),
             convertValue(binaryInstr.getSrc1()),
             std::make_unique<Assembly::RegisterOperand>("AX")));
-        instructions.emplace_back(std::make_unique<Assembly::CdqInstruction>(
-            determineAssemblyType(binaryInstr.getSrc1())));
-        instructions.emplace_back(std::make_unique<Assembly::IdivInstruction>(
-            determineAssemblyType(binaryInstr.getSrc1()),
-            convertValue(binaryInstr.getSrc2())));
+
+        // Signed: sign-extend `AX` to `DX:AX` using `Cdq`, then use `Idiv`.
+        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+            instructions.emplace_back(
+                std::make_unique<Assembly::CdqInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1())));
+            instructions.emplace_back(
+                std::make_unique<Assembly::IdivInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1()),
+                    convertValue(binaryInstr.getSrc2())));
+        }
+        // Unsigned: zero out `DX`, then use `Div`.
+        else {
+            instructions.emplace_back(
+                std::make_unique<Assembly::MovInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1()),
+                    std::make_unique<Assembly::ImmediateOperand>(0),
+                    std::make_unique<Assembly::RegisterOperand>("DX")));
+            instructions.emplace_back(
+                std::make_unique<Assembly::DivInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1()),
+                    convertValue(binaryInstr.getSrc2())));
+        }
+
+        // Move the quotient from `AX` to `dst` regardless of whether it is
+        // signed or unsigned.
         instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
             determineAssemblyType(binaryInstr.getSrc1()),
             std::make_unique<Assembly::RegisterOperand>("AX"),
             convertValue(binaryInstr.getDst())));
     }
     else if (dynamic_cast<const IR::RemainderOperator *>(binaryIROperator)) {
+        // Move `src1` to `AX` regardless of whether it is signed or unsigned.
         instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
             determineAssemblyType(binaryInstr.getSrc1()),
             convertValue(binaryInstr.getSrc1()),
             std::make_unique<Assembly::RegisterOperand>("AX")));
-        instructions.emplace_back(std::make_unique<Assembly::CdqInstruction>(
-            determineAssemblyType(binaryInstr.getSrc1())));
-        instructions.emplace_back(std::make_unique<Assembly::IdivInstruction>(
-            determineAssemblyType(binaryInstr.getSrc1()),
-            convertValue(binaryInstr.getSrc2())));
+
+        // Signed: sign-extend `AX` to `DX:AX` using `Cdq`, then use `Idiv`.
+        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+            instructions.emplace_back(
+                std::make_unique<Assembly::CdqInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1())));
+            instructions.emplace_back(
+                std::make_unique<Assembly::IdivInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1()),
+                    convertValue(binaryInstr.getSrc2())));
+        }
+        // Unsigned: zero out `DX`, then use `Div`.
+        else {
+            instructions.emplace_back(
+                std::make_unique<Assembly::MovInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1()),
+                    std::make_unique<Assembly::ImmediateOperand>(0),
+                    std::make_unique<Assembly::RegisterOperand>("DX")));
+            instructions.emplace_back(
+                std::make_unique<Assembly::DivInstruction>(
+                    determineAssemblyType(binaryInstr.getSrc1()),
+                    convertValue(binaryInstr.getSrc2())));
+        }
+
+        // Move the remainder from `DX` to `dst` regardless of whether it is
+        // signed or unsigned.
         instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
             determineAssemblyType(binaryInstr.getSrc1()),
             std::make_unique<Assembly::RegisterOperand>("DX"),
@@ -364,9 +460,18 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        instructions.emplace_back(std::make_unique<Assembly::SetCCInstruction>(
-            std::make_unique<Assembly::L>(),
-            convertValue(binaryInstr.getDst())));
+        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::L>(),
+                    convertValue(binaryInstr.getDst())));
+        }
+        else {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::B>(),
+                    convertValue(binaryInstr.getDst())));
+        }
     }
     else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(
                  binaryIROperator)) {
@@ -378,9 +483,18 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        instructions.emplace_back(std::make_unique<Assembly::SetCCInstruction>(
-            std::make_unique<Assembly::LE>(),
-            convertValue(binaryInstr.getDst())));
+        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::LE>(),
+                    convertValue(binaryInstr.getDst())));
+        }
+        else {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::BE>(),
+                    convertValue(binaryInstr.getDst())));
+        }
     }
     else if (dynamic_cast<const IR::GreaterThanOperator *>(binaryIROperator)) {
         instructions.emplace_back(std::make_unique<Assembly::CmpInstruction>(
@@ -391,9 +505,18 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        instructions.emplace_back(std::make_unique<Assembly::SetCCInstruction>(
-            std::make_unique<Assembly::G>(),
-            convertValue(binaryInstr.getDst())));
+        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::G>(),
+                    convertValue(binaryInstr.getDst())));
+        }
+        else {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::A>(),
+                    convertValue(binaryInstr.getDst())));
+        }
     }
     else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(
                  binaryIROperator)) {
@@ -405,9 +528,18 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        instructions.emplace_back(std::make_unique<Assembly::SetCCInstruction>(
-            std::make_unique<Assembly::GE>(),
-            convertValue(binaryInstr.getDst())));
+        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::GE>(),
+                    convertValue(binaryInstr.getDst())));
+        }
+        else {
+            instructions.emplace_back(
+                std::make_unique<Assembly::SetCCInstruction>(
+                    std::make_unique<Assembly::AE>(),
+                    convertValue(binaryInstr.getDst())));
+        }
     }
     else {
         throw std::logic_error("Unsupported IR binary operator type");
@@ -417,7 +549,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
 void AssemblyGenerator::convertIRJumpInstructionToAssy(
     const IR::JumpInstruction &jumpInstr,
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
-    // Generate a `Jmp` instruction to jump to the target (label).
+    // Generate a `JmpInstruction` to jump to the target (label).
     instructions.emplace_back(
         std::make_unique<Assembly::JmpInstruction>(jumpInstr.getTarget()));
 }
@@ -425,13 +557,13 @@ void AssemblyGenerator::convertIRJumpInstructionToAssy(
 void AssemblyGenerator::convertIRJumpIfZeroInstructionToAssy(
     const IR::JumpIfZeroInstruction &jumpIfZeroInstr,
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
-    // Generate a `Cmp` instruction to compare the condition with `0`.
+    // Generate a `CmpInstruction` to compare the condition with `0`.
     instructions.emplace_back(std::make_unique<Assembly::CmpInstruction>(
         determineAssemblyType(jumpIfZeroInstr.getCondition()),
         std::make_unique<Assembly::ImmediateOperand>(0),
         convertValue(jumpIfZeroInstr.getCondition())));
 
-    // Generate a `JmpCC` instruction to conditionally jump to the target
+    // Generate a `JmpCCInstruction` to conditionally jump to the target
     // (label).
     instructions.emplace_back(std::make_unique<Assembly::JmpCCInstruction>(
         std::make_unique<Assembly::E>(), jumpIfZeroInstr.getTarget()));
@@ -440,13 +572,13 @@ void AssemblyGenerator::convertIRJumpIfZeroInstructionToAssy(
 void AssemblyGenerator::convertIRJumpIfNotZeroInstructionToAssy(
     const IR::JumpIfNotZeroInstruction &jumpIfNotZeroInstr,
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
-    // Generate a `Cmp` instruction to compare the condition with `0`.
+    // Generate a `CmpInstruction` to compare the condition with `0`.
     instructions.emplace_back(std::make_unique<Assembly::CmpInstruction>(
         determineAssemblyType(jumpIfNotZeroInstr.getCondition()),
         std::make_unique<Assembly::ImmediateOperand>(0),
         convertValue(jumpIfNotZeroInstr.getCondition())));
 
-    // Generate a `JmpCC` instruction to conditionally jump to the target
+    // Generate a `JmpCCInstruction` to conditionally jump to the target
     // (label).
     instructions.emplace_back(std::make_unique<Assembly::JmpCCInstruction>(
         std::make_unique<Assembly::NE>(), jumpIfNotZeroInstr.getTarget()));
@@ -459,12 +591,12 @@ void AssemblyGenerator::convertIRCopyInstructionToAssy(
     auto srcOperand = convertValue(copyInstr.getSrc());
     auto dstOperand = convertValue(copyInstr.getDst());
 
-    // Determine the assembly type of the `Mov` instruction.
+    // Determine the assembly type of the `mov` instruction.
     auto assemblyType =
         determineMovType(srcOperand.get(), dstOperand.get(), copyInstr.getSrc(),
                          copyInstr.getDst());
 
-    // Generate a `Mov` instruction to copy the source operand to the
+    // Generate a `MovInstruction` to copy the source operand to the
     // destination operand.
     instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
         std::move(assemblyType), std::move(srcOperand), std::move(dstOperand)));
@@ -473,7 +605,7 @@ void AssemblyGenerator::convertIRCopyInstructionToAssy(
 void AssemblyGenerator::convertIRLabelInstructionToAssy(
     const IR::LabelInstruction &labelInstr,
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
-    // Generate a `Label` instruction with the label name.
+    // Generate a `LabelInstruction` with the label name.
     instructions.emplace_back(
         std::make_unique<Assembly::LabelInstruction>(labelInstr.getLabel()));
 }
@@ -561,7 +693,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
         }
     }
 
-    // Emit a `Call` instruction (to call the function).
+    // Emit a `call` instruction (to call the function).
     instructions.emplace_back(std::make_unique<Assembly::CallInstruction>(
         functionCallInstr.getFunctionIdentifier()));
 
@@ -596,9 +728,18 @@ AssemblyGenerator::convertValue(const IR::Value *irValue) {
         }
         else if (auto constLong = dynamic_cast<const AST::ConstantLong *>(
                      constantVal->getASTConstant())) {
-            // For long constants, we need to handle the full 64-bit value.
             return std::make_unique<Assembly::ImmediateOperand>(
                 constLong->getValue());
+        }
+        else if (auto constUInt = dynamic_cast<const AST::ConstantUInt *>(
+                     constantVal->getASTConstant())) {
+            return std::make_unique<Assembly::ImmediateOperand>(
+                constUInt->getValue());
+        }
+        else if (auto constULong = dynamic_cast<const AST::ConstantULong *>(
+                     constantVal->getASTConstant())) {
+            return std::make_unique<Assembly::ImmediateOperand>(
+                constULong->getValue());
         }
         else {
             throw std::logic_error("Unsupported constant type");
@@ -620,7 +761,7 @@ void AssemblyGenerator::convertIRSignExtendInstructionToAssy(
     auto srcOperand = convertValue(signExtendInstr.getSrc());
     auto dstOperand = convertValue(signExtendInstr.getDst());
 
-    // Generate a `Movsx` instruction to sign extend from int to long.
+    // Generate a `MovsxInstruction` to sign extend from int to long.
     instructions.emplace_back(std::make_unique<Assembly::MovsxInstruction>(
         std::move(srcOperand), std::move(dstOperand)));
 }
@@ -632,11 +773,25 @@ void AssemblyGenerator::convertIRTruncateInstructionToAssy(
     auto srcOperand = convertValue(truncateInstr.getSrc());
     auto dstOperand = convertValue(truncateInstr.getDst());
 
-    // Generate a `Mov` instruction with Longword type to truncate from long to
+    // Generate a `MovInstruction` with Longword type to truncate from long to
     // int. This moves the lowest 4 bytes of the source to the destination.
     instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
         std::make_unique<Assembly::Longword>(), std::move(srcOperand),
         std::move(dstOperand)));
+}
+
+void AssemblyGenerator::convertIRZeroExtendInstructionToAssy(
+    const IR::ZeroExtendInstruction &zeroExtendInstr,
+    std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
+    // Convert the source and destination operands to assembly operands.
+    auto srcOperand = convertValue(zeroExtendInstr.getSrc());
+    auto dstOperand = convertValue(zeroExtendInstr.getDst());
+
+    // Generate a `MovZeroExtendInstruction` to zero extend from long to
+    // quadword.
+    instructions.emplace_back(
+        std::make_unique<Assembly::MovZeroExtendInstruction>(
+            std::move(srcOperand), std::move(dstOperand)));
 }
 
 std::unique_ptr<Assembly::AssemblyType>
@@ -644,10 +799,14 @@ AssemblyGenerator::determineAssemblyType(const IR::Value *irValue) {
     if (auto constantVal = dynamic_cast<const IR::ConstantValue *>(irValue)) {
         // For constants, determine type based on the AST constant type.
         if (dynamic_cast<const AST::ConstantInt *>(
+                constantVal->getASTConstant()) ||
+            dynamic_cast<const AST::ConstantUInt *>(
                 constantVal->getASTConstant())) {
             return std::make_unique<Assembly::Longword>();
         }
         else if (dynamic_cast<const AST::ConstantLong *>(
+                     constantVal->getASTConstant()) ||
+                 dynamic_cast<const AST::ConstantULong *>(
                      constantVal->getASTConstant())) {
             return std::make_unique<Assembly::Quadword>();
         }
@@ -679,10 +838,10 @@ AssemblyGenerator::convertASTTypeToAssemblyType(const AST::Type *astType) {
     if (!astType) {
         throw std::logic_error("AST type is null");
     }
-    if (*astType == AST::IntType()) {
+    if (*astType == AST::IntType() || *astType == AST::UIntType()) {
         return std::make_unique<Assembly::Longword>();
     }
-    else if (*astType == AST::LongType()) {
+    else if (*astType == AST::LongType() || *astType == AST::ULongType()) {
         return std::make_unique<Assembly::Quadword>();
     }
     else {
@@ -716,8 +875,8 @@ std::unique_ptr<Assembly::AssemblyType> AssemblyGenerator::determineMovType(
         if (dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
             if (auto srcImm =
                     dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
-                long value = srcImm->getImmediateLong();
-                if (value >= 0 && value <= std::numeric_limits<int>::max()) {
+                auto value = srcImm->getImmediate();
+                if (value <= std::numeric_limits<int>::max()) {
                     return std::make_unique<Assembly::Longword>();
                 }
             }

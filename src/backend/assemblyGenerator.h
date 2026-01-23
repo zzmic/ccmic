@@ -184,6 +184,16 @@ class AssemblyGenerator {
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
     /**
+     * Convert an IR zero-extend instruction to assembly.
+     *
+     * @param zeroExtendInstr The IR zero-extend instruction to convert.
+     * @param instructions The assembly instructions.
+     */
+    void convertIRZeroExtendInstructionToAssy(
+        const IR::ZeroExtendInstruction &zeroExtendInstr,
+        std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
+
+    /**
      * Convert an IR value to an assembly operand.
      *
      * @param value The IR value to convert.
