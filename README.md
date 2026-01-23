@@ -50,10 +50,16 @@ The compiler transforms C source code into x86-64 assembly through a multi-stage
 
 ## Supported Language Features
 
+### Data Types
+
+- **Signed integers**: `int` (32-bit) and `long` (64-bit).
+- **Unsigned integers**: `unsigned int` (32-bit) and `unsigned long` (64-bit).
+
 ### Expressions
 
-- **Unary operations**: `-`, `~`, `!`.
-- **Binary operations**: Arithmetic (`+`, `-`, `*`, `/`, `%`), bitwise (`&`, `|`), assignment (`=`), logical (`&&`, `||`), relational (`<`, `>`, `<=`, `>=`, `==`, `!=`).
+- **Unary operations**: `-`, `~`, and `!`.
+- **Binary operations**: Arithmetic (`+`, `-`, `*`, `/`, `%`), bitwise (`&`, `|`), assignment (`=`), logical (`&&`, `||`), and relational (`<`, `>`, `<=`, `>=`, `==`, `!=`).
+- **Type conversions**: Explicit casts and implicit conversions following the usual arithmetic conversion rules.
 
 ### Statements
 
@@ -113,9 +119,9 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 
 ## Command-Line Flags
 
-- **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), `--codegen` (code generation).
-- **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
-- **Optimizations** (_to be implemented_): `--fold-constants` (constant folding), `--eliminate-unreachable-code` (dead code elimination), `--propagate-copies` (copy propagation), `--eliminate-dead-stores` (dead store elimination), `--optimize` (enable all optimizations).
+- **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), and `--codegen` (code generation).
+- **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), and `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
+- **Optimizations** (_to be implemented_): `--fold-constants` (constant folding), `--eliminate-unreachable-code` (dead code elimination), `--propagate-copies` (copy propagation), `--eliminate-dead-stores` (dead store elimination), and `--optimize` (enable all optimizations).
 
 ### Development and Extensibility
 
