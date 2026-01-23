@@ -11,13 +11,7 @@ namespace AST {
  *
  * A block item can be either a statement or a declaration.
  */
-class BlockItem : public AST {
-  public:
-    /**
-     * Default constructor for the block item class.
-     */
-    constexpr BlockItem() = default;
-};
+class BlockItem : public AST {};
 
 /**
  * Class representing a statement block item in the AST.

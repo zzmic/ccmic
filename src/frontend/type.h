@@ -13,7 +13,7 @@ namespace AST {
 class Type : public AST {
   public:
     /**
-     * Default constructor of the type class.
+     * Default constructor for the type class.
      */
     constexpr Type() = default;
 
@@ -21,6 +21,26 @@ class Type : public AST {
      * Default virtual destructor for the type class.
      */
     virtual ~Type() = default;
+
+    /**
+     * Delete the copy constructor for the type class.
+     */
+    constexpr Type(const Type &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the type class.
+     */
+    constexpr Type &operator=(const Type &) = delete;
+
+    /**
+     * Default move constructor for the type class.
+     */
+    constexpr Type(Type &&) = default;
+
+    /**
+     * Default move assignment operator for the type class.
+     */
+    constexpr Type &operator=(Type &&) = default;
 
     /**
      * Virtual function to check if two types are equal.
@@ -59,11 +79,6 @@ class Type : public AST {
  */
 class IntType : public Type {
   public:
-    /**
-     * Default constructor of the int-type class.
-     */
-    constexpr IntType() = default;
-
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     /**
@@ -83,11 +98,6 @@ class IntType : public Type {
  */
 class LongType : public Type {
   public:
-    /**
-     * Default constructor of the long-type class.
-     */
-    constexpr LongType() = default;
-
     void accept(Visitor &visitor) override { visitor.visit(*this); }
 
     /**
@@ -108,7 +118,7 @@ class LongType : public Type {
 class FunctionType : public Type {
   public:
     /**
-     * Constructor of the function-type class.
+     * Constructor for the function-type class.
      *
      * @param parameterTypes The parameter types of the function.
      * @param returnType The return type of the function.

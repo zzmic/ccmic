@@ -16,13 +16,7 @@ class ForInit;
 /**
  * Base class for statements in the AST.
  */
-class Statement : public AST {
-  public:
-    /**
-     * Default constructor of the statement class.
-     */
-    constexpr Statement() = default;
-};
+class Statement : public AST {};
 
 /**
  * Class representing a return statement in the AST.
@@ -30,7 +24,7 @@ class Statement : public AST {
 class ReturnStatement : public Statement {
   public:
     /**
-     * Constructor of the return-statement class.
+     * Constructor for the return-statement class.
      *
      * @param expr The expression to return.
      */
@@ -55,7 +49,7 @@ class ReturnStatement : public Statement {
 class ExpressionStatement : public Statement {
   public:
     /**
-     * Constructor of the expression-statement class.
+     * Constructor for the expression-statement class.
      *
      * @param expr The expression in the statement.
      */
@@ -78,7 +72,7 @@ class ExpressionStatement : public Statement {
 class IfStatement : public Statement {
   public:
     /**
-     * Constructor of the if-statement class with an (optional) else statement.
+     * Constructor for the if-statement class with an (optional) else statement.
      *
      * @param condition The condition expression of the if statement.
      * @param thenStatement The statement to execute if the condition is true.
@@ -90,7 +84,7 @@ class IfStatement : public Statement {
                          std::unique_ptr<Statement> elseOptStatement);
 
     /**
-     * Constructor of the if-statement class without an (optional) else
+     * Constructor for the if-statement class without an (optional) else
      * statement.
      *
      * @param condition The condition expression of the if statement.
@@ -131,18 +125,39 @@ class IfStatement : public Statement {
 class CompoundStatement : public Statement {
   public:
     /**
-     * Constructor of the compound-statement class.
+     * Constructor for the compound statement class.
      *
      * @param block The block of statements.
      */
     explicit CompoundStatement(std::unique_ptr<Block> block);
 
     /**
-     * Destructor for the `CompoundStatement` class.
+     * (Default) destructor for the `CompoundStatement` class.
      *
-     * Defined in `statement.cpp` to allow incomplete type `Block` in header.
+     * Defined in `statement.cpp` to allow incomplete type `Block` in the
+     * header.
      */
     ~CompoundStatement();
+
+    /**
+     * Delete the copy constructor for the compound statement class.
+     */
+    constexpr CompoundStatement(const CompoundStatement &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the compound statement class.
+     */
+    constexpr CompoundStatement &operator=(const CompoundStatement &) = delete;
+
+    /**
+     * Default move constructor for the compound statement class.
+     */
+    constexpr CompoundStatement(CompoundStatement &&) = default;
+
+    /**
+     * Default move assignment operator for the compound statement class.
+     */
+    constexpr CompoundStatement &operator=(CompoundStatement &&) = default;
 
     void accept(Visitor &visitor) override;
 
@@ -161,9 +176,9 @@ class CompoundStatement : public Statement {
 class BreakStatement : public Statement {
   public:
     /**
-     * Constructor of the break-statement class.
+     * Constructor for the break-statement class.
      */
-    BreakStatement() : label("") {}
+    constexpr BreakStatement() : label("") {}
 
     void accept(Visitor &visitor) override;
 
@@ -184,9 +199,9 @@ class BreakStatement : public Statement {
 class ContinueStatement : public Statement {
   public:
     /**
-     * Constructor of the continue-statement class.
+     * Constructor for the continue-statement class.
      */
-    ContinueStatement() : label("") {}
+    constexpr ContinueStatement() : label("") {}
 
     void accept(Visitor &visitor) override;
 
@@ -207,7 +222,7 @@ class ContinueStatement : public Statement {
 class WhileStatement : public Statement {
   public:
     /**
-     * Constructor of the while-statement class.
+     * Constructor for the while-statement class.
      *
      * @param condition The condition expression of the while statement.
      * @param body The body statement of the while loop.
@@ -248,7 +263,7 @@ class WhileStatement : public Statement {
 class DoWhileStatement : public Statement {
   public:
     /**
-     * Constructor of the do-while-statement class.
+     * Constructor for the do-while-statement class.
      *
      * @param condition The condition expression of the do-while statement.
      * @param body The body statement of the do-while loop.
@@ -289,7 +304,7 @@ class DoWhileStatement : public Statement {
 class ForStatement : public Statement {
   public:
     /**
-     * Constructor of the for-statement class.
+     * Constructor for the for-statement class.
      *
      * @param forInit The initialization part of the for statement.
      * @param condition The (optional) condition expression of the for
@@ -304,11 +319,32 @@ class ForStatement : public Statement {
                           std::unique_ptr<Statement> body);
 
     /**
-     * Destructor for the `ForStatement` class.
+     * (Default) destructor for the `ForStatement` class.
      *
-     * Defined in `statement.cpp` to allow incomplete type `ForInit` in header.
+     * Defined in `statement.cpp` to allow incomplete type `ForInit` in the
+     * header.
      */
     ~ForStatement();
+
+    /**
+     * Delete the copy constructor for the for-statement class.
+     */
+    constexpr ForStatement(const ForStatement &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the for-statement class.
+     */
+    constexpr ForStatement &operator=(const ForStatement &) = delete;
+
+    /**
+     * Default move constructor for the for-statement class.
+     */
+    constexpr ForStatement(ForStatement &&) = default;
+
+    /**
+     * Default move assignment operator for the for-statement class.
+     */
+    constexpr ForStatement &operator=(ForStatement &&) = default;
 
     void accept(Visitor &visitor) override;
 
@@ -357,11 +393,6 @@ class ForStatement : public Statement {
  */
 class NullStatement : public Statement {
   public:
-    /**
-     * Default constructor of the null-statement class.
-     */
-    constexpr NullStatement() = default;
-
     void accept(Visitor &visitor) override;
 };
 } // Namespace AST

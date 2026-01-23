@@ -14,9 +14,38 @@ namespace Assembly {
 class BackendSymbolTableEntry {
   public:
     /**
+     * Default constructor for the backend symbol table entry class.
+     */
+    constexpr BackendSymbolTableEntry() = default;
+
+    /**
      * Default virtual destructor for the backend symbol table entry class.
      */
     virtual ~BackendSymbolTableEntry() = default;
+
+    /**
+     * Delete the copy constructor for the backend symbol table entry class.
+     */
+    constexpr BackendSymbolTableEntry(const BackendSymbolTableEntry &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the backend symbol table entry
+     * class.
+     */
+    constexpr BackendSymbolTableEntry &
+    operator=(const BackendSymbolTableEntry &) = delete;
+
+    /**
+     * Default move constructor for the backend symbol table entry class.
+     */
+    constexpr BackendSymbolTableEntry(BackendSymbolTableEntry &&) = default;
+
+    /**
+     * Default move assignment operator for the backend symbol table entry
+     * class.
+     */
+    constexpr BackendSymbolTableEntry &
+    operator=(BackendSymbolTableEntry &&) = default;
 };
 
 /**

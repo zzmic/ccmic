@@ -17,9 +17,36 @@ namespace AST {
 class SemanticAnalysisPass {
   public:
     /**
+     * Default constructor for the semantic analysis pass class.
+     */
+    constexpr SemanticAnalysisPass() = default;
+
+    /**
      * Virtual destructor for semantic analysis passes.
      */
     virtual ~SemanticAnalysisPass() = default;
+
+    /**
+     * Delete the copy constructor for the semantic analysis pass class.
+     */
+    constexpr SemanticAnalysisPass(const SemanticAnalysisPass &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the semantic analysis pass class.
+     */
+    constexpr SemanticAnalysisPass &
+    operator=(const SemanticAnalysisPass &) = delete;
+
+    /**
+     * Default move constructor for the semantic analysis pass class.
+     */
+    constexpr SemanticAnalysisPass(SemanticAnalysisPass &&) = default;
+
+    /**
+     * Default move assignment operator for the semantic analysis pass class.
+     */
+    constexpr SemanticAnalysisPass &
+    operator=(SemanticAnalysisPass &&) = default;
 };
 
 /**
@@ -28,13 +55,12 @@ class SemanticAnalysisPass {
 class MapEntry {
   public:
     /**
-     * Constructor of the map entry class.
-     *
+     * Constructor for the map entry class.
      */
-    explicit MapEntry() = default;
+    constexpr MapEntry() = default;
 
     /**
-     * Constructor of the map entry class with parameters.
+     * Constructor for the map entry class with parameters.
      *
      * @param newName The new name of the identifier.
      * @param fromCurrentScope Whether the identifier is from the current scope.
@@ -192,9 +218,34 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
 class StaticInit {
   public:
     /**
+     * Default constructor for the static initializer class.
+     */
+    constexpr StaticInit() = default;
+
+    /**
      * Default virtual destructor for static initializers.
      */
     virtual ~StaticInit() = default;
+
+    /**
+     * Delete the copy constructor for the static initializer class.
+     */
+    constexpr StaticInit(const StaticInit &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the static initializer class.
+     */
+    constexpr StaticInit &operator=(const StaticInit &) = delete;
+
+    /**
+     * Default move constructor for the static initializer class.
+     */
+    constexpr StaticInit(StaticInit &&) = default;
+
+    /**
+     * Default move assignment operator for the static initializer class.
+     */
+    constexpr StaticInit &operator=(StaticInit &&) = default;
 
     /**
      * Pure virtual method to get the value of the static initializer.
@@ -247,9 +298,34 @@ class LongInit : public StaticInit {
 class InitialValue {
   public:
     /**
+     * Default constructor for the initial value class.
+     */
+    constexpr InitialValue() = default;
+
+    /**
      * Default virtual destructor for initial values.
      */
     virtual ~InitialValue() = default;
+
+    /**
+     * Delete the copy constructor for the initial value class.
+     */
+    constexpr InitialValue(const InitialValue &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the initial value class.
+     */
+    constexpr InitialValue &operator=(const InitialValue &) = delete;
+
+    /**
+     * Default move constructor for the initial value class.
+     */
+    constexpr InitialValue(InitialValue &&) = default;
+
+    /**
+     * Default move assignment operator for the initial value class.
+     */
+    constexpr InitialValue &operator=(InitialValue &&) = default;
 };
 
 /**
@@ -304,9 +380,35 @@ class NoInitializer : public InitialValue {};
 class IdentifierAttribute {
   public:
     /**
+     * Default constructor for the identifier attribute class.
+     */
+    constexpr IdentifierAttribute() = default;
+
+    /**
      * Default virtual destructor for identifier attributes.
      */
     virtual ~IdentifierAttribute() = default;
+
+    /**
+     * Delete the copy constructor for the identifier attribute class.
+     */
+    constexpr IdentifierAttribute(const IdentifierAttribute &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the identifier attribute class.
+     */
+    constexpr IdentifierAttribute &
+    operator=(const IdentifierAttribute &) = delete;
+
+    /**
+     * Default move constructor for the identifier attribute class.
+     */
+    constexpr IdentifierAttribute(IdentifierAttribute &&) = default;
+
+    /**
+     * Default move assignment operator for the identifier attribute class.
+     */
+    constexpr IdentifierAttribute &operator=(IdentifierAttribute &&) = default;
 };
 
 /**

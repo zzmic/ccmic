@@ -12,10 +12,7 @@ namespace AST {
  * A for-loop initialization can be either a variable declaration or an
  * expression.
  */
-class ForInit : public AST {
-  public:
-    constexpr ForInit() = default;
-};
+class ForInit : public AST {};
 
 /**
  * Class representing a for-loop initialization with a variable declaration.

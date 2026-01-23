@@ -84,7 +84,6 @@ FunctionDeclaration::FunctionDeclaration(
       optBody(std::move(optBody)), funType(std::move(funType)),
       optStorageClass(std::move(optStorageClass)) {}
 
-// Destructor defined here where Block is complete.
 FunctionDeclaration::~FunctionDeclaration() = default;
 
 void FunctionDeclaration::accept(Visitor &visitor) { visitor.visit(*this); }

@@ -18,9 +18,34 @@ namespace IR {
 class Operator {
   public:
     /**
+     * Default constructor for the IR operator class.
+     */
+    constexpr Operator() = default;
+
+    /**
      * Default virtual destructor for the IR operator class.
      */
     virtual ~Operator() = default;
+
+    /**
+     * Delete the copy constructor for the IR operator class.
+     */
+    constexpr Operator(const Operator &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the IR operator class.
+     */
+    constexpr Operator &operator=(const Operator &) = delete;
+
+    /**
+     * Default move constructor for the IR operator class.
+     */
+    constexpr Operator(Operator &&) = default;
+
+    /**
+     * Default move assignment operator for the IR operator class.
+     */
+    constexpr Operator &operator=(Operator &&) = default;
 };
 
 /**
@@ -112,9 +137,34 @@ class GreaterThanOrEqualOperator : public BinaryOperator {};
 class Value {
   public:
     /**
+     * Default constructor for the IR value class.
+     */
+    constexpr Value() = default;
+
+    /**
      * Default virtual destructor for the IR value class.
      */
     virtual ~Value() = default;
+
+    /**
+     * Delete the copy constructor for the IR value class.
+     */
+    constexpr Value(const Value &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the IR value class.
+     */
+    constexpr Value &operator=(const Value &) = delete;
+
+    /**
+     * Default move constructor for the IR value class.
+     */
+    constexpr Value(Value &&) = default;
+
+    /**
+     * Default move assignment operator for the IR value class.
+     */
+    constexpr Value &operator=(Value &&) = default;
 };
 
 /**
@@ -141,11 +191,6 @@ class ConstantValue : public Value {
                 "Creating ConstantValue with null astConstant");
         }
     }
-
-    /**
-     * Default destructor for the IR constant value class.
-     */
-    ~ConstantValue() = default;
 
     [[nodiscard]] const AST::Constant *getASTConstant() const {
         return astConstant.get();
@@ -179,11 +224,6 @@ class VariableValue : public Value {
     explicit VariableValue(std::string_view identifier)
         : identifier(identifier) {}
 
-    /**
-     * Default destructor for the IR variable value class.
-     */
-    ~VariableValue() = default;
-
     [[nodiscard]] const std::string &getIdentifier() const {
         return identifier;
     }
@@ -199,9 +239,34 @@ class VariableValue : public Value {
 class Instruction {
   public:
     /**
+     * Default constructor for the IR instruction class.
+     */
+    constexpr Instruction() = default;
+
+    /**
      * Default virtual destructor for the IR instruction class.
      */
     virtual ~Instruction() = default;
+
+    /**
+     * Delete the copy constructor for the IR instruction class.
+     */
+    constexpr Instruction(const Instruction &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the IR instruction class.
+     */
+    constexpr Instruction &operator=(const Instruction &) = delete;
+
+    /**
+     * Default move constructor for the IR instruction class.
+     */
+    constexpr Instruction(Instruction &&) = default;
+
+    /**
+     * Default move assignment operator for the IR instruction class.
+     */
+    constexpr Instruction &operator=(Instruction &&) = default;
 };
 
 /**
@@ -767,9 +832,34 @@ class FunctionCallInstruction : public Instruction {
 class TopLevel {
   public:
     /**
+     * Default constructor for the IR top-level class.
+     */
+    constexpr TopLevel() = default;
+
+    /**
      * Default virtual destructor for the IR top-level class.
      */
     virtual ~TopLevel() = default;
+
+    /**
+     * Delete the copy constructor for the IR top-level class.
+     */
+    constexpr TopLevel(const TopLevel &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the IR top-level class.
+     */
+    constexpr TopLevel &operator=(const TopLevel &) = delete;
+
+    /**
+     * Default move constructor for the IR top-level class.
+     */
+    constexpr TopLevel(TopLevel &&) = default;
+
+    /**
+     * Default move assignment operator for the IR top-level class.
+     */
+    constexpr TopLevel &operator=(TopLevel &&) = default;
 };
 
 /**

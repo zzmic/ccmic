@@ -25,10 +25,31 @@ class Expression : public AST {
      * Default constructor for the expression class.
      */
     constexpr Expression() = default;
+
     /**
      * Default virtual destructor for the expression class.
      */
     virtual ~Expression() = default;
+
+    /**
+     * Delete the copy constructor for the expression class.
+     */
+    constexpr Expression(const Expression &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the expression class.
+     */
+    constexpr Expression &operator=(const Expression &) = delete;
+
+    /**
+     * Default move constructor for the expression class.
+     */
+    constexpr Expression(Expression &&) = default;
+
+    /**
+     * Default move assignment operator for the expression class.
+     */
+    constexpr Expression &operator=(Expression &&) = default;
 
     /**
      * Pure virtual getter for the expression type.

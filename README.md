@@ -92,12 +92,12 @@ git clone --recurse-submodules https://github.com/zzmic/ccmic.git
 ### Installing Dependencies
 
 - [Clang](https://clang.llvm.org) that supports C++23 (or above) for building the compiler, although most of the codebase is compatible with C++17 at this point.
-- [GCC](https://gcc.gnu.org) that supports x86-64 and C17 for assembling and linking.
+- [GCC](https://gcc.gnu.org) that supports x86-64 and C17 for preprocessing, assembling, and linking.
 
 ### Building the Compiler
 
 ```bash
-# Remove any previous build artifacts:
+# Remove any previous build artifacts if necessary:
 make clean
 # Run any of the following commands to build the compiler if one is running macOS on ARM:
 # arch -x86_64 bash -c "$(make -j$(nproc))"

@@ -178,9 +178,30 @@ class FunctionDeclaration : public Declaration {
      * Destructor for the `FunctionDeclaration` class.
      *
      * Declared here, defined in `declaration.cpp` to allow incomplete type
-     * `Block` in header.
+     * `Block` in the header.
      */
     ~FunctionDeclaration();
+
+    /**
+     * Delete the copy constructor for the function declaration class.
+     */
+    constexpr FunctionDeclaration(const FunctionDeclaration &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the function declaration class.
+     */
+    constexpr FunctionDeclaration &
+    operator=(const FunctionDeclaration &) = delete;
+
+    /**
+     * Default move constructor for the function declaration class.
+     */
+    constexpr FunctionDeclaration(FunctionDeclaration &&) = default;
+
+    /**
+     * Default move assignment operator for the function declaration class.
+     */
+    constexpr FunctionDeclaration &operator=(FunctionDeclaration &&) = default;
 
     void accept(Visitor &visitor) override;
 

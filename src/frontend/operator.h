@@ -25,11 +25,6 @@ class UnaryOperator : public Operator {};
  */
 class ComplementOperator : public UnaryOperator {
   public:
-    /**
-     * Default constructor for the complement operator.
-     */
-    constexpr ComplementOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "~"; }
@@ -40,11 +35,6 @@ class ComplementOperator : public UnaryOperator {
  */
 class NegateOperator : public UnaryOperator {
   public:
-    /**
-     * Default constructor for the negate operator.
-     */
-    constexpr NegateOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "-"; }
@@ -55,11 +45,6 @@ class NegateOperator : public UnaryOperator {
  */
 class NotOperator : public UnaryOperator {
   public:
-    /**
-     * Default constructor for the not operator.
-     */
-    constexpr NotOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "!"; }
@@ -77,11 +62,6 @@ class BinaryOperator : public Operator {};
  */
 class AddOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the add operator.
-     */
-    constexpr AddOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "+"; }
@@ -92,11 +72,6 @@ class AddOperator : public BinaryOperator {
  */
 class SubtractOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the subtract operator.
-     */
-    constexpr SubtractOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "-"; }
@@ -107,11 +82,6 @@ class SubtractOperator : public BinaryOperator {
  */
 class MultiplyOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the multiply operator.
-     */
-    constexpr MultiplyOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "*"; }
@@ -122,11 +92,6 @@ class MultiplyOperator : public BinaryOperator {
  */
 class DivideOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the divide operator.
-     */
-    constexpr DivideOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "/"; }
@@ -137,11 +102,6 @@ class DivideOperator : public BinaryOperator {
  */
 class RemainderOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the remainder operator.
-     */
-    constexpr RemainderOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "%"; }
@@ -152,11 +112,6 @@ class RemainderOperator : public BinaryOperator {
  */
 class AndOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the logical AND operator.
-     */
-    constexpr AndOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "&&"; }
@@ -167,11 +122,6 @@ class AndOperator : public BinaryOperator {
  */
 class OrOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the logical OR operator.
-     */
-    constexpr OrOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "||"; }
@@ -182,11 +132,6 @@ class OrOperator : public BinaryOperator {
  */
 class EqualOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the equal operator.
-     */
-    constexpr EqualOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "=="; }
@@ -197,11 +142,6 @@ class EqualOperator : public BinaryOperator {
  */
 class NotEqualOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the not-equal operator.
-     */
-    constexpr NotEqualOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "!="; }
@@ -212,11 +152,6 @@ class NotEqualOperator : public BinaryOperator {
  */
 class LessThanOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the less-than operator.
-     */
-    constexpr LessThanOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "<"; }
@@ -227,11 +162,6 @@ class LessThanOperator : public BinaryOperator {
  */
 class LessThanOrEqualOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the less-than-or-equal operator.
-     */
-    constexpr LessThanOrEqualOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "<="; }
@@ -242,11 +172,6 @@ class LessThanOrEqualOperator : public BinaryOperator {
  */
 class GreaterThanOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the greater-than operator.
-     */
-    constexpr GreaterThanOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return ">"; }
@@ -257,11 +182,6 @@ class GreaterThanOperator : public BinaryOperator {
  */
 class GreaterThanOrEqualOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the greater-than-or-equal operator.
-     */
-    constexpr GreaterThanOrEqualOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return ">="; }
@@ -272,11 +192,6 @@ class GreaterThanOrEqualOperator : public BinaryOperator {
  */
 class AssignmentOperator : public BinaryOperator {
   public:
-    /**
-     * Default constructor for the assignment operator.
-     */
-    constexpr AssignmentOperator() = default;
-
     void accept(Visitor &visitor) override;
 
     constexpr std::string_view opInString() const { return "="; }

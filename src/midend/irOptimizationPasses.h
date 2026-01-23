@@ -46,9 +46,34 @@ class IROptimizer {
 class OptimizationPass {
   public:
     /**
+     * Default constructor for the optimization pass class.
+     */
+    constexpr OptimizationPass() = default;
+
+    /**
      * Default virtual destructor for the optimization pass class.
      */
     virtual ~OptimizationPass() = default;
+
+    /**
+     * Delete the copy constructor for the optimization pass class.
+     */
+    constexpr OptimizationPass(const OptimizationPass &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the optimization pass class.
+     */
+    constexpr OptimizationPass &operator=(const OptimizationPass &) = delete;
+
+    /**
+     * Default move constructor for the optimization pass class.
+     */
+    constexpr OptimizationPass(OptimizationPass &&) = default;
+
+    /**
+     * Default move assignment operator for the optimization pass class.
+     */
+    constexpr OptimizationPass &operator=(OptimizationPass &&) = default;
 };
 
 /**

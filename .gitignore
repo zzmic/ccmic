@@ -41,9 +41,7 @@
 *.dwo
 
 **/.vscode/
+**/.cache/
 **/bin/
 **/playground/
 **/valgrind-out.txt
-**/error.txt
-
-**/.cache/

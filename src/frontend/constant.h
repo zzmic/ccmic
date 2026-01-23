@@ -9,13 +9,7 @@ namespace AST {
  *
  * A constant can be either an integer constant or a long constant.
  */
-class Constant : public AST {
-  public:
-    /**
-     * Default constructor for the constant class.
-     */
-    constexpr Constant() = default;
-};
+class Constant : public AST {};
 
 /**
  * Class representing an integer constant.

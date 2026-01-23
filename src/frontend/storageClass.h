@@ -7,24 +7,13 @@ namespace AST {
 /**
  * Base class for storage classes in the AST.
  */
-class StorageClass : public AST {
-  public:
-    /**
-     * Default constructor of the storage-class class.
-     */
-    constexpr StorageClass() = default;
-};
+class StorageClass : public AST {};
 
 /**
  * Class representing the static storage class in the AST.
  */
 class StaticStorageClass : public StorageClass {
   public:
-    /**
-     * Default constructor of the static-storage-class class.
-     */
-    constexpr StaticStorageClass() = default;
-
     void accept(Visitor &visitor) override;
 };
 
@@ -33,11 +22,6 @@ class StaticStorageClass : public StorageClass {
  */
 class ExternStorageClass : public StorageClass {
   public:
-    /**
-     * Default constructor of the extern-storage-class class.
-     */
-    constexpr ExternStorageClass() = default;
-
     void accept(Visitor &visitor) override;
 };
 } // Namespace AST

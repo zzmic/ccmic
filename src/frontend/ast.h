@@ -10,9 +10,34 @@ namespace AST {
 class AST {
   public:
     /**
-     * Default virtual destructor for AST nodes.
+     * Default constructor for the AST class.
+     */
+    constexpr AST() = default;
+
+    /**
+     * Default virtual destructor for the AST class.
      */
     virtual ~AST() = default;
+
+    /**
+     * Delete the copy constructor for the AST class.
+     */
+    constexpr AST(const AST &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the AST class.
+     */
+    constexpr AST &operator=(const AST &) = delete;
+
+    /**
+     * Default move constructor for the AST class.
+     */
+    constexpr AST(AST &&) = default;
+
+    /**
+     * Default move assignment operator for the AST class.
+     */
+    constexpr AST &operator=(AST &&) = default;
 
     /**
      * Pure virtual method to accept a visitor.

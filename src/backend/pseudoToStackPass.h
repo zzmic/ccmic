@@ -12,11 +12,6 @@ namespace Assembly {
 class PseudoToStackPass {
   public:
     /**
-     * Default constructor for the pseudo-to-stack pass class.
-     */
-    explicit PseudoToStackPass() = default;
-
-    /**
      * Replace pseudo registers with stack operands and associate the stack size
      * with each function.
      *

@@ -84,9 +84,34 @@ class ConstantLong;
 class Visitor {
   public:
     /**
+     * Default constructor for the visitor class.
+     */
+    constexpr Visitor() = default;
+
+    /**
      * Virtual destructor for visitors.
      */
     virtual ~Visitor() = default;
+
+    /**
+     * Delete the copy constructor for the visitor class.
+     */
+    constexpr Visitor(const Visitor &) = delete;
+
+    /**
+     * Delete the copy assignment operator for the visitor class.
+     */
+    constexpr Visitor &operator=(const Visitor &) = delete;
+
+    /**
+     * Default move constructor for the visitor class.
+     */
+    constexpr Visitor(Visitor &&) = default;
+
+    /**
+     * Default move assignment operator for the visitor class.
+     */
+    constexpr Visitor &operator=(Visitor &&) = default;
 
     virtual void visit(Program &program) = 0;
     virtual void visit(Function &function) = 0;
