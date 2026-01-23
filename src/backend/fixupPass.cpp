@@ -1,8 +1,16 @@
 #include "fixupPass.h"
 #include <limits>
 
-namespace Assembly {
+/**
+ * Unnamed namespace for helper functions for the fixup pass.
+ */
 namespace {
+/**
+ * Clone an assembly type.
+ *
+ * @param type The assembly type to clone.
+ * @return The cloned assembly type.
+ */
 std::unique_ptr<Assembly::AssemblyType>
 cloneAssemblyType(const Assembly::AssemblyType *type) {
     if (!type) {
@@ -17,6 +25,12 @@ cloneAssemblyType(const Assembly::AssemblyType *type) {
     throw std::logic_error("Unsupported AssemblyType in cloneAssemblyType");
 }
 
+/**
+ * Clone an assembly operand.
+ *
+ * @param operand The assembly operand to clone.
+ * @return The cloned assembly operand.
+ */
 std::unique_ptr<Assembly::Operand>
 cloneOperand(const Assembly::Operand *operand) {
     if (!operand) {
@@ -97,6 +111,12 @@ cloneOperand(const Assembly::Operand *operand) {
     throw std::logic_error("Unsupported Operand in cloneOperand");
 }
 
+/**
+ * Clone an assembly binary operator.
+ *
+ * @param binaryOperator The assembly binary operator to clone.
+ * @return The cloned assembly binary operator.
+ */
 std::unique_ptr<Assembly::BinaryOperator>
 cloneBinaryOperator(const Assembly::BinaryOperator *binaryOperator) {
     if (!binaryOperator) {
@@ -115,6 +135,7 @@ cloneBinaryOperator(const Assembly::BinaryOperator *binaryOperator) {
 }
 } // namespace
 
+namespace Assembly {
 void FixupPass::fixup(std::vector<std::unique_ptr<TopLevel>> &topLevels) {
     for (auto &topLevel : topLevels) {
         if (auto *functionDefinition =

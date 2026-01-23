@@ -8,7 +8,7 @@
 #include <vector>
 
 /**
- * Regular expressions for different token types.
+ * Unnamed namespace for regular expressions for different token types.
  *
  * The caret symbol (`^`) matches the start of a line or a string.
  * It asserts that the current position in the string is at the beginning of a

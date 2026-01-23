@@ -4,6 +4,9 @@
 #include <memory>
 #include <sstream>
 
+/**
+ * Unnamed namespace for helper functions for the semantic analysis passes.
+ */
 namespace {
 /**
  * Clone a type.
@@ -20,6 +23,12 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
     }
     if (dynamic_cast<const AST::LongType *>(type)) {
         return std::make_unique<AST::LongType>();
+    }
+    if (dynamic_cast<const AST::UIntType *>(type)) {
+        return std::make_unique<AST::UIntType>();
+    }
+    if (dynamic_cast<const AST::ULongType *>(type)) {
+        return std::make_unique<AST::ULongType>();
     }
     if (auto functionType = dynamic_cast<const AST::FunctionType *>(type)) {
         auto parameterTypes =
@@ -47,6 +56,12 @@ std::unique_ptr<AST::Constant> cloneConstant(const AST::Constant *constant) {
     }
     if (auto longConst = dynamic_cast<const AST::ConstantLong *>(constant)) {
         return std::make_unique<AST::ConstantLong>(longConst->getValue());
+    }
+    if (auto uintConst = dynamic_cast<const AST::ConstantUInt *>(constant)) {
+        return std::make_unique<AST::ConstantUInt>(uintConst->getValue());
+    }
+    if (auto ulongConst = dynamic_cast<const AST::ConstantULong *>(constant)) {
+        return std::make_unique<AST::ConstantULong>(ulongConst->getValue());
     }
     throw std::logic_error("Unsupported constant type in cloneConstant");
 }
@@ -234,6 +249,54 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
         }
     }
     throw std::logic_error("Unsupported initial value in cloneInitialValue");
+}
+
+/**
+ * Get the size of a type in bytes.
+ *
+ * For x64 System V ABI:
+ * - `int` and `unsigned int` are 4 bytes (32-bit).
+ * - `long` and `unsigned long` are 8 bytes (64-bit).
+ *
+ * @param type The type to get the size of.
+ * @return The size of the type in bytes.
+ */
+int getTypeSize(const AST::Type *type) {
+    if (dynamic_cast<const AST::IntType *>(type) ||
+        dynamic_cast<const AST::UIntType *>(type)) {
+        return 4;
+    }
+    if (dynamic_cast<const AST::LongType *>(type) ||
+        dynamic_cast<const AST::ULongType *>(type)) {
+        return 8;
+    }
+    throw std::logic_error("Unsupported type in getTypeSize");
+}
+
+/**
+ * Check if a type is a signed type (`int` or `long`).
+ *
+ * @param type The type to check.
+ * @return True if the type is a signed type (`int` or `long`), false otherwise.
+ */
+bool isSigned(const AST::Type *type) {
+    return dynamic_cast<const AST::IntType *>(type) ||
+           dynamic_cast<const AST::LongType *>(type);
+}
+
+/**
+ * Check if a type is an arithmetic type (`int`, `long`, `unsigned int`, or
+ * `unsigned long`).
+ *
+ * @param type The type to check.
+ * @return True if the type is an arithmetic type (`int`, `long`, `unsigned
+ * int`, or `unsigned long`), false otherwise.
+ */
+bool isArithmeticType(const AST::Type *type) {
+    return dynamic_cast<const AST::IntType *>(type) ||
+           dynamic_cast<const AST::LongType *>(type) ||
+           dynamic_cast<const AST::UIntType *>(type) ||
+           dynamic_cast<const AST::ULongType *>(type);
 }
 } // namespace
 
@@ -661,20 +724,28 @@ std::unique_ptr<Type> TypeCheckingPass::getCommonType(const Type *type1,
     if (!type1) {
         throw std::logic_error("Null type1 in getCommonType");
     }
-    // TODO(zzmic): Check if this is correct.
     // If `type2` is `nullptr`, return `type1`.
-    else if (!type2) {
+    if (!type2) {
         return cloneType(type1);
     }
-    // If both types are the same, return `type1` (or `type2`).
-    // For now, there are only two primitive types: `int` and `long`.
-    else if (*type1 == *type2) {
+    // Rule 1: If both types are the same, return `type1` (or `type2`).
+    if (*type1 == *type2) {
         return cloneType(type1);
     }
-    // Otherwise, return the larger type.
-    else {
-        return std::make_unique<LongType>();
+    int size1 = getTypeSize(type1);
+    int size2 = getTypeSize(type2);
+    // Rule 2: If both types are the same size, return the unsigned one.
+    if (size1 == size2) {
+        if (isSigned(type1)) {
+            return cloneType(type2);
+        }
+        return cloneType(type1);
     }
+    // Rule 3: If the types have different sizes, return the larger one.
+    if (size1 > size2) {
+        return cloneType(type1);
+    }
+    return cloneType(type2);
 }
 
 std::unique_ptr<Expression>
@@ -769,7 +840,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
 void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     VariableDeclaration *declaration) {
     auto varType = declaration->getVarType();
-    if (*varType != IntType() && *varType != LongType()) {
+    if (!isArithmeticType(varType)) {
         throw std::logic_error(
             "Unsupported variable type for file-scope variables");
     }
@@ -873,7 +944,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
 void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     VariableDeclaration *declaration) {
     auto varType = declaration->getVarType();
-    if (*varType != IntType() && *varType != LongType()) {
+    if (!isArithmeticType(varType)) {
         throw std::logic_error("Unsupported variable type for local variables");
     }
 
@@ -995,7 +1066,7 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
         auto fType =
             frontendSymbolTable[functionCallExpression->getIdentifier()]
                 .first.get();
-        if (*fType == IntType() || *fType == LongType()) {
+        if (isArithmeticType(fType)) {
             throw std::logic_error("Function name used as variable: " +
                                    functionCallExpression->getIdentifier());
         }
@@ -1038,6 +1109,12 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
         else if (dynamic_cast<ConstantLong *>(constant)) {
             constantExpression->setExpType(std::make_unique<LongType>());
         }
+        else if (dynamic_cast<ConstantUInt *>(constant)) {
+            constantExpression->setExpType(std::make_unique<UIntType>());
+        }
+        else if (dynamic_cast<ConstantULong *>(constant)) {
+            constantExpression->setExpType(std::make_unique<ULongType>());
+        }
         else {
             throw std::logic_error("Unsupported constant type");
         }
@@ -1047,8 +1124,8 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
         auto variableType =
             frontendSymbolTable[variableExpression->getIdentifier()]
                 .first.get();
-        // If the variable is not of type int or long, it is of type function.
-        if (*variableType != IntType() && *variableType != LongType()) {
+        // If the variable is not an arithmetic type, it is of type function.
+        if (!isArithmeticType(variableType)) {
             std::stringstream msg;
             msg << "Function name used as variable: "
                 << variableExpression->getIdentifier();
@@ -1145,7 +1222,7 @@ void TypeCheckingPass::typeCheckStatement(
             throw std::logic_error("Function not found in symbol table: " +
                                    enclosingFunctionIdentifier);
         }
-        if (*functionType == IntType() || *functionType == LongType()) {
+        if (isArithmeticType(functionType)) {
             throw std::logic_error("Function name used as variable: " +
                                    enclosingFunctionIdentifier);
         }

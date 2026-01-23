@@ -2,6 +2,9 @@
 #include "../frontend/forInit.h"
 #include "../frontend/frontendSymbolTable.h"
 
+/**
+ * Unnamed namespace for helper functions for the IR generator.
+ */
 namespace {
 /**
  * Clone a type.
