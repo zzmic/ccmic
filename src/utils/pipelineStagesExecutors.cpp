@@ -265,6 +265,13 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
         isZeroInit = (std::get<long>(longInit->getValue()) == 0L);
     }
+    else if (auto uintInit = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        isZeroInit = (std::get<unsigned int>(uintInit->getValue()) == 0U);
+    }
+    else if (auto ulongInit =
+                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        isZeroInit = (std::get<unsigned long>(ulongInit->getValue()) == 0UL);
+    }
     else {
         throw std::logic_error("Unsupported static init type while printing "
                                "assembly static variable");
@@ -277,25 +284,25 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
         if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
-            if (std::get<int>(intInit->getValue()) == 0) {
-                assemblyFileStream << "    .zero 4\n";
-            }
-            else {
-                assemblyFileStream << "    .long "
-                                   << std::get<int>(intInit->getValue())
-                                   << "\n";
-            }
+            assemblyFileStream << "    .long "
+                               << std::get<int>(intInit->getValue()) << "\n";
         }
         else if (auto longInit =
                      dynamic_cast<const AST::LongInit *>(staticInit)) {
-            if (std::get<long>(longInit->getValue()) == 0) {
-                assemblyFileStream << "    .zero 8\n";
-            }
-            else {
-                assemblyFileStream << "    .quad "
-                                   << std::get<long>(longInit->getValue())
-                                   << "\n";
-            }
+            assemblyFileStream << "    .quad "
+                               << std::get<long>(longInit->getValue()) << "\n";
+        }
+        else if (auto uintInit =
+                     dynamic_cast<const AST::UIntInit *>(staticInit)) {
+            assemblyFileStream << "    .long "
+                               << std::get<unsigned int>(uintInit->getValue())
+                               << "\n";
+        }
+        else if (auto ulongInit =
+                     dynamic_cast<const AST::ULongInit *>(staticInit)) {
+            assemblyFileStream << "    .quad "
+                               << std::get<unsigned long>(ulongInit->getValue())
+                               << "\n";
         }
     }
     else if (isZeroInit) {
@@ -303,10 +310,12 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         assemblyFileStream << "    .bss\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
-        if (dynamic_cast<const AST::IntInit *>(staticInit)) {
+        if (dynamic_cast<const AST::IntInit *>(staticInit) ||
+            dynamic_cast<const AST::UIntInit *>(staticInit)) {
             assemblyFileStream << "    .zero 4\n";
         }
-        else if (dynamic_cast<const AST::LongInit *>(staticInit)) {
+        else if (dynamic_cast<const AST::LongInit *>(staticInit) ||
+                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
             assemblyFileStream << "    .zero 8\n";
         }
     }
@@ -351,10 +360,20 @@ void PipelineStagesExecutors::emitAssyInstruction(
                      &instruction)) {
         emitAssyIdivInstruction(*idivInstruction, assemblyFileStream);
     }
+    else if (auto divInstruction =
+                 dynamic_cast<const Assembly::DivInstruction *>(&instruction)) {
+        emitAssyDivInstruction(*divInstruction, assemblyFileStream);
+    }
     else if (auto movsxInstruction =
                  dynamic_cast<const Assembly::MovsxInstruction *>(
                      &instruction)) {
         emitAssyMovsxInstruction(*movsxInstruction, assemblyFileStream);
+    }
+    else if (auto movZeroExtendInstruction =
+                 dynamic_cast<const Assembly::MovZeroExtendInstruction *>(
+                     &instruction)) {
+        emitAssyMovZeroExtendInstruction(*movZeroExtendInstruction,
+                                         assemblyFileStream);
     }
     else if (auto cdqInstruction =
                  dynamic_cast<const Assembly::CdqInstruction *>(&instruction)) {
@@ -412,14 +431,8 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     }
     else if (auto srcImm =
                  dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
-        // Use long values for quadword instructions and int values for longword
-        // instructions in order to avoid (potential) overflow issues.
-        if (dynamic_cast<const Assembly::Quadword *>(type)) {
-            srcStr = "$" + std::to_string(srcImm->getImmediateLong());
-        }
-        else {
-            srcStr = "$" + std::to_string(srcImm->getImmediate());
-        }
+        srcStr =
+            "$" + std::to_string(static_cast<long>(srcImm->getImmediate()));
     }
     else if (auto srcStack =
                  dynamic_cast<const Assembly::StackOperand *>(src)) {
@@ -470,7 +483,8 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
     }
     else if (auto srcImm =
                  dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
-        srcStr = "$" + std::to_string(srcImm->getImmediateLong());
+        srcStr =
+            "$" + std::to_string(static_cast<long>(srcImm->getImmediate()));
     }
     else if (auto srcStack =
                  dynamic_cast<const Assembly::StackOperand *>(src)) {
@@ -510,11 +524,62 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
         dstStr = identifier + "(%rip)";
     }
     else {
-        throw std::logic_error("Invalid destination type while printing "
+        throw std::logic_error("Unsupported destination type while printing "
                                "assembly movsx instruction");
     }
 
     assemblyFileStream << "    movslq " << srcStr << ", " << dstStr << "\n";
+}
+
+void PipelineStagesExecutors::emitAssyMovZeroExtendInstruction(
+    const Assembly::MovZeroExtendInstruction &movZeroExtendInstruction,
+    std::ofstream &assemblyFileStream) {
+    auto src = movZeroExtendInstruction.getSrc();
+    std::string srcStr;
+    if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
+        srcStr = srcReg->getRegisterInBytesInStr(4);
+    }
+    else if (auto srcImm =
+                 dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
+        srcStr =
+            "$" + std::to_string(static_cast<long>(srcImm->getImmediate()));
+    }
+    else if (auto srcStack =
+                 dynamic_cast<const Assembly::StackOperand *>(src)) {
+        srcStr = std::to_string(srcStack->getOffset()) + "(" +
+                 srcStack->getReservedRegisterInStr() + ")";
+    }
+    else if (auto srcData = dynamic_cast<const Assembly::DataOperand *>(src)) {
+        auto identifier = srcData->getIdentifier();
+        prependUnderscoreToIdentifierIfMacOS(identifier);
+        srcStr = identifier + "(%rip)";
+    }
+    else {
+        throw std::logic_error("Unsupported source type while printing "
+                               "assembly movzeroextend instruction");
+    }
+
+    auto dst = movZeroExtendInstruction.getDst();
+    std::string dstStr;
+    if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
+        dstStr = dstReg->getRegisterInBytesInStr(8);
+    }
+    else if (auto dstStack =
+                 dynamic_cast<const Assembly::StackOperand *>(dst)) {
+        dstStr = std::to_string(dstStack->getOffset()) + "(" +
+                 dstStack->getReservedRegisterInStr() + ")";
+    }
+    else if (auto dstData = dynamic_cast<const Assembly::DataOperand *>(dst)) {
+        auto identifier = dstData->getIdentifier();
+        prependUnderscoreToIdentifierIfMacOS(identifier);
+        dstStr = identifier + "(%rip)";
+    }
+    else {
+        throw std::logic_error("Unsupported destination type while printing "
+                               "assembly movzeroextend instruction");
+    }
+
+    assemblyFileStream << "    movl " << srcStr << ", " << dstStr << "\n";
 }
 
 void PipelineStagesExecutors::emitAssyRetInstruction(
@@ -543,7 +608,8 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
     }
     else if (auto immOperand =
                  dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
-        assemblyFileStream << "    pushq $" << immOperand->getImmediateLong()
+        assemblyFileStream << "    pushq $"
+                           << static_cast<long>(immOperand->getImmediate())
                            << "\n";
     }
     else if (auto dataOperand =
@@ -652,7 +718,7 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
         instructionName = "imul";
     }
     else {
-        throw std::logic_error("Invalid binary operator while printing "
+        throw std::logic_error("Unsupported binary operator while printing "
                                "assembly binary instruction");
     }
 
@@ -676,13 +742,9 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     auto operand1 = binaryInstruction.getOperand1();
     if (auto operand1Imm =
             dynamic_cast<const Assembly::ImmediateOperand *>(operand1)) {
-        if (dynamic_cast<const Assembly::Quadword *>(type)) {
-            assemblyFileStream << " $" << operand1Imm->getImmediateLong()
-                               << ",";
-        }
-        else {
-            assemblyFileStream << " $" << operand1Imm->getImmediate() << ",";
-        }
+        assemblyFileStream << " $"
+                           << static_cast<long>(operand1Imm->getImmediate())
+                           << ",";
     }
     else if (auto operand1Reg =
                  dynamic_cast<const Assembly::RegisterOperand *>(operand1)) {
@@ -752,12 +814,8 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     auto operand1 = cmpInstruction.getOperand1();
     if (auto operand1Imm =
             dynamic_cast<const Assembly::ImmediateOperand *>(operand1)) {
-        if (dynamic_cast<const Assembly::Quadword *>(type)) {
-            assemblyFileStream << " $" << operand1Imm->getImmediateLong();
-        }
-        else {
-            assemblyFileStream << " $" << operand1Imm->getImmediate();
-        }
+        assemblyFileStream << " $"
+                           << static_cast<long>(operand1Imm->getImmediate());
     }
     else if (auto operand1Reg =
                  dynamic_cast<const Assembly::RegisterOperand *>(operand1)) {
@@ -845,8 +903,54 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
+        throw std::logic_error("Unsupported operand type while printing "
+                               "assembly idiv instruction");
+    }
+}
+
+void PipelineStagesExecutors::emitAssyDivInstruction(
+    const Assembly::DivInstruction &divInstruction,
+    std::ofstream &assemblyFileStream) {
+    auto type = divInstruction.getType();
+
+    std::string typeSuffix;
+    int registerSize;
+    if (dynamic_cast<const Assembly::Longword *>(type)) {
+        typeSuffix = "l";
+        registerSize = 4;
+    }
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+        typeSuffix = "q";
+        registerSize = 8;
+    }
+    else {
         throw std::logic_error(
-            "Invalid operand type while printing assembly idiv instruction");
+            "Unsupported type while printing assembly div instruction");
+    }
+
+    assemblyFileStream << "    div" << typeSuffix;
+
+    auto operand = divInstruction.getOperand();
+    if (auto regOperand =
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
+        assemblyFileStream << " "
+                           << regOperand->getRegisterInBytesInStr(registerSize)
+                           << "\n";
+    }
+    else if (auto stackOperand =
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
+        assemblyFileStream << " " << stackOperand->getOffset() << "("
+                           << stackOperand->getReservedRegisterInStr() << ")\n";
+    }
+    else if (auto dataOperand =
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
+        auto identifier = dataOperand->getIdentifier();
+        prependUnderscoreToIdentifierIfMacOS(identifier);
+        assemblyFileStream << " " << identifier << "(%rip)\n";
+    }
+    else {
+        throw std::logic_error(
+            "Unsupported operand type while printing assembly div instruction");
     }
 }
 
@@ -896,8 +1000,20 @@ void PipelineStagesExecutors::emitAssyJmpCCInstruction(
     else if (dynamic_cast<const Assembly::LE *>(condCode)) {
         assemblyFileStream << "    jle";
     }
+    else if (dynamic_cast<const Assembly::A *>(condCode)) {
+        assemblyFileStream << "    ja";
+    }
+    else if (dynamic_cast<const Assembly::AE *>(condCode)) {
+        assemblyFileStream << "    jae";
+    }
+    else if (dynamic_cast<const Assembly::B *>(condCode)) {
+        assemblyFileStream << "    jb";
+    }
+    else if (dynamic_cast<const Assembly::BE *>(condCode)) {
+        assemblyFileStream << "    jbe";
+    }
     else {
-        throw std::logic_error("Invalid conditional code while printing "
+        throw std::logic_error("Unsupported conditional code while printing "
                                "assembly jmpcc instruction");
     }
 
@@ -927,8 +1043,20 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     else if (dynamic_cast<const Assembly::LE *>(condCode)) {
         assemblyFileStream << "    setle";
     }
+    else if (dynamic_cast<const Assembly::A *>(condCode)) {
+        assemblyFileStream << "    seta";
+    }
+    else if (dynamic_cast<const Assembly::AE *>(condCode)) {
+        assemblyFileStream << "    setae";
+    }
+    else if (dynamic_cast<const Assembly::B *>(condCode)) {
+        assemblyFileStream << "    setb";
+    }
+    else if (dynamic_cast<const Assembly::BE *>(condCode)) {
+        assemblyFileStream << "    setbe";
+    }
     else {
-        throw std::logic_error("Invalid conditional code while printing "
+        throw std::logic_error("Unsupported conditional code while printing "
                                "assembly setcc instruction");
     }
 

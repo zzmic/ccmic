@@ -97,14 +97,9 @@ git clone --recurse-submodules https://github.com/zzmic/ccmic.git
 ### Building the Compiler
 
 ```bash
-# Remove any previous build artifacts if necessary:
+# Remove any previous build artifacts if necessary.
 make clean
-# Run any of the following commands to build the compiler if one is running macOS on ARM:
-# arch -x86_64 bash -c "$(make -j$(nproc))"
-# arch -x86_64 zsh -c "$(make -j$(nproc))"
-# arch -x86_64 fish -c "$(make -j$(nproc))"
-# arch -x86_64 tcsh -c "$(make -j$(nproc))"
-# Run the following command to build the compiler if one is running Linux/macOS/Windows on x86-64:
+# Build the compiler with the number of available CPU cores for parallel compilation.
 make -j$(nproc)
 ```
 
