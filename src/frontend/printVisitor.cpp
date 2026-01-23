@@ -182,6 +182,16 @@ void PrintVisitor::visit(LongType &longType) {
     std::cout << "LongType()";
 }
 
+void PrintVisitor::visit(UIntType &uintType) {
+    (void)uintType;
+    std::cout << "UIntType()";
+}
+
+void PrintVisitor::visit(ULongType &ulongType) {
+    (void)ulongType;
+    std::cout << "ULongType()";
+}
+
 void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << "FunctionType(\n";
 
@@ -412,6 +422,12 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
     }
     else if (auto *longConst = dynamic_cast<ConstantLong *>(constant)) {
         std::cout << longConst->getValue();
+    }
+    else if (auto *uintConst = dynamic_cast<ConstantUInt *>(constant)) {
+        std::cout << uintConst->getValue();
+    }
+    else if (auto *ulongConst = dynamic_cast<ConstantULong *>(constant)) {
+        std::cout << ulongConst->getValue();
     }
     else {
         throw std::logic_error("Unknown constant type in constant expression");
@@ -674,5 +690,13 @@ void PrintVisitor::visit(ConstantInt &constantInt) {
 
 void PrintVisitor::visit(ConstantLong &constantLong) {
     std::cout << "ConstantLong(" << constantLong.getValue() << ")";
+}
+
+void PrintVisitor::visit(ConstantUInt &constantUInt) {
+    std::cout << "ConstantUInt(" << constantUInt.getValue() << ")";
+}
+
+void PrintVisitor::visit(ConstantULong &constantULong) {
+    std::cout << "ConstantULong(" << constantULong.getValue() << ")";
 }
 } // Namespace AST

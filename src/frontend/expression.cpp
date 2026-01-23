@@ -21,16 +21,22 @@ void ConstantExpression::setExpType(std::unique_ptr<Type> newExpType) {
     this->expType = std::move(newExpType);
 }
 
-std::variant<int, long>
-ConstantExpression::getConstantInIntOrLongVariant() const {
-    // If the constant is an integer constant, return the integer value.
+std::variant<int, long, unsigned int, unsigned long>
+ConstantExpression::getConstantInVariant() const {
     if (auto *intConstant = dynamic_cast<ConstantInt *>(constant.get())) {
         return intConstant->getValue();
     }
-    // If the constant is a long constant, return the long value.
     else if (auto *longConstant =
                  dynamic_cast<ConstantLong *>(constant.get())) {
         return longConstant->getValue();
+    }
+    else if (auto *uintConstant =
+                 dynamic_cast<ConstantUInt *>(constant.get())) {
+        return static_cast<unsigned int>(uintConstant->getValue());
+    }
+    else if (auto *ulongConstant =
+                 dynamic_cast<ConstantULong *>(constant.get())) {
+        return static_cast<unsigned long>(ulongConstant->getValue());
     }
     else {
         throw std::logic_error("Unknown constant type in constant expression");

@@ -105,9 +105,8 @@ class ConstantExpression : public Factor {
 
     void setExpType(std::unique_ptr<Type> expType) override;
 
-    [[nodiscard]] int getConstantInInt() const;
-
-    [[nodiscard]] std::variant<int, long> getConstantInIntOrLongVariant() const;
+    [[nodiscard]] std::variant<int, long, unsigned int, unsigned long>
+    getConstantInVariant() const;
 
   private:
     /**

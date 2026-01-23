@@ -626,7 +626,7 @@ void TypeCheckingPass::typeCheckProgram(Program &program) {
 std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
     const Type *varType, const ConstantExpression *constantExpression) {
     // Extract the numeric value from the AST constant.
-    auto variantValue = constantExpression->getConstantInIntOrLongVariant();
+    auto variantValue = constantExpression->getConstantInVariant();
 
     long numericValue = 0;
     // Convert everything to 64-bit for uniform handling.
@@ -780,7 +780,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         dynamic_cast<ConstantExpression *>(declaration->getOptInitializer())) {
         auto constantExpression = dynamic_cast<ConstantExpression *>(
             declaration->getOptInitializer());
-        auto variantValue = constantExpression->getConstantInIntOrLongVariant();
+        auto variantValue = constantExpression->getConstantInVariant();
         if (dynamic_cast<LongType *>(varType)) {
             if (std::holds_alternative<long>(variantValue)) {
                 initialValue =
@@ -908,8 +908,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                 declaration->getOptInitializer())) {
             auto constantExpression = dynamic_cast<ConstantExpression *>(
                 declaration->getOptInitializer());
-            auto variantValue =
-                constantExpression->getConstantInIntOrLongVariant();
+            auto variantValue = constantExpression->getConstantInVariant();
             if (std::holds_alternative<long>(variantValue)) {
                 initialValue =
                     std::make_unique<Initial>(std::get<long>(variantValue));

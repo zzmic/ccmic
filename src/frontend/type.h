@@ -113,6 +113,44 @@ class LongType : public Type {
 };
 
 /**
+ * Class representing the unsigned int type in the AST.
+ */
+class UIntType : public Type {
+  public:
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    /**
+     * Overriden `isEqual` function to check if the other type is an
+     * unsigned int type.
+     *
+     * @param other The other type to compare with.
+     * @return True if the other type is a `UIntType`, false otherwise.
+     */
+    [[nodiscard]] bool isEqual(const Type &other) const override {
+        return dynamic_cast<const UIntType *>(&other) != nullptr;
+    }
+};
+
+/**
+ * Class representing the unsigned long type in the AST.
+ */
+class ULongType : public Type {
+  public:
+    void accept(Visitor &visitor) override { visitor.visit(*this); }
+
+    /**
+     * Overriden `isEqual` function to check if the other type is an
+     * unsigned long type.
+     *
+     * @param other The other type to compare with.
+     * @return True if the other type is a `ULongType`, false otherwise.
+     */
+    [[nodiscard]] bool isEqual(const Type &other) const override {
+        return dynamic_cast<const ULongType *>(&other) != nullptr;
+    }
+};
+
+/**
  * Class representing the function type in the AST.
  */
 class FunctionType : public Type {

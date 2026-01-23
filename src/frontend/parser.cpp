@@ -1,7 +1,9 @@
 #include "parser.h"
 #include "block.h"
 #include "forInit.h"
+#include "type.h"
 #include <sstream>
+#include <unordered_set>
 
 namespace AST {
 Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
@@ -55,6 +57,8 @@ void Parser::expectToken(TokenType type) {
 std::unique_ptr<BlockItem> Parser::parseBlockItem() {
     if (matchToken(TokenType::intKeyword) ||
         matchToken(TokenType::longKeyword) ||
+        matchToken(TokenType::signedKeyword) ||
+        matchToken(TokenType::unsignedKeyword) ||
         matchToken(TokenType::staticKeyword) ||
         matchToken(TokenType::externKeyword)) {
         // Peek ahead to check if this is a function declaration.
@@ -99,6 +103,8 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
     std::vector<std::string> specifierList;
     while (matchToken(TokenType::intKeyword) ||
            matchToken(TokenType::longKeyword) ||
+           matchToken(TokenType::signedKeyword) ||
+           matchToken(TokenType::unsignedKeyword) ||
            matchToken(TokenType::staticKeyword) ||
            matchToken(TokenType::externKeyword)) {
         if (matchToken(TokenType::intKeyword)) {
@@ -108,6 +114,14 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
         else if (matchToken(TokenType::longKeyword)) {
             specifierList.emplace_back("long");
             consumeToken(TokenType::longKeyword);
+        }
+        else if (matchToken(TokenType::signedKeyword)) {
+            specifierList.emplace_back("signed");
+            consumeToken(TokenType::signedKeyword);
+        }
+        else if (matchToken(TokenType::unsignedKeyword)) {
+            specifierList.emplace_back("unsigned");
+            consumeToken(TokenType::unsignedKeyword);
         }
         else if (matchToken(TokenType::staticKeyword)) {
             specifierList.emplace_back("static");
@@ -136,7 +150,9 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
             consumeToken(TokenType::voidKeyword);
         }
         else if (matchToken(TokenType::intKeyword) ||
-                 matchToken(TokenType::longKeyword)) {
+                 matchToken(TokenType::longKeyword) ||
+                 matchToken(TokenType::signedKeyword) ||
+                 matchToken(TokenType::unsignedKeyword)) {
             auto specifiers = parseTypeSpecifiersInParameters();
             auto parameterNameToken1 = consumeToken(TokenType::Identifier);
             parameters->emplace_back(parameterNameToken1.value);
@@ -218,7 +234,9 @@ std::unique_ptr<Declaration> Parser::parseDeclaration() {
 std::vector<std::string> Parser::parseTypeSpecifiersInParameters() {
     std::vector<std::string> specifiers;
     while (matchToken(TokenType::intKeyword) ||
-           matchToken(TokenType::longKeyword)) {
+           matchToken(TokenType::longKeyword) ||
+           matchToken(TokenType::signedKeyword) ||
+           matchToken(TokenType::unsignedKeyword)) {
         if (matchToken(TokenType::intKeyword)) {
             expectToken(TokenType::intKeyword);
             specifiers.emplace_back("int");
@@ -226,6 +244,14 @@ std::vector<std::string> Parser::parseTypeSpecifiersInParameters() {
         else if (matchToken(TokenType::longKeyword)) {
             expectToken(TokenType::longKeyword);
             specifiers.emplace_back("long");
+        }
+        else if (matchToken(TokenType::signedKeyword)) {
+            expectToken(TokenType::signedKeyword);
+            specifiers.emplace_back("signed");
+        }
+        else if (matchToken(TokenType::unsignedKeyword)) {
+            expectToken(TokenType::unsignedKeyword);
+            specifiers.emplace_back("unsigned");
         }
     }
     if (specifiers.empty()) {
@@ -237,6 +263,8 @@ std::vector<std::string> Parser::parseTypeSpecifiersInParameters() {
 std::unique_ptr<ForInit> Parser::parseForInit() {
     if (matchToken(TokenType::intKeyword) ||
         matchToken(TokenType::longKeyword) ||
+        matchToken(TokenType::signedKeyword) ||
+        matchToken(TokenType::unsignedKeyword) ||
         matchToken(TokenType::staticKeyword) ||
         matchToken(TokenType::externKeyword)) {
         auto declaration = parseDeclaration();
@@ -374,7 +402,9 @@ std::unique_ptr<Statement> Parser::parseStatement() {
 
 std::unique_ptr<Expression> Parser::parseFactor() {
     if (matchToken(TokenType::IntConstant) ||
-        matchToken(TokenType::LongConstant)) {
+        matchToken(TokenType::LongConstant) ||
+        matchToken(TokenType::UnsignedIntegerConstant) ||
+        matchToken(TokenType::UnsignedLongIntegerConstant)) {
         return std::make_unique<ConstantExpression>(parseConstant());
     }
     else if (matchToken(TokenType::Identifier)) {
@@ -407,12 +437,17 @@ std::unique_ptr<Expression> Parser::parseFactor() {
         }
     }
     else if (matchToken(TokenType::OpenParenthesis) &&
+             current + 1 < tokens.size() &&
              (tokens[current + 1].type == TokenType::intKeyword ||
-              tokens[current + 1].type == TokenType::longKeyword)) {
+              tokens[current + 1].type == TokenType::longKeyword ||
+              tokens[current + 1].type == TokenType::signedKeyword ||
+              tokens[current + 1].type == TokenType::unsignedKeyword)) {
         consumeToken(TokenType::OpenParenthesis);
         std::vector<std::string> specifierList;
         while (matchToken(TokenType::intKeyword) ||
-               matchToken(TokenType::longKeyword)) {
+               matchToken(TokenType::longKeyword) ||
+               matchToken(TokenType::signedKeyword) ||
+               matchToken(TokenType::unsignedKeyword)) {
             if (matchToken(TokenType::intKeyword)) {
                 specifierList.emplace_back("int");
                 consumeToken(TokenType::intKeyword);
@@ -420,6 +455,14 @@ std::unique_ptr<Expression> Parser::parseFactor() {
             else if (matchToken(TokenType::longKeyword)) {
                 specifierList.emplace_back("long");
                 consumeToken(TokenType::longKeyword);
+            }
+            else if (matchToken(TokenType::signedKeyword)) {
+                specifierList.emplace_back("signed");
+                consumeToken(TokenType::signedKeyword);
+            }
+            else if (matchToken(TokenType::unsignedKeyword)) {
+                specifierList.emplace_back("unsigned");
+                consumeToken(TokenType::unsignedKeyword);
             }
         }
         consumeToken(TokenType::CloseParenthesis);
@@ -467,34 +510,59 @@ std::unique_ptr<Expression> Parser::parseFactor() {
 }
 
 std::unique_ptr<Constant> Parser::parseConstant() {
+    // 2^63 - 1 = 9223372036854775807LL.
+    constexpr auto MAX_LONG = 9223372036854775807LL;
+    // 2^31 - 1 = 2147483647LL.
+    constexpr auto MAX_INT = 2147483647LL;
+    // 2^64 - 1 = 18446744073709551615ULL.
+    constexpr unsigned long long MAX_ULONG = 18446744073709551615ULL;
+    // 2^32 - 1 = 4294967295ULL.
+    constexpr unsigned long long MAX_UINT = 4294967295ULL;
+
+    if (tokens[current].type == TokenType::UnsignedIntegerConstant ||
+        tokens[current].type == TokenType::UnsignedLongIntegerConstant) {
+        auto constantValue = std::stoull(tokens[current].value);
+        if (constantValue > MAX_ULONG) {
+            throw std::invalid_argument(
+                "Constant is too large to represent as an unsigned long");
+        }
+        if (tokens[current].type == TokenType::UnsignedIntegerConstant) {
+            if (constantValue <= MAX_UINT) {
+                consumeToken(TokenType::UnsignedIntegerConstant);
+                return std::make_unique<ConstantUInt>(
+                    static_cast<unsigned int>(constantValue));
+            }
+            consumeToken(TokenType::UnsignedIntegerConstant);
+            return std::make_unique<ConstantULong>(
+                static_cast<unsigned long>(constantValue));
+        }
+        consumeToken(TokenType::UnsignedLongIntegerConstant);
+        return std::make_unique<ConstantULong>(
+            static_cast<unsigned long>(constantValue));
+    }
+
     auto constantValue = std::stoll(tokens[current].value);
-    // pow(2, 63) - 1 = 9223372036854775807LL.
-    if (constantValue > 9223372036854775807LL) {
+    if (constantValue > MAX_LONG) {
         throw std::invalid_argument(
             "Constant is too large to represent as an int or long");
     }
-    else if (tokens[current].type == TokenType::IntConstant) {
-        // pow(2, 31) - 1 = 2147483647LL.
-        if (constantValue <= 2147483647LL) {
+    if (tokens[current].type == TokenType::IntConstant) {
+        if (constantValue <= MAX_INT) {
             consumeToken(TokenType::IntConstant);
             return std::make_unique<ConstantInt>(
                 static_cast<int>(constantValue));
         }
-        else {
-            consumeToken(TokenType::IntConstant);
-            return std::make_unique<ConstantLong>(constantValue);
-        }
-    }
-    else {
-        consumeToken(TokenType::LongConstant);
+        consumeToken(TokenType::IntConstant);
         return std::make_unique<ConstantLong>(constantValue);
     }
+    consumeToken(TokenType::LongConstant);
+    return std::make_unique<ConstantLong>(constantValue);
 }
 
 std::unique_ptr<Expression> Parser::parseExpression(int minPrecedence) {
     // Parse the left operand of the expression.
     std::unique_ptr<Expression> left = parseFactor();
-    // While the next otkn is a binary operator and has a precedence greater
+    // While the next token is a binary operator and has a precedence greater
     // than or equal to the minimum precedence, ...
     while (
         (matchToken(TokenType::Plus) || matchToken(TokenType::Minus) ||
@@ -527,6 +595,8 @@ std::unique_ptr<Expression> Parser::parseExpression(int minPrecedence) {
             auto binOpToken = consumeToken(tokens[current].type);
             if (!(matchToken(TokenType::IntConstant) ||
                   matchToken(TokenType::LongConstant) ||
+                  matchToken(TokenType::UnsignedIntegerConstant) ||
+                  matchToken(TokenType::UnsignedLongIntegerConstant) ||
                   matchToken(TokenType::Tilde) ||
                   matchToken(TokenType::Minus) ||
                   matchToken(TokenType::LogicalNot) ||
@@ -562,7 +632,8 @@ Parser::parseTypeAndStorageClass(
     std::vector<std::string> types;
     std::vector<std::string> storageClasses;
     for (const auto &specifier : specifierList) {
-        if (specifier == "int" || specifier == "long") {
+        if (specifier == "int" || specifier == "long" ||
+            specifier == "signed" || specifier == "unsigned") {
             types.emplace_back(specifier);
         }
         else {
@@ -585,21 +656,36 @@ Parser::parseTypeAndStorageClass(
 
 std::unique_ptr<Type>
 Parser::parseType(const std::vector<std::string> &specifierList) {
-    if (specifierList.size() == 1 && specifierList[0] == "int") {
+    const std::unordered_set<std::string> specifierSet(specifierList.begin(),
+                                                       specifierList.end());
+    if (specifierSet.empty()) {
+        throw std::invalid_argument("Invalid type specifier (empty)");
+    }
+    else if (specifierSet.size() != specifierList.size()) {
+        throw std::invalid_argument(
+            "Invalid type specifier (duplicate specifiers)");
+    }
+    else if (specifierSet.contains("signed") &&
+             specifierSet.contains("unsigned")) {
+        throw std::invalid_argument(
+            "Invalid type specifier (both signed and unsigned)");
+    }
+
+    if (specifierSet.contains("unsigned") && specifierSet.contains("long")) {
+        return std::make_unique<ULongType>();
+    }
+    else if (specifierSet.contains("unsigned")) {
+        return std::make_unique<UIntType>();
+    }
+    else if (specifierSet.contains("long")) {
+        return std::make_unique<LongType>();
+    }
+    else if (specifierSet.contains("int") || specifierSet.contains("signed")) {
         return std::make_unique<IntType>();
-    }
-    else if ((specifierList.size() == 2) &&
-             ((specifierList[0] == "int" && specifierList[1] == "long") ||
-              (specifierList[0] == "long" && specifierList[1] == "int"))) {
-        return std::make_unique<LongType>();
-    }
-    else if (specifierList.size() == 1 && specifierList[0] == "long") {
-        return std::make_unique<LongType>();
     }
     else {
         std::stringstream msg;
-        msg << "Invalid type specifier of size " << specifierList.size()
-            << ": ";
+        msg << "Invalid type specifier: ";
         for (const auto &specifier : specifierList) {
             msg << specifier << " ";
         }
