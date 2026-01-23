@@ -542,7 +542,7 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
     const AST::Expression *e,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     if (auto constantExpr = dynamic_cast<const AST::ConstantExpression *>(e)) {
-        auto variantValue = constantExpr->getConstantInIntOrLongVariant();
+        auto variantValue = constantExpr->getConstantInVariant();
         if (std::holds_alternative<int>(variantValue)) {
             return std::make_unique<IR::ConstantValue>(
                 std::make_unique<AST::ConstantInt>(

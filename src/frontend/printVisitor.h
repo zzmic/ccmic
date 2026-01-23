@@ -27,6 +27,8 @@ class PrintVisitor : public Visitor {
     void visit(FunctionDeclaration &functionDeclaration) override;
     void visit(IntType &intType) override;
     void visit(LongType &longType) override;
+    void visit(UIntType &uintType) override;
+    void visit(ULongType &ulongType) override;
     void visit(FunctionType &functionType) override;
     void visit(StaticStorageClass &staticStorageClass) override;
     void visit(ExternStorageClass &externStorageClass) override;
@@ -69,6 +71,8 @@ class PrintVisitor : public Visitor {
     void visit(AssignmentOperator &assignmentOperator) override;
     void visit(ConstantInt &constantInt) override;
     void visit(ConstantLong &constantLong) override;
+    void visit(ConstantUInt &constantUInt) override;
+    void visit(ConstantULong &constantULong) override;
 };
 } // namespace AST
 

@@ -14,6 +14,8 @@ class FunctionDeclaration;
 class Type;
 class IntType;
 class LongType;
+class UIntType;
+class ULongType;
 class FunctionType;
 class StorageClass;
 class StaticStorageClass;
@@ -64,6 +66,8 @@ class AssignmentOperator;
 class Constant;
 class ConstantInt;
 class ConstantLong;
+class ConstantUInt;
+class ConstantULong;
 
 /**
  * Visitor interface for AST nodes.
@@ -122,6 +126,8 @@ class Visitor {
     virtual void visit(FunctionDeclaration &functionDeclaration) = 0;
     virtual void visit(IntType &intType) = 0;
     virtual void visit(LongType &longType) = 0;
+    virtual void visit(UIntType &uintType) = 0;
+    virtual void visit(ULongType &ulongType) = 0;
     virtual void visit(FunctionType &functionType) = 0;
     virtual void visit(StaticStorageClass &staticStorageClass) = 0;
     virtual void visit(ExternStorageClass &externStorageClass) = 0;
@@ -165,6 +171,8 @@ class Visitor {
     virtual void visit(AssignmentOperator &assignmentOperator) = 0;
     virtual void visit(ConstantInt &constantInt) = 0;
     virtual void visit(ConstantLong &constantLong) = 0;
+    virtual void visit(ConstantUInt &constantUInt) = 0;
+    virtual void visit(ConstantULong &constantULong) = 0;
 };
 } // Namespace AST
 

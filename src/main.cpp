@@ -290,10 +290,10 @@ int main(int argc, char *argv[]) {
                   << executableFileName << "\n";
         return EXIT_SUCCESS;
     } catch (const std::exception &e) {
-        std::cerr << "Error: " << e.what() << std::endl;
+        std::cerr << "Error: " << e.what() << "\n";
         return EXIT_FAILURE;
     } catch (...) {
-        std::cerr << "Unknown error occurred" << std::endl;
+        std::cerr << "Unknown error occurred" << "\n";
         return EXIT_FAILURE;
     }
 }
