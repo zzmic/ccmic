@@ -250,7 +250,8 @@ class StaticInit {
     /**
      * Pure virtual method to get the value of the static initializer.
      */
-    virtual std::variant<int, long> getValue() const = 0;
+    virtual std::variant<int, long, unsigned int, unsigned long>
+    getValue() const = 0;
 };
 
 /**
@@ -265,7 +266,10 @@ class IntInit : public StaticInit {
      */
     constexpr IntInit(int value) : value(value) {}
 
-    std::variant<int, long> getValue() const override { return value; }
+    std::variant<int, long, unsigned int, unsigned long>
+    getValue() const override {
+        return value;
+    }
 
   private:
     /**
@@ -283,13 +287,58 @@ class LongInit : public StaticInit {
      */
     constexpr LongInit(long value) : value(value) {}
 
-    std::variant<int, long> getValue() const override { return value; }
+    std::variant<int, long, unsigned int, unsigned long>
+    getValue() const override {
+        return value;
+    }
 
   private:
     /**
      * The long value of the static initializer.
      */
     long value;
+};
+
+class UIntInit : public StaticInit {
+  public:
+    /**
+     * Constructor for the unsigned integer static initializer class.
+     *
+     * @param value The unsigned integer value of the static initializer.
+     */
+    constexpr UIntInit(unsigned int value) : value(value) {}
+
+    std::variant<int, long, unsigned int, unsigned long>
+    getValue() const override {
+        return value;
+    }
+
+  private:
+    /**
+     * The unsigned integer value of the static initializer.
+     */
+    unsigned int value;
+};
+
+class ULongInit : public StaticInit {
+  public:
+    /**
+     * Constructor for the unsigned long static initializer class.
+     *
+     * @param value The unsigned long value of the static initializer.
+     */
+    constexpr ULongInit(unsigned long value) : value(value) {}
+
+    std::variant<int, long, unsigned int, unsigned long>
+    getValue() const override {
+        return value;
+    }
+
+  private:
+    /**
+     * The unsigned long value of the static initializer.
+     */
+    unsigned long value;
 };
 
 /**
@@ -339,18 +388,36 @@ class Tentative : public InitialValue {};
 class Initial : public InitialValue {
   public:
     /**
-     * Constructors for the initial class with an integer parameter.
+     * Constructor for the initial class with an `int` static initializer.
      *
-     * @param value The integer or long value of the static initializer.
+     * @param value The `int` value of the static initializer.
      */
     Initial(int value) : staticInit(std::make_unique<IntInit>(value)) {}
 
     /**
-     * Constructors for the initial class with a long parameter.
+     * Constructor for the initial class with a `long` static initializer.
      *
-     * @param value The long value of the static initializer.
+     * @param value The `long` value of the static initializer.
      */
     Initial(long value) : staticInit(std::make_unique<LongInit>(value)) {}
+
+    /**
+     * Constructor for the initial class with an `unsigned int` static
+     * initializer.
+     *
+     * @param value The `unsigned int` value of the static initializer.
+     */
+    Initial(unsigned int value)
+        : staticInit(std::make_unique<UIntInit>(value)) {}
+
+    /**
+     * Constructor for the initial class with an `unsigned long` static
+     * initializer.
+     *
+     * @param value The `unsigned long` value of the static initializer.
+     */
+    Initial(unsigned long value)
+        : staticInit(std::make_unique<ULongInit>(value)) {}
 
     /**
      * Constructor for the initial class with a static initializer parameter.
