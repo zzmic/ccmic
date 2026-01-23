@@ -10,15 +10,18 @@
 /**
  * Regular expressions for different token types.
  *
- * The caret symbol (^) matches the start of a line or a string.
+ * The caret symbol (`^`) matches the start of a line or a string.
  * It asserts that the current position in the string is at the beginning of a
  * line or the string.
  */
+namespace {
 const std::regex identifier_regex(R"(^[a-zA-Z_]\w*\b)");
 const std::regex LongConstant_regex(R"(^[0-9]+[lL]\b)");
 const std::regex intConstant_regex(R"(^[0-9]+\b)");
 const std::regex intKeyword_regex(R"(^int\b)");
 const std::regex longKeyword_regex(R"(^long\b)");
+const std::regex signedKeyword_regex(R"(^signed\b)");
+const std::regex unsignedKeyword_regex(R"(^unsigned\b)");
 const std::regex voidKeyword_regex(R"(^void\b)");
 const std::regex returnKeyword_regex(R"(^return\b)");
 const std::regex ifKeyword_regex(R"(^if\b)");
@@ -56,10 +59,14 @@ const std::regex lessThanOrEqual_regex(R"(^<=)");
 const std::regex greaterThanOrEqual_regex(R"(^>=)");
 const std::regex lessThan_regex(R"(^<)");
 const std::regex greaterThan_regex(R"(^>)");
+const std::regex unsignedIntegerConstant_regex(R"(^[0-9]+[uU]\b)");
+const std::regex
+    unsignedLongIntegerConstant_regex(R"(^[0-9]+([lL][uU]|[uU][lL])\b)");
 const std::regex singleLineComment_regex(R"(^\/\/[^\n]*\n?)");
 const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
 const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
 const std::regex preprocessorDirective_regex(R"(^#\w+)");
+} // namespace
 
 /**
  * Enumeration representing different types of tokens.
@@ -75,6 +82,8 @@ enum class TokenType {
     IntConstant,
     intKeyword,
     longKeyword,
+    signedKeyword,
+    unsignedKeyword,
     voidKeyword,
     returnKeyword,
     ifKeyword,
@@ -111,6 +120,8 @@ enum class TokenType {
     GreaterThanOrEqual,
     LessThan,
     GreaterThan,
+    UnsignedIntegerConstant,
+    UnsignedLongIntegerConstant,
     SingleLineComment,
     MultiLineComment,
     StringLiteral,
