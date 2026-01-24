@@ -48,9 +48,7 @@ class Type : public AST {
      * @param other The other type to compare with.
      * @return True if the types are equal, false otherwise.
      */
-    [[nodiscard]] virtual bool isEqual(const Type &other) const {
-        return typeid(*this) == typeid(other);
-    }
+    [[nodiscard]] virtual bool isEqual(const Type &other) const;
 
     /**
      * Overload the equality operator.
@@ -59,9 +57,7 @@ class Type : public AST {
      * @param rhs The right-hand side type.
      * @return True if the types are equal, false otherwise.
      */
-    [[nodiscard]] friend bool operator==(const Type &lhs, const Type &rhs) {
-        return lhs.isEqual(rhs);
-    }
+    friend bool operator==(const Type &lhs, const Type &rhs);
 
     /**
      * Overload the inequality operator.
@@ -69,9 +65,7 @@ class Type : public AST {
      * @param rhs The right-hand side type.
      * @return True if the types are not equal, false otherwise.
      */
-    [[nodiscard]] friend bool operator!=(const Type &lhs, const Type &rhs) {
-        return !lhs.isEqual(rhs);
-    }
+    friend bool operator!=(const Type &lhs, const Type &rhs);
 };
 
 /**
@@ -79,7 +73,7 @@ class Type : public AST {
  */
 class IntType : public Type {
   public:
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override;
 
     /**
      * Overriden `isEqual` function to check if the other type is an int
@@ -88,9 +82,7 @@ class IntType : public Type {
      * @param other The other type to compare with.
      * @return True if the other type is an `IntType`, false otherwise.
      */
-    [[nodiscard]] bool isEqual(const Type &other) const override {
-        return dynamic_cast<const IntType *>(&other) != nullptr;
-    }
+    [[nodiscard]] bool isEqual(const Type &other) const override;
 };
 
 /**
@@ -98,7 +90,7 @@ class IntType : public Type {
  */
 class LongType : public Type {
   public:
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override;
 
     /**
      * Overriden `isEqual` function to check if the other type is a
@@ -107,9 +99,7 @@ class LongType : public Type {
      * @param other The other type to compare with.
      * @return True if the other type is a `LongType`, false otherwise.
      */
-    [[nodiscard]] bool isEqual(const Type &other) const override {
-        return dynamic_cast<const LongType *>(&other) != nullptr;
-    }
+    [[nodiscard]] bool isEqual(const Type &other) const override;
 };
 
 /**
@@ -117,7 +107,7 @@ class LongType : public Type {
  */
 class UIntType : public Type {
   public:
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override;
 
     /**
      * Overriden `isEqual` function to check if the other type is an
@@ -126,9 +116,7 @@ class UIntType : public Type {
      * @param other The other type to compare with.
      * @return True if the other type is a `UIntType`, false otherwise.
      */
-    [[nodiscard]] bool isEqual(const Type &other) const override {
-        return dynamic_cast<const UIntType *>(&other) != nullptr;
-    }
+    [[nodiscard]] bool isEqual(const Type &other) const override;
 };
 
 /**
@@ -136,7 +124,7 @@ class UIntType : public Type {
  */
 class ULongType : public Type {
   public:
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override;
 
     /**
      * Overriden `isEqual` function to check if the other type is an
@@ -145,9 +133,7 @@ class ULongType : public Type {
      * @param other The other type to compare with.
      * @return True if the other type is a `ULongType`, false otherwise.
      */
-    [[nodiscard]] bool isEqual(const Type &other) const override {
-        return dynamic_cast<const ULongType *>(&other) != nullptr;
-    }
+    [[nodiscard]] bool isEqual(const Type &other) const override;
 };
 
 /**
@@ -163,42 +149,20 @@ class FunctionType : public Type {
      */
     explicit FunctionType(
         std::unique_ptr<std::vector<std::unique_ptr<Type>>> parameterTypes,
-        std::unique_ptr<Type> returnType)
-        : parameterTypes(std::move(parameterTypes)),
-          returnType(std::move(returnType)) {}
+        std::unique_ptr<Type> returnType);
 
-    void accept(Visitor &visitor) override { visitor.visit(*this); }
+    void accept(Visitor &visitor) override;
 
     /**
      * Overriden `isEqual` function to check if the other type is a
      * function type with the same parameter and return types.
      */
-    [[nodiscard]] bool isEqual(const Type &other) const override {
-        const auto *otherFn = dynamic_cast<const FunctionType *>(&other);
-        if (!otherFn) {
-            return false;
-        }
-        // Compare parameter types by value.
-        const auto &params1 = *parameterTypes;
-        const auto &params2 = *otherFn->parameterTypes;
-        if (params1.size() != params2.size()) {
-            return false;
-        }
-        for (size_t i = 0; i < params1.size(); ++i) {
-            if (*(params1[i]) != *(params2[i])) {
-                return false;
-            }
-        }
-        // Compare return types by value.
-        return *returnType == *otherFn->returnType;
-    }
+    [[nodiscard]] bool isEqual(const Type &other) const override;
 
     [[nodiscard]] const std::vector<std::unique_ptr<Type>> &
-    getParameterTypes() const {
-        return *parameterTypes;
-    }
+    getParameterTypes() const;
 
-    [[nodiscard]] const Type &getReturnType() const { return *returnType; }
+    [[nodiscard]] const Type &getReturnType() const;
 
   private:
     /**
