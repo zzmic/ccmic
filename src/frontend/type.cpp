@@ -1,4 +1,5 @@
 #include "type.h"
+#include <stdexcept>
 
 namespace AST {
 bool Type::isEqual(const Type &other) const {
@@ -37,7 +38,15 @@ FunctionType::FunctionType(
     std::unique_ptr<std::vector<std::unique_ptr<Type>>> parameterTypes,
     std::unique_ptr<Type> returnType)
     : parameterTypes(std::move(parameterTypes)),
-      returnType(std::move(returnType)) {}
+      returnType(std::move(returnType)) {
+    if (!this->parameterTypes) {
+        throw std::logic_error(
+            "Creating FunctionType with null parameterTypes");
+    }
+    if (!this->returnType) {
+        throw std::logic_error("Creating FunctionType with null returnType");
+    }
+}
 
 void FunctionType::accept(Visitor &visitor) { visitor.visit(*this); }
 

@@ -294,8 +294,8 @@ class SignExtendInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    SignExtendInstruction(std::unique_ptr<Value> src,
-                          std::unique_ptr<Value> dst);
+    explicit SignExtendInstruction(std::unique_ptr<Value> src,
+                                   std::unique_ptr<Value> dst);
 
     [[nodiscard]] Value *getSrc() const;
 
@@ -325,7 +325,8 @@ class TruncateInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    TruncateInstruction(std::unique_ptr<Value> src, std::unique_ptr<Value> dst);
+    explicit TruncateInstruction(std::unique_ptr<Value> src,
+                                 std::unique_ptr<Value> dst);
 
     [[nodiscard]] Value *getSrc() const;
 
@@ -352,8 +353,8 @@ class ZeroExtendInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    ZeroExtendInstruction(std::unique_ptr<Value> src,
-                          std::unique_ptr<Value> dst);
+    explicit ZeroExtendInstruction(std::unique_ptr<Value> src,
+                                   std::unique_ptr<Value> dst);
 
     [[nodiscard]] Value *getSrc() const;
 
@@ -388,8 +389,9 @@ class UnaryInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `unaryOperator`, `src`, or `dst` is null.
      */
-    UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
-                     std::unique_ptr<Value> src, std::unique_ptr<Value> dst);
+    explicit UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
+                              std::unique_ptr<Value> src,
+                              std::unique_ptr<Value> dst);
 
     [[nodiscard]] UnaryOperator *getUnaryOperator() const;
 
@@ -430,9 +432,10 @@ class BinaryInstruction : public Instruction {
      * @throws std::logic_error if `binaryOperator`, `src1`, `src2`, or `dst`
      * is null.
      */
-    BinaryInstruction(std::unique_ptr<BinaryOperator> binaryOperator,
-                      std::unique_ptr<Value> src1, std::unique_ptr<Value> src2,
-                      std::unique_ptr<Value> dst);
+    explicit BinaryInstruction(std::unique_ptr<BinaryOperator> binaryOperator,
+                               std::unique_ptr<Value> src1,
+                               std::unique_ptr<Value> src2,
+                               std::unique_ptr<Value> dst);
 
     [[nodiscard]] BinaryOperator *getBinaryOperator() const;
 
@@ -470,7 +473,8 @@ class CopyInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `src` or `dst` is null.
      */
-    CopyInstruction(std::unique_ptr<Value> src, std::unique_ptr<Value> dst);
+    explicit CopyInstruction(std::unique_ptr<Value> src,
+                             std::unique_ptr<Value> dst);
 
     [[nodiscard]] Value *getSrc() const;
 
@@ -527,8 +531,8 @@ class JumpIfZeroInstruction : public Instruction {
      * @param target The target label of the jump instruction.
      * @throws std::logic_error if `condition` is null.
      */
-    JumpIfZeroInstruction(std::unique_ptr<Value> condition,
-                          std::string_view target);
+    explicit JumpIfZeroInstruction(std::unique_ptr<Value> condition,
+                                   std::string_view target);
 
     [[nodiscard]] Value *getCondition() const;
 
@@ -562,8 +566,8 @@ class JumpIfNotZeroInstruction : public Instruction {
      * @param target The target label of the jump instruction.
      * @throws std::logic_error if `condition` is null.
      */
-    JumpIfNotZeroInstruction(std::unique_ptr<Value> condition,
-                             std::string_view target);
+    explicit JumpIfNotZeroInstruction(std::unique_ptr<Value> condition,
+                                      std::string_view target);
 
     [[nodiscard]] Value *getCondition() const;
 
@@ -625,7 +629,7 @@ class FunctionCallInstruction : public Instruction {
      * @param dst The destination value of the instruction.
      * @throws std::logic_error if `args` or `dst` is null.
      */
-    FunctionCallInstruction(
+    explicit FunctionCallInstruction(
         std::string_view functionIdentifier,
         std::unique_ptr<std::vector<std::unique_ptr<Value>>> args,
         std::unique_ptr<Value> dst);
@@ -713,7 +717,7 @@ class FunctionDefinition : public TopLevel {
      * @param functionBody The function body of the function definition.
      * @throws std::logic_error if `parameters` or `functionBody` is null.
      */
-    FunctionDefinition(
+    explicit FunctionDefinition(
         std::string_view functionIdentifier, bool global,
         std::unique_ptr<std::vector<std::string>> parameters,
         std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
@@ -767,9 +771,9 @@ class StaticVariable : public TopLevel {
      * @param staticInit The static initialization of the static variable.
      * @throws std::logic_error if `type` or `staticInit` is null.
      */
-    StaticVariable(std::string_view identifier, bool global,
-                   std::unique_ptr<AST::Type> type,
-                   std::unique_ptr<AST::StaticInit> staticInit);
+    explicit StaticVariable(std::string_view identifier, bool global,
+                            std::unique_ptr<AST::Type> type,
+                            std::unique_ptr<AST::StaticInit> staticInit);
 
     [[nodiscard]] const std::string &getIdentifier() const;
 

@@ -5,11 +5,24 @@
 
 namespace AST {
 ConstantExpression::ConstantExpression(std::unique_ptr<Constant> constant)
-    : constant(std::move(constant)) {}
+    : constant(std::move(constant)) {
+    if (!this->constant) {
+        throw std::logic_error(
+            "Creating ConstantExpression with null constant");
+    }
+}
 
 ConstantExpression::ConstantExpression(std::unique_ptr<Constant> constant,
                                        std::unique_ptr<Type> expType)
-    : constant(std::move(constant)), expType(std::move(expType)) {}
+    : constant(std::move(constant)), expType(std::move(expType)) {
+    if (!this->constant) {
+        throw std::logic_error(
+            "Creating ConstantExpression with null constant");
+    }
+    if (!this->expType) {
+        throw std::logic_error("Creating ConstantExpression with null expType");
+    }
+}
 
 void ConstantExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -18,7 +31,7 @@ Constant *ConstantExpression::getConstant() const { return constant.get(); }
 Type *ConstantExpression::getExpType() const { return expType.get(); }
 
 void ConstantExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 std::variant<int, long, unsigned int, unsigned long>
@@ -49,7 +62,11 @@ VariableExpression::VariableExpression(std::string_view identifier)
 
 VariableExpression::VariableExpression(std::string_view identifier,
                                        std::unique_ptr<Type> expType)
-    : identifier(identifier), expType(std::move(expType)) {}
+    : identifier(identifier), expType(std::move(expType)) {
+    if (!this->expType) {
+        throw std::logic_error("Creating VariableExpression with null expType");
+    }
+}
 
 void VariableExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -64,18 +81,35 @@ void VariableExpression::setIdentifier(std::string_view newIdentifier) {
 Type *VariableExpression::getExpType() const { return expType.get(); }
 
 void VariableExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 CastExpression::CastExpression(std::unique_ptr<Type> targetType,
                                std::unique_ptr<Expression> expr)
-    : targetType(std::move(targetType)), expr(std::move(expr)) {}
+    : targetType(std::move(targetType)), expr(std::move(expr)) {
+    if (!this->targetType) {
+        throw std::logic_error("Creating CastExpression with null targetType");
+    }
+    if (!this->expr) {
+        throw std::logic_error("Creating CastExpression with null expr");
+    }
+}
 
 CastExpression::CastExpression(std::unique_ptr<Type> targetType,
                                std::unique_ptr<Expression> expr,
                                std::unique_ptr<Type> expType)
     : targetType(std::move(targetType)), expr(std::move(expr)),
-      expType(std::move(expType)) {}
+      expType(std::move(expType)) {
+    if (!this->targetType) {
+        throw std::logic_error("Creating CastExpression with null targetType");
+    }
+    if (!this->expr) {
+        throw std::logic_error("Creating CastExpression with null expr");
+    }
+    if (!this->expType) {
+        throw std::logic_error("Creating CastExpression with null expType");
+    }
+}
 
 void CastExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -86,11 +120,12 @@ Expression *CastExpression::getExpression() const { return expr.get(); }
 Type *CastExpression::getExpType() const { return expType.get(); }
 
 void CastExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 UnaryExpression::UnaryExpression(std::string_view opInStr,
-                                 std::unique_ptr<Expression> expr) {
+                                 std::unique_ptr<Expression> expr)
+    : expr(std::move(expr)) {
     if (opInStr == "-") {
         op = std::make_unique<NegateOperator>();
     }
@@ -104,16 +139,15 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
         throw std::invalid_argument(
             "Invalid unary operator in unary expression");
     }
-    if (!expr) {
+    if (!this->expr) {
         throw std::logic_error("Null expression in unary expression");
     }
-    this->expr = std::move(expr);
 }
 
 UnaryExpression::UnaryExpression(std::string_view opInStr,
                                  std::unique_ptr<Expression> expr,
                                  std::unique_ptr<Type> expType)
-    : expType(std::move(expType)) {
+    : expr(std::move(expr)), expType(std::move(expType)) {
     if (opInStr == "-") {
         op = std::make_unique<NegateOperator>();
     }
@@ -127,20 +161,39 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
         throw std::invalid_argument(
             "Invalid unary operator in unary expression");
     }
-    if (!expr) {
+    if (!this->expr) {
         throw std::logic_error("Null expression in unary expression");
     }
-    this->expr = std::move(expr);
+    if (!this->expType) {
+        throw std::logic_error("Null expression type in unary expression");
+    }
 }
 
 UnaryExpression::UnaryExpression(std::unique_ptr<UnaryOperator> op,
                                  std::unique_ptr<Expression> expr)
-    : op(std::move(op)), expr(std::move(expr)) {}
+    : op(std::move(op)), expr(std::move(expr)) {
+    if (!this->op) {
+        throw std::logic_error("Null operator in unary expression");
+    }
+    if (!this->expr) {
+        throw std::logic_error("Null expression in unary expression");
+    }
+}
 
 UnaryExpression::UnaryExpression(std::unique_ptr<UnaryOperator> op,
                                  std::unique_ptr<Expression> expr,
                                  std::unique_ptr<Type> expType)
-    : op(std::move(op)), expr(std::move(expr)), expType(std::move(expType)) {}
+    : op(std::move(op)), expr(std::move(expr)), expType(std::move(expType)) {
+    if (!this->op) {
+        throw std::logic_error("Null operator in unary expression");
+    }
+    if (!this->expr) {
+        throw std::logic_error("Null expression in unary expression");
+    }
+    if (!this->expType) {
+        throw std::logic_error("Null expression type in unary expression");
+    }
+}
 
 void UnaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -151,7 +204,7 @@ Expression *UnaryExpression::getExpression() const { return expr.get(); }
 Type *UnaryExpression::getExpType() const { return expType.get(); }
 
 void UnaryExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
@@ -200,6 +253,12 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
     else {
         throw std::invalid_argument(
             "Invalid binary operator in binary expression");
+    }
+    if (!this->left) {
+        throw std::logic_error("Creating BinaryExpression with null left");
+    }
+    if (!this->right) {
+        throw std::logic_error("Creating BinaryExpression with null right");
     }
 }
 
@@ -252,55 +311,105 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
         throw std::invalid_argument(
             "Invalid binary operator in binary expression");
     }
+    if (!this->left) {
+        throw std::logic_error("Creating BinaryExpression with null left");
+    }
+    if (!this->right) {
+        throw std::logic_error("Creating BinaryExpression with null right");
+    }
+    if (!this->expType) {
+        throw std::logic_error("Creating BinaryExpression with null expType");
+    }
 }
 
 BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
                                    std::unique_ptr<BinaryOperator> op,
                                    std::unique_ptr<Expression> right)
-    : left(std::move(left)), op(std::move(op)), right(std::move(right)) {}
+    : left(std::move(left)), op(std::move(op)), right(std::move(right)) {
+    if (!this->left) {
+        throw std::logic_error("Creating BinaryExpression with null left");
+    }
+    if (!this->op) {
+        throw std::logic_error("Creating BinaryExpression with null op");
+    }
+    if (!this->right) {
+        throw std::logic_error("Creating BinaryExpression with null right");
+    }
+}
 
 BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
                                    std::unique_ptr<BinaryOperator> op,
                                    std::unique_ptr<Expression> right,
                                    std::unique_ptr<Type> expType)
     : left(std::move(left)), op(std::move(op)), right(std::move(right)),
-      expType(std::move(expType)) {}
+      expType(std::move(expType)) {
+    if (!this->left) {
+        throw std::logic_error("Creating BinaryExpression with null left");
+    }
+    if (!this->op) {
+        throw std::logic_error("Creating BinaryExpression with null op");
+    }
+    if (!this->right) {
+        throw std::logic_error("Creating BinaryExpression with null right");
+    }
+    if (!this->expType) {
+        throw std::logic_error("Creating BinaryExpression with null expType");
+    }
+}
 
 void BinaryExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
 Expression *BinaryExpression::getLeft() const { return left.get(); }
 
 void BinaryExpression::setLeft(std::unique_ptr<Expression> newLeft) {
-    this->left = std::move(newLeft);
+    left = std::move(newLeft);
 }
 
 BinaryOperator *BinaryExpression::getOperator() const { return op.get(); }
 
 void BinaryExpression::setOperator(std::unique_ptr<BinaryOperator> newOp) {
-    this->op = std::move(newOp);
+    op = std::move(newOp);
 }
 
 Expression *BinaryExpression::getRight() const { return right.get(); }
 
 void BinaryExpression::setRight(std::unique_ptr<Expression> newRight) {
-    this->right = std::move(newRight);
+    right = std::move(newRight);
 }
 
 Type *BinaryExpression::getExpType() const { return expType.get(); }
 
 void BinaryExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 AssignmentExpression::AssignmentExpression(std::unique_ptr<Expression> left,
                                            std::unique_ptr<Expression> right)
-    : left(std::move(left)), right(std::move(right)) {}
+    : left(std::move(left)), right(std::move(right)) {
+    if (!this->left) {
+        throw std::logic_error("Creating AssignmentExpression with null left");
+    }
+    if (!this->right) {
+        throw std::logic_error("Creating AssignmentExpression with null right");
+    }
+}
 
 AssignmentExpression::AssignmentExpression(std::unique_ptr<Expression> left,
                                            std::unique_ptr<Expression> right,
                                            std::unique_ptr<Type> expType)
     : left(std::move(left)), right(std::move(right)),
-      expType(std::move(expType)) {}
+      expType(std::move(expType)) {
+    if (!this->left) {
+        throw std::logic_error("Creating AssignmentExpression with null left");
+    }
+    if (!this->right) {
+        throw std::logic_error("Creating AssignmentExpression with null right");
+    }
+    if (!this->expType) {
+        throw std::logic_error(
+            "Creating AssignmentExpression with null expType");
+    }
+}
 
 void AssignmentExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -309,17 +418,17 @@ Expression *AssignmentExpression::getLeft() const { return left.get(); }
 Expression *AssignmentExpression::getRight() const { return right.get(); }
 
 void AssignmentExpression::setLeft(std::unique_ptr<Expression> newLeft) {
-    this->left = std::move(newLeft);
+    left = std::move(newLeft);
 }
 
 void AssignmentExpression::setRight(std::unique_ptr<Expression> newRight) {
-    this->right = std::move(newRight);
+    right = std::move(newRight);
 }
 
 Type *AssignmentExpression::getExpType() const { return expType.get(); }
 
 void AssignmentExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 ConditionalExpression::ConditionalExpression(
@@ -328,7 +437,20 @@ ConditionalExpression::ConditionalExpression(
     std::unique_ptr<Expression> elseExpression)
     : condition(std::move(condition)),
       thenExpression(std::move(thenExpression)),
-      elseExpression(std::move(elseExpression)) {}
+      elseExpression(std::move(elseExpression)) {
+    if (!this->condition) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null condition");
+    }
+    if (!this->thenExpression) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null thenExpression");
+    }
+    if (!this->elseExpression) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null elseExpression");
+    }
+}
 
 ConditionalExpression::ConditionalExpression(
     std::unique_ptr<Expression> condition,
@@ -336,7 +458,24 @@ ConditionalExpression::ConditionalExpression(
     std::unique_ptr<Expression> elseExpression, std::unique_ptr<Type> expType)
     : condition(std::move(condition)),
       thenExpression(std::move(thenExpression)),
-      elseExpression(std::move(elseExpression)), expType(std::move(expType)) {}
+      elseExpression(std::move(elseExpression)), expType(std::move(expType)) {
+    if (!this->condition) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null condition");
+    }
+    if (!this->thenExpression) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null thenExpression");
+    }
+    if (!this->elseExpression) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null elseExpression");
+    }
+    if (!this->expType) {
+        throw std::logic_error(
+            "Creating ConditionalExpression with null expType");
+    }
+}
 
 void ConditionalExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -346,7 +485,7 @@ Expression *ConditionalExpression::getCondition() const {
 
 void ConditionalExpression::setCondition(
     std::unique_ptr<Expression> newCondition) {
-    this->condition = std::move(newCondition);
+    condition = std::move(newCondition);
 }
 
 Expression *ConditionalExpression::getThenExpression() const {
@@ -355,7 +494,7 @@ Expression *ConditionalExpression::getThenExpression() const {
 
 void ConditionalExpression::setThenExpression(
     std::unique_ptr<Expression> newThenExpression) {
-    this->thenExpression = std::move(newThenExpression);
+    thenExpression = std::move(newThenExpression);
 }
 
 Expression *ConditionalExpression::getElseExpression() const {
@@ -364,26 +503,40 @@ Expression *ConditionalExpression::getElseExpression() const {
 
 void ConditionalExpression::setElseExpression(
     std::unique_ptr<Expression> newElseExpression) {
-    this->elseExpression = std::move(newElseExpression);
+    elseExpression = std::move(newElseExpression);
 }
 
 Type *ConditionalExpression::getExpType() const { return expType.get(); }
 
 void ConditionalExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 
 FunctionCallExpression::FunctionCallExpression(
     std::string_view identifier,
     std::unique_ptr<std::vector<std::unique_ptr<Expression>>> arguments)
-    : identifier(identifier), arguments(std::move(arguments)) {}
+    : identifier(identifier), arguments(std::move(arguments)) {
+    if (!this->arguments) {
+        throw std::logic_error(
+            "Creating FunctionCallExpression with null arguments");
+    }
+}
 
 FunctionCallExpression::FunctionCallExpression(
     std::string_view identifier,
     std::unique_ptr<std::vector<std::unique_ptr<Expression>>> arguments,
     std::unique_ptr<Type> expType)
     : identifier(identifier), arguments(std::move(arguments)),
-      expType(std::move(expType)) {}
+      expType(std::move(expType)) {
+    if (!this->arguments) {
+        throw std::logic_error(
+            "Creating FunctionCallExpression with null arguments");
+    }
+    if (!this->expType) {
+        throw std::logic_error(
+            "Creating FunctionCallExpression with null expType");
+    }
+}
 
 void FunctionCallExpression::accept(Visitor &visitor) { visitor.visit(*this); }
 
@@ -402,12 +555,12 @@ FunctionCallExpression::getArguments() const {
 
 void FunctionCallExpression::setArguments(
     std::unique_ptr<std::vector<std::unique_ptr<Expression>>> newArguments) {
-    this->arguments = std::move(newArguments);
+    arguments = std::move(newArguments);
 }
 
 Type *FunctionCallExpression::getExpType() const { return expType.get(); }
 
 void FunctionCallExpression::setExpType(std::unique_ptr<Type> newExpType) {
-    this->expType = std::move(newExpType);
+    expType = std::move(newExpType);
 }
 } // Namespace AST

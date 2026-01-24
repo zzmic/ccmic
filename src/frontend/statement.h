@@ -201,7 +201,7 @@ class ContinueStatement : public Statement {
     /**
      * Constructor for the continue-statement class.
      */
-    constexpr ContinueStatement() : label("") {}
+    explicit ContinueStatement() : label("") {}
 
     void accept(Visitor &visitor) override;
 

@@ -7,6 +7,7 @@
 #include "program.h"
 #include "statement.h"
 #include "type.h"
+#include <stdexcept>
 #include <unordered_map>
 #include <variant>
 
@@ -57,7 +58,7 @@ class MapEntry {
     /**
      * Constructor for the map entry class.
      */
-    constexpr MapEntry() = default;
+    constexpr explicit MapEntry() = default;
 
     /**
      * Constructor for the map entry class with parameters.
@@ -66,8 +67,8 @@ class MapEntry {
      * @param fromCurrentScope Whether the identifier is from the current scope.
      * @param hasLinkage Whether the identifier has linkage.
      */
-    explicit MapEntry(std::string newName, bool fromCurrentScope,
-                      bool hasLinkage)
+    constexpr explicit MapEntry(std::string newName, bool fromCurrentScope,
+                                bool hasLinkage)
         : newName(newName), fromCurrentScope(fromCurrentScope),
           hasLinkage(hasLinkage) {}
 
@@ -264,7 +265,7 @@ class IntInit : public StaticInit {
      *
      * @param value The integer value of the static initializer.
      */
-    constexpr IntInit(int value) : value(value) {}
+    constexpr explicit IntInit(int value) : value(value) {}
 
     std::variant<int, long, unsigned int, unsigned long>
     getValue() const override {
@@ -285,7 +286,7 @@ class LongInit : public StaticInit {
      *
      * @param value The long value of the static initializer.
      */
-    constexpr LongInit(long value) : value(value) {}
+    constexpr explicit LongInit(long value) : value(value) {}
 
     std::variant<int, long, unsigned int, unsigned long>
     getValue() const override {
@@ -306,7 +307,7 @@ class UIntInit : public StaticInit {
      *
      * @param value The unsigned integer value of the static initializer.
      */
-    constexpr UIntInit(unsigned int value) : value(value) {}
+    constexpr explicit UIntInit(unsigned int value) : value(value) {}
 
     std::variant<int, long, unsigned int, unsigned long>
     getValue() const override {
@@ -327,7 +328,7 @@ class ULongInit : public StaticInit {
      *
      * @param value The unsigned long value of the static initializer.
      */
-    constexpr ULongInit(unsigned long value) : value(value) {}
+    constexpr explicit ULongInit(unsigned long value) : value(value) {}
 
     std::variant<int, long, unsigned int, unsigned long>
     getValue() const override {
@@ -392,14 +393,16 @@ class Initial : public InitialValue {
      *
      * @param value The `int` value of the static initializer.
      */
-    Initial(int value) : staticInit(std::make_unique<IntInit>(value)) {}
+    explicit Initial(int value)
+        : staticInit(std::make_unique<IntInit>(value)) {}
 
     /**
      * Constructor for the initial class with a `long` static initializer.
      *
      * @param value The `long` value of the static initializer.
      */
-    Initial(long value) : staticInit(std::make_unique<LongInit>(value)) {}
+    explicit Initial(long value)
+        : staticInit(std::make_unique<LongInit>(value)) {}
 
     /**
      * Constructor for the initial class with an `unsigned int` static
@@ -407,7 +410,7 @@ class Initial : public InitialValue {
      *
      * @param value The `unsigned int` value of the static initializer.
      */
-    Initial(unsigned int value)
+    explicit Initial(unsigned int value)
         : staticInit(std::make_unique<UIntInit>(value)) {}
 
     /**
@@ -416,7 +419,7 @@ class Initial : public InitialValue {
      *
      * @param value The `unsigned long` value of the static initializer.
      */
-    Initial(unsigned long value)
+    explicit Initial(unsigned long value)
         : staticInit(std::make_unique<ULongInit>(value)) {}
 
     /**
@@ -425,7 +428,11 @@ class Initial : public InitialValue {
      * @param staticInit The static initializer.
      */
     explicit Initial(std::unique_ptr<StaticInit> staticInit)
-        : staticInit(std::move(staticInit)) {}
+        : staticInit(std::move(staticInit)) {
+        if (!this->staticInit) {
+            throw std::logic_error("Creating Initial with null staticInit");
+        }
+    }
 
     StaticInit *getStaticInit() const { return staticInit.get(); }
 
@@ -519,8 +526,14 @@ class StaticAttribute : public IdentifierAttribute {
      * @param initialValue The initial value of the static variable.
      * @param global Whether the static variable is global.
      */
-    StaticAttribute(std::unique_ptr<InitialValue> initialValue, bool global)
-        : initialValue(std::move(initialValue)), global(global) {}
+    explicit StaticAttribute(std::unique_ptr<InitialValue> initialValue,
+                             bool global)
+        : initialValue(std::move(initialValue)), global(global) {
+        if (!this->initialValue) {
+            throw std::logic_error(
+                "Creating StaticAttribute with null initialValue");
+        }
+    }
 
     InitialValue *getInitialValue() { return initialValue.get(); }
 

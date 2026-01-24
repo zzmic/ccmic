@@ -1,8 +1,13 @@
 #include "forInit.h"
+#include <stdexcept>
 
 namespace AST {
 InitDecl::InitDecl(std::unique_ptr<VariableDeclaration> decl)
-    : decl(std::move(decl)) {}
+    : decl(std::move(decl)) {
+    if (!this->decl) {
+        throw std::logic_error("Creating InitDecl with null decl");
+    }
+}
 
 void InitDecl::accept(Visitor &visitor) { visitor.visit(*this); }
 

@@ -342,7 +342,7 @@ int IdentifierResolutionPass::resolveProgram(Program &program) {
         }
     }
 
-    return this->variableResolutionCounter;
+    return variableResolutionCounter;
 }
 
 std::unordered_map<std::string, MapEntry>
@@ -361,7 +361,7 @@ IdentifierResolutionPass::copyIdentifierMap(
 std::string IdentifierResolutionPass::generateUniqueVariableName(
     const std::string &identifier) {
     // Return the string representation of the (unique) variable name.
-    return identifier + "." + std::to_string(this->variableResolutionCounter++);
+    return identifier + "." + std::to_string(variableResolutionCounter++);
 }
 
 void IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
@@ -1386,7 +1386,7 @@ void LoopLabelingPass::labelLoops(Program &program) {
 
 std::string LoopLabelingPass::generateLoopLabel() {
     // Return a new label with the current counter value.
-    return "loop" + std::to_string(this->loopLabelingCounter++);
+    return "loop" + std::to_string(loopLabelingCounter++);
 }
 
 void LoopLabelingPass::annotateStatement(Statement *statement,

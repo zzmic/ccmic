@@ -21,7 +21,7 @@ class ConstantInt : public Constant {
      *
      * @param value The integer value of the constant.
      */
-    constexpr ConstantInt(int value) : value(value) {}
+    constexpr explicit ConstantInt(int value) : value(value) {}
 
     void accept(Visitor &visitor) override;
 
@@ -44,7 +44,7 @@ class ConstantLong : public Constant {
      *
      * @param value The long value of the constant.
      */
-    constexpr ConstantLong(long value) : value(value) {}
+    constexpr explicit ConstantLong(long value) : value(value) {}
 
     void accept(Visitor &visitor) override;
 
@@ -67,7 +67,7 @@ class ConstantUInt : public Constant {
      *
      * @param value The unsigned integer value of the constant.
      */
-    constexpr ConstantUInt(unsigned int value) : value(value) {}
+    constexpr explicit ConstantUInt(unsigned int value) : value(value) {}
 
     void accept(Visitor &visitor) override;
 
@@ -87,7 +87,7 @@ class ConstantULong : public Constant {
      *
      * @param value The unsigned long value of the constant.
      */
-    constexpr ConstantULong(unsigned long value) : value(value) {}
+    constexpr explicit ConstantULong(unsigned long value) : value(value) {}
 
     void accept(Visitor &visitor) override;
 

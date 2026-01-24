@@ -4,6 +4,7 @@
 #include "../frontend/frontendSymbolTable.h"
 #include "assembly.h"
 #include <memory>
+#include <stdexcept>
 #include <unordered_map>
 #include <variant>
 
@@ -60,7 +61,11 @@ class ObjEntry : public BackendSymbolTableEntry {
      * @param isStatic Whether the object is static.
      */
     explicit ObjEntry(std::unique_ptr<AssemblyType> assemblyType, bool isStatic)
-        : assemblyType(std::move(assemblyType)), isStatic(isStatic) {}
+        : assemblyType(std::move(assemblyType)), isStatic(isStatic) {
+        if (!this->assemblyType) {
+            throw std::logic_error("Creating ObjEntry with null assemblyType");
+        }
+    }
 
     /**
      * Get the assembly type of the object.

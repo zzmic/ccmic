@@ -17,7 +17,7 @@ void ConstantValue::setASTConstant(
     if (!newAstConstant) {
         throw std::logic_error("Setting ConstantValue astConstant to null");
     }
-    this->astConstant = std::move(newAstConstant);
+    astConstant = std::move(newAstConstant);
 }
 
 VariableValue::VariableValue(std::string_view identifier)
@@ -26,7 +26,7 @@ VariableValue::VariableValue(std::string_view identifier)
 const std::string &VariableValue::getIdentifier() const { return identifier; }
 
 void VariableValue::setIdentifier(std::string_view newIdentifier) {
-    this->identifier = newIdentifier;
+    identifier = newIdentifier;
 }
 
 ReturnInstruction::ReturnInstruction(std::unique_ptr<Value> returnValue)
@@ -43,7 +43,7 @@ void ReturnInstruction::setReturnValue(std::unique_ptr<Value> newReturnValue) {
     if (!newReturnValue) {
         throw std::logic_error("Setting ReturnInstruction returnValue to null");
     }
-    this->returnValue = std::move(newReturnValue);
+    returnValue = std::move(newReturnValue);
 }
 
 SignExtendInstruction::SignExtendInstruction(std::unique_ptr<Value> src,
@@ -65,14 +65,14 @@ void SignExtendInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
         throw std::logic_error("Setting SignExtendInstruction src to null");
     }
-    this->src = std::move(newSrc);
+    src = std::move(newSrc);
 }
 
 void SignExtendInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting SignExtendInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 TruncateInstruction::TruncateInstruction(std::unique_ptr<Value> src,
@@ -94,14 +94,14 @@ void TruncateInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
         throw std::logic_error("Setting TruncateInstruction src to null");
     }
-    this->src = std::move(newSrc);
+    src = std::move(newSrc);
 }
 
 void TruncateInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting TruncateInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 ZeroExtendInstruction::ZeroExtendInstruction(std::unique_ptr<Value> src,
@@ -109,6 +109,9 @@ ZeroExtendInstruction::ZeroExtendInstruction(std::unique_ptr<Value> src,
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
         throw std::logic_error("Creating ZeroExtendInstruction with null src");
+    }
+    if (!this->dst) {
+        throw std::logic_error("Creating ZeroExtendInstruction with null dst");
     }
 }
 
@@ -120,14 +123,14 @@ void ZeroExtendInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
         throw std::logic_error("Setting ZeroExtendInstruction src to null");
     }
-    this->src = std::move(newSrc);
+    src = std::move(newSrc);
 }
 
 void ZeroExtendInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting ZeroExtendInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 UnaryInstruction::UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
@@ -161,21 +164,21 @@ void UnaryInstruction::setUnaryOperator(
         throw std::logic_error(
             "Setting UnaryInstruction unaryOperator to null");
     }
-    this->unaryOperator = std::move(newUnaryOperator);
+    unaryOperator = std::move(newUnaryOperator);
 }
 
 void UnaryInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
         throw std::logic_error("Setting UnaryInstruction src to null");
     }
-    this->src = std::move(newSrc);
+    src = std::move(newSrc);
 }
 
 void UnaryInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting UnaryInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 BinaryInstruction::BinaryInstruction(
@@ -214,28 +217,28 @@ void BinaryInstruction::setBinaryOperator(
         throw std::logic_error(
             "Setting BinaryInstruction binaryOperator to null");
     }
-    this->binaryOperator = std::move(newBinaryOperator);
+    binaryOperator = std::move(newBinaryOperator);
 }
 
 void BinaryInstruction::setSrc1(std::unique_ptr<Value> newSrc1) {
     if (!newSrc1) {
         throw std::logic_error("Setting BinaryInstruction src1 to null");
     }
-    this->src1 = std::move(newSrc1);
+    src1 = std::move(newSrc1);
 }
 
 void BinaryInstruction::setSrc2(std::unique_ptr<Value> newSrc2) {
     if (!newSrc2) {
         throw std::logic_error("Setting BinaryInstruction src2 to null");
     }
-    this->src2 = std::move(newSrc2);
+    src2 = std::move(newSrc2);
 }
 
 void BinaryInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting BinaryInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 CopyInstruction::CopyInstruction(std::unique_ptr<Value> src,
@@ -257,14 +260,14 @@ void CopyInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
         throw std::logic_error("Setting CopyInstruction src to null");
     }
-    this->src = std::move(newSrc);
+    src = std::move(newSrc);
 }
 
 void CopyInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting CopyInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 JumpInstruction::JumpInstruction(std::string_view target) : target(target) {}
@@ -272,7 +275,7 @@ JumpInstruction::JumpInstruction(std::string_view target) : target(target) {}
 const std::string &JumpInstruction::getTarget() const { return target; }
 
 void JumpInstruction::setTarget(std::string_view newTarget) {
-    this->target = newTarget;
+    target = newTarget;
 }
 
 JumpIfZeroInstruction::JumpIfZeroInstruction(std::unique_ptr<Value> condition,
@@ -293,11 +296,11 @@ void JumpIfZeroInstruction::setCondition(std::unique_ptr<Value> newCondition) {
         throw std::logic_error(
             "Setting JumpIfZeroInstruction condition to null");
     }
-    this->condition = std::move(newCondition);
+    condition = std::move(newCondition);
 }
 
 void JumpIfZeroInstruction::setTarget(std::string_view newTarget) {
-    this->target = newTarget;
+    target = newTarget;
 }
 
 JumpIfNotZeroInstruction::JumpIfNotZeroInstruction(
@@ -323,20 +326,18 @@ void JumpIfNotZeroInstruction::setCondition(
         throw std::logic_error(
             "Setting JumpIfNotZeroInstruction condition to null");
     }
-    this->condition = std::move(newCondition);
+    condition = std::move(newCondition);
 }
 
 void JumpIfNotZeroInstruction::setTarget(std::string_view newTarget) {
-    this->target = newTarget;
+    target = newTarget;
 }
 
 LabelInstruction::LabelInstruction(std::string_view label) : label(label) {}
 
 const std::string &LabelInstruction::getLabel() const { return label; }
 
-void LabelInstruction::setLabel(std::string_view newLabel) {
-    this->label = newLabel;
-}
+void LabelInstruction::setLabel(std::string_view newLabel) { label = newLabel; }
 
 FunctionCallInstruction::FunctionCallInstruction(
     std::string_view functionIdentifier,
@@ -367,7 +368,7 @@ Value *FunctionCallInstruction::getDst() const { return dst.get(); }
 
 void FunctionCallInstruction::setFunctionIdentifier(
     std::string_view newFunctionIdentifier) {
-    this->functionIdentifier = newFunctionIdentifier;
+    functionIdentifier = newFunctionIdentifier;
 }
 
 void FunctionCallInstruction::setArgs(
@@ -375,14 +376,14 @@ void FunctionCallInstruction::setArgs(
     if (!newArgs) {
         throw std::logic_error("Setting FunctionCallInstruction args to null");
     }
-    this->args = std::move(newArgs);
+    args = std::move(newArgs);
 }
 
 void FunctionCallInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
         throw std::logic_error("Setting FunctionCallInstruction dst to null");
     }
-    this->dst = std::move(newDst);
+    dst = std::move(newDst);
 }
 
 FunctionDefinition::FunctionDefinition(
@@ -424,7 +425,7 @@ void FunctionDefinition::setFunctionBody(
         throw std::logic_error(
             "Setting FunctionDefinition functionBody to null");
     }
-    this->functionBody = std::move(newFunctionBody);
+    functionBody = std::move(newFunctionBody);
 }
 
 StaticVariable::StaticVariable(std::string_view identifier, bool global,

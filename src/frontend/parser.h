@@ -23,7 +23,7 @@ class Parser {
      *
      * @param tokens A vector of tokens to be parsed.
      */
-    Parser(const std::vector<Token> &tokens);
+    explicit Parser(const std::vector<Token> &tokens);
 
     /**
      * Parse the tokens and return the root of the AST (`Program` node).
