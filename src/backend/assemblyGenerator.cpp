@@ -31,10 +31,13 @@ bool isSignedType(const IR::Value *irValue,
                    dynamic_cast<const AST::LongType *>(varType);
         }
         throw std::logic_error(
-            "Identifier not found in frontend symbol table: " +
+            "Identifier not found in frontend symbol table in isSignedType: " +
             varVal->getIdentifier());
     }
-    throw std::logic_error("Unsupported IR value type for signedness check");
+    const auto &r = *irValue;
+    throw std::logic_error("Unsupported IR value type for signedness check in "
+                           "isSignedType: " +
+                           std::string(typeid(r).name()));
 }
 } // namespace
 
@@ -62,7 +65,10 @@ AssemblyGenerator::generateAssembly(const IR::Program &irProgram) {
             assyTopLevels->emplace_back(std::move(assyFunctionDefinition));
         }
         else {
-            throw std::logic_error("Unsupported top-level element");
+            const auto &r = *irTopLevel;
+            throw std::logic_error("Unsupported top-level element in "
+                                   "generateAssembly in AssemblyGenerator: " +
+                                   std::string(typeid(r).name()));
         }
     }
 
@@ -184,7 +190,11 @@ AssemblyGenerator::convertIRStaticVariableToAssy(
                                                 std::move(assyInit));
     }
     else {
-        throw std::logic_error("Unsupported static initializer type");
+        const auto &r = *staticInit;
+        throw std::logic_error(
+            "Unsupported static initializer type in "
+            "convertIRStaticVariableToAssy in AssemblyGenerator: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -247,7 +257,11 @@ void AssemblyGenerator::convertIRInstructionToAssy(
         convertIRZeroExtendInstructionToAssy(*zeroExtendInstr, instructions);
     }
     else {
-        throw std::logic_error("Unsupported IR instruction type");
+        const auto &r = *&irInstruction;
+        throw std::logic_error(
+            "Unsupported IR instruction type in convertIRInstructionToAssy in "
+            "AssemblyGenerator: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -542,7 +556,11 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
         }
     }
     else {
-        throw std::logic_error("Unsupported IR binary operator type");
+        const auto &r = *binaryIROperator;
+        throw std::logic_error(
+            "Unsupported IR binary operator type in "
+            "convertIRBinaryInstructionToAssy in AssemblyGenerator: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -742,7 +760,10 @@ AssemblyGenerator::convertValue(const IR::Value *irValue) {
                 constULong->getValue());
         }
         else {
-            throw std::logic_error("Unsupported constant type");
+            const auto &r = *constantVal->getASTConstant();
+            throw std::logic_error("Unsupported constant type in convertValue "
+                                   "in AssemblyGenerator: " +
+                                   std::string(typeid(r).name()));
         }
     }
     else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
@@ -750,7 +771,9 @@ AssemblyGenerator::convertValue(const IR::Value *irValue) {
             varVal->getIdentifier());
     }
     else {
-        throw std::logic_error("Unsupported IR value type");
+        throw std::logic_error(
+            "Unsupported IR value type in convertValue in AssemblyGenerator: " +
+            std::string(typeid(*irValue).name()));
     }
 }
 
@@ -811,8 +834,11 @@ AssemblyGenerator::determineAssemblyType(const IR::Value *irValue) {
             return std::make_unique<Assembly::Quadword>();
         }
         else {
+            const auto &r = *constantVal->getASTConstant();
             throw std::logic_error(
-                "Unsupported constant type for assembly type determination");
+                "Unsupported constant type in determineAssemblyType in "
+                "AssemblyGenerator: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
@@ -824,19 +850,24 @@ AssemblyGenerator::determineAssemblyType(const IR::Value *irValue) {
         }
         // If not found in (frontend) symbol table, throw an error.
         throw std::logic_error(
-            "Identifier not found in frontend symbol table: " +
+            "Identifier not found in frontend symbol table in "
+            "determineAssemblyType in AssemblyGenerator: " +
             varVal->getIdentifier());
     }
     else {
-        throw std::logic_error(
-            "Unsupported IR value type for assembly value type conversion");
+        const auto &r = *irValue;
+        throw std::logic_error("Unsupported IR value type in "
+                               "determineAssemblyType in AssemblyGenerator: " +
+                               std::string(typeid(r).name()));
     }
 }
 
 std::unique_ptr<Assembly::AssemblyType>
 AssemblyGenerator::convertASTTypeToAssemblyType(const AST::Type *astType) {
     if (!astType) {
-        throw std::logic_error("AST type is null");
+        throw std::logic_error(
+            "AST type is null in convertASTTypeToAssemblyType in "
+            "AssemblyGenerator");
     }
     if (*astType == AST::IntType() || *astType == AST::UIntType()) {
         return std::make_unique<Assembly::Longword>();
@@ -845,8 +876,11 @@ AssemblyGenerator::convertASTTypeToAssemblyType(const AST::Type *astType) {
         return std::make_unique<Assembly::Quadword>();
     }
     else {
+        const auto &r = *astType;
         throw std::logic_error(
-            "Unsupported AST type for assembly value type conversion");
+            "Unsupported AST type in convertASTTypeToAssemblyType in "
+            "AssemblyGenerator: " +
+            std::string(typeid(r).name()));
     }
 }
 

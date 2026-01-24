@@ -4,7 +4,8 @@ namespace IR {
 ConstantValue::ConstantValue(std::unique_ptr<AST::Constant> astConstant)
     : astConstant(std::move(astConstant)) {
     if (!this->astConstant) {
-        throw std::logic_error("Creating ConstantValue with null astConstant");
+        throw std::logic_error(
+            "Creating ConstantValue with null astConstant in ConstantValue");
     }
 }
 
@@ -15,7 +16,8 @@ const AST::Constant *ConstantValue::getASTConstant() const {
 void ConstantValue::setASTConstant(
     std::unique_ptr<AST::Constant> newAstConstant) {
     if (!newAstConstant) {
-        throw std::logic_error("Setting ConstantValue astConstant to null");
+        throw std::logic_error(
+            "Setting astConstant to null in setASTConstant in ConstantValue");
     }
     astConstant = std::move(newAstConstant);
 }
@@ -32,8 +34,8 @@ void VariableValue::setIdentifier(std::string_view newIdentifier) {
 ReturnInstruction::ReturnInstruction(std::unique_ptr<Value> returnValue)
     : returnValue(std::move(returnValue)) {
     if (!this->returnValue) {
-        throw std::logic_error(
-            "Creating ReturnInstruction with null returnValue");
+        throw std::logic_error("Creating ReturnInstruction with null "
+                               "returnValue in ReturnInstruction");
     }
 }
 
@@ -41,7 +43,8 @@ Value *ReturnInstruction::getReturnValue() const { return returnValue.get(); }
 
 void ReturnInstruction::setReturnValue(std::unique_ptr<Value> newReturnValue) {
     if (!newReturnValue) {
-        throw std::logic_error("Setting ReturnInstruction returnValue to null");
+        throw std::logic_error("Setting returnValue to null in setReturnValue "
+                               "in ReturnInstruction");
     }
     returnValue = std::move(newReturnValue);
 }
@@ -50,10 +53,12 @@ SignExtendInstruction::SignExtendInstruction(std::unique_ptr<Value> src,
                                              std::unique_ptr<Value> dst)
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
-        throw std::logic_error("Creating SignExtendInstruction with null src");
+        throw std::logic_error("Creating SignExtendInstruction with null src "
+                               "in SignExtendInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating SignExtendInstruction with null dst");
+        throw std::logic_error("Creating SignExtendInstruction with null dst "
+                               "in SignExtendInstruction");
     }
 }
 
@@ -63,14 +68,16 @@ Value *SignExtendInstruction::getDst() const { return dst.get(); }
 
 void SignExtendInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
-        throw std::logic_error("Setting SignExtendInstruction src to null");
+        throw std::logic_error(
+            "Setting src to null in setSrc in SignExtendInstruction");
     }
     src = std::move(newSrc);
 }
 
 void SignExtendInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting SignExtendInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in SignExtendInstruction");
     }
     dst = std::move(newDst);
 }
@@ -79,10 +86,12 @@ TruncateInstruction::TruncateInstruction(std::unique_ptr<Value> src,
                                          std::unique_ptr<Value> dst)
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
-        throw std::logic_error("Creating TruncateInstruction with null src");
+        throw std::logic_error("Creating TruncateInstruction with null src in "
+                               "TruncateInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating TruncateInstruction with null dst");
+        throw std::logic_error("Creating TruncateInstruction with null dst in "
+                               "TruncateInstruction");
     }
 }
 
@@ -92,14 +101,16 @@ Value *TruncateInstruction::getDst() const { return dst.get(); }
 
 void TruncateInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
-        throw std::logic_error("Setting TruncateInstruction src to null");
+        throw std::logic_error(
+            "Setting src to null in setSrc in TruncateInstruction");
     }
     src = std::move(newSrc);
 }
 
 void TruncateInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting TruncateInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in TruncateInstruction");
     }
     dst = std::move(newDst);
 }
@@ -108,10 +119,12 @@ ZeroExtendInstruction::ZeroExtendInstruction(std::unique_ptr<Value> src,
                                              std::unique_ptr<Value> dst)
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
-        throw std::logic_error("Creating ZeroExtendInstruction with null src");
+        throw std::logic_error("Creating ZeroExtendInstruction with null src "
+                               "in ZeroExtendInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating ZeroExtendInstruction with null dst");
+        throw std::logic_error("Creating ZeroExtendInstruction with null dst "
+                               "in ZeroExtendInstruction");
     }
 }
 
@@ -121,14 +134,16 @@ Value *ZeroExtendInstruction::getDst() const { return dst.get(); }
 
 void ZeroExtendInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
-        throw std::logic_error("Setting ZeroExtendInstruction src to null");
+        throw std::logic_error(
+            "Setting src to null in setSrc in ZeroExtendInstruction");
     }
     src = std::move(newSrc);
 }
 
 void ZeroExtendInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting ZeroExtendInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in ZeroExtendInstruction");
     }
     dst = std::move(newDst);
 }
@@ -139,14 +154,16 @@ UnaryInstruction::UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
     : unaryOperator(std::move(unaryOperator)), src(std::move(src)),
       dst(std::move(dst)) {
     if (!this->unaryOperator) {
-        throw std::logic_error(
-            "Creating UnaryInstruction with null unaryOperator");
+        throw std::logic_error("Creating UnaryInstruction with null "
+                               "unaryOperator in UnaryInstruction");
     }
     if (!this->src) {
-        throw std::logic_error("Creating UnaryInstruction with null src");
+        throw std::logic_error(
+            "Creating UnaryInstruction with null src in UnaryInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating UnaryInstruction with null dst");
+        throw std::logic_error(
+            "Creating UnaryInstruction with null dst in UnaryInstruction");
     }
 }
 
@@ -161,22 +178,24 @@ Value *UnaryInstruction::getDst() const { return dst.get(); }
 void UnaryInstruction::setUnaryOperator(
     std::unique_ptr<UnaryOperator> newUnaryOperator) {
     if (!newUnaryOperator) {
-        throw std::logic_error(
-            "Setting UnaryInstruction unaryOperator to null");
+        throw std::logic_error("Setting unaryOperator to null in "
+                               "setUnaryOperator in UnaryInstruction");
     }
     unaryOperator = std::move(newUnaryOperator);
 }
 
 void UnaryInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
-        throw std::logic_error("Setting UnaryInstruction src to null");
+        throw std::logic_error(
+            "Setting src to null in setSrc in UnaryInstruction");
     }
     src = std::move(newSrc);
 }
 
 void UnaryInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting UnaryInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in UnaryInstruction");
     }
     dst = std::move(newDst);
 }
@@ -187,17 +206,20 @@ BinaryInstruction::BinaryInstruction(
     : binaryOperator(std::move(binaryOperator)), src1(std::move(src1)),
       src2(std::move(src2)), dst(std::move(dst)) {
     if (!this->binaryOperator) {
-        throw std::logic_error(
-            "Creating BinaryInstruction with null binaryOperator");
+        throw std::logic_error("Creating BinaryInstruction with null "
+                               "binaryOperator in BinaryInstruction");
     }
     if (!this->src1) {
-        throw std::logic_error("Creating BinaryInstruction with null src1");
+        throw std::logic_error(
+            "Creating BinaryInstruction with null src1 in BinaryInstruction");
     }
     if (!this->src2) {
-        throw std::logic_error("Creating BinaryInstruction with null src2");
+        throw std::logic_error(
+            "Creating BinaryInstruction with null src2 in BinaryInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating BinaryInstruction with null dst");
+        throw std::logic_error(
+            "Creating BinaryInstruction with null dst in BinaryInstruction");
     }
 }
 
@@ -214,29 +236,32 @@ Value *BinaryInstruction::getDst() const { return dst.get(); }
 void BinaryInstruction::setBinaryOperator(
     std::unique_ptr<BinaryOperator> newBinaryOperator) {
     if (!newBinaryOperator) {
-        throw std::logic_error(
-            "Setting BinaryInstruction binaryOperator to null");
+        throw std::logic_error("Setting binaryOperator to null in "
+                               "setBinaryOperator in BinaryInstruction");
     }
     binaryOperator = std::move(newBinaryOperator);
 }
 
 void BinaryInstruction::setSrc1(std::unique_ptr<Value> newSrc1) {
     if (!newSrc1) {
-        throw std::logic_error("Setting BinaryInstruction src1 to null");
+        throw std::logic_error(
+            "Setting src1 to null in setSrc1 in BinaryInstruction");
     }
     src1 = std::move(newSrc1);
 }
 
 void BinaryInstruction::setSrc2(std::unique_ptr<Value> newSrc2) {
     if (!newSrc2) {
-        throw std::logic_error("Setting BinaryInstruction src2 to null");
+        throw std::logic_error(
+            "Setting src2 to null in setSrc2 in BinaryInstruction");
     }
     src2 = std::move(newSrc2);
 }
 
 void BinaryInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting BinaryInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in BinaryInstruction");
     }
     dst = std::move(newDst);
 }
@@ -245,10 +270,12 @@ CopyInstruction::CopyInstruction(std::unique_ptr<Value> src,
                                  std::unique_ptr<Value> dst)
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
-        throw std::logic_error("Creating CopyInstruction with null src");
+        throw std::logic_error(
+            "Creating CopyInstruction with null src in CopyInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating CopyInstruction with null dst");
+        throw std::logic_error(
+            "Creating CopyInstruction with null dst in CopyInstruction");
     }
 }
 
@@ -258,14 +285,16 @@ Value *CopyInstruction::getDst() const { return dst.get(); }
 
 void CopyInstruction::setSrc(std::unique_ptr<Value> newSrc) {
     if (!newSrc) {
-        throw std::logic_error("Setting CopyInstruction src to null");
+        throw std::logic_error(
+            "Setting src to null in setSrc in CopyInstruction");
     }
     src = std::move(newSrc);
 }
 
 void CopyInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting CopyInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in CopyInstruction");
     }
     dst = std::move(newDst);
 }
@@ -282,8 +311,8 @@ JumpIfZeroInstruction::JumpIfZeroInstruction(std::unique_ptr<Value> condition,
                                              std::string_view target)
     : condition(std::move(condition)), target(target) {
     if (!this->condition) {
-        throw std::logic_error(
-            "Creating JumpIfZeroInstruction with null condition");
+        throw std::logic_error("Creating JumpIfZeroInstruction with null "
+                               "condition in JumpIfZeroInstruction");
     }
 }
 
@@ -293,8 +322,8 @@ const std::string &JumpIfZeroInstruction::getTarget() const { return target; }
 
 void JumpIfZeroInstruction::setCondition(std::unique_ptr<Value> newCondition) {
     if (!newCondition) {
-        throw std::logic_error(
-            "Setting JumpIfZeroInstruction condition to null");
+        throw std::logic_error("Setting condition to null in setCondition in "
+                               "JumpIfZeroInstruction");
     }
     condition = std::move(newCondition);
 }
@@ -307,8 +336,8 @@ JumpIfNotZeroInstruction::JumpIfNotZeroInstruction(
     std::unique_ptr<Value> condition, std::string_view target)
     : condition(std::move(condition)), target(target) {
     if (!this->condition) {
-        throw std::logic_error(
-            "Creating JumpIfNotZeroInstruction with null condition");
+        throw std::logic_error("Creating JumpIfNotZeroInstruction with null "
+                               "condition in JumpIfNotZeroInstruction");
     }
 }
 
@@ -323,8 +352,8 @@ const std::string &JumpIfNotZeroInstruction::getTarget() const {
 void JumpIfNotZeroInstruction::setCondition(
     std::unique_ptr<Value> newCondition) {
     if (!newCondition) {
-        throw std::logic_error(
-            "Setting JumpIfNotZeroInstruction condition to null");
+        throw std::logic_error("Setting condition to null in setCondition in "
+                               "JumpIfNotZeroInstruction");
     }
     condition = std::move(newCondition);
 }
@@ -346,12 +375,12 @@ FunctionCallInstruction::FunctionCallInstruction(
     : functionIdentifier(functionIdentifier), args(std::move(args)),
       dst(std::move(dst)) {
     if (!this->args) {
-        throw std::logic_error(
-            "Creating FunctionCallInstruction with null args");
+        throw std::logic_error("Creating FunctionCallInstruction with null "
+                               "args in FunctionCallInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error(
-            "Creating FunctionCallInstruction with null dst");
+        throw std::logic_error("Creating FunctionCallInstruction with null dst "
+                               "in FunctionCallInstruction");
     }
 }
 
@@ -374,14 +403,16 @@ void FunctionCallInstruction::setFunctionIdentifier(
 void FunctionCallInstruction::setArgs(
     std::unique_ptr<std::vector<std::unique_ptr<Value>>> newArgs) {
     if (!newArgs) {
-        throw std::logic_error("Setting FunctionCallInstruction args to null");
+        throw std::logic_error(
+            "Setting args to null in setArgs in FunctionCallInstruction");
     }
     args = std::move(newArgs);
 }
 
 void FunctionCallInstruction::setDst(std::unique_ptr<Value> newDst) {
     if (!newDst) {
-        throw std::logic_error("Setting FunctionCallInstruction dst to null");
+        throw std::logic_error(
+            "Setting dst to null in setDst in FunctionCallInstruction");
     }
     dst = std::move(newDst);
 }
@@ -393,12 +424,12 @@ FunctionDefinition::FunctionDefinition(
     : functionIdentifier(functionIdentifier), global(global),
       parameters(std::move(parameters)), functionBody(std::move(functionBody)) {
     if (!this->parameters) {
-        throw std::logic_error(
-            "Creating FunctionDefinition with null parameters");
+        throw std::logic_error("Creating FunctionDefinition with null "
+                               "parameters in FunctionDefinition");
     }
     if (!this->functionBody) {
-        throw std::logic_error(
-            "Creating FunctionDefinition with null functionBody");
+        throw std::logic_error("Creating FunctionDefinition with null "
+                               "functionBody in FunctionDefinition");
     }
 }
 
@@ -422,8 +453,8 @@ void FunctionDefinition::setFunctionBody(
     std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
         newFunctionBody) {
     if (!newFunctionBody) {
-        throw std::logic_error(
-            "Setting FunctionDefinition functionBody to null");
+        throw std::logic_error("Setting functionBody to null in "
+                               "setFunctionBody in FunctionDefinition");
     }
     functionBody = std::move(newFunctionBody);
 }
@@ -434,10 +465,12 @@ StaticVariable::StaticVariable(std::string_view identifier, bool global,
     : identifier(identifier), global(global), type(std::move(type)),
       staticInit(std::move(staticInit)) {
     if (!this->type) {
-        throw std::logic_error("Creating StaticVariable with null type");
+        throw std::logic_error(
+            "Creating StaticVariable with null type in StaticVariable");
     }
     if (!this->staticInit) {
-        throw std::logic_error("Creating StaticVariable with null staticInit");
+        throw std::logic_error(
+            "Creating StaticVariable with null staticInit in StaticVariable");
     }
 }
 
@@ -455,7 +488,8 @@ Program::Program(
     std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels)
     : topLevels(std::move(topLevels)) {
     if (!this->topLevels) {
-        throw std::logic_error("Creating Program with null topLevels");
+        throw std::logic_error(
+            "Creating Program with null topLevels in Program");
     }
 }
 

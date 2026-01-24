@@ -41,10 +41,11 @@ FunctionType::FunctionType(
       returnType(std::move(returnType)) {
     if (!this->parameterTypes) {
         throw std::logic_error(
-            "Creating FunctionType with null parameterTypes");
+            "Creating FunctionType with null parameterTypes in FunctionType");
     }
     if (!this->returnType) {
-        throw std::logic_error("Creating FunctionType with null returnType");
+        throw std::logic_error(
+            "Creating FunctionType with null returnType in FunctionType");
     }
 }
 

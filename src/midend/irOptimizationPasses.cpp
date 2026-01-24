@@ -29,7 +29,8 @@ std::optional<ConstValue> getConstValue(const IR::Value *value) {
     if (auto intConst = dynamic_cast<const AST::ConstantInt *>(astConst)) {
         return ConstValue{false, static_cast<long>(intConst->getValue())};
     }
-    if (auto longConst = dynamic_cast<const AST::ConstantLong *>(astConst)) {
+    else if (auto longConst =
+                 dynamic_cast<const AST::ConstantLong *>(astConst)) {
         return ConstValue{true, longConst->getValue()};
     }
     return std::nullopt;
@@ -63,10 +64,10 @@ std::optional<ConstValue> foldUnary(const IR::UnaryOperator *op,
     if (dynamic_cast<const IR::NegateOperator *>(op)) {
         return ConstValue{src.isLong, -src.value};
     }
-    if (dynamic_cast<const IR::ComplementOperator *>(op)) {
+    else if (dynamic_cast<const IR::ComplementOperator *>(op)) {
         return ConstValue{src.isLong, ~src.value};
     }
-    if (dynamic_cast<const IR::NotOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotOperator *>(op)) {
         return ConstValue{false, src.value == 0 ? 1 : 0};
     }
     return std::nullopt;
@@ -88,40 +89,40 @@ std::optional<ConstValue> foldBinary(const IR::BinaryOperator *op,
     if (dynamic_cast<const IR::AddOperator *>(op)) {
         return ConstValue{isLong, lhs.value + rhs.value};
     }
-    if (dynamic_cast<const IR::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const IR::SubtractOperator *>(op)) {
         return ConstValue{isLong, lhs.value - rhs.value};
     }
-    if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
         return ConstValue{isLong, lhs.value * rhs.value};
     }
-    if (dynamic_cast<const IR::DivideOperator *>(op)) {
+    else if (dynamic_cast<const IR::DivideOperator *>(op)) {
         if (rhs.value == 0) {
             return std::nullopt;
         }
         return ConstValue{isLong, lhs.value / rhs.value};
     }
-    if (dynamic_cast<const IR::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const IR::RemainderOperator *>(op)) {
         if (rhs.value == 0) {
             return std::nullopt;
         }
         return ConstValue{isLong, lhs.value % rhs.value};
     }
-    if (dynamic_cast<const IR::EqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::EqualOperator *>(op)) {
         return ConstValue{false, lhs.value == rhs.value ? 1 : 0};
     }
-    if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
         return ConstValue{false, lhs.value != rhs.value ? 1 : 0};
     }
-    if (dynamic_cast<const IR::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOperator *>(op)) {
         return ConstValue{false, lhs.value < rhs.value ? 1 : 0};
     }
-    if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
         return ConstValue{false, lhs.value <= rhs.value ? 1 : 0};
     }
-    if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
         return ConstValue{false, lhs.value > rhs.value ? 1 : 0};
     }
-    if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
         return ConstValue{false, lhs.value >= rhs.value ? 1 : 0};
     }
     return std::nullopt;
@@ -137,10 +138,13 @@ std::unique_ptr<AST::Constant> cloneASTConstant(const AST::Constant *constant) {
     if (auto intConst = dynamic_cast<const AST::ConstantInt *>(constant)) {
         return std::make_unique<AST::ConstantInt>(intConst->getValue());
     }
-    if (auto longConst = dynamic_cast<const AST::ConstantLong *>(constant)) {
+    else if (auto longConst =
+                 dynamic_cast<const AST::ConstantLong *>(constant)) {
         return std::make_unique<AST::ConstantLong>(longConst->getValue());
     }
-    throw std::logic_error("Unsupported AST constant in cloneASTConstant");
+    const auto &r = *constant;
+    throw std::logic_error("Unsupported AST constant in cloneASTConstant: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -154,11 +158,14 @@ std::unique_ptr<IR::Value> cloneValue(const IR::Value *value) {
         return std::make_unique<IR::ConstantValue>(
             cloneASTConstant(constantValue->getASTConstant()));
     }
-    if (auto variableValue = dynamic_cast<const IR::VariableValue *>(value)) {
+    else if (auto variableValue =
+                 dynamic_cast<const IR::VariableValue *>(value)) {
         return std::make_unique<IR::VariableValue>(
             variableValue->getIdentifier());
     }
-    throw std::logic_error("Unsupported IR value in cloneValue");
+    const auto &r = *value;
+    throw std::logic_error("Unsupported IR value in cloneValue: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -172,13 +179,16 @@ cloneUnaryOperator(const IR::UnaryOperator *op) {
     if (dynamic_cast<const IR::NegateOperator *>(op)) {
         return std::make_unique<IR::NegateOperator>();
     }
-    if (dynamic_cast<const IR::ComplementOperator *>(op)) {
+    else if (dynamic_cast<const IR::ComplementOperator *>(op)) {
         return std::make_unique<IR::ComplementOperator>();
     }
-    if (dynamic_cast<const IR::NotOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotOperator *>(op)) {
         return std::make_unique<IR::NotOperator>();
     }
-    throw std::logic_error("Unsupported unary operator in cloneUnaryOperator");
+    const auto &r = *op;
+    throw std::logic_error(
+        "Unsupported unary operator in cloneUnaryOperator: " +
+        std::string(typeid(r).name()));
 }
 
 /**
@@ -192,38 +202,40 @@ cloneBinaryOperator(const IR::BinaryOperator *op) {
     if (dynamic_cast<const IR::AddOperator *>(op)) {
         return std::make_unique<IR::AddOperator>();
     }
-    if (dynamic_cast<const IR::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const IR::SubtractOperator *>(op)) {
         return std::make_unique<IR::SubtractOperator>();
     }
-    if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
         return std::make_unique<IR::MultiplyOperator>();
     }
-    if (dynamic_cast<const IR::DivideOperator *>(op)) {
+    else if (dynamic_cast<const IR::DivideOperator *>(op)) {
         return std::make_unique<IR::DivideOperator>();
     }
-    if (dynamic_cast<const IR::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const IR::RemainderOperator *>(op)) {
         return std::make_unique<IR::RemainderOperator>();
     }
-    if (dynamic_cast<const IR::EqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::EqualOperator *>(op)) {
         return std::make_unique<IR::EqualOperator>();
     }
-    if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
         return std::make_unique<IR::NotEqualOperator>();
     }
-    if (dynamic_cast<const IR::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOperator *>(op)) {
         return std::make_unique<IR::LessThanOperator>();
     }
-    if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
         return std::make_unique<IR::LessThanOrEqualOperator>();
     }
-    if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
         return std::make_unique<IR::GreaterThanOperator>();
     }
-    if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
         return std::make_unique<IR::GreaterThanOrEqualOperator>();
     }
+    const auto &r = *op;
     throw std::logic_error(
-        "Unsupported binary operator in cloneBinaryOperator");
+        "Unsupported binary operator in cloneBinaryOperator: " +
+        std::string(typeid(r).name()));
 }
 
 /**
@@ -239,56 +251,57 @@ cloneInstruction(const IR::Instruction *instruction) {
         return std::make_unique<IR::ReturnInstruction>(
             cloneValue(returnInstr->getReturnValue()));
     }
-    if (auto signExtend =
-            dynamic_cast<const IR::SignExtendInstruction *>(instruction)) {
+    else if (auto signExtend =
+                 dynamic_cast<const IR::SignExtendInstruction *>(instruction)) {
         return std::make_unique<IR::SignExtendInstruction>(
             cloneValue(signExtend->getSrc()), cloneValue(signExtend->getDst()));
     }
-    if (auto truncate =
-            dynamic_cast<const IR::TruncateInstruction *>(instruction)) {
+    else if (auto truncate =
+                 dynamic_cast<const IR::TruncateInstruction *>(instruction)) {
         return std::make_unique<IR::TruncateInstruction>(
             cloneValue(truncate->getSrc()), cloneValue(truncate->getDst()));
     }
-    if (auto unaryInstr =
-            dynamic_cast<const IR::UnaryInstruction *>(instruction)) {
+    else if (auto unaryInstr =
+                 dynamic_cast<const IR::UnaryInstruction *>(instruction)) {
         return std::make_unique<IR::UnaryInstruction>(
             cloneUnaryOperator(unaryInstr->getUnaryOperator()),
             cloneValue(unaryInstr->getSrc()), cloneValue(unaryInstr->getDst()));
     }
-    if (auto binaryInstr =
-            dynamic_cast<const IR::BinaryInstruction *>(instruction)) {
+    else if (auto binaryInstr =
+                 dynamic_cast<const IR::BinaryInstruction *>(instruction)) {
         return std::make_unique<IR::BinaryInstruction>(
             cloneBinaryOperator(binaryInstr->getBinaryOperator()),
             cloneValue(binaryInstr->getSrc1()),
             cloneValue(binaryInstr->getSrc2()),
             cloneValue(binaryInstr->getDst()));
     }
-    if (auto copyInstr =
-            dynamic_cast<const IR::CopyInstruction *>(instruction)) {
+    else if (auto copyInstr =
+                 dynamic_cast<const IR::CopyInstruction *>(instruction)) {
         return std::make_unique<IR::CopyInstruction>(
             cloneValue(copyInstr->getSrc()), cloneValue(copyInstr->getDst()));
     }
-    if (auto jumpInstr =
-            dynamic_cast<const IR::JumpInstruction *>(instruction)) {
+    else if (auto jumpInstr =
+                 dynamic_cast<const IR::JumpInstruction *>(instruction)) {
         return std::make_unique<IR::JumpInstruction>(jumpInstr->getTarget());
     }
-    if (auto jumpIfZero =
-            dynamic_cast<const IR::JumpIfZeroInstruction *>(instruction)) {
+    else if (auto jumpIfZero =
+                 dynamic_cast<const IR::JumpIfZeroInstruction *>(instruction)) {
         return std::make_unique<IR::JumpIfZeroInstruction>(
             cloneValue(jumpIfZero->getCondition()), jumpIfZero->getTarget());
     }
-    if (auto jumpIfNotZero =
-            dynamic_cast<const IR::JumpIfNotZeroInstruction *>(instruction)) {
+    else if (auto jumpIfNotZero =
+                 dynamic_cast<const IR::JumpIfNotZeroInstruction *>(
+                     instruction)) {
         return std::make_unique<IR::JumpIfNotZeroInstruction>(
             cloneValue(jumpIfNotZero->getCondition()),
             jumpIfNotZero->getTarget());
     }
-    if (auto labelInstr =
-            dynamic_cast<const IR::LabelInstruction *>(instruction)) {
+    else if (auto labelInstr =
+                 dynamic_cast<const IR::LabelInstruction *>(instruction)) {
         return std::make_unique<IR::LabelInstruction>(labelInstr->getLabel());
     }
-    if (auto callInstr =
-            dynamic_cast<const IR::FunctionCallInstruction *>(instruction)) {
+    else if (auto callInstr = dynamic_cast<const IR::FunctionCallInstruction *>(
+                 instruction)) {
         auto args = std::make_unique<std::vector<std::unique_ptr<IR::Value>>>();
         for (const auto &arg : callInstr->getArgs()) {
             args->emplace_back(cloneValue(arg.get()));
@@ -297,7 +310,9 @@ cloneInstruction(const IR::Instruction *instruction) {
             callInstr->getFunctionIdentifier(), std::move(args),
             cloneValue(callInstr->getDst()));
     }
-    throw std::logic_error("Unsupported instruction in cloneInstruction");
+    const auto &r = *instruction;
+    throw std::logic_error("Unsupported instruction in cloneInstruction: " +
+                           std::string(typeid(r).name()));
 }
 
 /**

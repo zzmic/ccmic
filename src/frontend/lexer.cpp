@@ -126,9 +126,8 @@ Token matchToken(std::string_view input) {
                                unsignedIntegerConstant_regex))
         return {TokenType::UnsignedIntegerConstant, tokenMatches.str(0)};
     else {
-        // If no token matches, throw an error.
         std::stringstream msg;
-        msg << "Unknown token: " << inputStr;
+        msg << "Invalid token found in matchToken in Lexer: " << inputStr;
         throw std::invalid_argument(msg.str());
     }
 }
@@ -154,7 +153,7 @@ std::vector<Token> lexer(std::string_view input) {
         // Print out the remaining input (intentionally) and exit the program.
         if (token.type == TokenType::Invalid) {
             std::stringstream msg;
-            msg << "Invalid token found: " << token.value;
+            msg << "Invalid token found in lexer in Lexer: " << token.value;
             throw std::invalid_argument(msg.str());
         }
 

@@ -1,6 +1,5 @@
 #include "prettyPrinters.h"
 #include <iostream>
-#include <sstream>
 #include <stdexcept>
 
 /*
@@ -15,8 +14,10 @@ void PrettyPrinters::printIRProgram(
             printIRFunctionDefinition(*functionDefinition);
         }
         else {
-            throw std::logic_error(
-                "Unsupported top-level element while printing IR program");
+            const auto &r = *topLevel;
+            throw std::logic_error("Unsupported top-level element while "
+                                   "printing IR program in printIRProgram: " +
+                                   std::string(typeid(r).name()));
         }
     }
 
@@ -67,9 +68,11 @@ void PrettyPrinters::printIRStaticVariable(
         std::cout << std::get<unsigned long>(ulongInit->getValue());
     }
     else {
+        const auto &r = *staticInit;
         throw std::logic_error(
-            "Unsupported static variable initializer type while "
-            "printing IR static variable");
+            "Unsupported static variable initializer type while printing IR "
+            "static variable in printIRStaticVariable: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "\n";
@@ -130,8 +133,10 @@ void PrettyPrinters::printIRInstruction(const IR::Instruction &instruction) {
         printIRZeroExtendInstruction(*zeroExtendInstruction);
     }
     else {
-        throw std::logic_error(
-            "Unsupported instruction type while printing IR instruction");
+        const auto &r = *&instruction;
+        throw std::logic_error("Unsupported instruction type while printing IR "
+                               "instruction in printIRInstruction: " +
+                               std::string(typeid(r).name()));
     }
 }
 
@@ -158,8 +163,11 @@ void PrettyPrinters::printIRReturnInstruction(
             std::cout << constantULong->getValue();
         }
         else {
-            throw std::logic_error("Unsupported constant type while printing "
-                                   "IR return instruction");
+            const auto &r = *constantValue->getASTConstant();
+            throw std::logic_error(
+                "Unsupported constant type while printing IR return "
+                "instruction in printIRReturnInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -167,8 +175,11 @@ void PrettyPrinters::printIRReturnInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unsupported return value type while printing "
-                               "IR return instruction");
+        const auto &r = *returnInstruction.getReturnValue();
+        throw std::logic_error(
+            "Unsupported return value type while printing IR return "
+            "instruction in printIRReturnInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "\n";
@@ -182,9 +193,11 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
+        const auto &r = *signExtendInstruction.getDst();
         throw std::logic_error(
-            "Unsupported destination value type while printing "
-            "IR sign extend instruction");
+            "Unsupported destination value type while printing IR sign extend "
+            "instruction in printIRSignExtendInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << " = SignExtend(";
@@ -208,9 +221,11 @@ void PrettyPrinters::printIRSignExtendInstruction(
             std::cout << constantULong->getValue();
         }
         else {
+            const auto &r = *constantValue->getASTConstant();
             throw std::logic_error(
-                "Unsupported constant type while printing IR "
-                "sign extend instruction");
+                "Unsupported constant type while printing IR sign extend "
+                "instruction in printIRSignExtendInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -218,9 +233,11 @@ void PrettyPrinters::printIRSignExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
+        const auto &r = *signExtendInstruction.getSrc();
         throw std::logic_error(
-            "Unsupported source value type while printing IR "
-            "sign extend instruction");
+            "Unsupported source value type while printing IR sign extend "
+            "instruction in printIRSignExtendInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << ")\n";
@@ -234,9 +251,11 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
+        const auto &r = *truncateInstruction.getDst();
         throw std::logic_error(
-            "Unsupported destination value type while printing "
-            "IR truncate instruction");
+            "Unsupported destination value type while printing IR truncate "
+            "instruction in printIRTruncateInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << " = Truncate(";
@@ -260,8 +279,11 @@ void PrettyPrinters::printIRTruncateInstruction(
             std::cout << constantULong->getValue();
         }
         else {
-            throw std::logic_error("Unsupported constant type while printing "
-                                   "IR truncate instruction");
+            const auto &r = *constantValue->getASTConstant();
+            throw std::logic_error(
+                "Unsupported constant type while printing IR truncate "
+                "instruction in printIRTruncateInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -269,8 +291,11 @@ void PrettyPrinters::printIRTruncateInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unsupported source value type while printing "
-                               "IR truncate instruction");
+        const auto &r = *truncateInstruction.getSrc();
+        throw std::logic_error(
+            "Unsupported source value type while printing IR truncate "
+            "instruction in printIRTruncateInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << ")\n";
@@ -284,9 +309,11 @@ void PrettyPrinters::printIRZeroExtendInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
+        const auto &r = *zeroExtendInstruction.getDst();
         throw std::logic_error(
-            "Unsupported destination value type while printing "
-            "IR zero extend instruction");
+            "Unsupported destination value type while printing IR zero extend "
+            "instruction in printIRZeroExtendInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << " = ZeroExtend(";
@@ -314,15 +341,19 @@ void PrettyPrinters::printIRZeroExtendInstruction(
             std::cout << constantULong->getValue();
         }
         else {
+            const auto &r = *constantValue->getASTConstant();
             throw std::logic_error(
-                "Unsupported constant type while printing IR "
-                "zero extend instruction");
+                "Unsupported constant type while printing IR zero extend "
+                "instruction in printIRZeroExtendInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else {
+        const auto &r = *zeroExtendInstruction.getSrc();
         throw std::logic_error(
-            "Unsupported source value type while printing IR "
-            "zero extend instruction");
+            "Unsupported source value type while printing IR zero extend "
+            "instruction in printIRZeroExtendInstruction: " +
+            std::string(typeid(r).name()));
     }
     std::cout << ")\n";
 }
@@ -336,9 +367,11 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
+        const auto &r = *unaryInstruction.getDst();
         throw std::logic_error(
-            "Unsupported destination value type while printing "
-            "IR unary instruction");
+            "Unsupported destination value type while printing IR unary "
+            "instruction in printIRUnaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     if (dynamic_cast<const IR::ComplementOperator *>(
@@ -354,8 +387,11 @@ void PrettyPrinters::printIRUnaryInstruction(
         std::cout << " = !";
     }
     else {
+        const auto &r = *unaryInstruction.getUnaryOperator();
         throw std::logic_error(
-            "Unsupported unary operator while printing IR unary instruction");
+            "Unsupported unary operator while printing IR unary instruction in "
+            "printIRUnaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -383,13 +419,19 @@ void PrettyPrinters::printIRUnaryInstruction(
             std::cout << constantULong->getValue();
         }
         else {
-            throw std::logic_error("Unsupported constant type while printing "
-                                   "IR unary instruction");
+            const auto &r = *constantValue->getASTConstant();
+            throw std::logic_error(
+                "Unsupported constant type while printing IR unary instruction "
+                "in printIRUnaryInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else {
-        throw std::logic_error("Unsupported source value type while printing "
-                               "IR unary instruction");
+        const auto &r = *unaryInstruction.getSrc();
+        throw std::logic_error(
+            "Unsupported source value type while printing IR unary instruction "
+            "in printIRUnaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "\n";
@@ -427,13 +469,19 @@ void PrettyPrinters::printIRBinaryInstruction(
             std::cout << constantULong->getValue();
         }
         else {
-            throw std::logic_error("Unsupported constant type while printing "
-                                   "IR binary instruction");
+            const auto &r = *constantValue->getASTConstant();
+            throw std::logic_error(
+                "Unsupported constant type while printing IR binary "
+                "instruction in printIRBinaryInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else {
-        throw std::logic_error("Unsupported source value type while printing "
-                               "IR binary instruction");
+        const auto &r = *binaryInstruction.getSrc1();
+        throw std::logic_error(
+            "Unsupported source value type while printing IR binary "
+            "instruction in printIRBinaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     if (dynamic_cast<const IR::AddOperator *>(
@@ -481,8 +529,11 @@ void PrettyPrinters::printIRBinaryInstruction(
         std::cout << " >= ";
     }
     else {
+        const auto &r = *binaryInstruction.getBinaryOperator();
         throw std::logic_error(
-            "Unsupported binary operator while printing IR binary instruction");
+            "Unsupported binary operator while printing IR binary instruction "
+            "in printIRBinaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     if (auto variableValue = dynamic_cast<const IR::VariableValue *>(
@@ -508,13 +559,19 @@ void PrettyPrinters::printIRBinaryInstruction(
             std::cout << constantULong->getValue();
         }
         else {
-            throw std::logic_error("Unsupported constant type while printing "
-                                   "IR binary instruction");
+            const auto &r = *constantValue->getASTConstant();
+            throw std::logic_error(
+                "Unsupported constant type while printing IR binary "
+                "instruction in printIRBinaryInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else {
-        throw std::logic_error("Unsupported source value type while printing "
-                               "IR binary instruction");
+        const auto &r = *binaryInstruction.getSrc2();
+        throw std::logic_error(
+            "Unsupported source value type while printing IR binary "
+            "instruction in printIRBinaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "\n";
@@ -528,16 +585,21 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
-        throw std::logic_error("Unsupported destination value type "
-                               "while printing IR copy instruction");
+        const auto &r = *copyInstruction.getDst();
+        throw std::logic_error(
+            "Unsupported destination value type while printing IR copy "
+            "instruction in printIRCopyInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << " = ";
 
     auto src = copyInstruction.getSrc();
     if (!src) {
-        throw std::logic_error(
-            "Source value is null while printing IR copy instruction");
+        const auto &r = *src;
+        throw std::logic_error("Source value is null while printing IR copy "
+                               "instruction in printIRCopyInstruction: " +
+                               std::string(typeid(r).name()));
     }
 
     if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(src)) {
@@ -558,8 +620,11 @@ void PrettyPrinters::printIRCopyInstruction(
             std::cout << constantULong->getValue();
         }
         else {
+            const auto &r = *constantValue->getASTConstant();
             throw std::logic_error(
-                "Unsupported constant type while printing IR copy instruction");
+                "Unsupported constant type while printing IR copy instruction "
+                "in printIRCopyInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (auto variableValue =
@@ -567,8 +632,11 @@ void PrettyPrinters::printIRCopyInstruction(
         std::cout << variableValue->getIdentifier();
     }
     else {
+        const auto &r = *src;
         throw std::logic_error(
-            "Unsupported source value type while printing IR copy instruction");
+            "Unsupported source value type while printing IR copy instruction "
+            "in printIRCopyInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "\n";
@@ -606,9 +674,11 @@ void PrettyPrinters::printIRJumpIfZeroInstruction(
             std::cout << constantULong->getValue();
         }
         else {
+            const auto &r = *constantValue->getASTConstant();
             throw std::logic_error(
-                "Unsupported constant type while printing IR "
-                "jump if zero instruction");
+                "Unsupported constant type while printing IR jump if zero "
+                "instruction in printIRJumpIfZeroInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
 
@@ -642,15 +712,19 @@ void PrettyPrinters::printIRJumpIfNotZeroInstruction(
             std::cout << constantULong->getValue();
         }
         else {
+            const auto &r = *constantValue->getASTConstant();
             throw std::logic_error(
-                "Unsupported constant type while printing IR "
-                "jump if not zero instruction");
+                "Unsupported constant type while printing IR jump if not zero "
+                "instruction in printIRJumpIfNotZeroInstruction: " +
+                std::string(typeid(r).name()));
         }
     }
     else {
+        const auto &r = *jumpIfNotZeroInstruction.getCondition();
         throw std::logic_error(
-            "Unsupported condition value type while printing IR "
-            "jump if not zero instruction");
+            "Unsupported condition value type while printing IR jump if not "
+            "zero instruction in printIRJumpIfNotZeroInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << ", " << jumpIfNotZeroInstruction.getTarget() << ")\n";
@@ -669,9 +743,11 @@ void PrettyPrinters::printIRFunctionCallInstruction(
         std::cout << "    " << variableValue->getIdentifier() << " = ";
     }
     else {
+        const auto &r = *dst;
         throw std::logic_error(
-            "Unsupported destination value type while printing "
-            "IR function call instruction");
+            "Unsupported destination value type while printing IR function "
+            "call instruction in printIRFunctionCallInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     auto functionIdentifier = functionCallInstruction.getFunctionIdentifier();
@@ -706,9 +782,11 @@ void PrettyPrinters::printIRFunctionCallInstruction(
                 std::cout << constantULong->getValue();
             }
             else {
+                const auto &r = *constantValue->getASTConstant();
                 throw std::logic_error(
-                    "Unsupported constant type while printing "
-                    "IR function call argument");
+                    "Unsupported constant type while printing IR function call "
+                    "argument in printIRFunctionCallArgument: " +
+                    std::string(typeid(r).name()));
             }
         }
         bool isLast = (std::next(it) == args.end());
@@ -807,8 +885,11 @@ void PrettyPrinters::printAssyStaticVariable(
         isZeroInit = std::get<unsigned long>(ulongInit->getValue()) == 0UL;
     }
     else {
+        const auto &r = *staticInit;
         throw std::logic_error(
-            "Unsupported static init type while printing IR static variable");
+            "Unsupported static init type while printing assembly static "
+            "variable in printAssyStaticVariable: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "\n";
@@ -925,8 +1006,11 @@ void PrettyPrinters::printAssyInstruction(
         printAssyLabelInstruction(*labelInstruction);
     }
     else {
+        const auto &r = *&instruction;
         throw std::logic_error(
-            "Unsupported instruction type while printing assembly instruction");
+            "Unsupported instruction type while printing assembly instruction "
+            "in printAssyInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -945,8 +1029,10 @@ void PrettyPrinters::printAssyMovInstruction(
         registerSize = 8;
     }
     else {
-        throw std::logic_error(
-            "Invalid type while printing assembly mov instruction");
+        const auto &r = *type;
+        throw std::logic_error("Unsupported type while printing assembly mov "
+                               "instruction in printAssyMovInstruction: " +
+                               std::string(typeid(r).name()));
     }
 
     auto src = movInstruction.getSrc();
@@ -970,8 +1056,11 @@ void PrettyPrinters::printAssyMovInstruction(
         srcStr = identifier + "(%rip)";
     }
     else {
+        const auto &r = *src;
         throw std::logic_error(
-            "Invalid source type while printing assembly mov instruction");
+            "Unsupported source operand type while printing assembly mov "
+            "instruction in printAssyMovInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     auto dst = movInstruction.getDst();
@@ -990,8 +1079,11 @@ void PrettyPrinters::printAssyMovInstruction(
         dstStr = identifier + "(%rip)";
     }
     else {
+        const auto &r = *dst;
         throw std::logic_error(
-            "Invalid destination type while printing assembly mov instruction");
+            "Unsupported destination operand type while printing assembly mov "
+            "instruction in printAssyMovInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "    " << instructionName << " " << srcStr << ", " << dstStr
@@ -1021,15 +1113,11 @@ void PrettyPrinters::printAssyMovsxInstruction(
         srcStr = identifier + "(%rip)";
     }
     else {
-        std::stringstream msg;
-        msg << "Invalid source type while printing assembly movsx instruction";
-        if (!src) {
-            msg << ": Source operand is nullptr";
-        }
-        else {
-            msg << ": Source operand is not nullptr but unknown type";
-        }
-        throw std::logic_error(msg.str());
+        const auto &r = *src;
+        throw std::logic_error(
+            "Unsupported source type while printing assembly movsx instruction "
+            "in printAssyMovsxInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     auto dst = movsxInstruction.getDst();
@@ -1048,8 +1136,11 @@ void PrettyPrinters::printAssyMovsxInstruction(
         dstStr = identifier + "(%rip)";
     }
     else {
-        throw std::logic_error("Unsupported destination type while printing "
-                               "assembly movsx instruction");
+        const auto &r = *dst;
+        throw std::logic_error(
+            "Unsupported destination operand type while printing assembly "
+            "movsx instruction in printAssyMovsxInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "    movslq " << srcStr << ", " << dstStr << "\n";
@@ -1089,8 +1180,11 @@ void PrettyPrinters::printAssyPushInstruction(
         std::cout << "    pushq" << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly push instruction");
+            "Unsupported operand type while printing assembly push instruction "
+            "in printAssyPushInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -1124,8 +1218,11 @@ void PrettyPrinters::printAssyUnaryInstruction(
         instructionName = "not";
     }
     else {
+        const auto &r = *unaryOperator;
         throw std::logic_error(
-            "Invalid unary operator while printing assembly unary instruction");
+            "Unsupported unary operator while printing assembly unary "
+            "instruction in printAssyUnaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::string typeSuffix;
@@ -1139,8 +1236,10 @@ void PrettyPrinters::printAssyUnaryInstruction(
         registerSize = 8;
     }
     else {
-        throw std::logic_error(
-            "Invalid type while printing assembly unary instruction");
+        const auto &r = *type;
+        throw std::logic_error("Unsupported type while printing assembly unary "
+                               "instruction in printAssyUnaryInstruction: " +
+                               std::string(typeid(r).name()));
     }
 
     std::cout << "    " << instructionName << typeSuffix;
@@ -1163,8 +1262,11 @@ void PrettyPrinters::printAssyUnaryInstruction(
         std::cout << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly unary instruction");
+            "Unsupported operand type while printing assembly unary "
+            "instruction in printAssyUnaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -1184,8 +1286,11 @@ void PrettyPrinters::printAssyBinaryInstruction(
         instructionName = "imul";
     }
     else {
-        throw std::logic_error("Unsupported binary operator while printing "
-                               "assembly binary instruction");
+        const auto &r = *binaryOperator;
+        throw std::logic_error(
+            "Unsupported binary operator while printing assembly binary "
+            "instruction in printAssyBinaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::string typeSuffix;
@@ -1199,8 +1304,11 @@ void PrettyPrinters::printAssyBinaryInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly binary instruction");
+            "Unsupported type while printing assembly binary instruction in "
+            "printAssyBinaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     std::cout << "    " << instructionName << typeSuffix;
@@ -1246,8 +1354,11 @@ void PrettyPrinters::printAssyBinaryInstruction(
         std::cout << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand2;
         throw std::logic_error(
-            "Invalid operand type while printing assembly binary instruction");
+            "Unsupported operand type while printing assembly binary "
+            "instruction in printAssyBinaryInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -1266,8 +1377,10 @@ void PrettyPrinters::printAssyCmpInstruction(
         registerSize = 8;
     }
     else {
-        throw std::logic_error(
-            "Invalid type while printing assembly cmp instruction");
+        const auto &r = *type;
+        throw std::logic_error("Unsupported type while printing assembly cmp "
+                               "instruction in printAssyCmpInstruction: " +
+                               std::string(typeid(r).name()));
     }
 
     std::cout << "    cmp" << typeSuffix;
@@ -1329,8 +1442,10 @@ void PrettyPrinters::printAssyIdivInstruction(
         registerSize = 8;
     }
     else {
-        throw std::logic_error(
-            "Invalid type while printing assembly idiv instruction");
+        const auto &r = *type;
+        throw std::logic_error("Unsupported type while printing assembly idiv "
+                               "instruction in printAssyIdivInstruction: " +
+                               std::string(typeid(r).name()));
     }
 
     std::cout << "    idiv" << typeSuffix;
@@ -1353,8 +1468,11 @@ void PrettyPrinters::printAssyIdivInstruction(
         std::cout << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly idiv instruction");
+            "Unsupported operand type while printing assembly idiv instruction "
+            "in printAssyIdivInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -1373,8 +1491,10 @@ void PrettyPrinters::printAssyDivInstruction(
         registerSize = 8;
     }
     else {
-        throw std::logic_error(
-            "Unsupported type while printing assembly div instruction");
+        const auto &r = *type;
+        throw std::logic_error("Unsupported type while printing assembly div "
+                               "instruction in printAssyDivInstruction: " +
+                               std::string(typeid(r).name()));
     }
 
     std::cout << "    div" << typeSuffix;
@@ -1397,8 +1517,11 @@ void PrettyPrinters::printAssyDivInstruction(
         std::cout << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Unsupported operand type while printing assembly div instruction");
+            "Unsupported operand type while printing assembly div instruction "
+            "in printAssyDivInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -1413,8 +1536,10 @@ void PrettyPrinters::printAssyCdqInstruction(
         std::cout << "    cqo\n";
     }
     else {
-        throw std::logic_error(
-            "Invalid type while printing assembly cdq instruction");
+        const auto &r = *type;
+        throw std::logic_error("Unsupported type while printing assembly cdq "
+                               "instruction in printAssyCdqInstruction: " +
+                               std::string(typeid(r).name()));
     }
 }
 
@@ -1458,8 +1583,11 @@ void PrettyPrinters::printAssyJmpCCInstruction(
         std::cout << "    jbe";
     }
     else {
-        throw std::logic_error("Unsupported conditional code while printing "
-                               "assembly jmpcc instruction");
+        const auto &r = *condCode;
+        throw std::logic_error(
+            "Unsupported conditional code while printing "
+            "assembly jmpcc instruction in printAssyJmpCCInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     auto label = jmpCCInstruction.getLabel();
@@ -1500,8 +1628,11 @@ void PrettyPrinters::printAssySetCCInstruction(
         std::cout << "    setbe";
     }
     else {
-        throw std::logic_error("Unsupported conditional code while printing "
-                               "assembly setcc instruction");
+        const auto &r = *condCode;
+        throw std::logic_error(
+            "Unsupported conditional code while printing "
+            "assembly setcc instruction in printAssySetCCInstruction: " +
+            std::string(typeid(r).name()));
     }
 
     auto operand = setCCInstruction.getOperand();
@@ -1521,8 +1652,11 @@ void PrettyPrinters::printAssySetCCInstruction(
         std::cout << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly setcc instruction");
+            "Unsupported operand type while printing assembly setcc "
+            "instruction in printAssySetCCInstruction: " +
+            std::string(typeid(r).name()));
     }
 }
 

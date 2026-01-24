@@ -6,7 +6,7 @@ Block::Block(
     std::unique_ptr<std::vector<std::unique_ptr<BlockItem>>> blockItems)
     : blockItems(std::move(blockItems)) {
     if (!this->blockItems) {
-        throw std::logic_error("Creating Block with null blockItems");
+        throw std::logic_error("Creating Block with null blockItems in Block");
     }
 }
 

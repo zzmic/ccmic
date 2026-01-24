@@ -19,16 +19,17 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
     if (dynamic_cast<const AST::IntType *>(type)) {
         return std::make_unique<AST::IntType>();
     }
-    if (dynamic_cast<const AST::LongType *>(type)) {
+    else if (dynamic_cast<const AST::LongType *>(type)) {
         return std::make_unique<AST::LongType>();
     }
-    if (dynamic_cast<const AST::UIntType *>(type)) {
+    else if (dynamic_cast<const AST::UIntType *>(type)) {
         return std::make_unique<AST::UIntType>();
     }
-    if (dynamic_cast<const AST::ULongType *>(type)) {
+    else if (dynamic_cast<const AST::ULongType *>(type)) {
         return std::make_unique<AST::ULongType>();
     }
-    if (auto functionType = dynamic_cast<const AST::FunctionType *>(type)) {
+    else if (auto functionType =
+                 dynamic_cast<const AST::FunctionType *>(type)) {
         auto parameterTypes =
             std::make_unique<std::vector<std::unique_ptr<AST::Type>>>();
         parameterTypes->reserve(functionType->getParameterTypes().size());
@@ -39,7 +40,9 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
             std::move(parameterTypes),
             cloneType(&functionType->getReturnType()));
     }
-    throw std::logic_error("Unsupported type in cloneType");
+    const auto &r = *type;
+    throw std::logic_error("Unsupported type in cloneType: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -57,11 +60,13 @@ int getTypeSize(const AST::Type *type) {
         dynamic_cast<const AST::UIntType *>(type)) {
         return 4;
     }
-    if (dynamic_cast<const AST::LongType *>(type) ||
-        dynamic_cast<const AST::ULongType *>(type)) {
+    else if (dynamic_cast<const AST::LongType *>(type) ||
+             dynamic_cast<const AST::ULongType *>(type)) {
         return 8;
     }
-    throw std::logic_error("Unsupported type in getTypeSize");
+    const auto &r = *type;
+    throw std::logic_error("Unsupported type in getTypeSize: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -100,7 +105,10 @@ cloneStaticInit(const AST::StaticInit *staticInit) {
         auto value = ulongInit->getValue();
         return std::make_unique<AST::ULongInit>(std::get<unsigned long>(value));
     }
-    throw std::logic_error("Unsupported static initializer");
+    const auto &r = *staticInit;
+    throw std::logic_error(
+        "Unsupported static initializer type in cloneStaticInit: " +
+        std::string(typeid(r).name()));
 }
 } // namespace
 
@@ -152,17 +160,21 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
                     global = functionAttribute->isGlobal();
                 }
                 else {
+                    const auto &r = *symbolEntry.second;
                     throw std::logic_error(
                         "Function attribute not found in frontendSymbolTable "
-                        "while "
-                        "generating IR instructions for function definition");
+                        "while generating IR instructions for function "
+                        "definition in generateIR in IRGenerator: " +
+                        std::string(typeid(r).name()));
                 }
             }
             else {
+                const auto &r = *astDeclaration;
                 throw std::logic_error(
                     "Function declaration not found in frontendSymbolTable "
-                    "while "
-                    "generating IR instructions for function definition");
+                    "while generating IR instructions for function definition "
+                    "in generateIR in IRGenerator: " +
+                    std::string(typeid(r).name()));
             }
 
             // Generate IR instructions for the function body.
@@ -392,8 +404,11 @@ void IRGenerator::generateIRStatement(
         // If the statement is a null statement, do nothing.
     }
     else {
-        throw std::logic_error("Unsupported statement type while generating "
-                               "IR instructions for statement");
+        const auto &r = *astStatement;
+        throw std::logic_error(
+            "Unsupported statement type while generating IR instructions for "
+            "statement in generateIRStatement in IRGenerator: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -616,8 +631,9 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
         }
         else {
             throw std::logic_error(
-                "Unsupported constant type while generating IR instructions "
-                "for expression");
+                "Unsupported constant type in constant expression in "
+                "getConstantInVariant in ConstantExpression: " +
+                std::string(typeid(variantValue).name()));
         }
     }
     else if (auto unaryExpr = dynamic_cast<const AST::UnaryExpression *>(e)) {
@@ -661,9 +677,12 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
             return variableValue;
         }
         else {
+            const auto &r = *assignmentExpr;
             throw std::logic_error(
                 "Unsupported lvalue type in assignment while generating IR "
-                "instructions for expression");
+                "instructions for expression in generateIRInstruction in "
+                "IRGenerator: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (auto conditionalExpr =
@@ -680,7 +699,8 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
         auto resultType = conditionalExpr->getExpType();
         if (!resultType) {
             throw std::logic_error(
-                "Missing result type for conditional expression");
+                "Missing result type for conditional expression in "
+                "generateIRConditionalExpression in IRGenerator");
         }
         // Add the result variable to the frontend symbol table with the type of
         // the conditional expression's result.
@@ -716,8 +736,11 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
     else if (auto castExpr = dynamic_cast<const AST::CastExpression *>(e)) {
         return generateIRCastInstruction(castExpr, instructions);
     }
-    throw std::logic_error("Unsupported expression type while generating IR "
-                           "instructions for expression");
+    const auto &r = *e;
+    throw std::logic_error(
+        "Unsupported expression type while generating IR instructions for "
+        "expression in generateIRInstruction in IRGenerator: " +
+        std::string(typeid(r).name()));
 }
 
 std::unique_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
@@ -944,8 +967,10 @@ IRGenerator::generateIRFunctionCallInstruction(
         frontendSymbolTable[std::string(functionIdentifier)].first.get();
     auto functionTypePtr = dynamic_cast<AST::FunctionType *>(functionType);
     if (!functionTypePtr) {
-        throw std::logic_error("Function type not found in symbol table: " +
-                               std::string(functionIdentifier));
+        throw std::logic_error(
+            "Function type not found in symbol table in "
+            "generateIRFunctionCallInstruction in IRGenerator: " +
+            std::string(functionIdentifier));
     }
     const auto &returnType = functionTypePtr->getReturnType();
 
@@ -1122,15 +1147,23 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
                         std::make_unique<AST::ULongInit>(0UL)));
                 }
                 else {
-                    throw std::logic_error("Unsupported tentative type while "
-                                           "converting frontendSymbolTable "
-                                           "to IR static variables");
+                    const auto &r = *type;
+                    throw std::logic_error(
+                        "Unsupported tentative type while converting "
+                        "frontendSymbolTable to IR static variables in "
+                        "convertFrontendSymbolTableToIRStaticVariables in "
+                        "IRGenerator: " +
+                        std::string(typeid(r).name()));
                 }
                 continue;
             }
-            throw std::logic_error("Unsupported initial value type while "
-                                   "converting frontendSymbolTable "
-                                   "to IR static variables");
+            const auto &r = *initialValue;
+            throw std::logic_error(
+                "Unsupported initial value type while converting "
+                "frontendSymbolTable to IR static variables in "
+                "convertFrontendSymbolTableToIRStaticVariables in "
+                "IRGenerator: " +
+                std::string(typeid(r).name()));
         }
         else {
             continue;
@@ -1150,8 +1183,11 @@ IRGenerator::convertUnop(const AST::UnaryOperator *op) {
     else if (dynamic_cast<const AST::NotOperator *>(op)) {
         return std::make_unique<IR::NotOperator>();
     }
-    throw std::logic_error("Unsupported unary operator while converting "
-                           "unary operator to IR unary operator");
+    const auto &r = *op;
+    throw std::logic_error(
+        "Unsupported unary operator while converting unary operator to IR "
+        "unary operator in convertUnop in IRGenerator: " +
+        std::string(typeid(r).name()));
 }
 
 // Note: The logical-and and logical-or operators in the AST are NOT binary
@@ -1192,8 +1228,11 @@ IRGenerator::convertBinop(const AST::BinaryOperator *op) {
     else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op)) {
         return std::make_unique<IR::GreaterThanOrEqualOperator>();
     }
-    throw std::logic_error("Unsupported binary operator while converting "
-                           "binary operator to IR binary operator");
+    const auto &r = *op;
+    throw std::logic_error(
+        "Unsupported binary operator while converting binary operator to IR "
+        "binary operator in convertBinop in IRGenerator: " +
+        std::string(typeid(r).name()));
 }
 
 std::unique_ptr<IR::VariableValue>

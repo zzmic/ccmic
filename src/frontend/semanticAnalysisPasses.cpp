@@ -18,19 +18,20 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
     if (!type) {
         return nullptr;
     }
-    if (dynamic_cast<const AST::IntType *>(type)) {
+    else if (dynamic_cast<const AST::IntType *>(type)) {
         return std::make_unique<AST::IntType>();
     }
-    if (dynamic_cast<const AST::LongType *>(type)) {
+    else if (dynamic_cast<const AST::LongType *>(type)) {
         return std::make_unique<AST::LongType>();
     }
-    if (dynamic_cast<const AST::UIntType *>(type)) {
+    else if (dynamic_cast<const AST::UIntType *>(type)) {
         return std::make_unique<AST::UIntType>();
     }
-    if (dynamic_cast<const AST::ULongType *>(type)) {
+    else if (dynamic_cast<const AST::ULongType *>(type)) {
         return std::make_unique<AST::ULongType>();
     }
-    if (auto functionType = dynamic_cast<const AST::FunctionType *>(type)) {
+    else if (auto functionType =
+                 dynamic_cast<const AST::FunctionType *>(type)) {
         auto parameterTypes =
             std::make_unique<std::vector<std::unique_ptr<AST::Type>>>();
         parameterTypes->reserve(functionType->getParameterTypes().size());
@@ -41,7 +42,10 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
             std::move(parameterTypes),
             cloneType(&functionType->getReturnType()));
     }
-    throw std::logic_error("Unsupported type in cloneType");
+    const auto &r = *type;
+    throw std::logic_error(
+        "Unsupported type in cloneType in semanticAnalysisPasses: " +
+        std::string(typeid(r).name()));
 }
 
 /**
@@ -54,16 +58,22 @@ std::unique_ptr<AST::Constant> cloneConstant(const AST::Constant *constant) {
     if (auto intConst = dynamic_cast<const AST::ConstantInt *>(constant)) {
         return std::make_unique<AST::ConstantInt>(intConst->getValue());
     }
-    if (auto longConst = dynamic_cast<const AST::ConstantLong *>(constant)) {
+    else if (auto longConst =
+                 dynamic_cast<const AST::ConstantLong *>(constant)) {
         return std::make_unique<AST::ConstantLong>(longConst->getValue());
     }
-    if (auto uintConst = dynamic_cast<const AST::ConstantUInt *>(constant)) {
+    else if (auto uintConst =
+                 dynamic_cast<const AST::ConstantUInt *>(constant)) {
         return std::make_unique<AST::ConstantUInt>(uintConst->getValue());
     }
-    if (auto ulongConst = dynamic_cast<const AST::ConstantULong *>(constant)) {
+    else if (auto ulongConst =
+                 dynamic_cast<const AST::ConstantULong *>(constant)) {
         return std::make_unique<AST::ConstantULong>(ulongConst->getValue());
     }
-    throw std::logic_error("Unsupported constant type in cloneConstant");
+    const auto &r = *constant;
+    throw std::logic_error("Unsupported constant type in cloneConstant in "
+                           "semanticAnalysisPasses: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -77,13 +87,16 @@ cloneUnaryOperator(const AST::UnaryOperator *op) {
     if (dynamic_cast<const AST::ComplementOperator *>(op)) {
         return std::make_unique<AST::ComplementOperator>();
     }
-    if (dynamic_cast<const AST::NegateOperator *>(op)) {
+    else if (dynamic_cast<const AST::NegateOperator *>(op)) {
         return std::make_unique<AST::NegateOperator>();
     }
-    if (dynamic_cast<const AST::NotOperator *>(op)) {
+    else if (dynamic_cast<const AST::NotOperator *>(op)) {
         return std::make_unique<AST::NotOperator>();
     }
-    throw std::logic_error("Unsupported unary operator in cloneUnaryOperator");
+    const auto &r = *op;
+    throw std::logic_error("Unsupported unary operator in cloneUnaryOperator "
+                           "in semanticAnalysisPasses: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -97,47 +110,49 @@ cloneBinaryOperator(const AST::BinaryOperator *op) {
     if (dynamic_cast<const AST::AddOperator *>(op)) {
         return std::make_unique<AST::AddOperator>();
     }
-    if (dynamic_cast<const AST::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const AST::SubtractOperator *>(op)) {
         return std::make_unique<AST::SubtractOperator>();
     }
-    if (dynamic_cast<const AST::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const AST::MultiplyOperator *>(op)) {
         return std::make_unique<AST::MultiplyOperator>();
     }
-    if (dynamic_cast<const AST::DivideOperator *>(op)) {
+    else if (dynamic_cast<const AST::DivideOperator *>(op)) {
         return std::make_unique<AST::DivideOperator>();
     }
-    if (dynamic_cast<const AST::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const AST::RemainderOperator *>(op)) {
         return std::make_unique<AST::RemainderOperator>();
     }
-    if (dynamic_cast<const AST::AndOperator *>(op)) {
+    else if (dynamic_cast<const AST::AndOperator *>(op)) {
         return std::make_unique<AST::AndOperator>();
     }
-    if (dynamic_cast<const AST::OrOperator *>(op)) {
+    else if (dynamic_cast<const AST::OrOperator *>(op)) {
         return std::make_unique<AST::OrOperator>();
     }
-    if (dynamic_cast<const AST::EqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::EqualOperator *>(op)) {
         return std::make_unique<AST::EqualOperator>();
     }
-    if (dynamic_cast<const AST::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::NotEqualOperator *>(op)) {
         return std::make_unique<AST::NotEqualOperator>();
     }
-    if (dynamic_cast<const AST::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const AST::LessThanOperator *>(op)) {
         return std::make_unique<AST::LessThanOperator>();
     }
-    if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op)) {
         return std::make_unique<AST::LessThanOrEqualOperator>();
     }
-    if (dynamic_cast<const AST::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const AST::GreaterThanOperator *>(op)) {
         return std::make_unique<AST::GreaterThanOperator>();
     }
-    if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op)) {
         return std::make_unique<AST::GreaterThanOrEqualOperator>();
     }
-    if (dynamic_cast<const AST::AssignmentOperator *>(op)) {
+    else if (dynamic_cast<const AST::AssignmentOperator *>(op)) {
         return std::make_unique<AST::AssignmentOperator>();
     }
-    throw std::logic_error(
-        "Unsupported binary operator in cloneBinaryOperator");
+    const auto &r = *op;
+    throw std::logic_error("Unsupported binary operator in cloneBinaryOperator "
+                           "in semanticAnalysisPasses: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -151,8 +166,8 @@ cloneExpression(const AST::Expression *expression) {
     if (!expression) {
         return nullptr;
     }
-    if (auto assignmentExpression =
-            dynamic_cast<const AST::AssignmentExpression *>(expression)) {
+    else if (auto assignmentExpression =
+                 dynamic_cast<const AST::AssignmentExpression *>(expression)) {
         auto left = cloneExpression(assignmentExpression->getLeft());
         auto right = cloneExpression(assignmentExpression->getRight());
         auto cloned = std::make_unique<AST::AssignmentExpression>(
@@ -160,38 +175,38 @@ cloneExpression(const AST::Expression *expression) {
         cloned->setExpType(cloneType(assignmentExpression->getExpType()));
         return cloned;
     }
-    if (auto variableExpression =
-            dynamic_cast<const AST::VariableExpression *>(expression)) {
+    else if (auto variableExpression =
+                 dynamic_cast<const AST::VariableExpression *>(expression)) {
         auto cloned = std::make_unique<AST::VariableExpression>(
             variableExpression->getIdentifier(),
             cloneType(variableExpression->getExpType()));
         return cloned;
     }
-    if (auto constantExpression =
-            dynamic_cast<const AST::ConstantExpression *>(expression)) {
+    else if (auto constantExpression =
+                 dynamic_cast<const AST::ConstantExpression *>(expression)) {
         auto cloned = std::make_unique<AST::ConstantExpression>(
             cloneConstant(constantExpression->getConstant()),
             cloneType(constantExpression->getExpType()));
         return cloned;
     }
-    if (auto castExpression =
-            dynamic_cast<const AST::CastExpression *>(expression)) {
+    else if (auto castExpression =
+                 dynamic_cast<const AST::CastExpression *>(expression)) {
         auto cloned = std::make_unique<AST::CastExpression>(
             cloneType(castExpression->getTargetType()),
             cloneExpression(castExpression->getExpression()),
             cloneType(castExpression->getExpType()));
         return cloned;
     }
-    if (auto unaryExpression =
-            dynamic_cast<const AST::UnaryExpression *>(expression)) {
+    else if (auto unaryExpression =
+                 dynamic_cast<const AST::UnaryExpression *>(expression)) {
         auto operand = cloneExpression(unaryExpression->getExpression());
         auto cloned = std::make_unique<AST::UnaryExpression>(
             cloneUnaryOperator(unaryExpression->getOperator()),
             std::move(operand), cloneType(unaryExpression->getExpType()));
         return cloned;
     }
-    if (auto binaryExpression =
-            dynamic_cast<const AST::BinaryExpression *>(expression)) {
+    else if (auto binaryExpression =
+                 dynamic_cast<const AST::BinaryExpression *>(expression)) {
         auto left = cloneExpression(binaryExpression->getLeft());
         auto right = cloneExpression(binaryExpression->getRight());
         auto cloned = std::make_unique<AST::BinaryExpression>(
@@ -200,8 +215,8 @@ cloneExpression(const AST::Expression *expression) {
             std::move(right), cloneType(binaryExpression->getExpType()));
         return cloned;
     }
-    if (auto conditionalExpression =
-            dynamic_cast<const AST::ConditionalExpression *>(expression)) {
+    else if (auto conditionalExpression =
+                 dynamic_cast<const AST::ConditionalExpression *>(expression)) {
         auto cloned = std::make_unique<AST::ConditionalExpression>(
             cloneExpression(conditionalExpression->getCondition()),
             cloneExpression(conditionalExpression->getThenExpression()),
@@ -209,8 +224,9 @@ cloneExpression(const AST::Expression *expression) {
             cloneType(conditionalExpression->getExpType()));
         return cloned;
     }
-    if (auto functionCallExpression =
-            dynamic_cast<const AST::FunctionCallExpression *>(expression)) {
+    else if (auto functionCallExpression =
+                 dynamic_cast<const AST::FunctionCallExpression *>(
+                     expression)) {
         auto arguments =
             std::make_unique<std::vector<std::unique_ptr<AST::Expression>>>();
         arguments->reserve(functionCallExpression->getArguments().size());
@@ -222,7 +238,10 @@ cloneExpression(const AST::Expression *expression) {
             cloneType(functionCallExpression->getExpType()));
         return cloned;
     }
-    throw std::logic_error("Unsupported expression type in cloneExpression");
+    const auto &r = *expression;
+    throw std::logic_error("Unsupported expression type in cloneExpression in "
+                           "semanticAnalysisPasses: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -236,10 +255,10 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
     if (dynamic_cast<const AST::NoInitializer *>(initialValue)) {
         return std::make_unique<AST::NoInitializer>();
     }
-    if (dynamic_cast<const AST::Tentative *>(initialValue)) {
+    else if (dynamic_cast<const AST::Tentative *>(initialValue)) {
         return std::make_unique<AST::Tentative>();
     }
-    if (auto initial = dynamic_cast<const AST::Initial *>(initialValue)) {
+    else if (auto initial = dynamic_cast<const AST::Initial *>(initialValue)) {
         auto value = initial->getStaticInit()->getValue();
         if (std::holds_alternative<int>(value)) {
             return std::make_unique<AST::Initial>(std::get<int>(value));
@@ -256,12 +275,17 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
                 std::get<unsigned long>(value));
         }
         else {
+            const auto &r = *initialValue;
             throw std::logic_error(
-                "Unsupported initial value type in cloneInitialValue");
+                "Unsupported initial value type in cloneInitialValue in "
+                "semanticAnalysisPasses: " +
+                std::string(typeid(r).name()));
         }
     }
-    throw std::logic_error(
-        "Unsupported initial value type in cloneInitialValue");
+    const auto &r = *initialValue;
+    throw std::logic_error("Unsupported initial value type in "
+                           "cloneInitialValue in semanticAnalysisPasses: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -279,11 +303,14 @@ int getTypeSize(const AST::Type *type) {
         dynamic_cast<const AST::UIntType *>(type)) {
         return 4;
     }
-    if (dynamic_cast<const AST::LongType *>(type) ||
-        dynamic_cast<const AST::ULongType *>(type)) {
+    else if (dynamic_cast<const AST::LongType *>(type) ||
+             dynamic_cast<const AST::ULongType *>(type)) {
         return 8;
     }
-    throw std::logic_error("Unsupported type in getTypeSize");
+    const auto &r = *type;
+    throw std::logic_error(
+        "Unsupported type in getTypeSize in semanticAnalysisPasses: " +
+        std::string(typeid(r).name()));
 }
 
 /**
@@ -337,8 +364,11 @@ int IdentifierResolutionPass::resolveProgram(Program &program) {
                                                 identifierMap);
         }
         else {
+            const auto &r = *declaration;
             throw std::logic_error(
-                "Unsupported declaration type for identifier resolution");
+                "Unsupported declaration type for identifier resolution in "
+                "resolveProgram in IdentifierResolutionPass: " +
+                std::string(typeid(r).name()));
         }
     }
 
@@ -367,10 +397,6 @@ std::string IdentifierResolutionPass::generateUniqueVariableName(
 void IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
     VariableDeclaration *declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (!declaration) {
-        throw std::logic_error(
-            "Unsupported declaration type for file-scope variable resolution");
-    }
     identifierMap[declaration->getIdentifier()] =
         MapEntry(declaration->getIdentifier(), true, true);
 }
@@ -479,8 +505,11 @@ void IdentifierResolutionPass::resolveStatement(
     else if (dynamic_cast<NullStatement *>(statement)) {
     }
     else {
+        const auto &r = *statement;
         throw std::logic_error(
-            "Unsupported statement type for identifier resolution");
+            "Unsupported statement type for identifier resolution in "
+            "resolveStatement in IdentifierResolutionPass: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -491,7 +520,11 @@ void IdentifierResolutionPass::resolveExpression(
             dynamic_cast<AssignmentExpression *>(expression)) {
         if (!(dynamic_cast<VariableExpression *>(
                 assignmentExpression->getLeft()))) {
-            throw std::logic_error("Invalid lvalue in assignment expression");
+            const auto &r = *assignmentExpression->getLeft();
+            throw std::logic_error(
+                "Invalid lvalue in assignment expression in resolveExpression "
+                "in IdentifierResolutionPass: " +
+                std::string(typeid(r).name()));
         }
         resolveExpression(assignmentExpression->getLeft(), identifierMap);
         resolveExpression(assignmentExpression->getRight(), identifierMap);
@@ -562,8 +595,11 @@ void IdentifierResolutionPass::resolveExpression(
     else if (dynamic_cast<ConstantExpression *>(expression)) {
     }
     else {
+        const auto &r = *expression;
         throw std::logic_error(
-            "Unsupported expression type for identifier resolution");
+            "Unsupported expression type for identifier resolution in "
+            "resolveExpression in IdentifierResolutionPass: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -584,8 +620,11 @@ void IdentifierResolutionPass::resolveBlock(
                 resolveFunctionDeclaration(functionDeclaration, identifierMap);
             }
             else {
+                const auto &r = *dBlockItem->getDeclaration();
                 throw std::logic_error(
-                    "Unsupported declaration type for identifier resolution");
+                    "Unsupported declaration type for identifier resolution in "
+                    "resolveBlock in IdentifierResolutionPass: " +
+                    std::string(typeid(r).name()));
             }
         }
         else if (auto sBlockItem =
@@ -593,8 +632,11 @@ void IdentifierResolutionPass::resolveBlock(
             resolveStatement(sBlockItem->getStatement(), identifierMap);
         }
         else {
+            const auto &r = *blockItem;
             throw std::logic_error(
-                "Unsupported block item typen for identifier resolution");
+                "Unsupported block item typen for identifier resolution in "
+                "resolveBlock in IdentifierResolutionPass: " +
+                std::string(typeid(r).name()));
         }
     }
 }
@@ -613,8 +655,11 @@ void IdentifierResolutionPass::resolveForInit(
                                         identifierMap);
     }
     else {
+        const auto &r = *forInit;
         throw std::logic_error(
-            "Unsupported for-init type for identifier resolution");
+            "Unsupported for-init type for identifier resolution in "
+            "resolveForInit in IdentifierResolutionPass: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -693,8 +738,11 @@ void TypeCheckingPass::typeCheckProgram(Program &program) {
             typeCheckFileScopeVariableDeclaration(variableDeclaration);
         }
         else {
+            const auto &r = *declaration;
             throw std::logic_error(
-                "Unsupported declaration type for type checking at top level");
+                "Unsupported declaration type for type checking at top level "
+                "in typeCheckProgram in TypeCheckingPass: " +
+                std::string(typeid(r).name()));
         }
     }
 }
@@ -720,8 +768,11 @@ std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
         numericValue = std::get<unsigned long>(variantValue);
     }
     else {
+        const auto &r = *constantExpression;
         throw std::logic_error(
-            "Unsupported constant type in convertStaticConstantToStaticInit");
+            "Unsupported constant type in convertStaticConstantToStaticInit in "
+            "semanticAnalysisPasses: " +
+            std::string(typeid(r).name()));
     }
 
     if (*varType == IntType()) {
@@ -739,7 +790,10 @@ std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
             static_cast<unsigned long>(numericValue));
     }
     else {
-        throw std::logic_error("Unsupported type in static initializer");
+        const auto &r = *varType;
+        throw std::logic_error("Unsupported type in static initializer in "
+                               "semanticAnalysisPasses: " +
+                               std::string(typeid(r).name()));
     }
 }
 
@@ -747,7 +801,8 @@ std::unique_ptr<Type> TypeCheckingPass::getCommonType(const Type *type1,
                                                       const Type *type2) {
     // If `type1` is `nullptr`, throw an error.
     if (!type1) {
-        throw std::logic_error("Null type1 in getCommonType");
+        throw std::logic_error(
+            "Null type1 in getCommonType in semanticAnalysisPasses");
     }
     // If `type2` is `nullptr`, return `type1`.
     if (!type2) {
@@ -777,10 +832,12 @@ std::unique_ptr<Expression>
 TypeCheckingPass::convertTo(const Expression *expression,
                             const Type *targetType) {
     if (!expression) {
-        throw std::logic_error("Null expression in convertTo");
+        throw std::logic_error(
+            "Null expression in convertTo in semanticAnalysisPasses");
     }
     if (!targetType) {
-        throw std::logic_error("Null target type in convertTo");
+        throw std::logic_error(
+            "Null target type in convertTo in semanticAnalysisPasses");
     }
     // Otherwise, wrap the expression in a cast expression and annotate the
     // result with the correct type.
@@ -798,7 +855,11 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     auto funType = declaration->getFunType();
     auto funTypePtr = dynamic_cast<FunctionType *>(funType);
     if (!funTypePtr) {
-        throw std::logic_error("Function type is not a FunctionType");
+        const auto &r = *funType;
+        throw std::logic_error(
+            "Function type is not a FunctionType in "
+            "typeCheckFunctionDeclaration in TypeCheckingPass: " +
+            std::string(typeid(r).name()));
     }
     auto hasBody = (declaration->getOptBody() != nullptr);
     auto alreadyDefined = false;
@@ -814,20 +875,30 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
             frontendSymbolTable[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first.get();
         if (*oldType != *funType) {
-            throw std::logic_error("Incompatible function declarations");
+            const auto &r = *oldType;
+            const auto &r2 = *funType;
+            throw std::logic_error(
+                "Incompatible function declarations in "
+                "typeCheckFunctionDeclaration in TypeCheckingPass: " +
+                std::string(typeid(r).name()) + " and " +
+                std::string(typeid(r2).name()));
         }
         auto *oldFunctionAttribute =
             dynamic_cast<FunctionAttribute *>(oldDeclaration.second.get());
         alreadyDefined = oldFunctionAttribute->isDefined();
         if (alreadyDefined && hasBody) {
-            throw std::logic_error("Function redefinition");
+            throw std::logic_error(
+                "Function redefinition in typeCheckFunctionDeclaration in "
+                "TypeCheckingPass: " +
+                declaration->getIdentifier());
         }
         if (oldFunctionAttribute->isGlobal() &&
             declaration->getOptStorageClass() &&
             dynamic_cast<StaticStorageClass *>(
                 declaration->getOptStorageClass())) {
             throw std::logic_error(
-                "Static function declaration follows non-static");
+                "Static function declaration follows non-static in "
+                "typeCheckFunctionDeclaration in TypeCheckingPass");
         }
         global = oldFunctionAttribute->isGlobal();
     }
@@ -866,8 +937,11 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     VariableDeclaration *declaration) {
     auto varType = declaration->getVarType();
     if (!isArithmeticType(varType)) {
+        const auto &r = *varType;
         throw std::logic_error(
-            "Unsupported variable type for file-scope variables");
+            "Unsupported variable type for file-scope variables in "
+            "typeCheckFileScopeVariableDeclaration in TypeCheckingPass: " +
+            std::string(typeid(r).name()));
     }
 
     auto initialValue = std::make_unique<InitialValue>();
@@ -897,7 +971,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         }
         else {
             throw std::logic_error(
-                "Unsupported constant type in static initializer");
+                "Unsupported constant type in static initializer in "
+                "typeCheckFileScopeVariableDeclaration in TypeCheckingPass: " +
+                std::string(typeid(variantValue).name()));
         }
 
         // Create the initial value with the appropriate target type.
@@ -918,7 +994,11 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                 static_cast<unsigned long>(numericValue));
         }
         else {
-            throw std::logic_error("Unsupported type in static initializer");
+            const auto &r = *varType;
+            throw std::logic_error(
+                "Unsupported type in static initializer in "
+                "typeCheckFileScopeVariableDeclaration in TypeCheckingPass: " +
+                std::string(typeid(r).name()));
         }
     }
     else if (!declaration->getOptInitializer()) {
@@ -932,7 +1012,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         }
     }
     else {
-        throw std::logic_error("Non-constant initializer!");
+        throw std::logic_error(
+            "Non-constant initializer in typeCheckFileScopeVariableDeclaration "
+            "in TypeCheckingPass!");
     }
 
     // Determine the linkage of the variable.
@@ -947,7 +1029,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
             frontendSymbolTable[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first.get();
         if (*oldType != *varType) {
-            throw std::logic_error("Function redeclared as variable");
+            throw std::logic_error(
+                "Function redeclared as variable in "
+                "typeCheckFileScopeVariableDeclaration in TypeCheckingPass");
         }
         auto *oldStaticAttribute =
             dynamic_cast<StaticAttribute *>(oldDeclaration.second.get());
@@ -957,12 +1041,16 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
             global = oldStaticAttribute->isGlobal();
         }
         else if (oldStaticAttribute->isGlobal() != global) {
-            throw std::logic_error("Conflicting variable linkage");
+            throw std::logic_error(
+                "Conflicting variable linkage in "
+                "typeCheckFileScopeVariableDeclaration in TypeCheckingPass");
         }
         if (dynamic_cast<Initial *>(oldStaticAttribute->getInitialValue())) {
             if (dynamic_cast<Initial *>(initialValue.get())) {
                 throw std::logic_error(
-                    "Conflicting file-scope variable definitions");
+                    "Conflicting file-scope variable definitions in "
+                    "typeCheckFileScopeVariableDeclaration in "
+                    "TypeCheckingPass");
             }
             initialValue =
                 cloneInitialValue(oldStaticAttribute->getInitialValue());
@@ -985,14 +1073,18 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     VariableDeclaration *declaration) {
     auto varType = declaration->getVarType();
     if (!isArithmeticType(varType)) {
-        throw std::logic_error("Unsupported variable type for local variables");
+        throw std::logic_error(
+            "Unsupported variable type for local variables in "
+            "typeCheckLocalVariableDeclaration in TypeCheckingPass: " +
+            std::string(typeid(varType).name()));
     }
 
     if (declaration->getOptStorageClass() &&
         dynamic_cast<ExternStorageClass *>(declaration->getOptStorageClass())) {
         if (declaration->getOptInitializer()) {
             throw std::logic_error(
-                "Initializer on local extern variable declaration");
+                "Initializer on local extern variable declaration in "
+                "typeCheckLocalVariableDeclaration in TypeCheckingPass");
         }
         if (frontendSymbolTable.find(declaration->getIdentifier()) !=
             frontendSymbolTable.end()) {
@@ -1000,7 +1092,9 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                 frontendSymbolTable[declaration->getIdentifier()];
             auto oldType = oldDeclaration.first.get();
             if (*oldType != *varType) {
-                throw std::logic_error("Function redeclared as variable");
+                throw std::logic_error(
+                    "Function redeclared as variable in "
+                    "typeCheckLocalVariableDeclaration in TypeCheckingPass");
             }
         }
         else {
@@ -1040,7 +1134,9 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             }
             else {
                 throw std::logic_error(
-                    "Unsupported constant type in static initializer");
+                    "Unsupported constant type in static initializer in "
+                    "typeCheckLocalVariableDeclaration in TypeCheckingPass: " +
+                    std::string(typeid(variantValue).name()));
             }
 
             // Create the initial value with the appropriate target type.
@@ -1061,8 +1157,11 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                     static_cast<unsigned long>(numericValue));
             }
             else {
+                const auto &r = *varType;
                 throw std::logic_error(
-                    "Unsupported type in static initializer");
+                    "Unsupported type in static initializer in "
+                    "typeCheckLocalVariableDeclaration in TypeCheckingPass: " +
+                    std::string(typeid(r).name()));
             }
         }
         else if (!declaration->getOptInitializer()) {
@@ -1070,7 +1169,8 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         }
         else {
             throw std::logic_error(
-                "Non-constant initializer on local static variable");
+                "Non-constant initializer on local static variable in "
+                "typeCheckLocalVariableDeclaration in TypeCheckingPass");
         }
         auto staticAttribute =
             std::make_unique<StaticAttribute>(std::move(initialValue), false);
@@ -1102,20 +1202,24 @@ void TypeCheckingPass::typeCheckBlock(Block *block,
                              dBlockItem->getDeclaration())) {
                 if (functionDeclaration->getOptBody()) {
                     throw std::logic_error(
-                        "Nested function definitions are not permitted");
+                        "Nested function definitions are not permitted in "
+                        "typeCheckBlock in TypeCheckingPass");
                 }
                 if (functionDeclaration->getOptStorageClass() &&
                     dynamic_cast<StaticStorageClass *>(
                         functionDeclaration->getOptStorageClass())) {
                     throw std::logic_error(
                         "Static storage class on block-scope function "
-                        "declaration");
+                        "declaration in typeCheckBlock in TypeCheckingPass");
                 }
                 typeCheckFunctionDeclaration(functionDeclaration);
             }
             else {
+                const auto &r = *dBlockItem->getDeclaration();
                 throw std::logic_error(
-                    "Unsupported declaration type for type-checking");
+                    "Unsupported declaration type for type-checking in "
+                    "typeCheckBlock in TypeCheckingPass: " +
+                    std::string(typeid(r).name()));
             }
         }
         else if (auto sBlockItem =
@@ -1126,8 +1230,11 @@ void TypeCheckingPass::typeCheckBlock(Block *block,
                                enclosingFunctionIdentifier);
         }
         else {
+            const auto &r = *blockItem;
             throw std::logic_error(
-                "Unsupported block item type for type-checking");
+                "Unsupported block item type for type-checking in "
+                "typeCheckBlock in TypeCheckingPass: " +
+                std::string(typeid(r).name()));
         }
     }
 }
@@ -1139,7 +1246,8 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
             frontendSymbolTable[functionCallExpression->getIdentifier()]
                 .first.get();
         if (isArithmeticType(fType)) {
-            throw std::logic_error("Function name used as variable: " +
+            throw std::logic_error("Function name used as variable in "
+                                   "typeCheckExpression in TypeCheckingPass: " +
                                    functionCallExpression->getIdentifier());
         }
         else {
@@ -1148,7 +1256,11 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
             auto &arguments = functionCallExpression->getArguments();
             if (parameterTypes.size() != arguments.size()) {
                 throw std::logic_error(
-                    "Function called with a wrong number of arguments");
+                    "Function called with a wrong number of arguments in "
+                    "typeCheckExpression in TypeCheckingPass: " +
+                    functionCallExpression->getIdentifier() + " expected " +
+                    std::to_string(parameterTypes.size()) +
+                    " arguments but got " + std::to_string(arguments.size()));
             }
             auto convertedArguments =
                 std::make_unique<std::vector<std::unique_ptr<Expression>>>();
@@ -1188,7 +1300,10 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
             constantExpression->setExpType(std::make_unique<ULongType>());
         }
         else {
-            throw std::logic_error("Unsupported constant type");
+            const auto &r = *constant;
+            throw std::logic_error("Unsupported constant type in "
+                                   "typeCheckExpression in TypeCheckingPass: " +
+                                   std::string(typeid(r).name()));
         }
     }
     else if (auto variableExpression =
@@ -1199,7 +1314,8 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
         // If the variable is not an arithmetic type, it is of type function.
         if (!isArithmeticType(variableType)) {
             std::stringstream msg;
-            msg << "Function name used as variable: "
+            msg << "Function name used as variable in typeCheckExpression in "
+                   "TypeCheckingPass: "
                 << variableExpression->getIdentifier();
             throw std::logic_error(msg.str());
         }
@@ -1291,11 +1407,13 @@ void TypeCheckingPass::typeCheckStatement(
         auto functionType =
             frontendSymbolTable[enclosingFunctionIdentifier].first.get();
         if (!functionType) {
-            throw std::logic_error("Function not found in symbol table: " +
+            throw std::logic_error("Function not found in symbol table in "
+                                   "typeCheckStatement in TypeCheckingPass: " +
                                    enclosingFunctionIdentifier);
         }
         if (isArithmeticType(functionType)) {
-            throw std::logic_error("Function name used as variable: " +
+            throw std::logic_error("Function name used as variable in "
+                                   "typeCheckStatement in TypeCheckingPass: " +
                                    enclosingFunctionIdentifier);
         }
         auto returnType = dynamic_cast<FunctionType *>(functionType);
@@ -1358,12 +1476,14 @@ void TypeCheckingPass::typeCheckForInit(ForInit *forInit) {
     }
     else if (auto initDecl = dynamic_cast<InitDecl *>(forInit)) {
         if (initDecl->getVariableDeclaration()->getOptStorageClass()) {
-            throw std::logic_error("Storage class in for-init declaration");
+            throw std::logic_error("Storage class in for-init declaration in "
+                                   "typeCheckForInit in TypeCheckingPass");
         }
         typeCheckLocalVariableDeclaration(initDecl->getVariableDeclaration());
     }
     else {
-        throw std::logic_error("Unsupported for-init type for type-checking");
+        throw std::logic_error("Unsupported for-init type for type-checking in "
+                               "typeCheckForInit in TypeCheckingPass");
     }
 }
 /*
@@ -1414,14 +1534,16 @@ void LoopLabelingPass::labelStatement(Statement *statement,
                                       std::string_view label) {
     if (auto breakStatement = dynamic_cast<BreakStatement *>(statement)) {
         if (label.empty()) {
-            throw std::logic_error("Break statement outside of loop");
+            throw std::logic_error("Break statement outside of loop in "
+                                   "labelStatement in LoopLabelingPass");
         }
         annotateStatement(breakStatement, label);
     }
     else if (auto continueStatement =
                  dynamic_cast<ContinueStatement *>(statement)) {
         if (label.empty()) {
-            throw std::logic_error("Continue statement outside of loop");
+            throw std::logic_error("Continue statement outside of loop in "
+                                   "labelStatement in LoopLabelingPass");
         }
         annotateStatement(continueStatement, label);
     }
@@ -1462,7 +1584,9 @@ void LoopLabelingPass::labelBlock(Block *block, std::string_view label) {
             labelStatement(sBlockItem->getStatement(), label);
             continue;
         }
-        throw std::logic_error("Unsupported block item type for loop labeling");
+        throw std::logic_error("Unsupported block item type for loop labeling "
+                               "in labelBlock in LoopLabelingPass: " +
+                               std::string(typeid(blockItem).name()));
     }
 }
 /*

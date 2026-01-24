@@ -30,7 +30,8 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFileName) {
         printTokens(tokens);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Lexical error: " << e.what();
+        msg << "Lexical error in lexerExecutor in PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
 
@@ -50,7 +51,8 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
         program->accept(printVisitor);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Parsing error: " << e.what();
+        msg << "Parsing error in parserExecutor in PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
 
@@ -70,7 +72,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
             IdentifierResolutionPass.resolveProgram(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Identifier resolution error: " << e.what();
+        msg << "Identifier resolution error in semanticAnalysisExecutor in "
+               "PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
     try {
@@ -78,7 +82,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         typeCheckingPass.typeCheckProgram(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Type-checking error: " << e.what();
+        msg << "Type-checking error in semanticAnalysisExecutor in "
+               "PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
     try {
@@ -86,7 +92,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         loopLabelingPass.labelLoops(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Loop-labeling error: " << e.what();
+        msg << "Loop-labeling error in semanticAnalysisExecutor in "
+               "PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
     try {
@@ -96,7 +104,9 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         astProgram.accept(printVisitor);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Printing AST error (in semantic analysis): " << e.what();
+        msg << "Printing AST error (in semantic analysis) in "
+               "semanticAnalysisExecutor in PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
 
@@ -119,7 +129,9 @@ PipelineStagesExecutors::irGeneratorExecutor(
         irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "IR generation error: " << e.what();
+        msg << "IR generation error in irGeneratorExecutor in "
+               "PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
     return irProgramAndIRStaticVariables;
@@ -173,7 +185,9 @@ std::unique_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         fixupPass.fixup(topLevels);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
-        msg << "Code generation error: " << e.what();
+        msg << "Code generation error in codegenExecutor in "
+               "PipelineStagesExecutors: "
+            << e.what();
         throw std::runtime_error(msg.str());
     }
 
@@ -187,7 +201,8 @@ void PipelineStagesExecutors::codeEmissionExecutor(
     std::ofstream assemblyFileStream(std::string{assemblyFileName});
     if (!assemblyFileStream.is_open()) {
         std::stringstream msg;
-        msg << "Error: Unable to open output file " << assemblyFileName;
+        msg << "Error: Unable to open output file " << assemblyFileName
+            << " in codeEmissionExecutor in PipelineStagesExecutors";
         throw std::ios_base::failure(msg.str());
     }
 
@@ -273,8 +288,12 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         isZeroInit = (std::get<unsigned long>(ulongInit->getValue()) == 0UL);
     }
     else {
-        throw std::logic_error("Unsupported static init type while printing "
-                               "assembly static variable");
+        const auto &r = *staticInit;
+        throw std::logic_error(
+            "Unsupported static init type while printing "
+            "assembly static variable in emitAssyStaticVariable "
+            "in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "\n";
@@ -393,8 +412,11 @@ void PipelineStagesExecutors::emitAssyInstruction(
         emitAssyLabelInstruction(*labelInstruction, assemblyFileStream);
     }
     else {
+        const auto &r = *&instruction;
         throw std::logic_error(
-            "Invalid instruction type while printing assembly instruction");
+            "Unsupported instruction type while printing assembly instruction "
+            "in emitAssyInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -414,8 +436,11 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly mov instruction");
+            "Unsupported type while printing assembly mov instruction in "
+            "emitAssyMovInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     auto src = movInstruction.getSrc();
@@ -439,8 +464,11 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
         srcStr = identifier + "(%rip)";
     }
     else {
+        const auto &r = *src;
         throw std::logic_error(
-            "Invalid source type while printing assembly mov instruction");
+            "Unsupported source type while printing assembly mov instruction "
+            "in emitAssyMovInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     auto dst = movInstruction.getDst();
@@ -459,8 +487,12 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
         dstStr = identifier + "(%rip)";
     }
     else {
+        const auto &r = *dst;
         throw std::logic_error(
-            "Invalid destination type while printing assembly mov instruction");
+            "Unsupported destination type while printing assembly mov "
+            "instruction in emitAssyMovInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    " << instructionName << " " << srcStr << ", "
@@ -491,15 +523,11 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
         srcStr = identifier + "(%rip)";
     }
     else {
-        std::stringstream msg;
-        msg << "Invalid source type while printing assembly movsx instruction";
-        if (!src) {
-            msg << ": Source operand is nullptr";
-        }
-        else {
-            msg << ": Source operand is not nullptr but unknown type";
-        }
-        throw std::logic_error(msg.str());
+        const auto &r = *src;
+        throw std::logic_error(
+            "Unsupported source type while printing assembly movsx instruction "
+            "in emitAssyMovsxInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     auto dst = movsxInstruction.getDst();
@@ -518,8 +546,12 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
         dstStr = identifier + "(%rip)";
     }
     else {
-        throw std::logic_error("Unsupported destination type while printing "
-                               "assembly movsx instruction");
+        const auto &r = *dst;
+        throw std::logic_error(
+            "Unsupported destination type while printing assembly movsx "
+            "instruction in emitAssyMovsxInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    movslq " << srcStr << ", " << dstStr << "\n";
@@ -562,8 +594,11 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
         assemblyFileStream << "    pushq " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly push instruction");
+            "Unsupported operand type while printing assembly push instruction "
+            "in emitAssyPushInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -599,8 +634,12 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
         instructionName = "not";
     }
     else {
+        const auto &r = *unaryOperator;
         throw std::logic_error(
-            "Invalid unary operator while printing assembly unary instruction");
+            "Unsupported unary operator while printing assembly unary "
+            "instruction in emitAssyUnaryInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     std::string typeSuffix;
@@ -614,8 +653,11 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly unary instruction");
+            "Unsupported type while printing assembly unary instruction in "
+            "emitAssyUnaryInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    " << instructionName << typeSuffix;
@@ -639,8 +681,12 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly unary instruction");
+            "Unsupported operand type while printing assembly unary "
+            "instruction in emitAssyUnaryInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -676,8 +722,11 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly binary instruction");
+            "Unsupported type while printing assembly binary instruction in "
+            "emitAssyBinaryInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    " << instructionName << typeSuffix;
@@ -727,8 +776,12 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand2;
         throw std::logic_error(
-            "Invalid operand type while printing assembly binary instruction");
+            "Unsupported operand type while printing assembly binary "
+            "instruction in emitAssyBinaryInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -748,8 +801,11 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly cmp instruction");
+            "Unsupported type while printing assembly cmp instruction in "
+            "emitAssyCmpInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    cmp" << typeSuffix;
@@ -800,8 +856,11 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand2;
         throw std::logic_error(
-            "Invalid operand type while printing assembly cmp instruction");
+            "Unsupported operand type while printing assembly cmp instruction "
+            "in emitAssyCmpInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -821,8 +880,11 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly idiv instruction");
+            "Unsupported type while printing assembly idiv instruction in "
+            "emitAssyIdivInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    idiv" << typeSuffix;
@@ -846,8 +908,11 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
-        throw std::logic_error("Unsupported operand type while printing "
-                               "assembly idiv instruction");
+        const auto &r = *operand;
+        throw std::logic_error(
+            "Unsupported operand type while printing assembly idiv instruction "
+            "in emitAssyIdivInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -867,8 +932,11 @@ void PipelineStagesExecutors::emitAssyDivInstruction(
         registerSize = 8;
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Unsupported type while printing assembly div instruction");
+            "Unsupported type while printing assembly div instruction in "
+            "emitAssyDivInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     assemblyFileStream << "    div" << typeSuffix;
@@ -892,8 +960,11 @@ void PipelineStagesExecutors::emitAssyDivInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Unsupported operand type while printing assembly div instruction");
+            "Unsupported operand type while printing assembly div instruction "
+            "in emitAssyDivInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -909,8 +980,11 @@ void PipelineStagesExecutors::emitAssyCdqInstruction(
         assemblyFileStream << "    cqo\n";
     }
     else {
+        const auto &r = *type;
         throw std::logic_error(
-            "Invalid type while printing assembly cdq instruction");
+            "Unsupported type while printing assembly cdq instruction in "
+            "emitAssyCdqInstruction in PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 
@@ -956,8 +1030,12 @@ void PipelineStagesExecutors::emitAssyJmpCCInstruction(
         assemblyFileStream << "    jbe";
     }
     else {
-        throw std::logic_error("Unsupported conditional code while printing "
-                               "assembly jmpcc instruction");
+        const auto &r = *condCode;
+        throw std::logic_error(
+            "Unsupported conditional code while printing assembly jmpcc "
+            "instruction in emitAssyJmpCCInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     auto label = jmpCCInstruction.getLabel();
@@ -999,8 +1077,12 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
         assemblyFileStream << "    setbe";
     }
     else {
-        throw std::logic_error("Unsupported conditional code while printing "
-                               "assembly setcc instruction");
+        const auto &r = *condCode;
+        throw std::logic_error(
+            "Unsupported conditional code while printing assembly setcc "
+            "instruction in emitAssySetCCInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 
     auto operand = setCCInstruction.getOperand();
@@ -1021,8 +1103,12 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
         assemblyFileStream << " " << identifier << "(%rip)\n";
     }
     else {
+        const auto &r = *operand;
         throw std::logic_error(
-            "Invalid operand type while printing assembly setcc instruction");
+            "Unsupported operand type while printing assembly setcc "
+            "instruction in emitAssySetCCInstruction in "
+            "PipelineStagesExecutors: " +
+            std::string(typeid(r).name()));
     }
 }
 

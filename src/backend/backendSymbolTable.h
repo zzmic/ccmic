@@ -63,7 +63,8 @@ class ObjEntry : public BackendSymbolTableEntry {
     explicit ObjEntry(std::unique_ptr<AssemblyType> assemblyType, bool isStatic)
         : assemblyType(std::move(assemblyType)), isStatic(isStatic) {
         if (!this->assemblyType) {
-            throw std::logic_error("Creating ObjEntry with null assemblyType");
+            throw std::logic_error(
+                "Creating ObjEntry with null assemblyType in ObjEntry");
         }
     }
 

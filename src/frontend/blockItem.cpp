@@ -6,7 +6,8 @@ namespace AST {
 SBlockItem::SBlockItem(std::unique_ptr<Statement> statement)
     : statement(std::move(statement)) {
     if (!this->statement) {
-        throw std::logic_error("Creating SBlockItem with null statement");
+        throw std::logic_error(
+            "Creating SBlockItem with null statement in SBlockItem");
     }
 }
 
@@ -21,7 +22,8 @@ void SBlockItem::setStatement(std::unique_ptr<Statement> newStatement) {
 DBlockItem::DBlockItem(std::unique_ptr<Declaration> declaration)
     : declaration(std::move(declaration)) {
     if (!this->declaration) {
-        throw std::logic_error("Creating DBlockItem with null declaration");
+        throw std::logic_error(
+            "Creating DBlockItem with null declaration in DBlockItem");
     }
 }
 

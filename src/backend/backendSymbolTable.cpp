@@ -34,8 +34,11 @@ void convertFrontendToBackendSymbolTable(
             backendSymbolTable[identifier] = std::move(objEntry);
         }
         else {
-            throw std::logic_error("Unsupported identifier attribute type for "
-                                   "backend symbol table conversion");
+            const auto &r = *identifierAttribute;
+            throw std::logic_error(
+                "Unsupported identifier attribute type in "
+                "convertFrontendToBackendSymbolTable in BackendSymbolTable: " +
+                std::string(typeid(r).name()));
         }
     }
 }

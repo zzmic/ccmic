@@ -40,7 +40,8 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
     const Assembly::Operand *operand,
     const BackendSymbolTable &backendSymbolTable) {
     if (!operand) {
-        throw std::logic_error("Setting null operand in replaceOperand");
+        throw std::logic_error(
+            "Setting null operand in replaceOperand in PseudoToStackPass");
     }
 
     if (auto pseudoReg =
@@ -163,7 +164,10 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::BP>());
         }
-        throw std::logic_error("Unsupported register while replacing operand");
+        const auto &r = *reg;
+        throw std::logic_error("Unsupported register while replacing operand "
+                               "in replaceOperand in PseudoToStackPass: " +
+                               std::string(typeid(r).name()));
     }
 
     if (auto stackOp = dynamic_cast<const Assembly::StackOperand *>(operand)) {
@@ -176,15 +180,21 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::BP>());
         }
+        const auto &r = *reservedReg;
         throw std::logic_error(
-            "Unsupported reserved register while replacing operand");
+            "Unsupported reserved register while replacing operand in "
+            "replaceOperand in PseudoToStackPass: " +
+            std::string(typeid(r).name()));
     }
 
     if (auto dataOp = dynamic_cast<const Assembly::DataOperand *>(operand)) {
         return std::make_unique<Assembly::DataOperand>(dataOp->getIdentifier());
     }
 
-    throw std::logic_error("Unsupported operand type in replaceOperand");
+    const auto &r = *operand;
+    throw std::logic_error(
+        "Unsupported operand type in replaceOperand in PseudoToStackPass: " +
+        std::string(typeid(r).name()));
 }
 
 void PseudoToStackPass::replacePseudoWithStack(
@@ -292,8 +302,11 @@ void PseudoToStackPass::replacePseudoWithStack(
         (void)labelInstruction;
     }
     else {
+        const auto &r = *instruction;
         throw std::logic_error("Unsupported instruction type while replacing "
-                               "pseudo registers with stack operands");
+                               "pseudo registers with stack operands in "
+                               "replacePseudoWithStack in PseudoToStackPass: " +
+                               std::string(typeid(r).name()));
     }
 }
 
@@ -405,9 +418,13 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
             (void)labelInstruction;
         }
         else {
-            throw std::logic_error("Unsupported instruction type while "
-                                   "checking whether pseudo registers have "
-                                   "been replaced in function definition");
+            const auto &r = *instruction;
+            throw std::logic_error(
+                "Unsupported instruction type while checking whether pseudo "
+                "registers have been replaced in "
+                "checkPseudoRegistersInFunctionDefinitionReplaced in "
+                "PseudoToStackPass: " +
+                std::string(typeid(r).name()));
         }
     }
 }

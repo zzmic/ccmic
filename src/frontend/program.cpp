@@ -7,7 +7,8 @@ Program::Program(
     std::unique_ptr<std::vector<std::unique_ptr<Declaration>>> declarations)
     : declarations(std::move(declarations)) {
     if (!this->declarations) {
-        throw std::logic_error("Creating Program with null declarations");
+        throw std::logic_error(
+            "Creating Program with null declarations in Program");
     }
 }
 

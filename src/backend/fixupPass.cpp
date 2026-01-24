@@ -14,15 +14,18 @@ namespace {
 std::unique_ptr<Assembly::AssemblyType>
 cloneAssemblyType(const Assembly::AssemblyType *type) {
     if (!type) {
-        throw std::logic_error("Cloning null AssemblyType");
+        throw std::logic_error(
+            "Cloning null AssemblyType in cloneAssemblyType");
     }
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         return std::make_unique<Assembly::Longword>();
     }
-    if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         return std::make_unique<Assembly::Quadword>();
     }
-    throw std::logic_error("Unsupported AssemblyType in cloneAssemblyType");
+    const auto &r = *type;
+    throw std::logic_error("Unsupported AssemblyType in cloneAssemblyType: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -34,13 +37,15 @@ cloneAssemblyType(const Assembly::AssemblyType *type) {
 std::unique_ptr<Assembly::Operand>
 cloneOperand(const Assembly::Operand *operand) {
     if (!operand) {
-        throw std::logic_error("Cloning null Operand");
+        throw std::logic_error("Cloning null Operand in cloneOperand");
     }
-    if (auto imm = dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
+    if (auto immOp =
+            dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         return std::make_unique<Assembly::ImmediateOperand>(
-            imm->getImmediate());
+            immOp->getImmediate());
     }
-    if (auto regOp = dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
+    else if (auto regOp =
+                 dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         auto reg = regOp->getRegister();
         if (dynamic_cast<const Assembly::AX *>(reg)) {
             return std::make_unique<Assembly::RegisterOperand>(
@@ -86,9 +91,12 @@ cloneOperand(const Assembly::Operand *operand) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::BP>());
         }
-        throw std::logic_error("Unsupported register in cloneOperand");
+        const auto &r = *reg;
+        throw std::logic_error("Unsupported register in cloneOperand: " +
+                               std::string(typeid(r).name()));
     }
-    if (auto stackOp = dynamic_cast<const Assembly::StackOperand *>(operand)) {
+    else if (auto stackOp =
+                 dynamic_cast<const Assembly::StackOperand *>(operand)) {
         auto reservedReg = stackOp->getReservedRegister();
         if (dynamic_cast<const Assembly::SP *>(reservedReg)) {
             return std::make_unique<Assembly::StackOperand>(
@@ -98,17 +106,24 @@ cloneOperand(const Assembly::Operand *operand) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::BP>());
         }
-        throw std::logic_error("Unsupported reserved register in cloneOperand");
+        const auto &r = *reservedReg;
+        throw std::logic_error(
+            "Unsupported reserved register in cloneOperand: " +
+            std::string(typeid(r).name()));
     }
-    if (auto dataOp = dynamic_cast<const Assembly::DataOperand *>(operand)) {
+    else if (auto dataOp =
+                 dynamic_cast<const Assembly::DataOperand *>(operand)) {
         return std::make_unique<Assembly::DataOperand>(dataOp->getIdentifier());
     }
-    if (auto pseudoOp =
-            dynamic_cast<const Assembly::PseudoRegisterOperand *>(operand)) {
+    else if (auto pseudoOp =
+                 dynamic_cast<const Assembly::PseudoRegisterOperand *>(
+                     operand)) {
         return std::make_unique<Assembly::PseudoRegisterOperand>(
             pseudoOp->getPseudoRegister());
     }
-    throw std::logic_error("Unsupported Operand in cloneOperand");
+    const auto &r = *operand;
+    throw std::logic_error("Unsupported Operand in cloneOperand: " +
+                           std::string(typeid(r).name()));
 }
 
 /**
@@ -120,18 +135,22 @@ cloneOperand(const Assembly::Operand *operand) {
 std::unique_ptr<Assembly::BinaryOperator>
 cloneBinaryOperator(const Assembly::BinaryOperator *binaryOperator) {
     if (!binaryOperator) {
-        throw std::logic_error("Cloning null BinaryOperator");
+        throw std::logic_error(
+            "Cloning null BinaryOperator in cloneBinaryOperator");
     }
     if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator)) {
         return std::make_unique<Assembly::AddOperator>();
     }
-    if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
         return std::make_unique<Assembly::SubtractOperator>();
     }
-    if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
         return std::make_unique<Assembly::MultiplyOperator>();
     }
-    throw std::logic_error("Unsupported BinaryOperator in cloneBinaryOperator");
+    const auto &r = *binaryOperator;
+    throw std::logic_error(
+        "Unsupported BinaryOperator in cloneBinaryOperator: " +
+        std::string(typeid(r).name()));
 }
 } // namespace
 

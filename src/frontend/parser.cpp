@@ -37,7 +37,8 @@ Token Parser::consumeToken(TokenType type) {
     std::stringstream msg;
     msg << "Expect token of type " << tokenTypeToString(type) << " but found "
         << tokens[current].value;
-    msg << " of type " << tokenTypeToString(tokens[current].type);
+    msg << " of type " << tokenTypeToString(tokens[current].type)
+        << " in consumeToken in Parser";
     throw std::invalid_argument(msg.str());
 }
 
@@ -48,7 +49,8 @@ void Parser::expectToken(TokenType type) {
         std::stringstream msg;
         msg << "Expect token of type " << tokenTypeToString(type)
             << " but found " << tokens[current].value;
-        msg << " of type " << tokenTypeToString(tokens[current].type);
+        msg << " of type " << tokenTypeToString(tokens[current].type)
+            << " in expectToken in Parser";
         throw std::invalid_argument(msg.str());
     }
     consumeToken(type);
@@ -255,7 +257,9 @@ std::vector<std::string> Parser::parseTypeSpecifiersInParameters() {
         }
     }
     if (specifiers.empty()) {
-        throw std::invalid_argument("Missing type specifier in parameter");
+        throw std::invalid_argument(
+            "Missing type specifier in parameter in "
+            "parseTypeSpecifiersInParameters in Parser");
     }
     return specifiers;
 }
@@ -277,7 +281,8 @@ std::unique_ptr<ForInit> Parser::parseForInit() {
         }
         else {
             throw std::invalid_argument(
-                "Function declarations aren't permitted in for-loop headers");
+                "Function declarations aren't permitted in for-loop headers in "
+                "parseForInit in Parser");
         }
     }
     else {
@@ -396,7 +401,8 @@ std::unique_ptr<Statement> Parser::parseStatement() {
     }
     std::stringstream msg;
     msg << "Malformed statement: unexpected token: " << tokens[current].value;
-    msg << " of type " << tokenTypeToString(tokens[current].type);
+    msg << " of type " << tokenTypeToString(tokens[current].type)
+        << " in parseStatement in Parser";
     throw std::invalid_argument(msg.str());
 }
 
@@ -505,6 +511,7 @@ std::unique_ptr<Expression> Parser::parseFactor() {
         std::stringstream msg;
         msg << "Malformed factor: unexpected token: " << tokens[current].value;
         msg << " of type " << tokenTypeToString(tokens[current].type);
+        msg << " in parseFactor in Parser";
         throw std::invalid_argument(msg.str());
     }
 }
@@ -524,7 +531,8 @@ std::unique_ptr<Constant> Parser::parseConstant() {
         auto constantValue = std::stoull(tokens[current].value);
         if (constantValue > MAX_ULONG) {
             throw std::invalid_argument(
-                "Constant is too large to represent as an unsigned long");
+                "Constant is too large to represent as an unsigned long in "
+                "parseConstant in Parser");
         }
         if (tokens[current].type == TokenType::UnsignedIntegerConstant) {
             if (constantValue <= MAX_UINT) {
@@ -543,8 +551,8 @@ std::unique_ptr<Constant> Parser::parseConstant() {
 
     auto constantValue = std::stoll(tokens[current].value);
     if (constantValue > MAX_LONG) {
-        throw std::invalid_argument(
-            "Constant is too large to represent as an int or long");
+        throw std::invalid_argument("Constant is too large to represent as an "
+                                    "int or long in parseConstant in Parser");
     }
     if (tokens[current].type == TokenType::IntConstant) {
         if (constantValue <= MAX_INT) {
@@ -643,7 +651,8 @@ Parser::parseTypeAndStorageClass(
     auto type = parseType(types);
     std::unique_ptr<StorageClass> storageClass;
     if (storageClasses.size() > 1) {
-        throw std::invalid_argument("Invalid storage class (specifier)");
+        throw std::invalid_argument("Invalid storage class (specifier) in "
+                                    "parseTypeAndStorageClass in Parser");
     }
     if (storageClasses.size() == 1) {
         storageClass = parseStorageClass(storageClasses[0]);
@@ -659,16 +668,17 @@ Parser::parseType(const std::vector<std::string> &specifierList) {
     const std::unordered_set<std::string> specifierSet(specifierList.begin(),
                                                        specifierList.end());
     if (specifierSet.empty()) {
-        throw std::invalid_argument("Invalid type specifier (empty)");
+        throw std::invalid_argument(
+            "Invalid type specifier (empty) in parseType in Parser");
     }
     else if (specifierSet.size() != specifierList.size()) {
-        throw std::invalid_argument(
-            "Invalid type specifier (duplicate specifiers)");
+        throw std::invalid_argument("Invalid type specifier (duplicate "
+                                    "specifiers) in parseType in Parser");
     }
     else if (specifierSet.contains("signed") &&
              specifierSet.contains("unsigned")) {
-        throw std::invalid_argument(
-            "Invalid type specifier (both signed and unsigned)");
+        throw std::invalid_argument("Invalid type specifier (both signed and "
+                                    "unsigned) in parseType in Parser");
     }
 
     if (specifierSet.contains("unsigned") && specifierSet.contains("long")) {
@@ -702,7 +712,11 @@ Parser::parseStorageClass(const std::string &specifier) {
         return std::make_unique<ExternStorageClass>();
     }
     else {
-        throw std::invalid_argument("Invalid storage class (specifier)");
+        std::stringstream msg;
+        msg << "Invalid storage class (specifier) in parseStorageClass in "
+               "Parser: "
+            << specifier;
+        throw std::invalid_argument(msg.str());
     }
 }
 
