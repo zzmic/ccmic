@@ -5,7 +5,8 @@ namespace AST {
 InitDecl::InitDecl(std::unique_ptr<VariableDeclaration> decl)
     : decl(std::move(decl)) {
     if (!this->decl) {
-        throw std::logic_error("Creating InitDecl with null decl in InitDecl");
+        throw std::invalid_argument(
+            "Creating InitDecl with null decl in InitDecl");
     }
 }
 

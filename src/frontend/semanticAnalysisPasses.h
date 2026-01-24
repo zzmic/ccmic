@@ -430,7 +430,7 @@ class Initial : public InitialValue {
     explicit Initial(std::unique_ptr<StaticInit> staticInit)
         : staticInit(std::move(staticInit)) {
         if (!this->staticInit) {
-            throw std::logic_error(
+            throw std::invalid_argument(
                 "Creating Initial with null staticInit in Initial");
         }
     }
@@ -531,8 +531,8 @@ class StaticAttribute : public IdentifierAttribute {
                              bool global)
         : initialValue(std::move(initialValue)), global(global) {
         if (!this->initialValue) {
-            throw std::logic_error("Creating StaticAttribute with null "
-                                   "initialValue in StaticAttribute");
+            throw std::invalid_argument("Creating StaticAttribute with null "
+                                        "initialValue in StaticAttribute");
         }
     }
 

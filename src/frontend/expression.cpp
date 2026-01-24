@@ -7,8 +7,9 @@ namespace AST {
 ConstantExpression::ConstantExpression(std::unique_ptr<Constant> constant)
     : constant(std::move(constant)) {
     if (!this->constant) {
-        throw std::logic_error("Creating ConstantExpression with null constant "
-                               "in ConstantExpression");
+        throw std::invalid_argument(
+            "Creating ConstantExpression with null constant "
+            "in ConstantExpression");
     }
 }
 
@@ -16,12 +17,14 @@ ConstantExpression::ConstantExpression(std::unique_ptr<Constant> constant,
                                        std::unique_ptr<Type> expType)
     : constant(std::move(constant)), expType(std::move(expType)) {
     if (!this->constant) {
-        throw std::logic_error("Creating ConstantExpression with null constant "
-                               "in ConstantExpression");
+        throw std::invalid_argument(
+            "Creating ConstantExpression with null constant "
+            "in ConstantExpression");
     }
     if (!this->expType) {
-        throw std::logic_error("Creating ConstantExpression with null expType "
-                               "in ConstantExpression");
+        throw std::invalid_argument(
+            "Creating ConstantExpression with null expType "
+            "in ConstantExpression");
     }
 }
 
@@ -67,8 +70,9 @@ VariableExpression::VariableExpression(std::string_view identifier,
                                        std::unique_ptr<Type> expType)
     : identifier(identifier), expType(std::move(expType)) {
     if (!this->expType) {
-        throw std::logic_error("Creating VariableExpression with null expType "
-                               "in VariableExpression");
+        throw std::invalid_argument(
+            "Creating VariableExpression with null expType "
+            "in VariableExpression");
     }
 }
 
@@ -92,11 +96,11 @@ CastExpression::CastExpression(std::unique_ptr<Type> targetType,
                                std::unique_ptr<Expression> expr)
     : targetType(std::move(targetType)), expr(std::move(expr)) {
     if (!this->targetType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CastExpression with null targetType in CastExpression");
     }
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CastExpression with null expr in CastExpression");
     }
 }
@@ -107,15 +111,15 @@ CastExpression::CastExpression(std::unique_ptr<Type> targetType,
     : targetType(std::move(targetType)), expr(std::move(expr)),
       expType(std::move(expType)) {
     if (!this->targetType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CastExpression with null targetType in CastExpression");
     }
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CastExpression with null expr in CastExpression");
     }
     if (!this->expType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CastExpression with null expType in CastExpression");
     }
 }
@@ -150,7 +154,7 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
                                     std::string(opInStr));
     }
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating UnaryExpression with null expression in UnaryExpression");
     }
 }
@@ -174,12 +178,13 @@ UnaryExpression::UnaryExpression(std::string_view opInStr,
                                     std::string(opInStr));
     }
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating UnaryExpression with null expression in UnaryExpression");
     }
     if (!this->expType) {
-        throw std::logic_error("Creating UnaryExpression with null expression "
-                               "type in UnaryExpression");
+        throw std::invalid_argument(
+            "Creating UnaryExpression with null expression "
+            "type in UnaryExpression");
     }
 }
 
@@ -187,11 +192,11 @@ UnaryExpression::UnaryExpression(std::unique_ptr<UnaryOperator> op,
                                  std::unique_ptr<Expression> expr)
     : op(std::move(op)), expr(std::move(expr)) {
     if (!this->op) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating UnaryExpression with null operator in UnaryExpression");
     }
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating UnaryExpression with null expression in UnaryExpression");
     }
 }
@@ -201,16 +206,17 @@ UnaryExpression::UnaryExpression(std::unique_ptr<UnaryOperator> op,
                                  std::unique_ptr<Type> expType)
     : op(std::move(op)), expr(std::move(expr)), expType(std::move(expType)) {
     if (!this->op) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating UnaryExpression with null operator in UnaryExpression");
     }
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating UnaryExpression with null expression in UnaryExpression");
     }
     if (!this->expType) {
-        throw std::logic_error("Creating UnaryExpression with null expression "
-                               "type in UnaryExpression");
+        throw std::invalid_argument(
+            "Creating UnaryExpression with null expression "
+            "type in UnaryExpression");
     }
 }
 
@@ -275,11 +281,11 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
                                     std::string(opInStr));
     }
     if (!this->left) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null left in BinaryExpression");
     }
     if (!this->right) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null right in BinaryExpression");
     }
 }
@@ -335,15 +341,15 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
                                     std::string(opInStr));
     }
     if (!this->left) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null left in BinaryExpression");
     }
     if (!this->right) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null right in BinaryExpression");
     }
     if (!this->expType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null expType in BinaryExpression");
     }
 }
@@ -353,15 +359,15 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
                                    std::unique_ptr<Expression> right)
     : left(std::move(left)), op(std::move(op)), right(std::move(right)) {
     if (!this->left) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null left in BinaryExpression");
     }
     if (!this->op) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null op in BinaryExpression");
     }
     if (!this->right) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null right in BinaryExpression");
     }
 }
@@ -373,19 +379,19 @@ BinaryExpression::BinaryExpression(std::unique_ptr<Expression> left,
     : left(std::move(left)), op(std::move(op)), right(std::move(right)),
       expType(std::move(expType)) {
     if (!this->left) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null left in BinaryExpression");
     }
     if (!this->op) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null op in BinaryExpression");
     }
     if (!this->right) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null right in BinaryExpression");
     }
     if (!this->expType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating BinaryExpression with null expType in BinaryExpression");
     }
 }
@@ -420,12 +426,14 @@ AssignmentExpression::AssignmentExpression(std::unique_ptr<Expression> left,
                                            std::unique_ptr<Expression> right)
     : left(std::move(left)), right(std::move(right)) {
     if (!this->left) {
-        throw std::logic_error("Creating AssignmentExpression with null left "
-                               "in AssignmentExpression");
+        throw std::invalid_argument(
+            "Creating AssignmentExpression with null left "
+            "in AssignmentExpression");
     }
     if (!this->right) {
-        throw std::logic_error("Creating AssignmentExpression with null right "
-                               "in AssignmentExpression");
+        throw std::invalid_argument(
+            "Creating AssignmentExpression with null right "
+            "in AssignmentExpression");
     }
 }
 
@@ -435,16 +443,18 @@ AssignmentExpression::AssignmentExpression(std::unique_ptr<Expression> left,
     : left(std::move(left)), right(std::move(right)),
       expType(std::move(expType)) {
     if (!this->left) {
-        throw std::logic_error("Creating AssignmentExpression with null left "
-                               "in AssignmentExpression");
+        throw std::invalid_argument(
+            "Creating AssignmentExpression with null left "
+            "in AssignmentExpression");
     }
     if (!this->right) {
-        throw std::logic_error("Creating AssignmentExpression with null right "
-                               "in AssignmentExpression");
+        throw std::invalid_argument(
+            "Creating AssignmentExpression with null right "
+            "in AssignmentExpression");
     }
     if (!this->expType) {
-        throw std::logic_error("Creating AssignmentExpression with null "
-                               "expType in AssignmentExpression");
+        throw std::invalid_argument("Creating AssignmentExpression with null "
+                                    "expType in AssignmentExpression");
     }
 }
 
@@ -476,16 +486,16 @@ ConditionalExpression::ConditionalExpression(
       thenExpression(std::move(thenExpression)),
       elseExpression(std::move(elseExpression)) {
     if (!this->condition) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "condition in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "condition in ConditionalExpression");
     }
     if (!this->thenExpression) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "thenExpression in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "thenExpression in ConditionalExpression");
     }
     if (!this->elseExpression) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "elseExpression in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "elseExpression in ConditionalExpression");
     }
 }
 
@@ -497,20 +507,20 @@ ConditionalExpression::ConditionalExpression(
       thenExpression(std::move(thenExpression)),
       elseExpression(std::move(elseExpression)), expType(std::move(expType)) {
     if (!this->condition) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "condition in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "condition in ConditionalExpression");
     }
     if (!this->thenExpression) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "thenExpression in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "thenExpression in ConditionalExpression");
     }
     if (!this->elseExpression) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "elseExpression in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "elseExpression in ConditionalExpression");
     }
     if (!this->expType) {
-        throw std::logic_error("Creating ConditionalExpression with null "
-                               "expType in ConditionalExpression");
+        throw std::invalid_argument("Creating ConditionalExpression with null "
+                                    "expType in ConditionalExpression");
     }
 }
 
@@ -554,8 +564,8 @@ FunctionCallExpression::FunctionCallExpression(
     std::unique_ptr<std::vector<std::unique_ptr<Expression>>> arguments)
     : identifier(identifier), arguments(std::move(arguments)) {
     if (!this->arguments) {
-        throw std::logic_error("Creating FunctionCallExpression with null "
-                               "arguments in FunctionCallExpression");
+        throw std::invalid_argument("Creating FunctionCallExpression with null "
+                                    "arguments in FunctionCallExpression");
     }
 }
 
@@ -566,12 +576,12 @@ FunctionCallExpression::FunctionCallExpression(
     : identifier(identifier), arguments(std::move(arguments)),
       expType(std::move(expType)) {
     if (!this->arguments) {
-        throw std::logic_error("Creating FunctionCallExpression with null "
-                               "arguments in FunctionCallExpression");
+        throw std::invalid_argument("Creating FunctionCallExpression with null "
+                                    "arguments in FunctionCallExpression");
     }
     if (!this->expType) {
-        throw std::logic_error("Creating FunctionCallExpression with null "
-                               "expType in FunctionCallExpression");
+        throw std::invalid_argument("Creating FunctionCallExpression with null "
+                                    "expType in FunctionCallExpression");
     }
 }
 

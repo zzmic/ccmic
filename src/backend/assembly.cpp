@@ -46,8 +46,8 @@ unsigned long ImmediateOperand::getImmediate() const { return imm; }
 RegisterOperand::RegisterOperand(std::unique_ptr<Register> reg)
     : reg(std::move(reg)) {
     if (!this->reg) {
-        throw std::logic_error("Creating RegisterOperand with null reg in "
-                               "RegisterOperand");
+        throw std::invalid_argument("Creating RegisterOperand with null reg in "
+                                    "RegisterOperand");
     }
 }
 
@@ -121,8 +121,9 @@ StackOperand::StackOperand(int offset,
                            std::unique_ptr<ReservedRegister> reservedReg)
     : offset(offset), reservedReg(std::move(reservedReg)) {
     if (!this->reservedReg) {
-        throw std::logic_error("Creating StackOperand with null reservedReg in "
-                               "StackOperand");
+        throw std::invalid_argument(
+            "Creating StackOperand with null reservedReg in "
+            "StackOperand");
     }
 }
 
@@ -157,16 +158,16 @@ MovInstruction::MovInstruction(std::unique_ptr<AssemblyType> type,
                                std::unique_ptr<Operand> dst)
     : type(std::move(type)), src(std::move(src)), dst(std::move(dst)) {
     if (!this->type) {
-        throw std::logic_error("Creating MovInstruction with null type in "
-                               "MovInstruction");
+        throw std::invalid_argument("Creating MovInstruction with null type in "
+                                    "MovInstruction");
     }
     if (!this->src) {
-        throw std::logic_error("Creating MovInstruction with null src in "
-                               "MovInstruction");
+        throw std::invalid_argument("Creating MovInstruction with null src in "
+                                    "MovInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating MovInstruction with null dst in "
-                               "MovInstruction");
+        throw std::invalid_argument("Creating MovInstruction with null dst in "
+                                    "MovInstruction");
     }
 }
 
@@ -204,12 +205,14 @@ MovsxInstruction::MovsxInstruction(std::unique_ptr<Operand> src,
                                    std::unique_ptr<Operand> dst)
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
-        throw std::logic_error("Creating MovsxInstruction with null src in "
-                               "MovsxInstruction");
+        throw std::invalid_argument(
+            "Creating MovsxInstruction with null src in "
+            "MovsxInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating MovsxInstruction with null dst in "
-                               "MovsxInstruction");
+        throw std::invalid_argument(
+            "Creating MovsxInstruction with null dst in "
+            "MovsxInstruction");
     }
 }
 
@@ -237,12 +240,14 @@ MovZeroExtendInstruction::MovZeroExtendInstruction(std::unique_ptr<Operand> src,
                                                    std::unique_ptr<Operand> dst)
     : src(std::move(src)), dst(std::move(dst)) {
     if (!this->src) {
-        throw std::logic_error("Creating MovZeroExtendInstruction with null "
-                               "src in MovZeroExtendInstruction");
+        throw std::invalid_argument(
+            "Creating MovZeroExtendInstruction with null "
+            "src in MovZeroExtendInstruction");
     }
     if (!this->dst) {
-        throw std::logic_error("Creating MovZeroExtendInstruction with null "
-                               "dst in MovZeroExtendInstruction");
+        throw std::invalid_argument(
+            "Creating MovZeroExtendInstruction with null "
+            "dst in MovZeroExtendInstruction");
     }
 }
 
@@ -272,16 +277,18 @@ UnaryInstruction::UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
     : unaryOperator(std::move(unaryOperator)), type(std::move(type)),
       operand(std::move(operand)) {
     if (!this->unaryOperator) {
-        throw std::logic_error("Creating UnaryInstruction with null "
-                               "unaryOperator in UnaryInstruction");
+        throw std::invalid_argument("Creating UnaryInstruction with null "
+                                    "unaryOperator in UnaryInstruction");
     }
     if (!this->type) {
-        throw std::logic_error("Creating UnaryInstruction with null type in "
-                               "UnaryInstruction");
+        throw std::invalid_argument(
+            "Creating UnaryInstruction with null type in "
+            "UnaryInstruction");
     }
     if (!this->operand) {
-        throw std::logic_error("Creating UnaryInstruction with null operand in "
-                               "UnaryInstruction");
+        throw std::invalid_argument(
+            "Creating UnaryInstruction with null operand in "
+            "UnaryInstruction");
     }
 }
 
@@ -296,15 +303,15 @@ const Operand *UnaryInstruction::getOperand() const { return operand.get(); }
 void UnaryInstruction::setUnaryOperator(
     std::unique_ptr<UnaryOperator> newUnaryOperator) {
     if (!newUnaryOperator) {
-        throw std::logic_error("Setting null unary operator in "
-                               "setUnaryOperator in UnaryInstruction");
+        throw std::invalid_argument("Setting null unary operator in "
+                                    "setUnaryOperator in UnaryInstruction");
     }
     unaryOperator = std::move(newUnaryOperator);
 }
 
 void UnaryInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null type in setType in UnaryInstruction");
     }
     type = std::move(newType);
@@ -312,7 +319,7 @@ void UnaryInstruction::setType(std::unique_ptr<AssemblyType> newType) {
 
 void UnaryInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand in setOperand in UnaryInstruction");
     }
     operand = std::move(newOperand);
@@ -325,20 +332,23 @@ BinaryInstruction::BinaryInstruction(
     : binaryOperator(std::move(binaryOperator)), type(std::move(type)),
       operand1(std::move(operand1)), operand2(std::move(operand2)) {
     if (!this->binaryOperator) {
-        throw std::logic_error("Creating BinaryInstruction with null "
-                               "binaryOperator in BinaryInstruction");
+        throw std::invalid_argument("Creating BinaryInstruction with null "
+                                    "binaryOperator in BinaryInstruction");
     }
     if (!this->type) {
-        throw std::logic_error("Creating BinaryInstruction with null type in "
-                               "BinaryInstruction");
+        throw std::invalid_argument(
+            "Creating BinaryInstruction with null type in "
+            "BinaryInstruction");
     }
     if (!this->operand1) {
-        throw std::logic_error("Creating BinaryInstruction with null operand1 "
-                               "in BinaryInstruction");
+        throw std::invalid_argument(
+            "Creating BinaryInstruction with null operand1 "
+            "in BinaryInstruction");
     }
     if (!this->operand2) {
-        throw std::logic_error("Creating BinaryInstruction with null operand2 "
-                               "in BinaryInstruction");
+        throw std::invalid_argument(
+            "Creating BinaryInstruction with null operand2 "
+            "in BinaryInstruction");
     }
 }
 
@@ -355,15 +365,15 @@ const Operand *BinaryInstruction::getOperand2() const { return operand2.get(); }
 void BinaryInstruction::setBinaryOperator(
     std::unique_ptr<BinaryOperator> newBinaryOperator) {
     if (!newBinaryOperator) {
-        throw std::logic_error("Setting null binary operator in "
-                               "setBinaryOperator in BinaryInstruction");
+        throw std::invalid_argument("Setting null binary operator in "
+                                    "setBinaryOperator in BinaryInstruction");
     }
     binaryOperator = std::move(newBinaryOperator);
 }
 
 void BinaryInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null type in setType in BinaryInstruction");
     }
     type = std::move(newType);
@@ -371,7 +381,7 @@ void BinaryInstruction::setType(std::unique_ptr<AssemblyType> newType) {
 
 void BinaryInstruction::setOperand1(std::unique_ptr<Operand> newOperand1) {
     if (!newOperand1) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand1 in setOperand1 in BinaryInstruction");
     }
     operand1 = std::move(newOperand1);
@@ -379,7 +389,7 @@ void BinaryInstruction::setOperand1(std::unique_ptr<Operand> newOperand1) {
 
 void BinaryInstruction::setOperand2(std::unique_ptr<Operand> newOperand2) {
     if (!newOperand2) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand2 in setOperand2 in BinaryInstruction");
     }
     operand2 = std::move(newOperand2);
@@ -391,16 +401,18 @@ CmpInstruction::CmpInstruction(std::unique_ptr<AssemblyType> type,
     : type(std::move(type)), operand1(std::move(operand1)),
       operand2(std::move(operand2)) {
     if (!this->type) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CmpInstruction with null type in CmpInstruction");
     }
     if (!this->operand1) {
-        throw std::logic_error("Creating CmpInstruction with null operand1 in "
-                               "CmpInstruction");
+        throw std::invalid_argument(
+            "Creating CmpInstruction with null operand1 in "
+            "CmpInstruction");
     }
     if (!this->operand2) {
-        throw std::logic_error("Creating CmpInstruction with null operand2 in "
-                               "CmpInstruction");
+        throw std::invalid_argument(
+            "Creating CmpInstruction with null operand2 in "
+            "CmpInstruction");
     }
 }
 
@@ -412,7 +424,7 @@ const Operand *CmpInstruction::getOperand2() const { return operand2.get(); }
 
 void CmpInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null type in setType in CmpInstruction");
     }
     type = std::move(newType);
@@ -420,7 +432,7 @@ void CmpInstruction::setType(std::unique_ptr<AssemblyType> newType) {
 
 void CmpInstruction::setOperand1(std::unique_ptr<Operand> newOperand1) {
     if (!newOperand1) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand1 in setOperand1 in CmpInstruction");
     }
     operand1 = std::move(newOperand1);
@@ -428,7 +440,7 @@ void CmpInstruction::setOperand1(std::unique_ptr<Operand> newOperand1) {
 
 void CmpInstruction::setOperand2(std::unique_ptr<Operand> newOperand2) {
     if (!newOperand2) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand2 in setOperand2 in CmpInstruction");
     }
     operand2 = std::move(newOperand2);
@@ -438,12 +450,13 @@ IdivInstruction::IdivInstruction(std::unique_ptr<AssemblyType> type,
                                  std::unique_ptr<Operand> operand)
     : type(std::move(type)), operand(std::move(operand)) {
     if (!this->type) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating IdivInstruction with null type in IdivInstruction");
     }
     if (!this->operand) {
-        throw std::logic_error("Creating IdivInstruction with null operand in "
-                               "IdivInstruction");
+        throw std::invalid_argument(
+            "Creating IdivInstruction with null operand in "
+            "IdivInstruction");
     }
 }
 
@@ -453,7 +466,7 @@ const Operand *IdivInstruction::getOperand() const { return operand.get(); }
 
 void IdivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null type in setType in IdivInstruction");
     }
     type = std::move(newType);
@@ -461,7 +474,7 @@ void IdivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
 
 void IdivInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand in setOperand in IdivInstruction");
     }
     operand = std::move(newOperand);
@@ -471,12 +484,13 @@ DivInstruction::DivInstruction(std::unique_ptr<AssemblyType> type,
                                std::unique_ptr<Operand> operand)
     : type(std::move(type)), operand(std::move(operand)) {
     if (!this->type) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating DivInstruction with null type in DivInstruction");
     }
     if (!this->operand) {
-        throw std::logic_error("Creating DivInstruction with null operand in "
-                               "DivInstruction");
+        throw std::invalid_argument(
+            "Creating DivInstruction with null operand in "
+            "DivInstruction");
     }
 }
 
@@ -486,7 +500,7 @@ const Operand *DivInstruction::getOperand() const { return operand.get(); }
 
 void DivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null type in setType in DivInstruction");
     }
     type = std::move(newType);
@@ -494,7 +508,7 @@ void DivInstruction::setType(std::unique_ptr<AssemblyType> newType) {
 
 void DivInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand in setOperand in DivInstruction");
     }
     operand = std::move(newOperand);
@@ -503,7 +517,7 @@ void DivInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
 CdqInstruction::CdqInstruction(std::unique_ptr<AssemblyType> type)
     : type(std::move(type)) {
     if (!this->type) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CdqInstruction with null type in CdqInstruction");
     }
 }
@@ -512,7 +526,7 @@ const AssemblyType *CdqInstruction::getType() const { return type.get(); }
 
 void CdqInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     if (!newType) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null type in setType in CdqInstruction");
     }
     type = std::move(newType);
@@ -528,8 +542,9 @@ JmpCCInstruction::JmpCCInstruction(std::unique_ptr<CondCode> condCode,
                                    std::string label)
     : condCode(std::move(condCode)), label(label) {
     if (!this->condCode) {
-        throw std::logic_error("Creating JmpCCInstruction with null condCode "
-                               "in JmpCCInstruction");
+        throw std::invalid_argument(
+            "Creating JmpCCInstruction with null condCode "
+            "in JmpCCInstruction");
     }
 }
 
@@ -539,7 +554,7 @@ std::string JmpCCInstruction::getLabel() const { return label; }
 
 void JmpCCInstruction::setCondCode(std::unique_ptr<CondCode> newCondCode) {
     if (!newCondCode) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null condition code in setCondCode in JmpCCInstruction");
     }
     condCode = std::move(newCondCode);
@@ -551,12 +566,14 @@ SetCCInstruction::SetCCInstruction(std::unique_ptr<CondCode> condCode,
                                    std::unique_ptr<Operand> operand)
     : condCode(std::move(condCode)), operand(std::move(operand)) {
     if (!this->condCode) {
-        throw std::logic_error("Creating SetCCInstruction with null condCode "
-                               "in SetCCInstruction");
+        throw std::invalid_argument(
+            "Creating SetCCInstruction with null condCode "
+            "in SetCCInstruction");
     }
     if (!this->operand) {
-        throw std::logic_error("Creating SetCCInstruction with null operand in "
-                               "SetCCInstruction");
+        throw std::invalid_argument(
+            "Creating SetCCInstruction with null operand in "
+            "SetCCInstruction");
     }
 }
 
@@ -566,7 +583,7 @@ const Operand *SetCCInstruction::getOperand() const { return operand.get(); }
 
 void SetCCInstruction::setCondCode(std::unique_ptr<CondCode> newCondCode) {
     if (!newCondCode) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null condition code in setCondCode in SetCCInstruction");
     }
     condCode = std::move(newCondCode);
@@ -574,7 +591,7 @@ void SetCCInstruction::setCondCode(std::unique_ptr<CondCode> newCondCode) {
 
 void SetCCInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand in setOperand in SetCCInstruction");
     }
     operand = std::move(newOperand);
@@ -589,8 +606,9 @@ void LabelInstruction::setLabel(std::string newLabel) { label = newLabel; }
 PushInstruction::PushInstruction(std::unique_ptr<Operand> operand)
     : operand(std::move(operand)) {
     if (!this->operand) {
-        throw std::logic_error("Creating PushInstruction with null operand in "
-                               "PushInstruction");
+        throw std::invalid_argument(
+            "Creating PushInstruction with null operand in "
+            "PushInstruction");
     }
 }
 
@@ -598,7 +616,7 @@ const Operand *PushInstruction::getOperand() const { return operand.get(); }
 
 void PushInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     if (!newOperand) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null operand in setOperand in PushInstruction");
     }
     operand = std::move(newOperand);
@@ -618,8 +636,8 @@ FunctionDefinition::FunctionDefinition(
     : functionIdentifier(functionIdentifier), global(global),
       functionBody(std::move(functionBody)), stackSize(stackSize) {
     if (!this->functionBody) {
-        throw std::logic_error("Creating FunctionDefinition with null "
-                               "functionBody in FunctionDefinition");
+        throw std::invalid_argument("Creating FunctionDefinition with null "
+                                    "functionBody in FunctionDefinition");
     }
 }
 
@@ -643,8 +661,9 @@ void FunctionDefinition::setFunctionBody(
     std::unique_ptr<std::vector<std::unique_ptr<Instruction>>>
         newFunctionBody) {
     if (!newFunctionBody) {
-        throw std::logic_error("Setting null function body in setFunctionBody "
-                               "in FunctionDefinition");
+        throw std::invalid_argument(
+            "Setting null function body in setFunctionBody "
+            "in FunctionDefinition");
     }
     functionBody = std::move(newFunctionBody);
 }
@@ -661,8 +680,9 @@ StaticVariable::StaticVariable(std::string identifier, bool global,
     : identifier(identifier), global(global), alignment(alignment),
       staticInit(std::move(staticInit)) {
     if (!this->staticInit) {
-        throw std::logic_error("Creating StaticVariable with null staticInit "
-                               "in StaticVariable");
+        throw std::invalid_argument(
+            "Creating StaticVariable with null staticInit "
+            "in StaticVariable");
     }
 }
 
@@ -683,7 +703,7 @@ const AST::StaticInit *StaticVariable::getStaticInit() const {
 void StaticVariable::setStaticInit(
     std::unique_ptr<AST::StaticInit> newStaticInit) {
     if (!newStaticInit) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null static init in setStaticInit in StaticVariable");
     }
     staticInit = std::move(newStaticInit);
@@ -693,7 +713,7 @@ Program::Program(
     std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels)
     : topLevels(std::move(topLevels)) {
     if (!this->topLevels) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating Program with null topLevels in Program");
     }
 }
@@ -709,7 +729,7 @@ std::vector<std::unique_ptr<TopLevel>> &Program::getTopLevels() {
 void Program::setTopLevels(
     std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> newTopLevels) {
     if (!newTopLevels) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Setting null top levels in setTopLevels in Program");
     }
     topLevels = std::move(newTopLevels);

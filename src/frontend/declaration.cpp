@@ -8,8 +8,9 @@ VariableDeclaration::VariableDeclaration(std::string_view identifier,
                                          std::unique_ptr<Type> varType)
     : identifier(identifier), varType(std::move(varType)) {
     if (!this->varType) {
-        throw std::logic_error("Creating VariableDeclaration with null varType "
-                               "in VariableDeclaration");
+        throw std::invalid_argument(
+            "Creating VariableDeclaration with null varType "
+            "in VariableDeclaration");
     }
 }
 
@@ -19,8 +20,9 @@ VariableDeclaration::VariableDeclaration(std::string_view identifier,
     : identifier(identifier), optInitializer(std::move(optInit)),
       varType(std::move(varType)) {
     if (!this->varType) {
-        throw std::logic_error("Creating VariableDeclaration with null varType "
-                               "in VariableDeclaration");
+        throw std::invalid_argument(
+            "Creating VariableDeclaration with null varType "
+            "in VariableDeclaration");
     }
 }
 
@@ -30,8 +32,9 @@ VariableDeclaration::VariableDeclaration(
     : identifier(identifier), varType(std::move(varType)),
       optStorageClass(std::move(optStorageClass)) {
     if (!this->varType) {
-        throw std::logic_error("Creating VariableDeclaration with null varType "
-                               "in VariableDeclaration");
+        throw std::invalid_argument(
+            "Creating VariableDeclaration with null varType "
+            "in VariableDeclaration");
     }
 }
 
@@ -42,8 +45,9 @@ VariableDeclaration::VariableDeclaration(
     : identifier(identifier), optInitializer(std::move(optInit)),
       varType(std::move(varType)), optStorageClass(std::move(optStorageClass)) {
     if (!this->varType) {
-        throw std::logic_error("Creating VariableDeclaration with null varType "
-                               "in VariableDeclaration");
+        throw std::invalid_argument(
+            "Creating VariableDeclaration with null varType "
+            "in VariableDeclaration");
     }
 }
 
@@ -79,12 +83,13 @@ FunctionDeclaration::FunctionDeclaration(
     : identifier(identifier), parameters(std::move(parameters)),
       funType(std::move(funType)) {
     if (!this->parameters) {
-        throw std::logic_error("Creating FunctionDeclaration with null "
-                               "parameters in FunctionDeclaration");
+        throw std::invalid_argument("Creating FunctionDeclaration with null "
+                                    "parameters in FunctionDeclaration");
     }
     if (!this->funType) {
-        throw std::logic_error("Creating FunctionDeclaration with null funType "
-                               "in FunctionDeclaration");
+        throw std::invalid_argument(
+            "Creating FunctionDeclaration with null funType "
+            "in FunctionDeclaration");
     }
 }
 
@@ -95,12 +100,13 @@ FunctionDeclaration::FunctionDeclaration(
     : identifier(identifier), parameters(std::move(parameters)),
       optBody(std::move(optBody)), funType(std::move(funType)) {
     if (!this->parameters) {
-        throw std::logic_error("Creating FunctionDeclaration with null "
-                               "parameters in FunctionDeclaration");
+        throw std::invalid_argument("Creating FunctionDeclaration with null "
+                                    "parameters in FunctionDeclaration");
     }
     if (!this->funType) {
-        throw std::logic_error("Creating FunctionDeclaration with null funType "
-                               "in FunctionDeclaration");
+        throw std::invalid_argument(
+            "Creating FunctionDeclaration with null funType "
+            "in FunctionDeclaration");
     }
 }
 
@@ -112,12 +118,13 @@ FunctionDeclaration::FunctionDeclaration(
     : identifier(identifier), parameters(std::move(parameters)),
       funType(std::move(funType)), optStorageClass(std::move(optStorageClass)) {
     if (!this->parameters) {
-        throw std::logic_error("Creating FunctionDeclaration with null "
-                               "parameters in FunctionDeclaration");
+        throw std::invalid_argument("Creating FunctionDeclaration with null "
+                                    "parameters in FunctionDeclaration");
     }
     if (!this->funType) {
-        throw std::logic_error("Creating FunctionDeclaration with null funType "
-                               "in FunctionDeclaration");
+        throw std::invalid_argument(
+            "Creating FunctionDeclaration with null funType "
+            "in FunctionDeclaration");
     }
 }
 
@@ -130,12 +137,13 @@ FunctionDeclaration::FunctionDeclaration(
       optBody(std::move(optBody)), funType(std::move(funType)),
       optStorageClass(std::move(optStorageClass)) {
     if (!this->parameters) {
-        throw std::logic_error("Creating FunctionDeclaration with null "
-                               "parameters in FunctionDeclaration");
+        throw std::invalid_argument("Creating FunctionDeclaration with null "
+                                    "parameters in FunctionDeclaration");
     }
     if (!this->funType) {
-        throw std::logic_error("Creating FunctionDeclaration with null funType "
-                               "in FunctionDeclaration");
+        throw std::invalid_argument(
+            "Creating FunctionDeclaration with null funType "
+            "in FunctionDeclaration");
     }
 }
 

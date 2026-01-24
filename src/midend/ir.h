@@ -182,7 +182,7 @@ class ConstantValue : public Value {
      * Constructor for creating an IR constant value from an AST constant.
      *
      * @param astConstant The AST constant to encapsulate.
-     * @throws std::logic_error if `astConstant` is null.
+     * @throws std::invalid_argumentent if `astConstant` is null.
      */
     explicit ConstantValue(std::unique_ptr<AST::Constant> astConstant);
 
@@ -266,7 +266,7 @@ class ReturnInstruction : public Instruction {
      * Constructor for creating a return instruction with a return value.
      *
      * @param returnValue The return value of the instruction.
-     * @throws std::logic_error if `returnValue` is null.
+     * @throws std::invalid_argument if `returnValue` is null.
      */
     explicit ReturnInstruction(std::unique_ptr<Value> returnValue);
 
@@ -292,7 +292,7 @@ class SignExtendInstruction : public Instruction {
      *
      * @param src The source value of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `src` or `dst` is null.
+     * @throws std::invalid_argument if `src` or `dst` is null.
      */
     explicit SignExtendInstruction(std::unique_ptr<Value> src,
                                    std::unique_ptr<Value> dst);
@@ -323,7 +323,7 @@ class TruncateInstruction : public Instruction {
      *
      * @param src The source value of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `src` or `dst` is null.
+     * @throws std::invalid_argument if `src` or `dst` is null.
      */
     explicit TruncateInstruction(std::unique_ptr<Value> src,
                                  std::unique_ptr<Value> dst);
@@ -351,7 +351,7 @@ class ZeroExtendInstruction : public Instruction {
      *
      * @param src The source value of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `src` or `dst` is null.
+     * @throws std::invalid_argument if `src` or `dst` is null.
      */
     explicit ZeroExtendInstruction(std::unique_ptr<Value> src,
                                    std::unique_ptr<Value> dst);
@@ -387,7 +387,8 @@ class UnaryInstruction : public Instruction {
      * @param unaryOperator The unary operator of the instruction.
      * @param src The source value of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `unaryOperator`, `src`, or `dst` is null.
+     * @throws std::invalid_argument if `unaryOperator`, `src`, or `dst` is
+     * null.
      */
     explicit UnaryInstruction(std::unique_ptr<UnaryOperator> unaryOperator,
                               std::unique_ptr<Value> src,
@@ -429,8 +430,8 @@ class BinaryInstruction : public Instruction {
      * @param src1 The first source value of the instruction.
      * @param src2 The second source value of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `binaryOperator`, `src1`, `src2`, or `dst`
-     * is null.
+     * @throws std::invalid_argument if `binaryOperator`, `src1`, `src2`, or
+     * `dst` is null.
      */
     explicit BinaryInstruction(std::unique_ptr<BinaryOperator> binaryOperator,
                                std::unique_ptr<Value> src1,
@@ -471,7 +472,7 @@ class CopyInstruction : public Instruction {
      *
      * @param src The source value of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `src` or `dst` is null.
+     * @throws std::invalid_argument if `src` or `dst` is null.
      */
     explicit CopyInstruction(std::unique_ptr<Value> src,
                              std::unique_ptr<Value> dst);
@@ -529,7 +530,7 @@ class JumpIfZeroInstruction : public Instruction {
      *
      * @param condition The condition value of the jump instruction.
      * @param target The target label of the jump instruction.
-     * @throws std::logic_error if `condition` is null.
+     * @throws std::invalid_argument if `condition` is null.
      */
     explicit JumpIfZeroInstruction(std::unique_ptr<Value> condition,
                                    std::string_view target);
@@ -564,7 +565,7 @@ class JumpIfNotZeroInstruction : public Instruction {
      *
      * @param condition The condition value of the jump instruction.
      * @param target The target label of the jump instruction.
-     * @throws std::logic_error if `condition` is null.
+     * @throws std::invalid_argument if `condition` is null.
      */
     explicit JumpIfNotZeroInstruction(std::unique_ptr<Value> condition,
                                       std::string_view target);
@@ -627,7 +628,7 @@ class FunctionCallInstruction : public Instruction {
      * @param functionIdentifier The function identifier of the instruction.
      * @param args The argument values of the instruction.
      * @param dst The destination value of the instruction.
-     * @throws std::logic_error if `args` or `dst` is null.
+     * @throws std::invalid_argument if `args` or `dst` is null.
      */
     explicit FunctionCallInstruction(
         std::string_view functionIdentifier,
@@ -715,7 +716,7 @@ class FunctionDefinition : public TopLevel {
      * @param global Boolean indicating whether the function is global.
      * @param parameters The parameter identifiers of the function definition.
      * @param functionBody The function body of the function definition.
-     * @throws std::logic_error if `parameters` or `functionBody` is null.
+     * @throws std::invalid_argument if `parameters` or `functionBody` is null.
      */
     explicit FunctionDefinition(
         std::string_view functionIdentifier, bool global,
@@ -769,7 +770,7 @@ class StaticVariable : public TopLevel {
      * @param global Boolean indicating whether the static variable is global.
      * @param type The type of the static variable.
      * @param staticInit The static initialization of the static variable.
-     * @throws std::logic_error if `type` or `staticInit` is null.
+     * @throws std::invalid_argument if `type` or `staticInit` is null.
      */
     explicit StaticVariable(std::string_view identifier, bool global,
                             std::unique_ptr<AST::Type> type,
@@ -799,7 +800,7 @@ class Program {
      * Constructor for creating a program with top-level constructs.
      *
      * @param topLevels The top-level constructs of the program.
-     * @throws std::logic_error if `topLevels` is null.
+     * @throws std::invalid_argument if `topLevels` is null.
      */
     explicit Program(
         std::unique_ptr<std::vector<std::unique_ptr<TopLevel>>> topLevels);

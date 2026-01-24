@@ -6,7 +6,8 @@ namespace AST {
 Function::Function(std::string_view identifier, std::unique_ptr<Block> body)
     : identifier(identifier), body(std::move(body)) {
     if (!this->body) {
-        throw std::logic_error("Creating Function with null body in Function");
+        throw std::invalid_argument(
+            "Creating Function with null body in Function");
     }
 }
 

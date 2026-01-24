@@ -8,7 +8,7 @@ namespace AST {
 ReturnStatement::ReturnStatement(std::unique_ptr<Expression> expr)
     : expr(std::move(expr)) {
     if (!this->expr) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating ReturnStatement with null expr in ReturnStatement");
     }
 }
@@ -24,8 +24,9 @@ void ReturnStatement::setExpression(std::unique_ptr<Expression> newExpr) {
 ExpressionStatement::ExpressionStatement(std::unique_ptr<Expression> expr)
     : expr(std::move(expr)) {
     if (!this->expr) {
-        throw std::logic_error("Creating ExpressionStatement with null expr in "
-                               "ExpressionStatement");
+        throw std::invalid_argument(
+            "Creating ExpressionStatement with null expr in "
+            "ExpressionStatement");
     }
 }
 
@@ -39,11 +40,11 @@ IfStatement::IfStatement(std::unique_ptr<Expression> condition,
     : condition(std::move(condition)), thenStatement(std::move(thenStatement)),
       elseOptStatement(std::move(elseOptStatement)) {
     if (!this->condition) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating IfStatement with null condition in IfStatement");
     }
     if (!this->thenStatement) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating IfStatement with null thenStatement in IfStatement");
     }
 }
@@ -53,11 +54,11 @@ IfStatement::IfStatement(std::unique_ptr<Expression> condition,
     : condition(std::move(condition)), thenStatement(std::move(thenStatement)),
       elseOptStatement(nullptr) {
     if (!this->condition) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating IfStatement with null condition in IfStatement");
     }
     if (!this->thenStatement) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating IfStatement with null thenStatement in IfStatement");
     }
 }
@@ -75,7 +76,7 @@ Statement *IfStatement::getElseOptStatement() const {
 CompoundStatement::CompoundStatement(std::unique_ptr<Block> block)
     : block(std::move(block)) {
     if (!this->block) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating CompoundStatement with null block in CompoundStatement");
     }
 }
@@ -104,11 +105,11 @@ WhileStatement::WhileStatement(std::unique_ptr<Expression> condition,
                                std::unique_ptr<Statement> body)
     : condition(std::move(condition)), body(std::move(body)) {
     if (!this->condition) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating WhileStatement with null condition in WhileStatement");
     }
     if (!this->body) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating WhileStatement with null body in WhileStatement");
     }
 }
@@ -127,11 +128,12 @@ DoWhileStatement::DoWhileStatement(std::unique_ptr<Expression> condition,
                                    std::unique_ptr<Statement> body)
     : condition(std::move(condition)), body(std::move(body)) {
     if (!this->condition) {
-        throw std::logic_error("Creating DoWhileStatement with null condition "
-                               "in DoWhileStatement");
+        throw std::invalid_argument(
+            "Creating DoWhileStatement with null condition "
+            "in DoWhileStatement");
     }
     if (!this->body) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating DoWhileStatement with null body in DoWhileStatement");
     }
 }
@@ -153,11 +155,11 @@ ForStatement::ForStatement(std::unique_ptr<ForInit> forInit,
     : forInit(std::move(forInit)), optCondition(std::move(condition)),
       optPost(std::move(post)), body(std::move(body)) {
     if (!this->forInit) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating ForStatement with null forInit in ForStatement");
     }
     if (!this->body) {
-        throw std::logic_error(
+        throw std::invalid_argument(
             "Creating ForStatement with null body in ForStatement");
     }
 }
