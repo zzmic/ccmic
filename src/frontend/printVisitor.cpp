@@ -14,7 +14,7 @@ void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
     auto &declarations = program.getDeclarations();
-    for (auto it = declarations.begin(); it != declarations.end(); it++) {
+    for (auto it = declarations.begin(); it != declarations.end(); ++it) {
         auto &functionDeclaration = *it;
         functionDeclaration->accept(*this);
         bool isLast = (std::next(it) == declarations.end());
@@ -145,7 +145,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
     std::cout << "\nparameters = (";
 
     auto &parameters = functionDeclaration.getParameterIdentifiers();
-    for (auto it = parameters.begin(); it != parameters.end(); it++) {
+    for (auto it = parameters.begin(); it != parameters.end(); ++it) {
         auto &parameter = *it;
         std::cout << parameter;
         if (std::next(it) != parameters.end()) {
@@ -203,7 +203,7 @@ void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << "parameters = (";
 
     auto &parameters = functionType.getParameterTypes();
-    for (auto it = parameters.begin(); it != parameters.end(); it++) {
+    for (auto it = parameters.begin(); it != parameters.end(); ++it) {
         auto &parameter = *it;
         parameter->accept(*this);
         if (std::next(it) != parameters.end()) {
@@ -625,7 +625,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
     std::cout << "\nargs = ";
 
     auto &args = functionCallExpression.getArguments();
-    for (auto it = args.begin(); it != args.end(); it++) {
+    for (auto it = args.begin(); it != args.end(); ++it) {
         auto &arg = *it;
         arg->accept(*this);
         bool isLast = (std::next(it) == args.end());

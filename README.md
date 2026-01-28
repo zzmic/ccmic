@@ -109,24 +109,28 @@ make clean
 make -j$(nproc)
 ```
 
-### Compiling C Programs
+## Compiling C Programs
 
-## Command-Line Usage
+### Command-Line Usage
 
 ```bash
 bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o <outputFile>] <sourceFile>
 ```
 
-## Command-Line Flags
+### Command-Line Flags
 
 - **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), and `--codegen` (code generation).
 - **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), and `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
 - **Optimizations** (_to be implemented_): `--fold-constants` (constant folding), `--eliminate-unreachable-code` (dead code elimination), `--propagate-copies` (copy propagation), `--eliminate-dead-stores` (dead store elimination), and `--optimize` (enable all optimizations).
 
-### Development and Extensibility
+## Development and Extensibility
 
 - **Adding language features**: Expand the frontend in [`src/frontend/`](https://github.com/zzmic/ccmic/tree/main/src/frontend) by modifying the lexer, parser, and AST nodes, as well as updating semantic analysis.
 - **Adding optimizations**: Implement new optimization passes in [`src/midend/`](https://github.com/zzmic/ccmic/tree/main/src/midend) by following the existing `IR::OptimizationPass` pattern.
 - **Extending code generation**: Modify or add new code generation strategies in [`src/backend/`](https://github.com/zzmic/ccmic/tree/main/src/backend).
 - **Debugging**: Leverage the implemented pretty-printers for IR and assembly inspection in [`src/utils/`](https://github.com/zzmic/ccmic/tree/main/src/utils) (and [`gdb`](https://www.sourceware.org/gdb/)/[`lldb`](https://lldb.llvm.org/)).
 - **Testing**: Run tests using the companion test suite linked in the overview section.
+
+## Disclaimer
+
+This project is _not_ an orthodox implementation or artifact from the referenced literature. Therefore, I should be accountable for any errors and flaws in the implementation and documentation, not the original authors of the sources.

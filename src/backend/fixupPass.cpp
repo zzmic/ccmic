@@ -189,7 +189,7 @@ void FixupPass::rewriteFunctionDefinition(
                                    static_cast<int>(alignedStackSize));
     // Traverse the instructions (associated with (included in) the
     // function) and rewrite invalid instructions.
-    for (auto it = instructions.begin(); it != instructions.end(); it++) {
+    for (auto it = instructions.begin(); it != instructions.end(); ++it) {
         if (auto movInstr =
                 dynamic_cast<Assembly::MovInstruction *>(it->get())) {
             // If the mov instruction is invalid, rewrite it.

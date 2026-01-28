@@ -34,7 +34,7 @@ void PrettyPrinters::printIRFunctionDefinition(
     std::cout << "(";
 
     auto &parameters = functionDefinition.getParameterIdentifiers();
-    for (auto it = parameters.begin(); it != parameters.end(); it++) {
+    for (auto it = parameters.begin(); it != parameters.end(); ++it) {
         auto &parameter = *it;
         std::cout << parameter;
         bool isLast = (std::next(it) == parameters.end());
@@ -754,7 +754,7 @@ void PrettyPrinters::printIRFunctionCallInstruction(
     std::cout << functionIdentifier << "(";
 
     auto &args = functionCallInstruction.getArgs();
-    for (auto it = args.begin(); it != args.end(); it++) {
+    for (auto it = args.begin(); it != args.end(); ++it) {
         auto &arg = *it;
         if (auto variableValue =
                 dynamic_cast<const IR::VariableValue *>(arg.get())) {
