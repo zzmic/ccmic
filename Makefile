@@ -108,7 +108,7 @@ format:
 	clang-format -i $(SOURCES) $(HEADERS)
 
 clean:
-	rm -rf $(BIN_DIR)/*
+	rm -rfv $(BIN_DIR)/*
 	@find $(BIN_DIR) -name '*.d' -delete 2>/dev/null || true
 
 # Frontend-only compilation check target for debugging purposes.
