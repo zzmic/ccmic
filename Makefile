@@ -21,6 +21,14 @@ ifeq ($(UNAME_S),Darwin)
     STDLIBFLAGS := -stdlib=libc++
   endif
 endif
+SYSROOT :=
+SYSROOTFLAGS :=
+ifeq ($(UNAME_S),Darwin)
+  SYSROOT := $(shell xcrun --show-sdk-path 2>/dev/null)
+  ifneq ($(strip $(SYSROOT)),)
+    SYSROOTFLAGS := -isysroot $(SYSROOT)
+  endif
+endif
 LDFLAGS = $(STDLIBFLAGS) $(if $(filter -stdlib=libc++,$(STDLIBFLAGS)),-L$(BREW_LLVM_PREFIX)lib/c++)
 # References:
 # 1. <https://github.com/cpp-best-practices/cppbestpractices/blob/master/02-Use_the_Tools_Available.md#gcc--clang>>.
@@ -30,7 +38,7 @@ WARNFLAGS = -Werror -Wall -Wextra -Wshadow -Wnon-virtual-dtor -pedantic \
   -Wconversion -Wsign-conversion -Wmisleading-indentation -Wnull-dereference \
   -Wdouble-promotion -Wformat=2 -Wimplicit-fallthrough \
   -Wfor-loop-analysis -Wrange-loop-analysis
-CXXFLAGS = $(STDFLAGS) $(WARNFLAGS) $(STDLIBFLAGS) -O2
+CXXFLAGS = $(STDFLAGS) $(WARNFLAGS) $(STDLIBFLAGS) $(SYSROOTFLAGS) -O2
 LDLIBS =
 SAN_FLAGS = -fsanitize=address,undefined,vptr,leak -fno-omit-frame-pointer -fno-sanitize-recover=all
 

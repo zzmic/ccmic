@@ -40,8 +40,9 @@
 # debug information files
 *.dwo
 
-**/.vscode/
-**/.cache/
-**/bin/
-**/playground/
-**/valgrind-out.txt
+.cache/
+.vscode/
+bin/
+playground/
+valgrind-out.txt
+compile_commands.json

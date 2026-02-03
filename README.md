@@ -123,6 +123,14 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 - **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), and `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
 - **Optimizations** (_to be implemented_): `--fold-constants` (constant folding), `--eliminate-unreachable-code` (dead code elimination), `--propagate-copies` (copy propagation), `--eliminate-dead-stores` (dead store elimination), and `--optimize` (enable all optimizations).
 
+## Generating Clang's JSON Compilation Database File(s)
+
+To generate a `compile_commands.json` file for use with tools that support Clang's compilation database format, use the following command (assuming that [compiledb](https://github.com/nickdiego/compiledb) is installed):
+
+```bash
+compiledb make -j$(nproc)
+```
+
 ## Development and Extensibility
 
 - **Adding language features**: Expand the frontend in [`src/frontend/`](https://github.com/zzmic/ccmic/tree/main/src/frontend) by modifying the lexer, parser, and AST nodes, as well as updating semantic analysis.
