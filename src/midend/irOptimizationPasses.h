@@ -1,15 +1,9 @@
 #ifndef MIDEND_IR_OPTIMIZATION_PASSES_H
 #define MIDEND_IR_OPTIMIZATION_PASSES_H
 
-#include "../frontend/block.h"
-#include "../frontend/declaration.h"
-#include "../frontend/expression.h"
-#include "../frontend/function.h"
-#include "../frontend/program.h"
-#include "../frontend/semanticAnalysisPasses.h"
-#include "../frontend/statement.h"
-#include "../frontend/type.h"
 #include "ir.h"
+#include <memory>
+#include <vector>
 
 namespace IR {
 /**
@@ -35,9 +29,10 @@ class IROptimizer {
      */
     [[nodiscard]] static std::unique_ptr<
         std::vector<std::unique_ptr<IR::Instruction>>>
-    irOptimize(const std::vector<std::unique_ptr<Instruction>> &functionBody,
-               bool foldConstantsPass, bool propagateCopiesPass,
-               bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
+    irOptimize(
+        const std::vector<std::unique_ptr<IR::Instruction>> &functionBody,
+        bool foldConstantsPass, bool propagateCopiesPass,
+        bool eliminateUnreachableCodePass, bool eliminateDeadStoresPass);
 };
 
 /**

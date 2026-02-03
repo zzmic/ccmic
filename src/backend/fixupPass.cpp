@@ -1,5 +1,11 @@
 #include "fixupPass.h"
+#include "assembly.h"
 #include <limits>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 /**
  * Unnamed namespace for helper functions for the fixup pass.

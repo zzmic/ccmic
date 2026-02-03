@@ -1,9 +1,23 @@
 #include "parser.h"
 #include "block.h"
+#include "blockItem.h"
+#include "constant.h"
+#include "declaration.h"
+#include "expression.h"
 #include "forInit.h"
+#include "lexer.h"
+#include "program.h"
+#include "statement.h"
+#include "storageClass.h"
 #include "type.h"
+#include <cstddef>
+#include <memory>
 #include <sstream>
+#include <stdexcept>
+#include <string>
 #include <unordered_set>
+#include <utility>
+#include <vector>
 
 namespace AST {
 Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}

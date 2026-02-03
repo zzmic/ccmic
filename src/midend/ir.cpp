@@ -1,5 +1,13 @@
 #include "ir.h"
+#include "../frontend/constant.h"
+#include "../frontend/semanticAnalysisPasses.h"
+#include "../frontend/type.h"
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace IR {
 ConstantValue::ConstantValue(std::unique_ptr<AST::Constant> astConstant)

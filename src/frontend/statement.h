@@ -3,8 +3,9 @@
 
 #include "ast.h"
 #include "expression.h"
+#include "visitor.h"
 #include <memory>
-#include <optional>
+#include <string>
 #include <string_view>
 
 namespace AST {

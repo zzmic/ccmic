@@ -1,10 +1,10 @@
 #ifndef MIDEND_IR_H
 #define MIDEND_IR_H
 
+#include "../frontend/constant.h"
 #include "../frontend/semanticAnalysisPasses.h"
 #include "../frontend/type.h"
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>

@@ -2,7 +2,7 @@
 #define FRONTEND_OPERATOR_H
 
 #include "ast.h"
-#include <string>
+#include "visitor.h"
 #include <string_view>
 
 namespace AST {

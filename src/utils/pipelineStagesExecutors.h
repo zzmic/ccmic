@@ -2,24 +2,16 @@
 #define UTILS_PIPELINE_STAGES_EXECUTORS_H
 
 #include "../backend/assembly.h"
-#include "../backend/assemblyGenerator.h"
-#include "../backend/fixupPass.h"
-#include "../backend/pseudoToStackPass.h"
+#include "../frontend/frontendSymbolTable.h"
 #include "../frontend/lexer.h"
-#include "../frontend/parser.h"
-#include "../frontend/printVisitor.h"
-#include "../frontend/semanticAnalysisPasses.h"
+#include "../frontend/program.h"
 #include "../midend/ir.h"
-#include "../midend/irGenerator.h"
-#include "../midend/irOptimizationPasses.h"
-#include "compilerDriver.h"
-#include <filesystem>
 #include <fstream>
-#include <iostream>
 #include <memory>
-#include <sstream>
-#include <string.h>
+#include <string>
 #include <string_view>
+#include <utility>
+#include <vector>
 
 /**
  * Class containing static executor methods for each pipeline stage.

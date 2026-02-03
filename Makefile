@@ -1,7 +1,7 @@
 CXX ?= clang++
 UNAME_S := $(shell uname -s)
 
-.PHONY: all clean debug format frontend-check help midend-check release
+.PHONY: all debug release check-frontend check-midend format clean compiledb tidy tidy-and-fix help
 
 ifeq ($(UNAME_S),Darwin)
   BREW_LLVM_PREFIX := $(firstword \
@@ -112,6 +112,16 @@ debug: all
 release: CXXFLAGS += -O3 -DNDEBUG -fstack-protector-strong -D_FORTIFY_SOURCE=3 -fvisibility=hidden -fno-omit-frame-pointer -gline-tables-only
 release: all
 
+# Frontend-only compilation check target for debugging purposes.
+# This compiles only the frontend sources to verify they compile independently.
+check-frontend: $(BIN_DIR) $(FRONTEND_OBJECTS)
+	@echo "Frontend compilation check passed!"
+
+# Frontend + midend compilation check target for debugging purposes.
+# This compiles the frontend and midend sources (no linking).
+check-midend: $(BIN_DIR) $(MIDEND_OBJECTS)
+	@echo "Frontend + midend compilation check passed!"
+
 format:
 	clang-format -i $(SOURCES) $(HEADERS)
 
@@ -119,15 +129,17 @@ clean:
 	rm -rfv $(BIN_DIR)/*
 	@find $(BIN_DIR) -name '*.d' -delete 2>/dev/null || true
 
-# Frontend-only compilation check target for debugging purposes.
-# This compiles only the frontend sources to verify they compile independently.
-frontend-check: $(BIN_DIR) $(FRONTEND_OBJECTS)
-	@echo "Frontend compilation check passed!"
+compiledb:
+	@which compiledb >/dev/null || (echo "Error: `compiledb` not found. Please install it to generate `compile_commands.json`." >&2; exit 1)
+	compiledb make
 
-# Frontend + midend compilation check target for debugging purposes.
-# This compiles the frontend and midend sources (no linking).
-midend-check: $(BIN_DIR) $(MIDEND_OBJECTS)
-	@echo "Frontend + midend compilation check passed!"
+tidy:
+	@which clang-tidy >/dev/null || (echo "Error: `clang-tidy` not found. Please install it to run tidy checks." >&2; exit 1)
+	run-clang-tidy -p .
+
+tidy-and-fix:
+	@which clang-tidy >/dev/null || (echo "Error: `clang-tidy` not found. Please install it to run tidy checks." >&2; exit 1)
+	run-clang-tidy -fix -p .
 
 help:
 	@echo 'Usage: make <target>'
@@ -136,8 +148,11 @@ help:
 	@printf '  %-15s %s\n' 'all' 'Build the project (default target).'
 	@printf '  %-15s %s\n' 'debug' 'Build with most optimizations disabled, full debug symbols, sanitizers, and runtime hardening for debugging.'
 	@printf '  %-15s %s\n' 'release' 'Build with optimizations, hardening flags, and minimal debug info for profiling/stack traces for release.'
-	@printf '  %-15s %s\n' 'frontend-check' 'Compile frontend sources only (no linking).'
-	@printf '  %-15s %s\n' 'midend-check' 'Compile frontend + midend sources (no linking).'
+	@printf '  %-15s %s\n' 'check-frontend' 'Compile frontend sources only (no linking).'
+	@printf '  %-15s %s\n' 'check-midend' 'Compile frontend + midend sources (no linking).'
 	@printf '  %-15s %s\n' 'format' 'Format C++ source and header files using `clang-format`.'
 	@printf '  %-15s %s\n' 'clean' 'Remove build artifacts.'
+	@printf '  %-15s %s\n' 'compiledb' 'Generate `compile_commands.json` for tooling support.'
+	@printf '  %-15s %s\n' 'tidy' 'Run `clang-tidy` checks on the source files.'
+	@printf '  %-15s %s\n' 'tidy-and-fix' 'Run `clang-tidy` checks and apply automatic fixes (if available) to the source files.'
 	@printf '  %-15s %s\n' 'help' 'Show this help message.'

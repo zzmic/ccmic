@@ -2,6 +2,10 @@
 #include <cstdlib>
 #include <iostream>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
 
 void runCommand(std::string_view command) {
     std::cout << "Executing command: " << command << "\n";

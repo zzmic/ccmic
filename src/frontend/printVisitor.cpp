@@ -3,11 +3,20 @@
  * concretizes the abstract visitor interface.
  */
 #include "printVisitor.h"
+#include "blockItem.h"
+#include "constant.h"
+#include "declaration.h"
 #include "expression.h"
 #include "forInit.h"
 #include "function.h"
+#include "operator.h"
 #include "program.h"
 #include "statement.h"
+#include "storageClass.h"
+#include "type.h"
+#include <iostream>
+#include <iterator>
+#include <stdexcept>
 
 namespace AST {
 void PrintVisitor::visit(Program &program) {

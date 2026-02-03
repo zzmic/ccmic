@@ -1,4 +1,11 @@
 #include "assembly.h"
+#include "../frontend/semanticAnalysisPasses.h"
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Assembly {
 unsigned long Operand::getImmediate() const {

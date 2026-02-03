@@ -1,6 +1,8 @@
 #include "blockItem.h"
 #include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <utility>
 
 namespace AST {
 SBlockItem::SBlockItem(std::unique_ptr<Statement> statement)

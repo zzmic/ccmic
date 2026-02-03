@@ -7,8 +7,12 @@
 #include "program.h"
 #include "statement.h"
 #include "type.h"
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <variant>
 
 namespace AST {

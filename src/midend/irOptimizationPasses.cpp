@@ -1,5 +1,11 @@
 #include "irOptimizationPasses.h"
+#include "../frontend/constant.h"
+#include "ir.h"
+#include <memory>
 #include <optional>
+#include <stdexcept>
+#include <utility>
+#include <vector>
 
 /**
  * Unnamed namespace for helper functions for the IR optimization passes.
@@ -142,9 +148,7 @@ std::unique_ptr<AST::Constant> cloneASTConstant(const AST::Constant *constant) {
                  dynamic_cast<const AST::ConstantLong *>(constant)) {
         return std::make_unique<AST::ConstantLong>(longConst->getValue());
     }
-    const auto &r = *constant;
-    throw std::logic_error("Unsupported AST constant in cloneASTConstant: " +
-                           std::string(typeid(r).name()));
+    throw std::logic_error("Unsupported AST constant in cloneASTConstant");
 }
 
 /**
@@ -163,9 +167,7 @@ std::unique_ptr<IR::Value> cloneValue(const IR::Value *value) {
         return std::make_unique<IR::VariableValue>(
             variableValue->getIdentifier());
     }
-    const auto &r = *value;
-    throw std::logic_error("Unsupported IR value in cloneValue: " +
-                           std::string(typeid(r).name()));
+    throw std::logic_error("Unsupported IR value in cloneValue");
 }
 
 /**
@@ -185,10 +187,7 @@ cloneUnaryOperator(const IR::UnaryOperator *op) {
     else if (dynamic_cast<const IR::NotOperator *>(op)) {
         return std::make_unique<IR::NotOperator>();
     }
-    const auto &r = *op;
-    throw std::logic_error(
-        "Unsupported unary operator in cloneUnaryOperator: " +
-        std::string(typeid(r).name()));
+    throw std::logic_error("Unsupported unary operator in cloneUnaryOperator");
 }
 
 /**
@@ -232,10 +231,8 @@ cloneBinaryOperator(const IR::BinaryOperator *op) {
     else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
         return std::make_unique<IR::GreaterThanOrEqualOperator>();
     }
-    const auto &r = *op;
     throw std::logic_error(
-        "Unsupported binary operator in cloneBinaryOperator: " +
-        std::string(typeid(r).name()));
+        "Unsupported binary operator in cloneBinaryOperator");
 }
 
 /**
@@ -310,9 +307,7 @@ cloneInstruction(const IR::Instruction *instruction) {
             callInstr->getFunctionIdentifier(), std::move(args),
             cloneValue(callInstr->getDst()));
     }
-    const auto &r = *instruction;
-    throw std::logic_error("Unsupported instruction in cloneInstruction: " +
-                           std::string(typeid(r).name()));
+    throw std::logic_error("Unsupported instruction in cloneInstruction");
 }
 
 /**

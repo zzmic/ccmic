@@ -125,10 +125,30 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 
 ## Generating Clang's JSON Compilation Database File(s)
 
-To generate a `compile_commands.json` file for use with tools that support Clang's compilation database format, use the following command (assuming that [compiledb](https://github.com/nickdiego/compiledb) is installed):
+To generate a `compile_commands.json` file for use with tools that support the [JSON compilation database format](https://clang.llvm.org/docs/JSONCompilationDatabase.html), run the following command (assuming that [`compiledb`](https://github.com/nickdiego/compiledb) is installed):
 
 ```bash
 compiledb make -j$(nproc)
+```
+
+or
+
+```bash
+make -j$(nproc) compiledb
+```
+
+## Static Analysis with Clang-Tidy
+
+To perform static analysis on the codebase using [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/), run the following command (assuming that Clang-Tidy is installed) with the compilation database generated in the previous step/section and [default checkers](https://clang.llvm.org/docs/analyzer/checkers.html) enabled:
+
+```bash
+run-clang-tidy -j$(nproc) -p .
+```
+
+or
+
+```bash
+make -j$(nproc) tidy
 ```
 
 ## Development and Extensibility

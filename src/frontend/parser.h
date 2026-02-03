@@ -1,15 +1,21 @@
 #ifndef FRONTEND_PARSER_H
 #define FRONTEND_PARSER_H
 
-#include "ast.h"
+#include "blockItem.h"
+#include "constant.h"
 #include "declaration.h"
 #include "expression.h"
-#include "function.h"
 #include "lexer.h"
 #include "program.h"
 #include "statement.h"
+#include "storageClass.h"
 #include "type.h"
+#include <cstddef>
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace AST {
 /**

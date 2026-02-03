@@ -2,10 +2,10 @@
 #define BACKEND_ASSEMBLY_GENERATOR_H
 
 #include "../frontend/frontendSymbolTable.h"
-#include "../frontend/semanticAnalysisPasses.h"
 #include "../midend/ir.h"
 #include "assembly.h"
-#include <unordered_map>
+#include <memory>
+#include <vector>
 
 namespace Assembly {
 /**

@@ -2,6 +2,7 @@
 #define CONSTANT_H
 
 #include "ast.h"
+#include "visitor.h"
 
 namespace AST {
 /**

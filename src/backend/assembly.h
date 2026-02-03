@@ -2,12 +2,11 @@
 #define BACKEND_ASSEMBLY_H
 
 #include "../frontend/semanticAnalysisPasses.h"
+#include <cstddef>
 #include <memory>
-#include <stdexcept>
 #include <string>
 #include <typeindex>
 #include <unordered_map>
-#include <variant>
 #include <vector>
 
 namespace Assembly {

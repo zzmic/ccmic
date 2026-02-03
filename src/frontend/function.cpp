@@ -1,6 +1,10 @@
 #include "function.h"
 #include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace AST {
 Function::Function(std::string_view identifier, std::unique_ptr<Block> body)

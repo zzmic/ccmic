@@ -5,6 +5,7 @@
 #include "constant.h"
 #include "operator.h"
 #include "type.h"
+#include "visitor.h"
 #include <memory>
 #include <string>
 #include <string_view>

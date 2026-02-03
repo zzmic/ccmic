@@ -1,7 +1,6 @@
 #ifndef FRONTEND_LEXER_H
 #define FRONTEND_LEXER_H
 
-#include <iostream>
 #include <regex>
 #include <string>
 #include <string_view>

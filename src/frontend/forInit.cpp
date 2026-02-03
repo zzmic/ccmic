@@ -1,5 +1,9 @@
 #include "forInit.h"
+#include "declaration.h"
+#include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <utility>
 
 namespace AST {
 InitDecl::InitDecl(std::unique_ptr<VariableDeclaration> decl)

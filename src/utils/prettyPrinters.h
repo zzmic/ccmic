@@ -3,7 +3,9 @@
 
 #include "../backend/assembly.h"
 #include "../midend/ir.h"
-#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 /**
  * Class containing static pretty-printer methods for IR and assembly programs.

@@ -1,8 +1,18 @@
 #include "assemblyGenerator.h"
+#include "../frontend/constant.h"
 #include "../frontend/frontendSymbolTable.h"
+#include "../frontend/semanticAnalysisPasses.h"
+#include "../frontend/type.h"
+#include "../midend/ir.h"
 #include "assembly.h"
 #include <algorithm>
+#include <cstddef>
 #include <limits>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 /**
  * Unnamed namespace for helper functions for the assembly generator.
@@ -34,10 +44,8 @@ bool isSignedType(const IR::Value *irValue,
             "Identifier not found in frontend symbol table in isSignedType: " +
             varVal->getIdentifier());
     }
-    const auto &r = *irValue;
     throw std::logic_error("Unsupported IR value type for signedness check in "
-                           "isSignedType: " +
-                           std::string(typeid(r).name()));
+                           "isSignedType");
 }
 } // namespace
 
@@ -190,11 +198,9 @@ AssemblyGenerator::convertIRStaticVariableToAssy(
                                                 std::move(assyInit));
     }
     else {
-        const auto &r = *staticInit;
         throw std::logic_error(
             "Unsupported static initializer type in "
-            "convertIRStaticVariableToAssy in AssemblyGenerator: " +
-            std::string(typeid(r).name()));
+            "convertIRStaticVariableToAssy in AssemblyGenerator");
     }
 }
 
@@ -556,11 +562,9 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
         }
     }
     else {
-        const auto &r = *binaryIROperator;
         throw std::logic_error(
             "Unsupported IR binary operator type in "
-            "convertIRBinaryInstructionToAssy in AssemblyGenerator: " +
-            std::string(typeid(r).name()));
+            "convertIRBinaryInstructionToAssy in AssemblyGenerator");
     }
 }
 

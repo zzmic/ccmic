@@ -1,5 +1,10 @@
 #include "type.h"
+#include "visitor.h"
+#include <cstddef>
+#include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace AST {
 bool Type::isEqual(const Type &other) const {

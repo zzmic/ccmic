@@ -5,8 +5,9 @@
 #include "assembly.h"
 #include <memory>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
-#include <variant>
+#include <utility>
 
 namespace Assembly {
 /**

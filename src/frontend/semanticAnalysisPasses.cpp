@@ -1,8 +1,26 @@
 #include "semanticAnalysisPasses.h"
+#include "block.h"
+#include "blockItem.h"
+#include "constant.h"
+#include "declaration.h"
+#include "expression.h"
 #include "forInit.h"
 #include "frontendSymbolTable.h"
+#include "operator.h"
+#include "program.h"
+#include "statement.h"
+#include "storageClass.h"
+#include "type.h"
+#include <cstddef>
 #include <memory>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
 
 /**
  * Unnamed namespace for helper functions for the semantic analysis passes.
@@ -70,10 +88,8 @@ std::unique_ptr<AST::Constant> cloneConstant(const AST::Constant *constant) {
                  dynamic_cast<const AST::ConstantULong *>(constant)) {
         return std::make_unique<AST::ConstantULong>(ulongConst->getValue());
     }
-    const auto &r = *constant;
     throw std::logic_error("Unsupported constant type in cloneConstant in "
-                           "semanticAnalysisPasses: " +
-                           std::string(typeid(r).name()));
+                           "semanticAnalysisPasses");
 }
 
 /**
@@ -93,10 +109,8 @@ cloneUnaryOperator(const AST::UnaryOperator *op) {
     else if (dynamic_cast<const AST::NotOperator *>(op)) {
         return std::make_unique<AST::NotOperator>();
     }
-    const auto &r = *op;
     throw std::logic_error("Unsupported unary operator in cloneUnaryOperator "
-                           "in semanticAnalysisPasses: " +
-                           std::string(typeid(r).name()));
+                           "in semanticAnalysisPasses");
 }
 
 /**
@@ -149,10 +163,8 @@ cloneBinaryOperator(const AST::BinaryOperator *op) {
     else if (dynamic_cast<const AST::AssignmentOperator *>(op)) {
         return std::make_unique<AST::AssignmentOperator>();
     }
-    const auto &r = *op;
     throw std::logic_error("Unsupported binary operator in cloneBinaryOperator "
-                           "in semanticAnalysisPasses: " +
-                           std::string(typeid(r).name()));
+                           "in semanticAnalysisPasses");
 }
 
 /**
@@ -282,10 +294,8 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
                 std::string(typeid(r).name()));
         }
     }
-    const auto &r = *initialValue;
     throw std::logic_error("Unsupported initial value type in "
-                           "cloneInitialValue in semanticAnalysisPasses: " +
-                           std::string(typeid(r).name()));
+                           "cloneInitialValue in semanticAnalysisPasses");
 }
 
 /**
@@ -505,11 +515,9 @@ void IdentifierResolutionPass::resolveStatement(
     else if (dynamic_cast<NullStatement *>(statement)) {
     }
     else {
-        const auto &r = *statement;
         throw std::logic_error(
             "Unsupported statement type for identifier resolution in "
-            "resolveStatement in IdentifierResolutionPass: " +
-            std::string(typeid(r).name()));
+            "resolveStatement in IdentifierResolutionPass");
     }
 }
 
@@ -595,11 +603,9 @@ void IdentifierResolutionPass::resolveExpression(
     else if (dynamic_cast<ConstantExpression *>(expression)) {
     }
     else {
-        const auto &r = *expression;
         throw std::logic_error(
             "Unsupported expression type for identifier resolution in "
-            "resolveExpression in IdentifierResolutionPass: " +
-            std::string(typeid(r).name()));
+            "resolveExpression in IdentifierResolutionPass");
     }
 }
 
@@ -655,11 +661,9 @@ void IdentifierResolutionPass::resolveForInit(
                                         identifierMap);
     }
     else {
-        const auto &r = *forInit;
         throw std::logic_error(
             "Unsupported for-init type for identifier resolution in "
-            "resolveForInit in IdentifierResolutionPass: " +
-            std::string(typeid(r).name()));
+            "resolveForInit in IdentifierResolutionPass");
     }
 }
 
@@ -855,11 +859,9 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     auto funType = declaration->getFunType();
     auto funTypePtr = dynamic_cast<FunctionType *>(funType);
     if (!funTypePtr) {
-        const auto &r = *funType;
         throw std::logic_error(
             "Function type is not a FunctionType in "
-            "typeCheckFunctionDeclaration in TypeCheckingPass: " +
-            std::string(typeid(r).name()));
+            "typeCheckFunctionDeclaration in TypeCheckingPass");
     }
     auto hasBody = (declaration->getOptBody() != nullptr);
     auto alreadyDefined = false;

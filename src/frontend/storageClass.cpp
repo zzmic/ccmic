@@ -1,4 +1,5 @@
 #include "storageClass.h"
+#include "visitor.h"
 
 namespace AST {
 void StaticStorageClass::accept(Visitor &visitor) { visitor.visit(*this); }

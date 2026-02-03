@@ -3,7 +3,10 @@
 
 #include "assembly.h"
 #include "backendSymbolTable.h"
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 namespace Assembly {
 /**

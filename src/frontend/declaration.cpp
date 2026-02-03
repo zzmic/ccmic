@@ -1,7 +1,12 @@
 #include "declaration.h"
 #include "block.h"
 #include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 
 namespace AST {
 VariableDeclaration::VariableDeclaration(std::string_view identifier,

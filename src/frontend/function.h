@@ -4,10 +4,10 @@
 #include "ast.h"
 #include "block.h"
 #include "statement.h"
+#include "visitor.h"
 #include <memory>
 #include <string>
 #include <string_view>
-#include <vector>
 
 namespace AST {
 /**

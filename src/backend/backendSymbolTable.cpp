@@ -1,5 +1,10 @@
 #include "backendSymbolTable.h"
+#include "../frontend/frontendSymbolTable.h"
+#include "../frontend/semanticAnalysisPasses.h"
 #include "assemblyGenerator.h"
+#include <memory>
+#include <stdexcept>
+#include <utility>
 
 namespace Assembly {
 // Function to convert a frontend symbol table to a backend symbol table.
@@ -34,11 +39,9 @@ void convertFrontendToBackendSymbolTable(
             backendSymbolTable[identifier] = std::move(objEntry);
         }
         else {
-            const auto &r = *identifierAttribute;
             throw std::logic_error(
                 "Unsupported identifier attribute type in "
-                "convertFrontendToBackendSymbolTable in BackendSymbolTable: " +
-                std::string(typeid(r).name()));
+                "convertFrontendToBackendSymbolTable in BackendSymbolTable");
         }
     }
 }

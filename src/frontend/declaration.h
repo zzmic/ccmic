@@ -5,9 +5,11 @@
 #include "expression.h"
 #include "storageClass.h"
 #include "type.h"
+#include "visitor.h"
 #include <memory>
-#include <optional>
+#include <string>
 #include <string_view>
+#include <vector>
 
 namespace AST {
 // Forward declaration for `Block` (used by `FunctionDeclaration`).

@@ -2,6 +2,7 @@
 #define FRONTEND_STORAGE_CLASS_H
 
 #include "ast.h"
+#include "visitor.h"
 
 namespace AST {
 /**

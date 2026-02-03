@@ -1,6 +1,13 @@
 #include "pseudoToStackPass.h"
+#include "assembly.h"
 #include "backendSymbolTable.h"
 #include <cassert>
+#include <cstddef>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace Assembly {
 void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(

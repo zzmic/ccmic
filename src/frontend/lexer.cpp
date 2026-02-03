@@ -1,5 +1,11 @@
 #include "lexer.h"
+#include <iostream>
+#include <regex>
 #include <sstream>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
 
 Token matchToken(std::string_view input) {
     // Convert string_view to string for regex operations

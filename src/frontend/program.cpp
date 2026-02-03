@@ -1,6 +1,9 @@
 #include "program.h"
 #include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace AST {
 Program::Program(

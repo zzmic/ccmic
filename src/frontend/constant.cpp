@@ -1,4 +1,5 @@
 #include "constant.h"
+#include "visitor.h"
 
 namespace AST {
 void ConstantInt::accept(Visitor &visitor) { visitor.visit(*this); }

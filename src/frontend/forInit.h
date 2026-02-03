@@ -4,6 +4,8 @@
 #include "ast.h"
 #include "declaration.h"
 #include "expression.h"
+#include "visitor.h"
+#include <memory>
 
 namespace AST {
 /**

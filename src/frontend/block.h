@@ -1,7 +1,10 @@
 #ifndef FRONTEND_BLOCK_H
 #define FRONTEND_BLOCK_H
 
+#include "ast.h"
 #include "blockItem.h"
+#include "visitor.h"
+#include <memory>
 #include <vector>
 
 namespace AST {

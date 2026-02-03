@@ -2,7 +2,11 @@
 #include "block.h"
 #include "forInit.h"
 #include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
 
 namespace AST {
 ReturnStatement::ReturnStatement(std::unique_ptr<Expression> expr)

@@ -1,6 +1,14 @@
 #include "prettyPrinters.h"
+#include "../backend/assembly.h"
+#include "../frontend/constant.h"
+#include "../frontend/semanticAnalysisPasses.h"
+#include "../midend/ir.h"
 #include <iostream>
+#include <iterator>
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <vector>
 
 /*
  * Start: Functions to print the IR program to stdout.
@@ -743,11 +751,9 @@ void PrettyPrinters::printIRFunctionCallInstruction(
         std::cout << "    " << variableValue->getIdentifier() << " = ";
     }
     else {
-        const auto &r = *dst;
         throw std::logic_error(
             "Unsupported destination value type while printing IR function "
-            "call instruction in printIRFunctionCallInstruction: " +
-            std::string(typeid(r).name()));
+            "call instruction in printIRFunctionCallInstruction");
     }
 
     auto functionIdentifier = functionCallInstruction.getFunctionIdentifier();
@@ -1113,11 +1119,9 @@ void PrettyPrinters::printAssyMovsxInstruction(
         srcStr = identifier + "(%rip)";
     }
     else {
-        const auto &r = *src;
         throw std::logic_error(
             "Unsupported source type while printing assembly movsx instruction "
-            "in printAssyMovsxInstruction: " +
-            std::string(typeid(r).name()));
+            "in printAssyMovsxInstruction");
     }
 
     auto dst = movsxInstruction.getDst();
@@ -1136,11 +1140,9 @@ void PrettyPrinters::printAssyMovsxInstruction(
         dstStr = identifier + "(%rip)";
     }
     else {
-        const auto &r = *dst;
         throw std::logic_error(
             "Unsupported destination operand type while printing assembly "
-            "movsx instruction in printAssyMovsxInstruction: " +
-            std::string(typeid(r).name()));
+            "movsx instruction in printAssyMovsxInstruction");
     }
 
     std::cout << "    movslq " << srcStr << ", " << dstStr << "\n";
@@ -1180,11 +1182,9 @@ void PrettyPrinters::printAssyPushInstruction(
         std::cout << "    pushq" << " " << identifier << "(%rip)\n";
     }
     else {
-        const auto &r = *operand;
         throw std::logic_error(
             "Unsupported operand type while printing assembly push instruction "
-            "in printAssyPushInstruction: " +
-            std::string(typeid(r).name()));
+            "in printAssyPushInstruction");
     }
 }
 
@@ -1218,11 +1218,9 @@ void PrettyPrinters::printAssyUnaryInstruction(
         instructionName = "not";
     }
     else {
-        const auto &r = *unaryOperator;
         throw std::logic_error(
             "Unsupported unary operator while printing assembly unary "
-            "instruction in printAssyUnaryInstruction: " +
-            std::string(typeid(r).name()));
+            "instruction in printAssyUnaryInstruction");
     }
 
     std::string typeSuffix;
@@ -1236,10 +1234,8 @@ void PrettyPrinters::printAssyUnaryInstruction(
         registerSize = 8;
     }
     else {
-        const auto &r = *type;
         throw std::logic_error("Unsupported type while printing assembly unary "
-                               "instruction in printAssyUnaryInstruction: " +
-                               std::string(typeid(r).name()));
+                               "instruction in printAssyUnaryInstruction");
     }
 
     std::cout << "    " << instructionName << typeSuffix;
@@ -1286,11 +1282,9 @@ void PrettyPrinters::printAssyBinaryInstruction(
         instructionName = "imul";
     }
     else {
-        const auto &r = *binaryOperator;
         throw std::logic_error(
             "Unsupported binary operator while printing assembly binary "
-            "instruction in printAssyBinaryInstruction: " +
-            std::string(typeid(r).name()));
+            "instruction in printAssyBinaryInstruction");
     }
 
     std::string typeSuffix;
@@ -1304,11 +1298,9 @@ void PrettyPrinters::printAssyBinaryInstruction(
         registerSize = 8;
     }
     else {
-        const auto &r = *type;
         throw std::logic_error(
             "Unsupported type while printing assembly binary instruction in "
-            "printAssyBinaryInstruction: " +
-            std::string(typeid(r).name()));
+            "printAssyBinaryInstruction");
     }
 
     std::cout << "    " << instructionName << typeSuffix;
@@ -1377,10 +1369,8 @@ void PrettyPrinters::printAssyCmpInstruction(
         registerSize = 8;
     }
     else {
-        const auto &r = *type;
         throw std::logic_error("Unsupported type while printing assembly cmp "
-                               "instruction in printAssyCmpInstruction: " +
-                               std::string(typeid(r).name()));
+                               "instruction in printAssyCmpInstruction");
     }
 
     std::cout << "    cmp" << typeSuffix;
@@ -1442,10 +1432,8 @@ void PrettyPrinters::printAssyIdivInstruction(
         registerSize = 8;
     }
     else {
-        const auto &r = *type;
         throw std::logic_error("Unsupported type while printing assembly idiv "
-                               "instruction in printAssyIdivInstruction: " +
-                               std::string(typeid(r).name()));
+                               "instruction in printAssyIdivInstruction");
     }
 
     std::cout << "    idiv" << typeSuffix;
@@ -1491,10 +1479,8 @@ void PrettyPrinters::printAssyDivInstruction(
         registerSize = 8;
     }
     else {
-        const auto &r = *type;
         throw std::logic_error("Unsupported type while printing assembly div "
-                               "instruction in printAssyDivInstruction: " +
-                               std::string(typeid(r).name()));
+                               "instruction in printAssyDivInstruction");
     }
 
     std::cout << "    div" << typeSuffix;
@@ -1536,10 +1522,8 @@ void PrettyPrinters::printAssyCdqInstruction(
         std::cout << "    cqo\n";
     }
     else {
-        const auto &r = *type;
         throw std::logic_error("Unsupported type while printing assembly cdq "
-                               "instruction in printAssyCdqInstruction: " +
-                               std::string(typeid(r).name()));
+                               "instruction in printAssyCdqInstruction");
     }
 }
 
@@ -1583,11 +1567,9 @@ void PrettyPrinters::printAssyJmpCCInstruction(
         std::cout << "    jbe";
     }
     else {
-        const auto &r = *condCode;
         throw std::logic_error(
             "Unsupported conditional code while printing "
-            "assembly jmpcc instruction in printAssyJmpCCInstruction: " +
-            std::string(typeid(r).name()));
+            "assembly jmpcc instruction in printAssyJmpCCInstruction");
     }
 
     auto label = jmpCCInstruction.getLabel();
@@ -1628,11 +1610,9 @@ void PrettyPrinters::printAssySetCCInstruction(
         std::cout << "    setbe";
     }
     else {
-        const auto &r = *condCode;
         throw std::logic_error(
             "Unsupported conditional code while printing "
-            "assembly setcc instruction in printAssySetCCInstruction: " +
-            std::string(typeid(r).name()));
+            "assembly setcc instruction in printAssySetCCInstruction");
     }
 
     auto operand = setCCInstruction.getOperand();

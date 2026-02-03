@@ -2,8 +2,8 @@
 #define FRONTEND_TYPES_H
 
 #include "ast.h"
+#include "visitor.h"
 #include <memory>
-#include <typeinfo>
 #include <vector>
 
 namespace AST {

@@ -2,7 +2,6 @@
 #define FRONTEND_PRINT_VISITOR_H
 
 #include "visitor.h"
-#include <iostream>
 
 namespace AST {
 /**

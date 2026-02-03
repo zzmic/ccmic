@@ -1,6 +1,24 @@
 #include "irGenerator.h"
+#include "../frontend/blockItem.h"
+#include "../frontend/constant.h"
+#include "../frontend/declaration.h"
+#include "../frontend/expression.h"
 #include "../frontend/forInit.h"
 #include "../frontend/frontendSymbolTable.h"
+#include "../frontend/operator.h"
+#include "../frontend/program.h"
+#include "../frontend/semanticAnalysisPasses.h"
+#include "../frontend/statement.h"
+#include "../frontend/storageClass.h"
+#include "../frontend/type.h"
+#include "ir.h"
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 /**
  * Unnamed namespace for helper functions for the IR generator.
@@ -105,10 +123,8 @@ cloneStaticInit(const AST::StaticInit *staticInit) {
         auto value = ulongInit->getValue();
         return std::make_unique<AST::ULongInit>(std::get<unsigned long>(value));
     }
-    const auto &r = *staticInit;
     throw std::logic_error(
-        "Unsupported static initializer type in cloneStaticInit: " +
-        std::string(typeid(r).name()));
+        "Unsupported static initializer type in cloneStaticInit");
 }
 } // namespace
 
@@ -404,11 +420,9 @@ void IRGenerator::generateIRStatement(
         // If the statement is a null statement, do nothing.
     }
     else {
-        const auto &r = *astStatement;
         throw std::logic_error(
             "Unsupported statement type while generating IR instructions for "
-            "statement in generateIRStatement in IRGenerator: " +
-            std::string(typeid(r).name()));
+            "statement in generateIRStatement in IRGenerator");
     }
 }
 
@@ -1157,13 +1171,11 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
                 }
                 continue;
             }
-            const auto &r = *initialValue;
             throw std::logic_error(
                 "Unsupported initial value type while converting "
                 "frontendSymbolTable to IR static variables in "
                 "convertFrontendSymbolTableToIRStaticVariables in "
-                "IRGenerator: " +
-                std::string(typeid(r).name()));
+                "IRGenerator");
         }
         else {
             continue;

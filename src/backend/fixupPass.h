@@ -3,6 +3,7 @@
 
 #include "assembly.h"
 #include <memory>
+#include <vector>
 
 namespace Assembly {
 /**

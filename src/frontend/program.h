@@ -2,8 +2,10 @@
 #define FRONTEND_PROGRAM_H
 
 #include "ast.h"
-#include "function.h"
+#include "declaration.h"
+#include "visitor.h"
 #include <memory>
+#include <vector>
 
 namespace AST {
 /**

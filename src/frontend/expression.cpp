@@ -1,7 +1,12 @@
 #include "expression.h"
 #include "visitor.h"
-
+#include <memory>
 #include <stdexcept>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <vector>
 
 namespace AST {
 ConstantExpression::ConstantExpression(std::unique_ptr<Constant> constant)

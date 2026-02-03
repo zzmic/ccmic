@@ -5,13 +5,15 @@
 #include "../frontend/declaration.h"
 #include "../frontend/expression.h"
 #include "../frontend/frontendSymbolTable.h"
-#include "../frontend/function.h"
+#include "../frontend/operator.h"
 #include "../frontend/program.h"
 #include "../frontend/statement.h"
 #include "ir.h"
-#include <optional>
+#include <memory>
+#include <string>
 #include <string_view>
-#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace IR {
 /**

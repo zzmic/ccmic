@@ -1,5 +1,16 @@
+#include "frontend/frontendSymbolTable.h"
+#include "utils/compilerDriver.h"
 #include "utils/pipelineStagesExecutors.h"
 #include "utils/prettyPrinters.h"
+#include <cstdlib>
+#include <exception>
+#include <filesystem>
+#include <iostream>
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <utility>
+#include <vector>
 
 int main(int argc, char *argv[]) {
     try {

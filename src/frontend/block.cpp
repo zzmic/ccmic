@@ -1,5 +1,10 @@
 #include "block.h"
+#include "blockItem.h"
+#include "visitor.h"
+#include <memory>
 #include <stdexcept>
+#include <utility>
+#include <vector>
 
 namespace AST {
 Block::Block(

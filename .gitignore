@@ -46,3 +46,4 @@ bin/
 playground/
 valgrind-out.txt
 compile_commands.json
+tmp.txt
