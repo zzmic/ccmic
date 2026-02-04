@@ -1,0 +1,9 @@
+---
+Checks: "clang-diagnostic-*,clang-analyzer-*"
+WarningsAsErrors: false
+HeaderFilterRegex: ""
+ExcludeHeaderFilterRegex: ""
+FormatStyle: none
+CheckOptions: {}
+SystemHeaders: false
+---

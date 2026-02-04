@@ -123,7 +123,7 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 - **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), and `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
 - **Optimizations** (_to be implemented_): `--fold-constants` (constant folding), `--eliminate-unreachable-code` (dead code elimination), `--propagate-copies` (copy propagation), `--eliminate-dead-stores` (dead store elimination), and `--optimize` (enable all optimizations).
 
-## Generating Clang's JSON Compilation Database File(s)
+## Generating JSON Compilation Database Files
 
 To generate a `compile_commands.json` file for use with tools that support the [JSON compilation database format](https://clang.llvm.org/docs/JSONCompilationDatabase.html), run the following command (assuming that [`compiledb`](https://github.com/nickdiego/compiledb) is installed):
 
@@ -139,7 +139,7 @@ make -j$(nproc) compiledb
 
 ## Static Analysis with Clang-Tidy
 
-To perform static analysis on the codebase using [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/), run the following command (assuming that Clang-Tidy is installed) with the compilation database generated in the previous step/section and [default checkers](https://clang.llvm.org/docs/analyzer/checkers.html) enabled:
+To perform static analysis on the codebase using [Clang-Tidy](https://clang.llvm.org/extra/clang-tidy/), run the following command (assuming that the LLVM toolchain is installed) with the compilation database generated in the previous step/section and [default checkers](https://clang.llvm.org/docs/analyzer/checkers.html) enabled:
 
 ```bash
 run-clang-tidy -j$(nproc) -p .
