@@ -80,6 +80,7 @@ MIDEND_OBJECTS = $(patsubst $(SRC_DIR)/%.cpp, $(BIN_DIR)/%.o, $(MIDEND_SOURCES))
 # Main executable path.
 EXECUTABLE = $(BIN_DIR)/main
 
+# Default target to build the project.
 all: $(BIN_DIR) $(EXECUTABLE)
 
 # Create the binary directory if it doesn't exist.
@@ -122,21 +123,26 @@ check-frontend: $(BIN_DIR) $(FRONTEND_OBJECTS)
 check-midend: $(BIN_DIR) $(MIDEND_OBJECTS)
 	@echo "Frontend + midend compilation check passed!"
 
+# Format C++ header and source files using `clang-format` (that obeys `.clang-format`'s configuration).
 format:
 	clang-format -i $(SOURCES) $(HEADERS)
 
+# Clean build artifacts.
 clean:
 	rm -rfv $(BIN_DIR)/*
 	@find $(BIN_DIR) -name '*.d' -delete 2>/dev/null || true
 
+# Generate `compile_commands.json` for tooling support (e.g., `clang-tidy`, `clangd`).
 compiledb:
 	@which compiledb >/dev/null || (echo "Error: `compiledb` not found. Please install it to generate `compile_commands.json`." >&2; exit 1)
 	compiledb make
 
+# Run `clang-tidy` checks on the source files.
 tidy:
 	@which clang-tidy >/dev/null || (echo "Error: `clang-tidy` not found. Please install it to run tidy checks." >&2; exit 1)
 	run-clang-tidy -p .
 
+# Run `clang-tidy` checks and apply automatic fixes (if available) to the source files.
 tidy-and-fix:
 	@which clang-tidy >/dev/null || (echo "Error: `clang-tidy` not found. Please install it to run tidy checks." >&2; exit 1)
 	run-clang-tidy -fix -p .

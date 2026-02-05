@@ -508,11 +508,11 @@ void IdentifierResolutionPass::resolveStatement(
             resolveStatement(ifStatement->getElseOptStatement(), identifierMap);
         }
     }
-    else if (dynamic_cast<BreakStatement *>(statement)) {
-    }
-    else if (dynamic_cast<ContinueStatement *>(statement)) {
-    }
-    else if (dynamic_cast<NullStatement *>(statement)) {
+    else if ((dynamic_cast<BreakStatement *>(statement)) ||
+             (dynamic_cast<ContinueStatement *>(statement)) ||
+             (dynamic_cast<NullStatement *>(statement))) {
+        // If the statement is a break statement, continue statement, or null
+        // statement, do nothing.
     }
     else {
         throw std::logic_error(

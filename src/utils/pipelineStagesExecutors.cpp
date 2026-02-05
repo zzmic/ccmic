@@ -641,11 +641,9 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator)) {
         instructionName = "neg";
     }
-    else if (dynamic_cast<const Assembly::ComplementOperator *>(
-                 unaryOperator)) {
-        instructionName = "not";
-    }
-    else if (dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) {
+    else if ((dynamic_cast<const Assembly::ComplementOperator *>(
+                 unaryOperator)) ||
+             (dynamic_cast<const Assembly::NotOperator *>(unaryOperator))) {
         instructionName = "not";
     }
     else {

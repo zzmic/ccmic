@@ -212,17 +212,34 @@ class AssemblyGenerator {
     determineAssemblyType(const IR::Value *value);
 
     /**
+     * Struct for holding operands for determining the `mov` instruction type
+     * (to mitigate `[bugprone-branch-clone]`).
+     */
+    struct MovTypeOperands {
+        const Assembly::Operand *src;
+        const Assembly::Operand *dst;
+    };
+
+    /**
+     * Struct for holding IR values for determining the `mov` instruction type
+     * (to mitigate `[bugprone-branch-clone]`).
+     */
+    struct MovTypeIRValues {
+        const IR::Value *src;
+        const IR::Value *dst;
+    };
+
+    /**
      * Determine the assembly type of a mov instruction.
      *
-     * @param src The source operand of the move instruction.
-     * @param dst The destination operand of the move instruction.
-     * @param irSrc The IR source value of the move instruction.
-     * @param irDst The IR destination value of the move instruction.
+     * @param operands The assembly operands (in struct) for the move
+     * instruction.
+     * @param irValues The IR values (in struct) for the move instruction.
      * @return The assembly type of the move instruction.
      */
     [[nodiscard]] std::unique_ptr<Assembly::AssemblyType>
-    determineMovType(const Assembly::Operand *src, const Assembly::Operand *dst,
-                     const IR::Value *irSrc, const IR::Value *irDst);
+    determineMovType(const MovTypeOperands &operands,
+                     const MovTypeIRValues &irValues);
 
   public:
     /**

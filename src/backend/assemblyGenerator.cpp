@@ -615,8 +615,8 @@ void AssemblyGenerator::convertIRCopyInstructionToAssy(
 
     // Determine the assembly type of the `mov` instruction.
     auto assemblyType =
-        determineMovType(srcOperand.get(), dstOperand.get(), copyInstr.getSrc(),
-                         copyInstr.getDst());
+        determineMovType({srcOperand.get(), dstOperand.get()},
+                         {copyInstr.getSrc(), copyInstr.getDst()});
 
     // Generate a `MovInstruction` to copy the source operand to the
     // destination operand.
@@ -889,11 +889,11 @@ AssemblyGenerator::convertASTTypeToAssemblyType(const AST::Type *astType) {
 }
 
 std::unique_ptr<Assembly::AssemblyType> AssemblyGenerator::determineMovType(
-    const Assembly::Operand *src, const Assembly::Operand *dst,
-    const IR::Value *irSrc, const IR::Value *irDst) {
+    const AssemblyGenerator::MovTypeOperands &operands,
+    const AssemblyGenerator::MovTypeIRValues &irValues) {
     // Determine the assembly type based on the IR operands.
-    auto srcType = determineAssemblyType(irSrc);
-    auto dstType = determineAssemblyType(irDst);
+    auto srcType = determineAssemblyType(irValues.src);
+    auto dstType = determineAssemblyType(irValues.dst);
 
     // Use the larger type as base.
     std::unique_ptr<Assembly::AssemblyType> baseType;
@@ -910,9 +910,9 @@ std::unique_ptr<Assembly::AssemblyType> AssemblyGenerator::determineMovType(
     // is non-negative, as `movl` zero-extends to 64 bits and does not write
     // the upper 4 bytes of memory destinations.
     if (dynamic_cast<Assembly::Quadword *>(baseType.get())) {
-        if (dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
-            if (auto srcImm =
-                    dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
+        if (dynamic_cast<const Assembly::RegisterOperand *>(operands.dst)) {
+            if (auto srcImm = dynamic_cast<const Assembly::ImmediateOperand *>(
+                    operands.src)) {
                 auto value = srcImm->getImmediate();
                 if (value <= std::numeric_limits<int>::max()) {
                     return std::make_unique<Assembly::Longword>();

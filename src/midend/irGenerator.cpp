@@ -233,15 +233,13 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
 
                     // Create a constant value based on the return type.
                     std::unique_ptr<IR::Value> returnValue;
-                    if (dynamic_cast<const AST::IntType *>(&returnType)) {
-                        returnValue = std::make_unique<IR::ConstantValue>(
-                            std::make_unique<AST::ConstantInt>(0));
-                    }
-                    else if (dynamic_cast<const AST::LongType *>(&returnType)) {
+                    if (dynamic_cast<const AST::LongType *>(&returnType)) {
                         returnValue = std::make_unique<IR::ConstantValue>(
                             std::make_unique<AST::ConstantLong>(0L));
                     }
                     else {
+                        // This case usually corresponds to int, unsigned int,
+                        // unsigned long.
                         // For void functions, we don't need to return anything,
                         // but we still need a return instruction for proper
                         // function termination.

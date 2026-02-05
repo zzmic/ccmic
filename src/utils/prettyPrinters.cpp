@@ -1211,10 +1211,8 @@ void PrettyPrinters::printAssyUnaryInstruction(
         instructionName = "neg";
     }
     else if (dynamic_cast<const Assembly::ComplementOperator *>(
-                 unaryOperator)) {
-        instructionName = "not";
-    }
-    else if (dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) {
+                 unaryOperator) ||
+             dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) {
         instructionName = "not";
     }
     else {

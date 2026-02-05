@@ -406,14 +406,18 @@ bool FixupPass::isInvalidDiv(const Assembly::DivInstruction &divInstr) {
 }
 
 bool FixupPass::isInvalidCmp(const Assembly::CmpInstruction &cmpInstr) {
-    if ((dynamic_cast<const Assembly::StackOperand *>(cmpInstr.getOperand1()) ||
-         dynamic_cast<const Assembly::DataOperand *>(cmpInstr.getOperand1())) &&
-        (dynamic_cast<const Assembly::StackOperand *>(cmpInstr.getOperand2()) ||
-         dynamic_cast<const Assembly::DataOperand *>(cmpInstr.getOperand2()))) {
-        return true;
-    }
-    else if (dynamic_cast<const Assembly::ImmediateOperand *>(
-                 cmpInstr.getOperand2())) {
+    // If either both operands are memory-address operands or the second operand
+    // is an immediate value, the `cmp` instruction is invalid.
+    if (((dynamic_cast<const Assembly::StackOperand *>(
+              cmpInstr.getOperand1()) ||
+          dynamic_cast<const Assembly::DataOperand *>(
+              cmpInstr.getOperand1())) &&
+         (dynamic_cast<const Assembly::StackOperand *>(
+              cmpInstr.getOperand2()) ||
+          dynamic_cast<const Assembly::DataOperand *>(
+              cmpInstr.getOperand2()))) ||
+        (dynamic_cast<const Assembly::ImmediateOperand *>(
+            cmpInstr.getOperand2()))) {
         return true;
     }
     return false;
