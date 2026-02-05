@@ -138,7 +138,7 @@ class CompoundStatement : public Statement {
      * Defined in `statement.cpp` to allow incomplete type `Block` in the
      * header.
      */
-    ~CompoundStatement();
+    ~CompoundStatement() override;
 
     /**
      * Delete the copy constructor for the compound statement class.
@@ -325,7 +325,7 @@ class ForStatement : public Statement {
      * Defined in `statement.cpp` to allow incomplete type `ForInit` in the
      * header.
      */
-    ~ForStatement();
+    ~ForStatement() override;
 
     /**
      * Delete the copy constructor for the for-statement class.

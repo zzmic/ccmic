@@ -20,12 +20,13 @@
 #include <vector>
 
 namespace AST {
-Parser::Parser(const std::vector<Token> &tokens) : tokens(tokens), current(0) {}
+Parser::Parser(const std::vector<Token> &tokens)
+    : tokens(&tokens), current(0) {}
 
 std::unique_ptr<Program> Parser::parse() {
     auto declarations =
         std::make_unique<std::vector<std::unique_ptr<Declaration>>>();
-    while (current < tokens.size()) {
+    while (current < tokens->size()) {
         auto declaration = parseDeclaration();
         declarations->emplace_back(std::move(declaration));
     }
@@ -35,7 +36,7 @@ std::unique_ptr<Program> Parser::parse() {
 bool Parser::matchToken(TokenType type) {
     // If the current index is less than the number of tokens and the current
     // token is of the expected type, return true. Otherwise, return false.
-    if (current < tokens.size() && tokens[current].type == type) {
+    if (current < tokens->size() && (*tokens)[current].type == type) {
         return true;
     }
     return false;
@@ -46,12 +47,12 @@ Token Parser::consumeToken(TokenType type) {
     // token is of the expected type, consume the token, increment the
     // current index, and return the token. Otherwise, throw an error.
     if (matchToken(type)) {
-        return tokens[current++];
+        return (*tokens)[current++];
     }
     std::stringstream msg;
     msg << "Expect token of type " << tokenTypeToString(type) << " but found "
-        << tokens[current].value;
-    msg << " of type " << tokenTypeToString(tokens[current].type)
+        << (*tokens)[current].value;
+    msg << " of type " << tokenTypeToString((*tokens)[current].type)
         << " in consumeToken in Parser";
     throw std::invalid_argument(msg.str());
 }
@@ -62,8 +63,8 @@ void Parser::expectToken(TokenType type) {
     if (!matchToken(type)) {
         std::stringstream msg;
         msg << "Expect token of type " << tokenTypeToString(type)
-            << " but found " << tokens[current].value;
-        msg << " of type " << tokenTypeToString(tokens[current].type)
+            << " but found " << (*tokens)[current].value;
+        msg << " of type " << tokenTypeToString((*tokens)[current].type)
             << " in expectToken in Parser";
         throw std::invalid_argument(msg.str());
     }
@@ -79,11 +80,11 @@ std::unique_ptr<BlockItem> Parser::parseBlockItem() {
         matchToken(TokenType::externKeyword)) {
         // Peek ahead to check if this is a function declaration.
         size_t nextIndex = current + 1;
-        if (nextIndex < tokens.size() &&
-            tokens[nextIndex].type == TokenType::Identifier) {
+        if (nextIndex < tokens->size() &&
+            (*tokens)[nextIndex].type == TokenType::Identifier) {
             size_t afterIdentifierIndex = nextIndex + 1;
-            if (afterIdentifierIndex < tokens.size() &&
-                tokens[afterIdentifierIndex].type ==
+            if (afterIdentifierIndex < tokens->size() &&
+                (*tokens)[afterIdentifierIndex].type ==
                     TokenType::OpenParenthesis) {
                 // If the sequence matches `int <identifier> (<params>)`, it's a
                 // function declaration.
@@ -289,7 +290,7 @@ std::unique_ptr<ForInit> Parser::parseForInit() {
         if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
             // Release as Declaration and re-wrap as VariableDeclaration.
             auto *varDecl =
-                static_cast<VariableDeclaration *>(declaration.release());
+                dynamic_cast<VariableDeclaration *>(declaration.release());
             return std::make_unique<InitDecl>(
                 std::unique_ptr<VariableDeclaration>(varDecl));
         }
@@ -414,8 +415,9 @@ std::unique_ptr<Statement> Parser::parseStatement() {
         return std::make_unique<ExpressionStatement>(std::move(expr));
     }
     std::stringstream msg;
-    msg << "Malformed statement: unexpected token: " << tokens[current].value;
-    msg << " of type " << tokenTypeToString(tokens[current].type)
+    msg << "Malformed statement: unexpected token: "
+        << (*tokens)[current].value;
+    msg << " of type " << tokenTypeToString((*tokens)[current].type)
         << " in parseStatement in Parser";
     throw std::invalid_argument(msg.str());
 }
@@ -435,17 +437,11 @@ std::unique_ptr<Expression> Parser::parseFactor() {
             auto arguments =
                 std::make_unique<std::vector<std::unique_ptr<Expression>>>();
             if (!matchToken(TokenType::CloseParenthesis)) {
-                // Parse additional arguments if they exist.
-                do {
-                    auto argument = parseExpression(0);
-                    arguments->emplace_back(std::move(argument));
-                    if (matchToken(TokenType::Comma)) {
-                        consumeToken(TokenType::Comma);
-                    }
-                    else {
-                        break;
-                    }
-                } while (true);
+                arguments->emplace_back(parseExpression(0));
+                while (matchToken(TokenType::Comma)) {
+                    consumeToken(TokenType::Comma);
+                    arguments->emplace_back(parseExpression(0));
+                }
             }
             expectToken(TokenType::CloseParenthesis);
             return std::make_unique<FunctionCallExpression>(
@@ -457,11 +453,11 @@ std::unique_ptr<Expression> Parser::parseFactor() {
         }
     }
     else if (matchToken(TokenType::OpenParenthesis) &&
-             current + 1 < tokens.size() &&
-             (tokens[current + 1].type == TokenType::intKeyword ||
-              tokens[current + 1].type == TokenType::longKeyword ||
-              tokens[current + 1].type == TokenType::signedKeyword ||
-              tokens[current + 1].type == TokenType::unsignedKeyword)) {
+             current + 1 < tokens->size() &&
+             ((*tokens)[current + 1].type == TokenType::intKeyword ||
+              (*tokens)[current + 1].type == TokenType::longKeyword ||
+              (*tokens)[current + 1].type == TokenType::signedKeyword ||
+              (*tokens)[current + 1].type == TokenType::unsignedKeyword)) {
         consumeToken(TokenType::OpenParenthesis);
         std::vector<std::string> specifierList;
         while (matchToken(TokenType::intKeyword) ||
@@ -523,8 +519,9 @@ std::unique_ptr<Expression> Parser::parseFactor() {
     }
     else {
         std::stringstream msg;
-        msg << "Malformed factor: unexpected token: " << tokens[current].value;
-        msg << " of type " << tokenTypeToString(tokens[current].type);
+        msg << "Malformed factor: unexpected token: "
+            << (*tokens)[current].value;
+        msg << " of type " << tokenTypeToString((*tokens)[current].type);
         msg << " in parseFactor in Parser";
         throw std::invalid_argument(msg.str());
     }
@@ -540,15 +537,15 @@ std::unique_ptr<Constant> Parser::parseConstant() {
     // 2^32 - 1 = 4294967295ULL.
     constexpr unsigned long long MAX_UINT = 4294967295ULL;
 
-    if (tokens[current].type == TokenType::UnsignedIntegerConstant ||
-        tokens[current].type == TokenType::UnsignedLongIntegerConstant) {
-        auto constantValue = std::stoull(tokens[current].value);
+    if ((*tokens)[current].type == TokenType::UnsignedIntegerConstant ||
+        (*tokens)[current].type == TokenType::UnsignedLongIntegerConstant) {
+        auto constantValue = std::stoull((*tokens)[current].value);
         if (constantValue > MAX_ULONG) {
             throw std::invalid_argument(
                 "Constant is too large to represent as an unsigned long in "
                 "parseConstant in Parser");
         }
-        if (tokens[current].type == TokenType::UnsignedIntegerConstant) {
+        if ((*tokens)[current].type == TokenType::UnsignedIntegerConstant) {
             if (constantValue <= MAX_UINT) {
                 consumeToken(TokenType::UnsignedIntegerConstant);
                 return std::make_unique<ConstantUInt>(
@@ -563,12 +560,12 @@ std::unique_ptr<Constant> Parser::parseConstant() {
             static_cast<unsigned long>(constantValue));
     }
 
-    auto constantValue = std::stoll(tokens[current].value);
+    auto constantValue = std::stoll((*tokens)[current].value);
     if (constantValue > MAX_LONG) {
         throw std::invalid_argument("Constant is too large to represent as an "
                                     "int or long in parseConstant in Parser");
     }
-    if (tokens[current].type == TokenType::IntConstant) {
+    if ((*tokens)[current].type == TokenType::IntConstant) {
         if (constantValue <= MAX_INT) {
             consumeToken(TokenType::IntConstant);
             return std::make_unique<ConstantInt>(
@@ -597,7 +594,7 @@ std::unique_ptr<Expression> Parser::parseExpression(int minPrecedence) {
          matchToken(TokenType::GreaterThanOrEqual) ||
          matchToken(TokenType::Assign) ||
          matchToken(TokenType::QuestionMark)) &&
-        getPrecedence(tokens[current]) >= minPrecedence) {
+        getPrecedence((*tokens)[current]) >= minPrecedence) {
         // If the next token is an assignment operator, ...
         if (matchToken(TokenType::Assign)) {
             auto assignToken = consumeToken(TokenType::Assign);
@@ -614,7 +611,7 @@ std::unique_ptr<Expression> Parser::parseExpression(int minPrecedence) {
         }
         // Otherwise, the next token is (should be) a binary operator.
         else {
-            auto binOpToken = consumeToken(tokens[current].type);
+            auto binOpToken = consumeToken((*tokens)[current].type);
             if (!(matchToken(TokenType::IntConstant) ||
                   matchToken(TokenType::LongConstant) ||
                   matchToken(TokenType::UnsignedIntegerConstant) ||

@@ -91,12 +91,12 @@ class MapEntry {
     /**
      * Whether the identifier is from the current scope.
      */
-    bool fromCurrentScope;
+    bool fromCurrentScope{};
 
     /**
      * Whether the identifier has linkage.
      */
-    bool hasLinkage;
+    bool hasLinkage{};
 };
 
 /**
@@ -584,7 +584,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
     /**
      * The frontend symbol table.
      */
-    FrontendSymbolTable &frontendSymbolTable;
+    FrontendSymbolTable *frontendSymbolTable;
 
     /**
      * Convert a static constant expression to a static initializer.

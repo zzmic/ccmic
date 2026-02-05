@@ -1,4 +1,5 @@
 #include "fixupPass.h"
+#include "../utils/constants.h"
 #include "assembly.h"
 #include <limits>
 #include <memory>
@@ -187,8 +188,9 @@ void FixupPass::rewriteFunctionDefinition(
     auto &instructions = functionDefinition.getFunctionBody();
     auto preAlignedStackSize = functionDefinition.getStackSize();
     // Align the stack size to the next multiple of 16.
-    // Reference: https://math.stackexchange.com/a/291494.
-    auto alignedStackSize = ((preAlignedStackSize - 1) | 15) + 1;
+    // Reference: <https://math.stackexchange.com/a/291494>.
+    auto alignedStackSize =
+        ((preAlignedStackSize - 1) | STACK_ALIGNMENT_MASK) + 1;
     // Insert an allocate-stack instruction at the beginning of each
     // function.
     insertAllocateStackInstruction(instructions,

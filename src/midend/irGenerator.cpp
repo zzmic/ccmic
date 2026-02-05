@@ -11,6 +11,7 @@
 #include "../frontend/statement.h"
 #include "../frontend/storageClass.h"
 #include "../frontend/type.h"
+#include "../utils/constants.h"
 #include "ir.h"
 #include <memory>
 #include <stdexcept>
@@ -76,11 +77,11 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
 int getTypeSize(const AST::Type *type) {
     if (dynamic_cast<const AST::IntType *>(type) ||
         dynamic_cast<const AST::UIntType *>(type)) {
-        return 4;
+        return LONGWORD_SIZE;
     }
     else if (dynamic_cast<const AST::LongType *>(type) ||
              dynamic_cast<const AST::ULongType *>(type)) {
-        return 8;
+        return QUADWORD_SIZE;
     }
     const auto &r = *type;
     throw std::logic_error("Unsupported type in getTypeSize: " +
@@ -132,7 +133,7 @@ namespace IR {
 IRGenerator::IRGenerator(int variableResolutionCounter,
                          AST::FrontendSymbolTable &frontendSymbolTable)
     : irTemporariesCounter(variableResolutionCounter),
-      frontendSymbolTable(frontendSymbolTable) {}
+      frontendSymbolTable(&frontendSymbolTable) {}
 
 std::pair<std::unique_ptr<IR::Program>,
           std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
@@ -167,9 +168,9 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             // Find the global attribute of the function declaration in the
             // frontend symbol table and set the global flag.
             bool global = false;
-            if (frontendSymbolTable.find(identifier) !=
-                frontendSymbolTable.end()) {
-                auto &symbolEntry = frontendSymbolTable[identifier];
+            if (frontendSymbolTable->find(identifier) !=
+                frontendSymbolTable->end()) {
+                auto &symbolEntry = (*frontendSymbolTable)[identifier];
                 if (auto *functionAttribute =
                         dynamic_cast<AST::FunctionAttribute *>(
                             symbolEntry.second.get())) {
@@ -225,7 +226,8 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             // If the function needs an implicit return, add it.
             if (needsImplicitReturn) {
                 // Get the function's return type from the symbol table.
-                auto functionType = frontendSymbolTable[identifier].first.get();
+                auto functionType =
+                    (*frontendSymbolTable)[identifier].first.get();
                 auto functionTypePtr =
                     dynamic_cast<AST::FunctionType *>(functionType);
                 if (functionTypePtr) {
@@ -716,7 +718,7 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
         }
         // Add the result variable to the frontend symbol table with the type of
         // the conditional expression's result.
-        frontendSymbolTable[resultLabel] = std::make_pair(
+        (*frontendSymbolTable)[resultLabel] = std::make_pair(
             cloneType(resultType), std::make_unique<AST::LocalAttribute>());
 
         auto resultValue = std::make_unique<IR::VariableValue>(resultLabel);
@@ -767,7 +769,7 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(
 
     // Add the temporary variable to the frontend symbol table with the type
     // of the expression and local attribute.
-    frontendSymbolTable[tmpName] =
+    (*frontendSymbolTable)[tmpName] =
         std::make_pair(cloneType(unaryExpr->getExpType()),
                        std::make_unique<AST::LocalAttribute>());
 
@@ -839,7 +841,7 @@ IRGenerator::generateIRInstructionWithLogicalAnd(
     auto resultLabel = generateIRResultLabel();
 
     // Add the result variable to the frontend symbol table with type int.
-    frontendSymbolTable[resultLabel] =
+    (*frontendSymbolTable)[resultLabel] =
         std::make_pair(std::make_unique<AST::IntType>(),
                        std::make_unique<AST::LocalAttribute>());
 
@@ -893,7 +895,7 @@ IRGenerator::generateIRInstructionWithLogicalOr(
     auto resultLabel = generateIRResultLabel();
 
     // Add the result variable to the frontend symbol table with type int.
-    frontendSymbolTable[resultLabel] =
+    (*frontendSymbolTable)[resultLabel] =
         std::make_pair(std::make_unique<AST::IntType>(),
                        std::make_unique<AST::LocalAttribute>());
 
@@ -976,7 +978,7 @@ IRGenerator::generateIRFunctionCallInstruction(
 
     // Look up the function's return type in the frontend symbol table.
     auto functionType =
-        frontendSymbolTable[std::string(functionIdentifier)].first.get();
+        (*frontendSymbolTable)[std::string(functionIdentifier)].first.get();
     auto functionTypePtr = dynamic_cast<AST::FunctionType *>(functionType);
     if (!functionTypePtr) {
         throw std::logic_error(
@@ -988,7 +990,7 @@ IRGenerator::generateIRFunctionCallInstruction(
 
     // Add the temporary variable to the frontend symbol table with the type
     // of the function's return type and local attribute.
-    frontendSymbolTable[tmpName] = std::make_pair(
+    (*frontendSymbolTable)[tmpName] = std::make_pair(
         cloneType(&returnType), std::make_unique<AST::LocalAttribute>());
 
     // Create a variable value for the temporary variable.
@@ -1027,7 +1029,7 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
     auto dstName = generateIRTemporary();
     // Add the temporary variable to the frontend symbol table with the type
     // of the target type and local attribute.
-    frontendSymbolTable[dstName] = std::make_pair(
+    (*frontendSymbolTable)[dstName] = std::make_pair(
         cloneType(targetType), std::make_unique<AST::LocalAttribute>());
     // Create a variable value for the temporary variable.
     auto dst = std::make_unique<IR::VariableValue>(dstName);
@@ -1120,7 +1122,7 @@ std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>
 IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
     auto irDefs =
         std::make_unique<std::vector<std::unique_ptr<IR::StaticVariable>>>();
-    for (const auto &symbol : frontendSymbolTable) {
+    for (const auto &symbol : *frontendSymbolTable) {
         auto name = symbol.first;
         auto *type = symbol.second.first.get();
         auto *attribute = symbol.second.second.get();
@@ -1253,7 +1255,7 @@ IRGenerator::generateIRVariable(const AST::BinaryExpression *binaryExpr) {
 
     // Add the temporary variable to the frontend symbol table with the
     // appropriate type and local attribute.
-    frontendSymbolTable[tmpName] =
+    (*frontendSymbolTable)[tmpName] =
         std::make_pair(cloneType(binaryExpr->getExpType()),
                        std::make_unique<AST::LocalAttribute>());
 

@@ -3,6 +3,7 @@
 #include "../frontend/constant.h"
 #include "../frontend/semanticAnalysisPasses.h"
 #include "../midend/ir.h"
+#include "../utils/constants.h"
 #include <iostream>
 #include <iterator>
 #include <memory>
@@ -1025,14 +1026,14 @@ void PrettyPrinters::printAssyMovInstruction(
     auto type = movInstruction.getType();
 
     std::string instructionName;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         instructionName = "movl";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         instructionName = "movq";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         const auto &r = *type;
@@ -1101,7 +1102,7 @@ void PrettyPrinters::printAssyMovsxInstruction(
     auto src = movsxInstruction.getSrc();
     std::string srcStr;
     if (auto srcReg = dynamic_cast<const Assembly::RegisterOperand *>(src)) {
-        srcStr = srcReg->getRegisterInBytesInStr(4);
+        srcStr = srcReg->getRegisterInBytesInStr(LONGWORD_SIZE);
     }
     else if (auto srcImm =
                  dynamic_cast<const Assembly::ImmediateOperand *>(src)) {
@@ -1127,7 +1128,7 @@ void PrettyPrinters::printAssyMovsxInstruction(
     auto dst = movsxInstruction.getDst();
     std::string dstStr;
     if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
-        dstStr = dstReg->getRegisterInBytesInStr(8);
+        dstStr = dstReg->getRegisterInBytesInStr(QUADWORD_SIZE);
     }
     else if (auto dstStack =
                  dynamic_cast<const Assembly::StackOperand *>(dst)) {
@@ -1168,7 +1169,7 @@ void PrettyPrinters::printAssyPushInstruction(
     else if (auto regOperand =
                  dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         std::cout << "    pushq" << " "
-                  << regOperand->getRegisterInBytesInStr(8) << "\n";
+                  << regOperand->getRegisterInBytesInStr(QUADWORD_SIZE) << "\n";
     }
     else if (auto immOperand =
                  dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
@@ -1222,14 +1223,14 @@ void PrettyPrinters::printAssyUnaryInstruction(
     }
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error("Unsupported type while printing assembly unary "
@@ -1286,14 +1287,14 @@ void PrettyPrinters::printAssyBinaryInstruction(
     }
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(
@@ -1357,14 +1358,14 @@ void PrettyPrinters::printAssyCmpInstruction(
     auto type = cmpInstruction.getType();
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error("Unsupported type while printing assembly cmp "
@@ -1420,14 +1421,14 @@ void PrettyPrinters::printAssyIdivInstruction(
     auto type = idivInstruction.getType();
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error("Unsupported type while printing assembly idiv "
@@ -1467,14 +1468,14 @@ void PrettyPrinters::printAssyDivInstruction(
     auto type = divInstruction.getType();
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error("Unsupported type while printing assembly div "

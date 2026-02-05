@@ -18,9 +18,9 @@ class Type : public AST {
     constexpr Type() = default;
 
     /**
-     * Default virtual destructor for the type class.
+     * Default destructor for the type class.
      */
-    virtual ~Type() = default;
+    ~Type() override = default;
 
     /**
      * Delete the copy constructor for the type class.
@@ -163,6 +163,8 @@ class FunctionType : public Type {
     getParameterTypes() const;
 
     [[nodiscard]] const Type &getReturnType() const;
+
+    Type &getReturnType();
 
   private:
     /**

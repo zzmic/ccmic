@@ -53,7 +53,7 @@ class IRGenerator {
     /**
      * The frontend symbol table.
      */
-    AST::FrontendSymbolTable &frontendSymbolTable;
+    AST::FrontendSymbolTable *frontendSymbolTable;
 
     /**
      * Generate the IR for a block.

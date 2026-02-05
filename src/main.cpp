@@ -2,10 +2,12 @@
 #include "utils/compilerDriver.h"
 #include "utils/pipelineStagesExecutors.h"
 #include "utils/prettyPrinters.h"
+#include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <span>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -14,13 +16,15 @@
 
 int main(int argc, char *argv[]) {
     try {
+        // Reference: <https://stackoverflow.com/a/45718539>.
+        auto args = std::span(argv, static_cast<std::size_t>(argc));
         std::vector<std::string> flags;
         std::string sourceFile;
         std::string outputFileName;
         bool isOutputFileSpecified = false;
         if (argc < 2) {
             std::cerr
-                << "Usage: " << argv[0]
+                << "Usage: " << args[0]
                 << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
                    "[-s] [-c] [-o <outputFile>] <sourceFile>\n";
             std::cerr << "Given argc: " << argc << "\n";
@@ -28,14 +32,14 @@ int main(int argc, char *argv[]) {
         }
         // Parse the command line arguments and extract the flag(s), the source
         // file (name), and the output file (name).
-        for (int i = 1; i < argc; ++i) {
-            std::string arg = argv[i];
+        for (std::size_t i = 1; i < static_cast<std::size_t>(argc); ++i) {
+            std::string arg = args[i];
             if (arg == "-o") {
-                if (i + 1 >= argc) {
+                if (i + 1 >= static_cast<std::size_t>(argc)) {
                     std::cerr << "Missing output file after -o\n";
                     return EXIT_FAILURE;
                 }
-                outputFileName = argv[++i];
+                outputFileName = args[++i];
                 isOutputFileSpecified = true;
                 continue;
             }
@@ -51,7 +55,7 @@ int main(int argc, char *argv[]) {
         }
         if (sourceFile.empty()) {
             std::cerr
-                << "Usage: " << argv[0]
+                << "Usage: " << args[0]
                 << " [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] "
                    "[-s] [-c] [-o <outputFile>] <sourceFile>\n";
             return EXIT_FAILURE;

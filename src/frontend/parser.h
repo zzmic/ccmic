@@ -42,7 +42,7 @@ class Parser {
     /**
      * The list of tokens to be parsed.
      */
-    const std::vector<Token> &tokens;
+    const std::vector<Token> *tokens;
 
     /**
      * The current token being processed.
@@ -53,6 +53,7 @@ class Parser {
      * The map that maps token types to their precedence(s).
      */
     std::unordered_map<TokenType, int> precedenceMap = {
+        // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
         {TokenType::Assign, 1},       {TokenType::QuestionMark, 3},
         {TokenType::LogicalOr, 5},    {TokenType::LogicalAnd, 10},
         {TokenType::Equal, 30},       {TokenType::NotEqual, 30},
@@ -61,6 +62,7 @@ class Parser {
         {TokenType::Plus, 45},        {TokenType::Minus, 45},
         {TokenType::Multiply, 50},    {TokenType::Divide, 50},
         {TokenType::Modulo, 50},
+        // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
     };
 
     /**

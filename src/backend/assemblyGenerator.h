@@ -38,12 +38,12 @@ class AssemblyGenerator {
     /**
      * The IR static variables.
      */
-    const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables;
+    const std::vector<std::unique_ptr<IR::StaticVariable>> *irStaticVariables;
 
     /**
      * The frontend symbol table.
      */
-    const AST::FrontendSymbolTable &frontendSymbolTable;
+    const AST::FrontendSymbolTable *frontendSymbolTable;
 
     /**
      * Convert an IR function definition to assembly.
@@ -212,8 +212,7 @@ class AssemblyGenerator {
     determineAssemblyType(const IR::Value *value);
 
     /**
-     * Struct for holding operands for determining the `mov` instruction type
-     * (to mitigate `[bugprone-branch-clone]`).
+     * Struct for holding operands for determining the `mov` instruction type.
      */
     struct MovTypeOperands {
         const Assembly::Operand *src;
@@ -221,8 +220,7 @@ class AssemblyGenerator {
     };
 
     /**
-     * Struct for holding IR values for determining the `mov` instruction type
-     * (to mitigate `[bugprone-branch-clone]`).
+     * Struct for holding IR values for determining the `mov` instruction type.
      */
     struct MovTypeIRValues {
         const IR::Value *src;

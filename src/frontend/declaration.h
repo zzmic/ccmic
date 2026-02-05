@@ -182,7 +182,7 @@ class FunctionDeclaration : public Declaration {
      * Declared here, defined in `declaration.cpp` to allow incomplete type
      * `Block` in the header.
      */
-    ~FunctionDeclaration();
+    ~FunctionDeclaration() override;
 
     /**
      * Delete the copy constructor for the function declaration class.

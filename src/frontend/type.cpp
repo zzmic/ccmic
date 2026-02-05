@@ -80,4 +80,6 @@ FunctionType::getParameterTypes() const {
 }
 
 const Type &FunctionType::getReturnType() const { return *returnType; }
+
+Type &FunctionType::getReturnType() { return *returnType; }
 } // namespace AST

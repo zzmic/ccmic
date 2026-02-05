@@ -4,6 +4,7 @@
 #include "../frontend/semanticAnalysisPasses.h"
 #include "../frontend/type.h"
 #include "../midend/ir.h"
+#include "../utils/constants.h"
 #include "assembly.h"
 #include <algorithm>
 #include <cstddef>
@@ -53,8 +54,8 @@ namespace Assembly {
 AssemblyGenerator::AssemblyGenerator(
     const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables,
     const AST::FrontendSymbolTable &frontendSymbolTable)
-    : irStaticVariables(irStaticVariables),
-      frontendSymbolTable(frontendSymbolTable) {}
+    : irStaticVariables(&irStaticVariables),
+      frontendSymbolTable(&frontendSymbolTable) {}
 
 std::unique_ptr<Assembly::Program>
 AssemblyGenerator::generateAssembly(const IR::Program &irProgram) {
@@ -82,7 +83,7 @@ AssemblyGenerator::generateAssembly(const IR::Program &irProgram) {
 
     // Generate assembly instructions for each IR (either top-level or local)
     // static variable.
-    for (const auto &irStaticVariable : irStaticVariables) {
+    for (const auto &irStaticVariable : *irStaticVariables) {
         auto assyStaticVariable =
             convertIRStaticVariableToAssy(*irStaticVariable);
         assyTopLevels->emplace_back(std::move(assyStaticVariable));
@@ -111,7 +112,8 @@ AssemblyGenerator::convertIRFunctionDefinitionToAssy(
             auto irParam = irParameters.at(i);
             auto irParamOperand =
                 std::make_unique<Assembly::PseudoRegisterOperand>(irParam);
-            if (i < 6) { // First six parameters from registers.
+            if (i < NUM_ARGUMENT_REGISTERS) { // First six parameters from
+                                              // registers.
                 auto registerOperand =
                     std::make_unique<Assembly::RegisterOperand>(
                         argRegistersInStr[registerIndex]);
@@ -133,7 +135,8 @@ AssemblyGenerator::convertIRFunctionDefinitionToAssy(
                 // `(%rbp + 8)` stores the return address.
                 // `(%rbp + 16)` stores the first stack parameter (if any).
                 // ...
-                auto stackOffset = 8 * (i - 6 + 2);
+                auto stackOffset =
+                    QUADWORD_SIZE * (i - NUM_ARGUMENT_REGISTERS + 2);
                 auto stackOperand = std::make_unique<Assembly::StackOperand>(
                     stackOffset, std::make_unique<Assembly::BP>());
                 // Determine assembly type based on the parameter type from the
@@ -175,27 +178,27 @@ AssemblyGenerator::convertIRStaticVariableToAssy(
     if (auto constInt = dynamic_cast<const AST::IntInit *>(staticInit)) {
         auto assyInit =
             std::make_unique<AST::IntInit>(std::get<int>(constInt->getValue()));
-        return std::make_unique<StaticVariable>(identifier, global, 4,
-                                                std::move(assyInit));
+        return std::make_unique<StaticVariable>(
+            identifier, global, LONGWORD_SIZE, std::move(assyInit));
     }
     else if (auto constLong = dynamic_cast<const AST::LongInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::LongInit>(
             std::get<long>(constLong->getValue()));
-        return std::make_unique<StaticVariable>(identifier, global, 8,
-                                                std::move(assyInit));
+        return std::make_unique<StaticVariable>(
+            identifier, global, QUADWORD_SIZE, std::move(assyInit));
     }
     else if (auto constUInt = dynamic_cast<const AST::UIntInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::UIntInit>(
             std::get<unsigned int>(constUInt->getValue()));
-        return std::make_unique<StaticVariable>(identifier, global, 4,
-                                                std::move(assyInit));
+        return std::make_unique<StaticVariable>(
+            identifier, global, LONGWORD_SIZE, std::move(assyInit));
     }
     else if (auto constULong =
                  dynamic_cast<const AST::ULongInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::ULongInit>(
             std::get<unsigned long>(constULong->getValue()));
-        return std::make_unique<StaticVariable>(identifier, global, 8,
-                                                std::move(assyInit));
+        return std::make_unique<StaticVariable>(
+            identifier, global, QUADWORD_SIZE, std::move(assyInit));
     }
     else {
         throw std::logic_error(
@@ -379,7 +382,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             std::make_unique<Assembly::RegisterOperand>("AX")));
 
         // Signed: sign-extend `AX` to `DX:AX` using `Cdq`, then use `Idiv`.
-        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+        if (isSignedType(binaryInstr.getSrc1(), *frontendSymbolTable)) {
             instructions.emplace_back(
                 std::make_unique<Assembly::CdqInstruction>(
                     determineAssemblyType(binaryInstr.getSrc1())));
@@ -416,7 +419,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             std::make_unique<Assembly::RegisterOperand>("AX")));
 
         // Signed: sign-extend `AX` to `DX:AX` using `Cdq`, then use `Idiv`.
-        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+        if (isSignedType(binaryInstr.getSrc1(), *frontendSymbolTable)) {
             instructions.emplace_back(
                 std::make_unique<Assembly::CdqInstruction>(
                     determineAssemblyType(binaryInstr.getSrc1())));
@@ -480,7 +483,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+        if (isSignedType(binaryInstr.getSrc1(), *frontendSymbolTable)) {
             instructions.emplace_back(
                 std::make_unique<Assembly::SetCCInstruction>(
                     std::make_unique<Assembly::L>(),
@@ -503,7 +506,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+        if (isSignedType(binaryInstr.getSrc1(), *frontendSymbolTable)) {
             instructions.emplace_back(
                 std::make_unique<Assembly::SetCCInstruction>(
                     std::make_unique<Assembly::LE>(),
@@ -525,7 +528,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+        if (isSignedType(binaryInstr.getSrc1(), *frontendSymbolTable)) {
             instructions.emplace_back(
                 std::make_unique<Assembly::SetCCInstruction>(
                     std::make_unique<Assembly::G>(),
@@ -548,7 +551,7 @@ void AssemblyGenerator::convertIRBinaryInstructionToAssy(
             determineAssemblyType(binaryInstr.getDst()),
             std::make_unique<Assembly::ImmediateOperand>(0),
             convertValue(binaryInstr.getDst())));
-        if (isSignedType(binaryInstr.getSrc1(), frontendSymbolTable)) {
+        if (isSignedType(binaryInstr.getSrc1(), *frontendSymbolTable)) {
             instructions.emplace_back(
                 std::make_unique<Assembly::SetCCInstruction>(
                     std::make_unique<Assembly::GE>(),
@@ -641,14 +644,14 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     auto &irArgs = functionCallInstr.getArgs();
     std::vector<const IR::Value *> irRegisterArgs;
     std::vector<const IR::Value *> irStackArgs;
-    if (irArgs.size() < 6) {
+    if (irArgs.size() < NUM_ARGUMENT_REGISTERS) {
         for (const auto &arg : irArgs) {
             irRegisterArgs.emplace_back(arg.get());
         }
     }
     else {
         for (size_t i = 0; i < irArgs.size(); ++i) {
-            if (i < 6) {
+            if (i < NUM_ARGUMENT_REGISTERS) {
                 irRegisterArgs.emplace_back(irArgs.at(i).get());
             }
             else {
@@ -658,7 +661,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     }
     // Adjust the stack alignment (if the number of arguments on the stack is
     // odd).
-    auto stackPadding = irStackArgs.size() % 2 != 0 ? 8 : 0;
+    auto stackPadding = irStackArgs.size() % 2 != 0 ? QUADWORD_SIZE : 0;
     if (stackPadding != 0) {
         instructions.emplace_back(std::make_unique<Assembly::BinaryInstruction>(
             std::make_unique<Assembly::SubtractOperator>(),
@@ -721,7 +724,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
 
     // Adjust the stack pointer (after the function call).
     auto bytesToPop =
-        8 * irStackArgs.size() + static_cast<size_t>(stackPadding);
+        QUADWORD_SIZE * irStackArgs.size() + static_cast<size_t>(stackPadding);
     if (bytesToPop != 0) {
         instructions.emplace_back(std::make_unique<Assembly::BinaryInstruction>(
             std::make_unique<Assembly::AddOperator>(),
@@ -847,8 +850,8 @@ AssemblyGenerator::determineAssemblyType(const IR::Value *irValue) {
     }
     else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
         // For variables, look up the type in the (frontend) symbol table.
-        auto symbolIt = frontendSymbolTable.find(varVal->getIdentifier());
-        if (symbolIt != frontendSymbolTable.end()) {
+        auto symbolIt = frontendSymbolTable->find(varVal->getIdentifier());
+        if (symbolIt != frontendSymbolTable->end()) {
             auto varType = symbolIt->second.first.get();
             return AssemblyGenerator::convertASTTypeToAssemblyType(varType);
         }

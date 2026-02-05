@@ -1,4 +1,5 @@
 #include "semanticAnalysisPasses.h"
+#include "../utils/constants.h"
 #include "block.h"
 #include "blockItem.h"
 #include "constant.h"
@@ -311,11 +312,11 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
 int getTypeSize(const AST::Type *type) {
     if (dynamic_cast<const AST::IntType *>(type) ||
         dynamic_cast<const AST::UIntType *>(type)) {
-        return 4;
+        return LONGWORD_SIZE;
     }
     else if (dynamic_cast<const AST::LongType *>(type) ||
              dynamic_cast<const AST::ULongType *>(type)) {
-        return 8;
+        return QUADWORD_SIZE;
     }
     const auto &r = *type;
     throw std::logic_error(
@@ -725,11 +726,11 @@ std::string IdentifierResolutionPass::resolveParameter(
  * Start: Functions for the type-checking pass.
  */
 TypeCheckingPass::TypeCheckingPass(FrontendSymbolTable &frontendSymbolTable)
-    : frontendSymbolTable(frontendSymbolTable) {}
+    : frontendSymbolTable(&frontendSymbolTable) {}
 
 void TypeCheckingPass::typeCheckProgram(Program &program) {
     // Clear the symbol table for this compilation.
-    frontendSymbolTable.clear();
+    frontendSymbolTable->clear();
 
     // Type-check the program.
     for (auto &declaration : program.getDeclarations()) {
@@ -871,10 +872,10 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
         dynamic_cast<StaticStorageClass *>(declaration->getOptStorageClass())) {
         global = false;
     }
-    if (frontendSymbolTable.find(declaration->getIdentifier()) !=
-        frontendSymbolTable.end()) {
+    if (frontendSymbolTable->find(declaration->getIdentifier()) !=
+        frontendSymbolTable->end()) {
         auto &oldDeclaration =
-            frontendSymbolTable[declaration->getIdentifier()];
+            (*frontendSymbolTable)[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first.get();
         if (*oldType != *funType) {
             const auto &r = *oldType;
@@ -907,8 +908,8 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
 
     auto attribute =
         std::make_unique<FunctionAttribute>(alreadyDefined || hasBody, global);
-    frontendSymbolTable[declaration->getIdentifier()] = {cloneType(funType),
-                                                         std::move(attribute)};
+    (*frontendSymbolTable)[declaration->getIdentifier()] = {
+        cloneType(funType), std::move(attribute)};
 
     if (hasBody) {
         const auto &funcParameterTypes = funTypePtr->getParameterTypes();
@@ -918,13 +919,13 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
         for (size_t i = 0; i < parameterIdentifiers.size(); ++i) {
             // If the parameter type is available, use it.
             if (i < funcParameterTypes.size()) {
-                frontendSymbolTable[parameterIdentifiers[i]] = {
+                (*frontendSymbolTable)[parameterIdentifiers[i]] = {
                     cloneType(funcParameterTypes[i].get()),
                     std::make_unique<LocalAttribute>()};
             }
             else {
                 // Otherwise, fallback to `IntType`.
-                frontendSymbolTable[parameterIdentifiers[i]] = {
+                (*frontendSymbolTable)[parameterIdentifiers[i]] = {
                     std::make_unique<IntType>(),
                     std::make_unique<LocalAttribute>()};
             }
@@ -1025,10 +1026,10 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                    !(dynamic_cast<StaticStorageClass *>(
                        declaration->getOptStorageClass())));
 
-    if (frontendSymbolTable.find(declaration->getIdentifier()) !=
-        frontendSymbolTable.end()) {
+    if (frontendSymbolTable->find(declaration->getIdentifier()) !=
+        frontendSymbolTable->end()) {
         auto &oldDeclaration =
-            frontendSymbolTable[declaration->getIdentifier()];
+            (*frontendSymbolTable)[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first.get();
         if (*oldType != *varType) {
             throw std::logic_error(
@@ -1067,8 +1068,8 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     auto attribute =
         std::make_unique<StaticAttribute>(std::move(initialValue), global);
     // Store the corresponding variable type and attribute in the symbol table.
-    frontendSymbolTable[declaration->getIdentifier()] = {cloneType(varType),
-                                                         std::move(attribute)};
+    (*frontendSymbolTable)[declaration->getIdentifier()] = {
+        cloneType(varType), std::move(attribute)};
 }
 
 void TypeCheckingPass::typeCheckLocalVariableDeclaration(
@@ -1088,10 +1089,10 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                 "Initializer on local extern variable declaration in "
                 "typeCheckLocalVariableDeclaration in TypeCheckingPass");
         }
-        if (frontendSymbolTable.find(declaration->getIdentifier()) !=
-            frontendSymbolTable.end()) {
+        if (frontendSymbolTable->find(declaration->getIdentifier()) !=
+            frontendSymbolTable->end()) {
             auto &oldDeclaration =
-                frontendSymbolTable[declaration->getIdentifier()];
+                (*frontendSymbolTable)[declaration->getIdentifier()];
             auto oldType = oldDeclaration.first.get();
             if (*oldType != *varType) {
                 throw std::logic_error(
@@ -1102,7 +1103,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         else {
             auto staticAttribute = std::make_unique<StaticAttribute>(
                 std::make_unique<NoInitializer>(), true);
-            frontendSymbolTable[declaration->getIdentifier()] =
+            (*frontendSymbolTable)[declaration->getIdentifier()] =
                 std::make_pair(cloneType(varType), std::move(staticAttribute));
         }
     }
@@ -1176,12 +1177,12 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         }
         auto staticAttribute =
             std::make_unique<StaticAttribute>(std::move(initialValue), false);
-        frontendSymbolTable[declaration->getIdentifier()] =
+        (*frontendSymbolTable)[declaration->getIdentifier()] =
             std::make_pair(cloneType(varType), std::move(staticAttribute));
     }
     else {
         auto localAttribute = std::make_unique<LocalAttribute>();
-        frontendSymbolTable[declaration->getIdentifier()] =
+        (*frontendSymbolTable)[declaration->getIdentifier()] =
             std::make_pair(cloneType(varType), std::move(localAttribute));
         if (declaration->getOptInitializer()) {
             auto *initializer = declaration->getOptInitializer();
@@ -1245,7 +1246,7 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
     if (auto functionCallExpression =
             dynamic_cast<FunctionCallExpression *>(expression)) {
         auto fType =
-            frontendSymbolTable[functionCallExpression->getIdentifier()]
+            (*frontendSymbolTable)[functionCallExpression->getIdentifier()]
                 .first.get();
         if (isArithmeticType(fType)) {
             throw std::logic_error("Function name used as variable in "
@@ -1311,7 +1312,7 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
     else if (auto variableExpression =
                  dynamic_cast<VariableExpression *>(expression)) {
         auto variableType =
-            frontendSymbolTable[variableExpression->getIdentifier()]
+            (*frontendSymbolTable)[variableExpression->getIdentifier()]
                 .first.get();
         // If the variable is not an arithmetic type, it is of type function.
         if (!isArithmeticType(variableType)) {
@@ -1407,7 +1408,7 @@ void TypeCheckingPass::typeCheckStatement(
         // Use the enclosing function's name to look up the enclosing function's
         // return type.
         auto functionType =
-            frontendSymbolTable[enclosingFunctionIdentifier].first.get();
+            (*frontendSymbolTable)[enclosingFunctionIdentifier].first.get();
         if (!functionType) {
             throw std::logic_error("Function not found in symbol table in "
                                    "typeCheckStatement in TypeCheckingPass: " +

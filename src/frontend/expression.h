@@ -28,9 +28,9 @@ class Expression : public AST {
     constexpr Expression() = default;
 
     /**
-     * Default virtual destructor for the expression class.
+     * Default destructor for the expression class.
      */
-    virtual ~Expression() = default;
+    ~Expression() override = default;
 
     /**
      * Delete the copy constructor for the expression class.

@@ -2,6 +2,7 @@
 #define BACKEND_ASSEMBLY_H
 
 #include "../frontend/semanticAnalysisPasses.h"
+#include "../utils/constants.h"
 #include <cstddef>
 #include <memory>
 #include <string>
@@ -229,7 +230,7 @@ class ImmediateOperand : public Operand {
      */
     explicit ImmediateOperand(unsigned long imm);
 
-    [[nodiscard]] unsigned long getImmediate() const;
+    [[nodiscard]] unsigned long getImmediate() const override;
 };
 
 /**
@@ -258,7 +259,7 @@ class RegisterOperand : public Operand {
                          {typeid(R11), "%r11b"},
                          {typeid(SP), "%spl"},
                          {typeid(BP), "%bpl"}}},
-                       {4, // 4-byte registers.
+                       {LONGWORD_SIZE, // 4-byte registers.
                         {{typeid(AX), "%eax"},
                          {typeid(CX), "%ecx"},
                          {typeid(DX), "%edx"},
@@ -270,7 +271,7 @@ class RegisterOperand : public Operand {
                          {typeid(R11), "%r11d"},
                          {typeid(SP), "%esp"},
                          {typeid(BP), "%ebp"}}},
-                       {8, // 8-byte registers.
+                       {QUADWORD_SIZE, // 8-byte registers.
                         {{typeid(AX), "%rax"},
                          {typeid(CX), "%rcx"},
                          {typeid(DX), "%rdx"},

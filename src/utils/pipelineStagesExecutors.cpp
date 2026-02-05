@@ -13,6 +13,7 @@
 #include "../midend/ir.h"
 #include "../midend/irGenerator.h"
 #include "../midend/irOptimizationPasses.h"
+#include "../utils/constants.h"
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -449,14 +450,14 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
     auto type = movInstruction.getType();
 
     std::string instructionName;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         instructionName = "movl";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         instructionName = "movq";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(
@@ -552,7 +553,7 @@ void PipelineStagesExecutors::emitAssyMovsxInstruction(
     auto dst = movsxInstruction.getDst();
     std::string dstStr;
     if (auto dstReg = dynamic_cast<const Assembly::RegisterOperand *>(dst)) {
-        dstStr = dstReg->getRegisterInBytesInStr(8);
+        dstStr = dstReg->getRegisterInBytesInStr(QUADWORD_SIZE);
     }
     else if (auto dstStack =
                  dynamic_cast<const Assembly::StackOperand *>(dst)) {
@@ -596,7 +597,8 @@ void PipelineStagesExecutors::emitAssyPushInstruction(
     else if (auto regOperand =
                  dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         assemblyFileStream << "    pushq "
-                           << regOperand->getRegisterInBytesInStr(8) << "\n";
+                           << regOperand->getRegisterInBytesInStr(QUADWORD_SIZE)
+                           << "\n";
     }
     else if (auto immOperand =
                  dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
@@ -654,14 +656,14 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     }
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(
@@ -721,14 +723,14 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     }
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(
@@ -798,14 +800,14 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
     auto type = cmpInstruction.getType();
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(
@@ -875,14 +877,14 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
     auto type = idivInstruction.getType();
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(
@@ -925,14 +927,14 @@ void PipelineStagesExecutors::emitAssyDivInstruction(
     auto type = divInstruction.getType();
 
     std::string typeSuffix;
-    int registerSize;
+    int registerSize = 0;
     if (dynamic_cast<const Assembly::Longword *>(type)) {
         typeSuffix = "l";
-        registerSize = 4;
+        registerSize = LONGWORD_SIZE;
     }
     else if (dynamic_cast<const Assembly::Quadword *>(type)) {
         typeSuffix = "q";
-        registerSize = 8;
+        registerSize = QUADWORD_SIZE;
     }
     else {
         throw std::logic_error(

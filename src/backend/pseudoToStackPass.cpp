@@ -1,4 +1,5 @@
 #include "pseudoToStackPass.h"
+#include "../utils/constants.h"
 #include "assembly.h"
 #include "backendSymbolTable.h"
 #include <cassert>
@@ -76,7 +77,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             // Look up the type in the backend symbol table to determine the
             // allocation size.
             int allocationSize =
-                8; // Default to 8 bytes for temporary variables
+                QUADWORD_SIZE; // Default to 8 bytes for temporary variables
             auto backendSymbolTableIt = backendSymbolTable.find(pseudoRegister);
             if (backendSymbolTableIt != backendSymbolTable.end()) {
                 auto &backendEntry = backendSymbolTableIt->second;
@@ -84,19 +85,21 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
                         dynamic_cast<ObjEntry *>(backendEntry.get())) {
                     auto assemblyType = objEntry->getAssemblyType();
                     if (dynamic_cast<const Quadword *>(assemblyType)) {
-                        allocationSize = 8; // 8 bytes for `Quadword`.
+                        allocationSize =
+                            QUADWORD_SIZE; // 8 bytes for `Quadword`.
                     }
                     else {
-                        allocationSize = 4; // 4 bytes for `Longword`.
+                        allocationSize =
+                            LONGWORD_SIZE; // 4 bytes for `Longword`.
                     }
                 }
             }
 
             // Align the offset to an 8-byte boundary if allocating 8 bytes (for
             // type `Quadword`).
-            if (allocationSize == 8) {
+            if (allocationSize == QUADWORD_SIZE) {
                 // Compute the (negative) remainder when offset is divided by 8.
-                int rem = this->offset % 8;
+                int rem = this->offset % QUADWORD_SIZE;
                 // If it's not aligned, round down the (negative) offset to the
                 // next 8-byte boundary.
                 if (rem != 0) {
@@ -104,7 +107,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
                     // subtracting `8 - |rem|` where `rem` is negative, which
                     // moves the negative offset down to the next lower multiple
                     // of 8.
-                    this->offset -= (8 + rem);
+                    this->offset -= (QUADWORD_SIZE + rem);
                 }
             }
 
