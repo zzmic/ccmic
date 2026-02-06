@@ -58,7 +58,7 @@ RegisterOperand::RegisterOperand(std::unique_ptr<Register> reg)
     }
 }
 
-RegisterOperand::RegisterOperand(std::string regInStr) {
+RegisterOperand::RegisterOperand(const std::string &regInStr) {
     if (regInStr == "AX") {
         reg = std::make_unique<AX>();
     }
@@ -118,7 +118,7 @@ std::string RegisterOperand::getRegisterInBytesInStr(int size) const {
 }
 
 PseudoRegisterOperand::PseudoRegisterOperand(std::string pseudoReg)
-    : pseudoReg(pseudoReg) {}
+    : pseudoReg(std::move(pseudoReg)) {}
 
 std::string PseudoRegisterOperand::getPseudoRegister() const {
     return pseudoReg;
@@ -156,7 +156,8 @@ std::string StackOperand::getReservedRegisterInStr() const {
     }
 }
 
-DataOperand::DataOperand(std::string identifier) : identifier(identifier) {}
+DataOperand::DataOperand(std::string identifier)
+    : identifier(std::move(identifier)) {}
 
 std::string DataOperand::getIdentifier() const { return identifier; }
 
@@ -539,15 +540,17 @@ void CdqInstruction::setType(std::unique_ptr<AssemblyType> newType) {
     type = std::move(newType);
 }
 
-JmpInstruction::JmpInstruction(std::string label) : label(label) {}
+JmpInstruction::JmpInstruction(std::string label) : label(std::move(label)) {}
 
 std::string JmpInstruction::getLabel() const { return label; }
 
-void JmpInstruction::setLabel(std::string newLabel) { label = newLabel; }
+void JmpInstruction::setLabel(std::string newLabel) {
+    label = std::move(newLabel);
+}
 
 JmpCCInstruction::JmpCCInstruction(std::unique_ptr<CondCode> condCode,
                                    std::string label)
-    : condCode(std::move(condCode)), label(label) {
+    : condCode(std::move(condCode)), label(std::move(label)) {
     if (!this->condCode) {
         throw std::invalid_argument(
             "Creating JmpCCInstruction with null condCode "
@@ -567,7 +570,9 @@ void JmpCCInstruction::setCondCode(std::unique_ptr<CondCode> newCondCode) {
     condCode = std::move(newCondCode);
 }
 
-void JmpCCInstruction::setLabel(std::string newLabel) { label = newLabel; }
+void JmpCCInstruction::setLabel(std::string newLabel) {
+    label = std::move(newLabel);
+}
 
 SetCCInstruction::SetCCInstruction(std::unique_ptr<CondCode> condCode,
                                    std::unique_ptr<Operand> operand)
@@ -604,11 +609,14 @@ void SetCCInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
     operand = std::move(newOperand);
 }
 
-LabelInstruction::LabelInstruction(std::string label) : label(label) {}
+LabelInstruction::LabelInstruction(std::string label)
+    : label(std::move(label)) {}
 
 std::string LabelInstruction::getLabel() const { return label; }
 
-void LabelInstruction::setLabel(std::string newLabel) { label = newLabel; }
+void LabelInstruction::setLabel(std::string newLabel) {
+    label = std::move(newLabel);
+}
 
 PushInstruction::PushInstruction(std::unique_ptr<Operand> operand)
     : operand(std::move(operand)) {
@@ -630,7 +638,7 @@ void PushInstruction::setOperand(std::unique_ptr<Operand> newOperand) {
 }
 
 CallInstruction::CallInstruction(std::string functionIdentifier)
-    : functionIdentifier(functionIdentifier) {}
+    : functionIdentifier(std::move(functionIdentifier)) {}
 
 std::string CallInstruction::getFunctionIdentifier() const {
     return functionIdentifier;
@@ -640,7 +648,7 @@ FunctionDefinition::FunctionDefinition(
     std::string functionIdentifier, bool global,
     std::unique_ptr<std::vector<std::unique_ptr<Instruction>>> functionBody,
     size_t stackSize)
-    : functionIdentifier(functionIdentifier), global(global),
+    : functionIdentifier(std::move(functionIdentifier)), global(global),
       functionBody(std::move(functionBody)), stackSize(stackSize) {
     if (!this->functionBody) {
         throw std::invalid_argument("Creating FunctionDefinition with null "
@@ -684,7 +692,7 @@ void FunctionDefinition::setStackSize(size_t newStackSize) {
 StaticVariable::StaticVariable(std::string identifier, bool global,
                                int alignment,
                                std::unique_ptr<AST::StaticInit> staticInit)
-    : identifier(identifier), global(global), alignment(alignment),
+    : identifier(std::move(identifier)), global(global), alignment(alignment),
       staticInit(std::move(staticInit)) {
     if (!this->staticInit) {
         throw std::invalid_argument(

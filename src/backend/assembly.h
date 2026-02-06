@@ -297,7 +297,7 @@ class RegisterOperand : public Operand {
      *
      * @param regInStr The string representation of the register.
      */
-    explicit RegisterOperand(std::string regInStr);
+    explicit RegisterOperand(const std::string &regInStr);
 
     [[nodiscard]] Register *getRegister() const override;
 

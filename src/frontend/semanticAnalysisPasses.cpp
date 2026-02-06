@@ -702,7 +702,7 @@ void IdentifierResolutionPass::resolveFunctionDeclaration(
 }
 
 std::string IdentifierResolutionPass::resolveParameter(
-    std::string parameter,
+    const std::string &parameter,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     if (identifierMap.find(parameter) != identifierMap.end()) {
         auto previousEntry = identifierMap[parameter];
@@ -1192,8 +1192,8 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     }
 }
 
-void TypeCheckingPass::typeCheckBlock(Block *block,
-                                      std::string enclosingFunctionIdentifier) {
+void TypeCheckingPass::typeCheckBlock(
+    Block *block, const std::string &enclosingFunctionIdentifier) {
     for (auto &blockItem : block->getBlockItems()) {
         if (auto dBlockItem = dynamic_cast<DBlockItem *>(blockItem.get())) {
             if (auto variableDeclaration = dynamic_cast<VariableDeclaration *>(
@@ -1401,7 +1401,7 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
 }
 
 void TypeCheckingPass::typeCheckStatement(
-    Statement *statement, std::string enclosingFunctionIdentifier) {
+    Statement *statement, const std::string &enclosingFunctionIdentifier) {
     if (auto returnStatement = dynamic_cast<ReturnStatement *>(statement)) {
         // Look up the enclosing function's return type and convert the return
         // value to that type.

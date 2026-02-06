@@ -1,5 +1,8 @@
 ---
-Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-*"
+# References:
+# - <https://clang.llvm.org/extra/clang-tidy/>.
+# - <https://clang.llvm.org/extra/clang-tidy/checks/list.html>.
+Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-*,performance-*"
 WarningsAsErrors: true
 HeaderFilterRegex: ""
 ExcludeHeaderFilterRegex: ""

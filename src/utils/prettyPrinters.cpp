@@ -757,7 +757,7 @@ void PrettyPrinters::printIRFunctionCallInstruction(
             "call instruction in printIRFunctionCallInstruction");
     }
 
-    auto functionIdentifier = functionCallInstruction.getFunctionIdentifier();
+    auto &functionIdentifier = functionCallInstruction.getFunctionIdentifier();
     std::cout << functionIdentifier << "(";
 
     auto &args = functionCallInstruction.getArgs();

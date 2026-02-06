@@ -73,7 +73,7 @@ class MapEntry {
      */
     constexpr explicit MapEntry(std::string newName, bool fromCurrentScope,
                                 bool hasLinkage)
-        : newName(newName), fromCurrentScope(fromCurrentScope),
+        : newName(std::move(newName)), fromCurrentScope(fromCurrentScope),
           hasLinkage(hasLinkage) {}
 
     std::string getNewName() { return newName; }
@@ -213,7 +213,7 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      * @return The resolved parameter identifier.
      */
     std::string
-    resolveParameter(std::string parameter,
+    resolveParameter(const std::string &parameter,
                      std::unordered_map<std::string, MapEntry> &identifierMap);
 };
 
@@ -649,7 +649,8 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param enclosingFunctionIdentifier The identifier of the enclosing
      * function.
      */
-    void typeCheckBlock(Block *block, std::string enclosingFunctionIdentifier);
+    void typeCheckBlock(Block *block,
+                        const std::string &enclosingFunctionIdentifier);
 
     /**
      * Type check a statement.
@@ -659,7 +660,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * function.
      */
     void typeCheckStatement(Statement *statement,
-                            std::string enclosingFunctionIdentifier);
+                            const std::string &enclosingFunctionIdentifier);
 
     /**
      * Type check a for-init.
