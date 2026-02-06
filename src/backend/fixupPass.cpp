@@ -331,9 +331,9 @@ bool FixupPass::isInvalidLongwordImmediateMov(
 bool FixupPass::isInvalidMovsx(const Assembly::MovsxInstruction &movsxInstr) {
     // Movsx can't use a memory address as a destination or an immediate value
     // as a source.
-    bool invalidSrc = dynamic_cast<const Assembly::ImmediateOperand *>(
-                          movsxInstr.getSrc()) != nullptr;
-    bool invalidDst =
+    const bool invalidSrc = dynamic_cast<const Assembly::ImmediateOperand *>(
+                                movsxInstr.getSrc()) != nullptr;
+    const bool invalidDst =
         dynamic_cast<const Assembly::StackOperand *>(movsxInstr.getDst()) !=
             nullptr ||
         dynamic_cast<const Assembly::DataOperand *>(movsxInstr.getDst()) !=
@@ -392,7 +392,7 @@ bool FixupPass::isInvalidLargeImmediateBinary(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    long value = static_cast<long>(immediateOp->getImmediate());
+    const long value = static_cast<long>(immediateOp->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -452,7 +452,7 @@ bool FixupPass::isInvalidLargeImmediateCmp(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    long value = static_cast<long>(immediateOp->getImmediate());
+    const long value = static_cast<long>(immediateOp->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -466,7 +466,7 @@ bool FixupPass::isInvalidLargeImmediatePush(
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
-    long value = static_cast<long>(immediateOp->getImmediate());
+    const long value = static_cast<long>(immediateOp->getImmediate());
     return value > std::numeric_limits<int>::max() ||
            value < std::numeric_limits<int>::min();
 }
@@ -499,9 +499,9 @@ FixupPass::rewriteInvalidMovsx(
     auto src = movsxInst.getSrc();
     auto dst = movsxInst.getDst();
 
-    bool invalidSrc =
+    const bool invalidSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(src) != nullptr;
-    bool invalidDst =
+    const bool invalidDst =
         dynamic_cast<const Assembly::StackOperand *>(dst) != nullptr ||
         dynamic_cast<const Assembly::DataOperand *>(dst) != nullptr;
 
@@ -779,7 +779,7 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
         isFirstOperand = false;
     }
 
-    bool otherIsMemory =
+    const bool otherIsMemory =
         dynamic_cast<const Assembly::StackOperand *>(otherOp) ||
         dynamic_cast<const Assembly::DataOperand *>(otherOp);
     auto otherOpCloneForLoad = otherIsMemory ? cloneOperand(otherOp) : nullptr;
@@ -862,7 +862,7 @@ FixupPass::rewriteInvalidLargeImmediateCmp(
         std::make_unique<Assembly::RegisterOperand>(
             std::make_unique<Assembly::R10>()));
 
-    bool otherIsImmediate =
+    const bool otherIsImmediate =
         dynamic_cast<const Assembly::ImmediateOperand *>(otherOp) != nullptr;
     bool otherInRegister = false;
     std::unique_ptr<Assembly::Instruction> otherMov;

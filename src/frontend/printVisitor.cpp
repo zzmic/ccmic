@@ -26,7 +26,7 @@ void PrintVisitor::visit(Program &program) {
     for (auto it = declarations.begin(); it != declarations.end(); ++it) {
         auto &functionDeclaration = *it;
         functionDeclaration->accept(*this);
-        bool isLast = (std::next(it) == declarations.end());
+        const bool isLast = (std::next(it) == declarations.end());
         if (!isLast) {
             std::cout << ",\n";
         }
@@ -636,7 +636,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
     for (auto it = args.begin(); it != args.end(); ++it) {
         auto &arg = *it;
         arg->accept(*this);
-        bool isLast = (std::next(it) == args.end());
+        const bool isLast = (std::next(it) == args.end());
         if (!isLast) {
             std::cout << ", ";
         }

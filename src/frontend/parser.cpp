@@ -79,10 +79,10 @@ std::unique_ptr<BlockItem> Parser::parseBlockItem() {
         matchToken(TokenType::staticKeyword) ||
         matchToken(TokenType::externKeyword)) {
         // Peek ahead to check if this is a function declaration.
-        size_t nextIndex = current + 1;
+        const size_t nextIndex = current + 1;
         if (nextIndex < tokens->size() &&
             (*tokens)[nextIndex].type == TokenType::Identifier) {
-            size_t afterIdentifierIndex = nextIndex + 1;
+            const size_t afterIdentifierIndex = nextIndex + 1;
             if (afterIdentifierIndex < tokens->size() &&
                 (*tokens)[afterIdentifierIndex].type ==
                     TokenType::OpenParenthesis) {

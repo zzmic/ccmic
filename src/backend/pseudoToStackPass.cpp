@@ -99,7 +99,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             // type `Quadword`).
             if (allocationSize == QUADWORD_SIZE) {
                 // Compute the (negative) remainder when offset is divided by 8.
-                int rem = this->offset % QUADWORD_SIZE;
+                const int rem = this->offset % QUADWORD_SIZE;
                 // If it's not aligned, round down the (negative) offset to the
                 // next 8-byte boundary.
                 if (rem != 0) {

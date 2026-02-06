@@ -46,7 +46,7 @@ void PrettyPrinters::printIRFunctionDefinition(
     for (auto it = parameters.begin(); it != parameters.end(); ++it) {
         auto &parameter = *it;
         std::cout << parameter;
-        bool isLast = (std::next(it) == parameters.end());
+        const bool isLast = (std::next(it) == parameters.end());
         if (!isLast) {
             std::cout << ", ";
         }
@@ -796,7 +796,7 @@ void PrettyPrinters::printIRFunctionCallInstruction(
                     std::string(typeid(r).name()));
             }
         }
-        bool isLast = (std::next(it) == args.end());
+        const bool isLast = (std::next(it) == args.end());
         if (!isLast) {
             std::cout << ", ";
         }

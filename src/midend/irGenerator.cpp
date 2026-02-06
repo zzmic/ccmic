@@ -1034,8 +1034,8 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
     // Create a variable value for the temporary variable.
     auto dst = std::make_unique<IR::VariableValue>(dstName);
 
-    int sourceSize = getTypeSize(sourceType);
-    int targetSize = getTypeSize(targetType);
+    const int sourceSize = getTypeSize(sourceType);
+    const int targetSize = getTypeSize(targetType);
     if (sourceSize == targetSize) {
         // The source and target types are the same size: just copy.
         instructions.emplace_back(std::make_unique<IR::CopyInstruction>(

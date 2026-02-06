@@ -817,8 +817,8 @@ std::unique_ptr<Type> TypeCheckingPass::getCommonType(const Type *type1,
     if (*type1 == *type2) {
         return cloneType(type1);
     }
-    int size1 = getTypeSize(type1);
-    int size2 = getTypeSize(type2);
+    const int size1 = getTypeSize(type1);
+    const int size2 = getTypeSize(type2);
     // Rule 2: If both types are the same size, return the unsigned one.
     if (size1 == size2) {
         if (isSigned(type1)) {

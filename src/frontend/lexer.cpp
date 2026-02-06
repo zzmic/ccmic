@@ -9,7 +9,7 @@
 
 Token matchToken(std::string_view input) {
     // Convert string_view to string for regex operations
-    std::string inputStr(input);
+    const std::string inputStr(input);
 
     // Instantiate the `match_results` class template for matches on string
     // objects.
@@ -153,7 +153,7 @@ std::vector<Token> lexer(std::string_view input) {
 
         // Find the longest match at the start of the input for any regex
         // specified in Table 1-1 (page 9).
-        Token token = matchToken(remainingInput);
+        const Token token = matchToken(remainingInput);
 
         // If no match is found, raise an error.
         // Print out the remaining input (intentionally) and exit the program.
@@ -172,7 +172,7 @@ std::vector<Token> lexer(std::string_view input) {
             while (!remainingInput.empty()) {
                 remainingInput =
                     std::regex_replace(remainingInput, std::regex("^\\s+"), "");
-                Token nextToken = matchToken(remainingInput);
+                const Token nextToken = matchToken(remainingInput);
                 // Stop skipping if the next token is not part of the directive
                 if (nextToken.type != TokenType::StringLiteral &&
                     nextToken.type != TokenType::Identifier) {

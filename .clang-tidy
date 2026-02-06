@@ -2,7 +2,16 @@
 # References:
 # - <https://clang.llvm.org/extra/clang-tidy/>.
 # - <https://clang.llvm.org/extra/clang-tidy/checks/list.html>.
-Checks: "clang-diagnostic-*,clang-analyzer-*,bugprone-*,cppcoreguidelines-*,performance-*"
+# - <https://github.com/llvm/llvm-project/blob/main/.clang-tidy>.
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  cppcoreguidelines-*,
+  performance-*,
+  portability-*,
+  misc-*,
+  -misc-no-recursion,
 WarningsAsErrors: true
 HeaderFilterRegex: ""
 ExcludeHeaderFilterRegex: ""

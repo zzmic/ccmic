@@ -703,7 +703,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
             // For immediates, stack operands, or data operands, move to a
             // register first. Use R10 for quadword values, AX for longword
             // values.
-            bool isQuadword =
+            const bool isQuadword =
                 dynamic_cast<Assembly::Quadword *>(assemblyType.get());
             auto tempRegisterName = isQuadword ? "R10" : "AX";
             instructions.emplace_back(
