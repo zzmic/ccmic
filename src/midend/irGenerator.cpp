@@ -967,7 +967,7 @@ void IRGenerator::generateIRLabelInstruction(
 std::unique_ptr<IR::VariableValue>
 IRGenerator::generateIRFunctionCallInstruction(
     std::string_view functionIdentifier,
-    std::unique_ptr<std::vector<std::unique_ptr<IR::Value>>> arguments,
+    std::unique_ptr<std::vector<std::unique_ptr<IR::Value>>> args,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Create a temporary variable (in string) to store the result of
     // the function call.
@@ -995,7 +995,7 @@ IRGenerator::generateIRFunctionCallInstruction(
     // Generate a function call instruction with the function identifier,
     // the arguments, and the destination value.
     instructions.emplace_back(std::make_unique<IR::FunctionCallInstruction>(
-        functionIdentifier, std::move(arguments),
+        functionIdentifier, std::move(args),
         std::make_unique<IR::VariableValue>(tmpName)));
     // Return the destination value.
     return dst;
@@ -1100,13 +1100,13 @@ std::string IRGenerator::generateIRE2Label() {
     return "e2" + std::to_string(counter++);
 }
 
-std::string IRGenerator::generateIRContinueLoopLabel(
-    std::string_view loopLabelingLabel) {
+std::string
+IRGenerator::generateIRContinueLoopLabel(std::string_view loopLabelingLabel) {
     return "continue_" + std::string(loopLabelingLabel);
 }
 
-std::string IRGenerator::generateIRBreakLoopLabel(
-    std::string_view loopLabelingLabel) {
+std::string
+IRGenerator::generateIRBreakLoopLabel(std::string_view loopLabelingLabel) {
     return "break_" + std::string(loopLabelingLabel);
 }
 

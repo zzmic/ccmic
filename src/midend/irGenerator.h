@@ -370,7 +370,7 @@ class IRGenerator {
      * @return The generated continue loop label.
      */
     [[nodiscard]] static std::string
-    generateIRContinueLoopLabel(std::string_view loopLabelingLabel) ;
+    generateIRContinueLoopLabel(std::string_view loopLabelingLabel);
 
     /**
      * Generate a unique label for break statements in loops.
@@ -379,14 +379,14 @@ class IRGenerator {
      * @return The generated break loop label.
      */
     [[nodiscard]] static std::string
-    generateIRBreakLoopLabel(std::string_view loopLabelingLabel) ;
+    generateIRBreakLoopLabel(std::string_view loopLabelingLabel);
 
     /**
      * Generate a unique label for start of control flow structures.
      *
      * @return The generated start label.
      */
-    [[nodiscard]] static std::string generateIRStartLabel() ;
+    [[nodiscard]] static std::string generateIRStartLabel();
 
     /**
      * Convert the frontend symbol table to IR static variables.

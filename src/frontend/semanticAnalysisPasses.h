@@ -602,7 +602,8 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param type1 The first type.
      * @param type2 The second type.
      */
-    static std::unique_ptr<Type> getCommonType(const Type *type1, const Type *type2);
+    static std::unique_ptr<Type> getCommonType(const Type *type1,
+                                               const Type *type2);
 
     /**
      * Convert an expression to a target type.
@@ -611,7 +612,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param targetType The target type.
      */
     static std::unique_ptr<Expression> convertTo(const Expression *expression,
-                                          const Type *targetType);
+                                                 const Type *targetType);
 
     /**
      * Type check a function declaration.

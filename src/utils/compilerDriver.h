@@ -15,36 +15,38 @@ void runCommand(std::string_view command);
 /**
  * Preprocess the input file and write the result to the preprocessed file.
  *
- * @param inputFile The input source file.
+ * @param inputFileName The input source file.
+ * @param preprocessedFileName The output preprocessed file.
  */
-void preprocess(std::string_view inputFile, std::string_view preprocessedFile);
+void preprocess(std::string_view inputFileName,
+                std::string_view preprocessedFileName);
 
 /**
  * Compile the preprocessed file to assembly and write the result to the
  * assembly file.
  *
- * @param preprocessedFile The preprocessed source file.
- * @param assemblyFile The output assembly file.
+ * @param preprocessedFileName The preprocessed source file.
+ * @param assemblyFileName The output assembly file.
  */
-void compileToAssembly(std::string_view preprocessedFile,
-                       std::string_view assemblyFile);
+void compileToAssembly(std::string_view preprocessedFileName,
+                       std::string_view assemblyFileName);
 
 /**
  * Assemble the assembly file to an object file.
  *
- * @param assemblyFile The input assembly file.
- * @param objectFile The output object file.
+ * @param assemblyFileName The input assembly file.
+ * @param objectFileName The output object file.
  */
-void assembleToObject(std::string_view assemblyFile,
-                      std::string_view objectFile);
+void assembleToObject(std::string_view assemblyFileName,
+                      std::string_view objectFileName);
 
 /**
  * Link the object files to an executable file.
  *
- * @param objectFiles The list of object files to link.
- * @param executableFile The output executable file.
+ * @param objectFileNames The list of object files to link.
+ * @param executableFileName The output executable file.
  */
-void linkToExecutable(const std::vector<std::string> &objectFiles,
-                      std::string_view executableFile);
+void linkToExecutable(const std::vector<std::string> &objectFileNames,
+                      std::string_view executableFileName);
 
 #endif // UTILS_COMPILER_DRIVER_H
