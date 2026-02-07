@@ -133,7 +133,7 @@ class IRGenerator {
      * @param breakStmt The AST node representing the break statement.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRBreakStatement(
+    static void generateIRBreakStatement(
         const AST::BreakStatement *breakStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -143,7 +143,7 @@ class IRGenerator {
      * @param continueStmt The AST node representing the continue statement.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRContinueStatement(
+    static void generateIRContinueStatement(
         const AST::ContinueStatement *continueStmt,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -242,7 +242,7 @@ class IRGenerator {
      * @param dst The destination IR value.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRCopyInstruction(
+    static void generateIRCopyInstruction(
         std::unique_ptr<IR::Value> src, std::unique_ptr<IR::Value> dst,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -252,7 +252,7 @@ class IRGenerator {
      * @param target The target label for the jump.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRJumpInstruction(
+    static void generateIRJumpInstruction(
         std::string_view target,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -263,7 +263,7 @@ class IRGenerator {
      * @param target The target label for the jump.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRJumpIfZeroInstruction(
+    static void generateIRJumpIfZeroInstruction(
         std::unique_ptr<IR::Value> condition, std::string_view target,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -274,7 +274,7 @@ class IRGenerator {
      * @param target The target label for the jump.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRJumpIfNotZeroInstruction(
+    static void generateIRJumpIfNotZeroInstruction(
         std::unique_ptr<IR::Value> condition, std::string_view target,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -284,7 +284,7 @@ class IRGenerator {
      * @param identifier The label identifier.
      * @param instructions The vector to store the generated IR instructions.
      */
-    void generateIRLabelInstruction(
+    static void generateIRLabelInstruction(
         std::string_view identifier,
         std::vector<std::unique_ptr<IR::Instruction>> &instructions);
 
@@ -326,42 +326,42 @@ class IRGenerator {
      *
      * @return The generated false label.
      */
-    [[nodiscard]] std::string generateIRFalseLabel();
+    [[nodiscard]] static std::string generateIRFalseLabel();
 
     /**
      * Generate a unique label for true branches.
      *
      * @return The generated true label.
      */
-    [[nodiscard]] std::string generateIRTrueLabel();
+    [[nodiscard]] static std::string generateIRTrueLabel();
 
     /**
      * Generate a unique label for result branches.
      *
      * @return The generated result label.
      */
-    [[nodiscard]] std::string generateIRResultLabel();
+    [[nodiscard]] static std::string generateIRResultLabel();
 
     /**
      * Generate a unique label for the end of a control flow structure.
      *
      * @return The generated end label.
      */
-    [[nodiscard]] std::string generateIREndLabel();
+    [[nodiscard]] static std::string generateIREndLabel();
 
     /**
      * Generate a unique label for else branches.
      *
      * @return The generated else label.
      */
-    [[nodiscard]] std::string generateIRElseLabel();
+    [[nodiscard]] static std::string generateIRElseLabel();
 
     /**
      * Generate a unique label for e2 branches.
      *
      * @return The generated e2 label.
      */
-    [[nodiscard]] std::string generateIRE2Label();
+    [[nodiscard]] static std::string generateIRE2Label();
 
     /**
      * Generate a unique label for continue statements in loops.
@@ -369,8 +369,8 @@ class IRGenerator {
      * @param loopLabelingLabel The base label for the loop.
      * @return The generated continue loop label.
      */
-    [[nodiscard]] std::string
-    generateIRContinueLoopLabel(std::string_view loopLabelingLabel) const;
+    [[nodiscard]] static std::string
+    generateIRContinueLoopLabel(std::string_view loopLabelingLabel) ;
 
     /**
      * Generate a unique label for break statements in loops.
@@ -378,15 +378,15 @@ class IRGenerator {
      * @param loopLabelingLabel The base label for the loop.
      * @return The generated break loop label.
      */
-    [[nodiscard]] std::string
-    generateIRBreakLoopLabel(std::string_view loopLabelingLabel) const;
+    [[nodiscard]] static std::string
+    generateIRBreakLoopLabel(std::string_view loopLabelingLabel) ;
 
     /**
      * Generate a unique label for start of control flow structures.
      *
      * @return The generated start label.
      */
-    [[nodiscard]] std::string generateIRStartLabel() const;
+    [[nodiscard]] static std::string generateIRStartLabel() ;
 
     /**
      * Convert the frontend symbol table to IR static variables.
@@ -404,7 +404,7 @@ class IRGenerator {
      * @param op The unary operator in the AST.
      * @return The corresponding IR unary operator.
      */
-    [[nodiscard]] std::unique_ptr<IR::UnaryOperator>
+    [[nodiscard]] static std::unique_ptr<IR::UnaryOperator>
     convertUnop(const AST::UnaryOperator *op);
 
     /**
@@ -414,7 +414,7 @@ class IRGenerator {
      * @param op The binary operator in the AST.
      * @return The corresponding IR binary operator.
      */
-    [[nodiscard]] std::unique_ptr<IR::BinaryOperator>
+    [[nodiscard]] static std::unique_ptr<IR::BinaryOperator>
     convertBinop(const AST::BinaryOperator *op);
 
     /**

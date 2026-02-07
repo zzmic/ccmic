@@ -204,7 +204,7 @@ std::unique_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
             topLevels, backendSymbolTable);
 
-        Assembly::FixupPass fixupPass;
+        const Assembly::FixupPass fixupPass;
         // Fix up the assembly program.
         fixupPass.fixup(topLevels);
     } catch (const std::runtime_error &e) {

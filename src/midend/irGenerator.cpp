@@ -1101,16 +1101,16 @@ std::string IRGenerator::generateIRE2Label() {
 }
 
 std::string IRGenerator::generateIRContinueLoopLabel(
-    std::string_view loopLabelingLabel) const {
+    std::string_view loopLabelingLabel) {
     return "continue_" + std::string(loopLabelingLabel);
 }
 
 std::string IRGenerator::generateIRBreakLoopLabel(
-    std::string_view loopLabelingLabel) const {
+    std::string_view loopLabelingLabel) {
     return "break_" + std::string(loopLabelingLabel);
 }
 
-std::string IRGenerator::generateIRStartLabel() const {
+std::string IRGenerator::generateIRStartLabel() {
     static int counter = 0;
     return "start" + std::to_string(counter++);
 }

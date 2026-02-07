@@ -60,7 +60,7 @@ class AssemblyGenerator {
      * @param irStaticVariable The IR static variable to convert.
      * @return The converted assembly static variable.
      */
-    [[nodiscard]] std::unique_ptr<Assembly::StaticVariable>
+    [[nodiscard]] static std::unique_ptr<Assembly::StaticVariable>
     convertIRStaticVariableToAssy(const IR::StaticVariable &irStaticVariable);
 
     /**
@@ -109,7 +109,7 @@ class AssemblyGenerator {
      * @param labelInstr The IR label instruction to convert.
      * @param instructions The assembly instructions.
      */
-    void convertIRLabelInstructionToAssy(
+    static void convertIRLabelInstructionToAssy(
         const IR::LabelInstruction &labelInstr,
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
@@ -119,7 +119,7 @@ class AssemblyGenerator {
      * @param jumpInstr The IR jump instruction to convert.
      * @param instructions The assembly instructions.
      */
-    void convertIRJumpInstructionToAssy(
+    static void convertIRJumpInstructionToAssy(
         const IR::JumpInstruction &jumpInstr,
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
@@ -159,7 +159,7 @@ class AssemblyGenerator {
      * @param signExtendInstr The IR sign-extend instruction to convert.
      * @param instructions The assembly instructions.
      */
-    void convertIRSignExtendInstructionToAssy(
+    static void convertIRSignExtendInstructionToAssy(
         const IR::SignExtendInstruction &signExtendInstr,
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
@@ -169,7 +169,7 @@ class AssemblyGenerator {
      * @param truncateInstr The IR truncate instruction to convert.
      * @param instructions The assembly instructions.
      */
-    void convertIRTruncateInstructionToAssy(
+    static void convertIRTruncateInstructionToAssy(
         const IR::TruncateInstruction &truncateInstr,
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
@@ -189,7 +189,7 @@ class AssemblyGenerator {
      * @param zeroExtendInstr The IR zero-extend instruction to convert.
      * @param instructions The assembly instructions.
      */
-    void convertIRZeroExtendInstructionToAssy(
+    static void convertIRZeroExtendInstructionToAssy(
         const IR::ZeroExtendInstruction &zeroExtendInstr,
         std::vector<std::unique_ptr<Assembly::Instruction>> &instructions);
 
@@ -199,7 +199,7 @@ class AssemblyGenerator {
      * @param value The IR value to convert.
      * @return The converted assembly operand.
      */
-    [[nodiscard]] std::unique_ptr<Assembly::Operand>
+    [[nodiscard]] static std::unique_ptr<Assembly::Operand>
     convertValue(const IR::Value *value);
 
     /**

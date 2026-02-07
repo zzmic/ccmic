@@ -167,7 +167,7 @@ class Parser {
      * @return A pair consisting of (a unique pointer to) the type and a (unique
      * pointer) to the storage class.
      */
-    std::pair<std::unique_ptr<Type>, std::unique_ptr<StorageClass>>
+    static std::pair<std::unique_ptr<Type>, std::unique_ptr<StorageClass>>
     parseTypeAndStorageClass(const std::vector<std::string> &specifierList);
 
     /**
@@ -176,7 +176,7 @@ class Parser {
      * @param specifierList A vector of specifier strings.
      * @return The type.
      */
-    std::unique_ptr<Type>
+    static std::unique_ptr<Type>
     parseType(const std::vector<std::string> &specifierList);
 
     /**
@@ -185,7 +185,7 @@ class Parser {
      * @param specifier A specifier string.
      * @return The storage class.
      */
-    std::unique_ptr<StorageClass>
+    static std::unique_ptr<StorageClass>
     parseStorageClass(const std::string &specifier);
 
     /**

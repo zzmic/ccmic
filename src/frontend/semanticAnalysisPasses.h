@@ -133,7 +133,7 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      * @param identifierMap The original identifier map.
      * @return The copied identifier map.
      */
-    std::unordered_map<std::string, MapEntry>
+    static std::unordered_map<std::string, MapEntry>
     copyIdentifierMap(std::unordered_map<std::string, MapEntry> &identifierMap);
 
     /**
@@ -142,7 +142,7 @@ class IdentifierResolutionPass : public SemanticAnalysisPass {
      * @param declaration The variable declaration to resolve.
      * @param identifierMap The current identifier map.
      */
-    void resolveFileScopeVariableDeclaration(
+    static void resolveFileScopeVariableDeclaration(
         VariableDeclaration *declaration,
         std::unordered_map<std::string, MapEntry> &identifierMap);
 
@@ -592,7 +592,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param varType The type of the variable.
      * @param constantExpr The constant expression to
      */
-    std::unique_ptr<StaticInit>
+    static std::unique_ptr<StaticInit>
     convertStaticConstantToStaticInit(const Type *varType,
                                       const ConstantExpression *constantExpr);
 
@@ -602,7 +602,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param type1 The first type.
      * @param type2 The second type.
      */
-    std::unique_ptr<Type> getCommonType(const Type *type1, const Type *type2);
+    static std::unique_ptr<Type> getCommonType(const Type *type1, const Type *type2);
 
     /**
      * Convert an expression to a target type.
@@ -610,7 +610,7 @@ class TypeCheckingPass : public SemanticAnalysisPass {
      * @param expression The expression to convert.
      * @param targetType The target type.
      */
-    std::unique_ptr<Expression> convertTo(const Expression *expression,
+    static std::unique_ptr<Expression> convertTo(const Expression *expression,
                                           const Type *targetType);
 
     /**
@@ -701,7 +701,7 @@ class LoopLabelingPass : public SemanticAnalysisPass {
      * @param statement The statement to annotate.
      * @param label The label to annotate with.
      */
-    void annotateStatement(Statement *statement, std::string_view label);
+    static void annotateStatement(Statement *statement, std::string_view label);
 
     /**
      * Label a statement with a label.

@@ -54,7 +54,7 @@ class PseudoToStackPass {
      *
      * @param functionDefinition The function definition to check.
      */
-    void checkPseudoRegistersInFunctionDefinitionReplaced(
+    static void checkPseudoRegistersInFunctionDefinitionReplaced(
         const Assembly::FunctionDefinition &functionDefinition);
 
     /**
