@@ -80,12 +80,13 @@ The compiler transforms C source code into X86-64 assembly through a multi-stage
 
 ## Project Structure
 
-The codebase is organized into modular components:
+The implementation is organized into several key directories and file(s):
 
 - **[src/frontend/](https://github.com/zzmic/ccmic/tree/main/src/frontend)**: Lexer, parser, AST, and semantic analysis.
 - **[src/midend/](https://github.com/zzmic/ccmic/tree/main/src/midend)**: IR generation (and optimization passes to be implemented).
 - **[src/backend/](https://github.com/zzmic/ccmic/tree/main/src/backend)**: Assembly generation, stack allocation, and fixup passes.
 - **[src/utils/](https://github.com/zzmic/ccmic/tree/main/src/utils)**: Pipeline orchestration, including assembly emission, and pretty-printers for debugging.
+- **[src/main.cpp](https://github.com/zzmic/ccmic/blob/main/src/main.cpp)**: Entry point of the compiler, orchestrating the compilation pipeline based on command-line arguments.
 
 ## Building and Usage
 
@@ -97,8 +98,8 @@ git clone --recurse-submodules https://github.com/zzmic/ccmic.git
 
 ### Installing Dependencies
 
-- [Clang](https://clang.llvm.org) that supports C++23 (or above) for building the compiler.
-- [GCC](https://gcc.gnu.org) that supports X86-64 and C17 for preprocessing, assembling, and linking.
+- **[Clang](https://clang.llvm.org)** that supports C++23 (or above) for building the compiler.
+- **[GCC](https://gcc.gnu.org)** that supports X86-64 and C17 for preprocessing, assembling, and linking.
 
 ### Building the Compiler
 
@@ -150,6 +151,8 @@ or
 ```bash
 make -j$(nproc) tidy
 ```
+
+The checks and options for Clang-Tidy are configured (and can be further customized) in [`.clang-tidy`](https://github.com/zzmic/ccmic/blob/main/.clang-tidy).
 
 ## Development and Extensibility
 

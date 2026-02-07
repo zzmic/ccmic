@@ -617,9 +617,9 @@ void AssemblyGenerator::convertIRCopyInstructionToAssy(
     auto dstOperand = convertValue(copyInstr.getDst());
 
     // Determine the assembly type of the `mov` instruction.
-    auto assemblyType =
-        determineMovType({srcOperand.get(), dstOperand.get()},
-                         {copyInstr.getSrc(), copyInstr.getDst()});
+    auto assemblyType = determineMovType(
+        {.src = srcOperand.get(), .dst = dstOperand.get()},
+        {.src = copyInstr.getSrc(), .dst = copyInstr.getDst()});
 
     // Generate a `MovInstruction` to copy the source operand to the
     // destination operand.
@@ -686,7 +686,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     // Pass the arguments on the stack.
     // Reverse the order of the stack arguments since
     // they should be pushed in the reverse order.
-    std::reverse(irStackArgs.begin(), irStackArgs.end());
+    std::ranges::reverse(irStackArgs);
     for (auto irStackArg : irStackArgs) {
         auto assyStackArg = convertValue(irStackArg);
         auto assemblyType = determineAssemblyType(irStackArg);

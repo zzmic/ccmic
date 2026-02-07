@@ -32,7 +32,7 @@ int main(int argc, char *argv[]) {
         }
         // Parse the command line arguments and extract the flag(s), the source
         // file (name), and the output file (name).
-        for (std::size_t i = 1; i < static_cast<std::size_t>(argc); ++i) {
+        for (std::size_t i = 1; std::cmp_less(i, argc); ++i) {
             std::string arg = args[i];
             if (arg == "-o") {
                 if (i + 1 >= static_cast<std::size_t>(argc)) {
@@ -141,7 +141,7 @@ int main(int argc, char *argv[]) {
         // Extract the program (base/actual) name of the source file (without
         // the extension).
         const size_t dotIndex = sourceFile.rfind('.');
-        if (dotIndex == static_cast<size_t>(-1)) {
+        if (std::cmp_equal(dotIndex, -1)) {
             std::stringstream msg;
             msg << "Source file must have an extension.";
             throw std::invalid_argument(msg.str());

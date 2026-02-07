@@ -33,11 +33,12 @@ std::optional<ConstValue> getConstValue(const IR::Value *value) {
     }
     auto astConst = constantValue->getASTConstant();
     if (auto intConst = dynamic_cast<const AST::ConstantInt *>(astConst)) {
-        return ConstValue{false, static_cast<long>(intConst->getValue())};
+        return ConstValue{.isLong = false,
+                          .value = static_cast<long>(intConst->getValue())};
     }
     else if (auto longConst =
                  dynamic_cast<const AST::ConstantLong *>(astConst)) {
-        return ConstValue{true, longConst->getValue()};
+        return ConstValue{.isLong = true, .value = longConst->getValue()};
     }
     return std::nullopt;
 }
@@ -68,13 +69,13 @@ std::unique_ptr<IR::Value> makeConstValue(const ConstValue &value) {
 std::optional<ConstValue> foldUnary(const IR::UnaryOperator *op,
                                     const ConstValue &src) {
     if (dynamic_cast<const IR::NegateOperator *>(op)) {
-        return ConstValue{src.isLong, -src.value};
+        return ConstValue{.isLong = src.isLong, .value = -src.value};
     }
     else if (dynamic_cast<const IR::ComplementOperator *>(op)) {
-        return ConstValue{src.isLong, ~src.value};
+        return ConstValue{.isLong = src.isLong, .value = ~src.value};
     }
     else if (dynamic_cast<const IR::NotOperator *>(op)) {
-        return ConstValue{false, src.value == 0 ? 1 : 0};
+        return ConstValue{.isLong = false, .value = src.value == 0 ? 1 : 0};
     }
     return std::nullopt;
 }
@@ -93,43 +94,49 @@ std::optional<ConstValue> foldBinary(const IR::BinaryOperator *op,
                                      const ConstValue &rhs) {
     const bool isLong = lhs.isLong || rhs.isLong;
     if (dynamic_cast<const IR::AddOperator *>(op)) {
-        return ConstValue{isLong, lhs.value + rhs.value};
+        return ConstValue{.isLong = isLong, .value = lhs.value + rhs.value};
     }
     else if (dynamic_cast<const IR::SubtractOperator *>(op)) {
-        return ConstValue{isLong, lhs.value - rhs.value};
+        return ConstValue{.isLong = isLong, .value = lhs.value - rhs.value};
     }
     else if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
-        return ConstValue{isLong, lhs.value * rhs.value};
+        return ConstValue{.isLong = isLong, .value = lhs.value * rhs.value};
     }
     else if (dynamic_cast<const IR::DivideOperator *>(op)) {
         if (rhs.value == 0) {
             return std::nullopt;
         }
-        return ConstValue{isLong, lhs.value / rhs.value};
+        return ConstValue{.isLong = isLong, .value = lhs.value / rhs.value};
     }
     else if (dynamic_cast<const IR::RemainderOperator *>(op)) {
         if (rhs.value == 0) {
             return std::nullopt;
         }
-        return ConstValue{isLong, lhs.value % rhs.value};
+        return ConstValue{.isLong = isLong, .value = lhs.value % rhs.value};
     }
     else if (dynamic_cast<const IR::EqualOperator *>(op)) {
-        return ConstValue{false, lhs.value == rhs.value ? 1 : 0};
+        return ConstValue{.isLong = false,
+                          .value = lhs.value == rhs.value ? 1 : 0};
     }
     else if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
-        return ConstValue{false, lhs.value != rhs.value ? 1 : 0};
+        return ConstValue{.isLong = false,
+                          .value = lhs.value != rhs.value ? 1 : 0};
     }
     else if (dynamic_cast<const IR::LessThanOperator *>(op)) {
-        return ConstValue{false, lhs.value < rhs.value ? 1 : 0};
+        return ConstValue{.isLong = false,
+                          .value = lhs.value < rhs.value ? 1 : 0};
     }
     else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
-        return ConstValue{false, lhs.value <= rhs.value ? 1 : 0};
+        return ConstValue{.isLong = false,
+                          .value = lhs.value <= rhs.value ? 1 : 0};
     }
     else if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
-        return ConstValue{false, lhs.value > rhs.value ? 1 : 0};
+        return ConstValue{.isLong = false,
+                          .value = lhs.value > rhs.value ? 1 : 0};
     }
     else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
-        return ConstValue{false, lhs.value >= rhs.value ? 1 : 0};
+        return ConstValue{.isLong = false,
+                          .value = lhs.value >= rhs.value ? 1 : 0};
     }
     return std::nullopt;
 }

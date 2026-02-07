@@ -44,6 +44,6 @@
 .vscode/
 bin/
 playground/
-valgrind-out.txt
+valgrind_out.txt
 compile_commands.json
 tmp.txt
