@@ -55,8 +55,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
     if (auto pseudoReg =
             dynamic_cast<const Assembly::PseudoRegisterOperand *>(operand)) {
         const std::string &pseudoRegister = pseudoReg->getPseudoRegister();
-        if (this->pseudoToStackMap.find(pseudoRegister) ==
-            this->pseudoToStackMap.end()) {
+        if (!this->pseudoToStackMap.contains(pseudoRegister)) {
             // If a pseudoregister is not in `pseudoToStackMap`, look it up in
             // the backend symbol table.
             auto backendSymbolTableItForAlloc =

@@ -168,8 +168,7 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             // Find the global attribute of the function declaration in the
             // frontend symbol table and set the global flag.
             bool global = false;
-            if (frontendSymbolTable->find(identifier) !=
-                frontendSymbolTable->end()) {
+            if (frontendSymbolTable->contains(identifier)) {
                 auto &symbolEntry = (*frontendSymbolTable)[identifier];
                 if (auto *functionAttribute =
                         dynamic_cast<AST::FunctionAttribute *>(
@@ -750,11 +749,9 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
     else if (auto castExpr = dynamic_cast<const AST::CastExpression *>(e)) {
         return generateIRCastInstruction(castExpr, instructions);
     }
-    const auto &r = *e;
     throw std::logic_error(
         "Unsupported expression type while generating IR instructions for "
-        "expression in generateIRInstruction in IRGenerator: " +
-        std::string(typeid(r).name()));
+        "expression in generateIRInstruction in IRGenerator");
 }
 
 std::unique_ptr<IR::VariableValue> IRGenerator::generateIRUnaryInstruction(

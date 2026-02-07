@@ -42,7 +42,7 @@ void PrintVisitor::visit(Function &function) {
     std::cout << "Function(\n";
     std::cout << "name = \"";
 
-    if (function.getIdentifier().size() > 0) {
+    if (!function.getIdentifier().empty()) {
         std::cout << function.getIdentifier();
     }
     else {
@@ -109,7 +109,7 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
 
     std::cout << "identifier = ";
 
-    if (declaration.getIdentifier().size() > 0) {
+    if (!declaration.getIdentifier().empty()) {
         std::cout << declaration.getIdentifier();
     }
     else {
@@ -143,7 +143,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << "identifier = ";
 
-    if (functionDeclaration.getIdentifier().size() > 0) {
+    if (!functionDeclaration.getIdentifier().empty()) {
         std::cout << functionDeclaration.getIdentifier();
     }
     else {
@@ -462,7 +462,7 @@ void PrintVisitor::visit(ConstantExpression &constantExpression) {
 void PrintVisitor::visit(VariableExpression &variableExpression) {
     std::cout << "VariableExpression(";
 
-    if (variableExpression.getIdentifier().size() > 0) {
+    if (!variableExpression.getIdentifier().empty()) {
         std::cout << variableExpression.getIdentifier();
     }
     else {
@@ -622,7 +622,7 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
 
     std::cout << "function = ";
 
-    if (functionCallExpression.getIdentifier().size() > 0) {
+    if (!functionCallExpression.getIdentifier().empty()) {
         std::cout << functionCallExpression.getIdentifier();
     }
     else {

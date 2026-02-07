@@ -288,19 +288,22 @@ bool FixupPass::isInvalidLargeImmediateMov(
     // Check if it's a quadword mov with large immediate to memory.
     auto quadwordType =
         dynamic_cast<const Assembly::Quadword *>(movInstr.getType());
-    if (!quadwordType)
+    if (!quadwordType) {
         return false;
+    }
 
     auto immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInstr.getSrc());
-    if (!immediateSrc)
+    if (!immediateSrc) {
         return false;
+    }
 
     auto memoryDst =
         dynamic_cast<const Assembly::StackOperand *>(movInstr.getDst()) ||
         dynamic_cast<const Assembly::DataOperand *>(movInstr.getDst());
-    if (!memoryDst)
+    if (!memoryDst) {
         return false;
+    }
 
     // Check if immediate value is outside 32-bit signed range.
     // We interpret the unsigned long as a signed long for range checking.
@@ -314,13 +317,15 @@ bool FixupPass::isInvalidLongwordImmediateMov(
     // Check if it's a longword mov with 8-byte immediate value.
     auto longwordType =
         dynamic_cast<const Assembly::Longword *>(movInstr.getType());
-    if (!longwordType)
+    if (!longwordType) {
         return false;
+    }
 
     auto immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInstr.getSrc());
-    if (!immediateSrc)
+    if (!immediateSrc) {
         return false;
+    }
 
     // Check if immediate value is outside 32-bit unsigned range (truncation
     // needed).
@@ -371,8 +376,9 @@ bool FixupPass::isInvalidLargeImmediateBinary(
     // value.
     auto quadwordType =
         dynamic_cast<const Assembly::Quadword *>(binInstr.getType());
-    if (!quadwordType)
+    if (!quadwordType) {
         return false;
+    }
 
     auto immediateOp1 = dynamic_cast<const Assembly::ImmediateOperand *>(
         binInstr.getOperand1());
@@ -387,8 +393,9 @@ bool FixupPass::isInvalidLargeImmediateBinary(
         immediateOp = immediateOp2;
     }
 
-    if (!immediateOp)
+    if (!immediateOp) {
         return false;
+    }
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
@@ -431,8 +438,9 @@ bool FixupPass::isInvalidLargeImmediateCmp(
     // value.
     auto quadwordType =
         dynamic_cast<const Assembly::Quadword *>(cmpInstr.getType());
-    if (!quadwordType)
+    if (!quadwordType) {
         return false;
+    }
 
     auto immediateOp1 = dynamic_cast<const Assembly::ImmediateOperand *>(
         cmpInstr.getOperand1());
@@ -447,8 +455,9 @@ bool FixupPass::isInvalidLargeImmediateCmp(
         immediateOp = immediateOp2;
     }
 
-    if (!immediateOp)
+    if (!immediateOp) {
         return false;
+    }
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).
@@ -461,8 +470,9 @@ bool FixupPass::isInvalidLargeImmediatePush(
     const Assembly::PushInstruction &pushInstr) {
     auto immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
         pushInstr.getOperand());
-    if (!immediateOp)
+    if (!immediateOp) {
         return false;
+    }
 
     // Check if immediate value is outside the range of a `Quadword` (32-bit
     // signed).

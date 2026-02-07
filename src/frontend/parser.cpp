@@ -732,7 +732,7 @@ Parser::parseStorageClass(const std::string &specifier) {
 }
 
 int Parser::getPrecedence(const Token &token) {
-    if (precedenceMap.find(token.type) != precedenceMap.end()) {
+    if (precedenceMap.contains(token.type)) {
         return precedenceMap[token.type];
     }
     return -1;

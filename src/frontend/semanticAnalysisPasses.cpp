@@ -415,8 +415,7 @@ void IdentifierResolutionPass::resolveFileScopeVariableDeclaration(
 void IdentifierResolutionPass::resolveLocalVariableDeclaration(
     VariableDeclaration *declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (identifierMap.find(declaration->getIdentifier()) !=
-        identifierMap.end()) {
+    if (identifierMap.contains(declaration->getIdentifier())) {
         auto previousEntry = identifierMap[declaration->getIdentifier()];
         if (previousEntry.fromCurrentScopeOrNot()) {
             if (!(previousEntry.hasLinkageOrNot() &&
@@ -545,7 +544,7 @@ void IdentifierResolutionPass::resolveExpression(
         // Otherwise, return a new variable expression with the resolved
         // identifier from the identifier map.
         auto identifier = variableExpression->getIdentifier();
-        if (identifierMap.find(identifier) == identifierMap.end()) {
+        if (!identifierMap.contains(identifier)) {
             std::stringstream msg;
             msg << "Undeclared variable: " << identifier;
             throw std::logic_error(msg.str());
@@ -584,8 +583,7 @@ void IdentifierResolutionPass::resolveExpression(
         // error. Otherwise, return a new function call expression with the
         // resolved identifier from the identifier map and the resolved
         // arguments.
-        if (identifierMap.find(functionCallExpression->getIdentifier()) ==
-            identifierMap.end()) {
+        if (!identifierMap.contains(functionCallExpression->getIdentifier())) {
             std::stringstream msg;
             msg << "Undeclared function: "
                 << functionCallExpression->getIdentifier();
@@ -671,8 +669,7 @@ void IdentifierResolutionPass::resolveForInit(
 void IdentifierResolutionPass::resolveFunctionDeclaration(
     FunctionDeclaration *declaration,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (identifierMap.find(declaration->getIdentifier()) !=
-        identifierMap.end()) {
+    if (identifierMap.contains(declaration->getIdentifier())) {
         auto previousEntry = identifierMap[declaration->getIdentifier()];
         if (previousEntry.fromCurrentScopeOrNot() &&
             !previousEntry.hasLinkageOrNot()) {
@@ -704,7 +701,7 @@ void IdentifierResolutionPass::resolveFunctionDeclaration(
 std::string IdentifierResolutionPass::resolveParameter(
     const std::string &parameter,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (identifierMap.find(parameter) != identifierMap.end()) {
+    if (identifierMap.contains(parameter)) {
         auto previousEntry = identifierMap[parameter];
         if (previousEntry.fromCurrentScopeOrNot()) {
             std::stringstream msg;
@@ -872,8 +869,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
         dynamic_cast<StaticStorageClass *>(declaration->getOptStorageClass())) {
         global = false;
     }
-    if (frontendSymbolTable->find(declaration->getIdentifier()) !=
-        frontendSymbolTable->end()) {
+    if (frontendSymbolTable->contains(declaration->getIdentifier())) {
         auto &oldDeclaration =
             (*frontendSymbolTable)[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first.get();
@@ -1026,8 +1022,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                    !(dynamic_cast<StaticStorageClass *>(
                        declaration->getOptStorageClass())));
 
-    if (frontendSymbolTable->find(declaration->getIdentifier()) !=
-        frontendSymbolTable->end()) {
+    if (frontendSymbolTable->contains(declaration->getIdentifier())) {
         auto &oldDeclaration =
             (*frontendSymbolTable)[declaration->getIdentifier()];
         auto oldType = oldDeclaration.first.get();
@@ -1089,8 +1084,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                 "Initializer on local extern variable declaration in "
                 "typeCheckLocalVariableDeclaration in TypeCheckingPass");
         }
-        if (frontendSymbolTable->find(declaration->getIdentifier()) !=
-            frontendSymbolTable->end()) {
+        if (frontendSymbolTable->contains(declaration->getIdentifier())) {
             auto &oldDeclaration =
                 (*frontendSymbolTable)[declaration->getIdentifier()];
             auto oldType = oldDeclaration.first.get();
