@@ -43,6 +43,19 @@ Checks: >
   readability-non-const-parameter,
   readability-operators-representation,
   readability-qualified-auto,
+  readability-redundant-access-specifiers,
+  readability-redundant-casting,
+  readability-redundant-control-flow,
+  readability-redundant-declaration,
+  readability-redundant-function-ptr-dereference,
+  readability-redundant-inline-specifier,
+  readability-redundant-member-init,
+  readability-redundant-parentheses,
+  readability-redundant-preprocessor,
+  readability-redundant-smartptr-get,
+  readability-redundant-string-cstr,
+  readability-redundant-string-init,
+  readability-redundant-typename,
 WarningsAsErrors: true
 HeaderFilterRegex: ""
 ExcludeHeaderFilterRegex: ""

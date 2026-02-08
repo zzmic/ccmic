@@ -54,11 +54,11 @@ ConstantExpression::getConstantInVariant() const {
     }
     else if (auto *uintConstant =
                  dynamic_cast<ConstantUInt *>(constant.get())) {
-        return static_cast<unsigned int>(uintConstant->getValue());
+        return uintConstant->getValue();
     }
     else if (auto *ulongConstant =
                  dynamic_cast<ConstantULong *>(constant.get())) {
-        return static_cast<unsigned long>(ulongConstant->getValue());
+        return ulongConstant->getValue();
     }
     else {
         const auto &r = *constant;

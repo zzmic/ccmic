@@ -223,7 +223,7 @@ void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << ")";
 
     std::cout << "\nreturnType = ";
-    const_cast<Type &>(functionType.getReturnType()).accept(*this);
+    functionType.getReturnType().accept(*this);
 
     std::cout << "\n)";
 }

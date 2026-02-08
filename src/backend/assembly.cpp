@@ -107,7 +107,7 @@ std::string RegisterOperand::getRegisterInBytesInStr(int size) const {
             std::to_string(size));
     }
     const auto &sizeMappings = sizeIt->second;
-    const auto &r = *reg.get();
+    const auto &r = *reg;
     auto regIt = sizeMappings.find(typeid(r));
     if (regIt == sizeMappings.end()) {
         throw std::logic_error("Unsupported register type in "

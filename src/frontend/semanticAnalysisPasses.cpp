@@ -791,8 +791,7 @@ std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
             static_cast<unsigned int>(numericValue));
     }
     else if (*varType == ULongType()) {
-        return std::make_unique<ULongInit>(
-            static_cast<unsigned long>(numericValue));
+        return std::make_unique<ULongInit>(numericValue);
     }
     else {
         const auto &r = *varType;
@@ -993,8 +992,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                 static_cast<unsigned int>(numericValue));
         }
         else if (dynamic_cast<ULongType *>(varType)) {
-            initialValue = std::make_unique<Initial>(
-                static_cast<unsigned long>(numericValue));
+            initialValue = std::make_unique<Initial>(numericValue);
         }
         else {
             const auto &r = *varType;
@@ -1154,8 +1152,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                     static_cast<unsigned int>(numericValue));
             }
             else if (dynamic_cast<ULongType *>(varType)) {
-                initialValue = std::make_unique<Initial>(
-                    static_cast<unsigned long>(numericValue));
+                initialValue = std::make_unique<Initial>(numericValue);
             }
             else {
                 const auto &r = *varType;
