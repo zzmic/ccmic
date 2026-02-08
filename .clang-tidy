@@ -61,6 +61,14 @@ Checks: >
   readability-simplify-subscript-expr,
   readability-static-accessed-through-instance,
   readability-static-definition-in-anonymous-namespace,
+  readability-string-compare,
+  readability-suspicious-call-argument,
+  readability-trailing-comma,
+  readability-uniqueptr-delete-release,
+  readability-uppercase-literal-suffix,
+  readability-use-anyofallof,
+  readability-use-concise-preprocessor-directives,
+  readability-use-std-min-max,
 WarningsAsErrors: true
 HeaderFilterRegex: ""
 ExcludeHeaderFilterRegex: ""
