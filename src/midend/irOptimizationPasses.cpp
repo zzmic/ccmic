@@ -27,16 +27,17 @@ struct ConstValue {
  * `std::nullopt`.
  */
 std::optional<ConstValue> getConstValue(const IR::Value *value) {
-    auto constantValue = dynamic_cast<const IR::ConstantValue *>(value);
+    const auto *constantValue = dynamic_cast<const IR::ConstantValue *>(value);
     if (!constantValue) {
         return std::nullopt;
     }
-    auto astConst = constantValue->getASTConstant();
-    if (auto intConst = dynamic_cast<const AST::ConstantInt *>(astConst)) {
+    const auto *astConst = constantValue->getASTConstant();
+    if (const auto *intConst =
+            dynamic_cast<const AST::ConstantInt *>(astConst)) {
         return ConstValue{.isLong = false,
                           .value = static_cast<long>(intConst->getValue())};
     }
-    else if (auto longConst =
+    else if (const auto *longConst =
                  dynamic_cast<const AST::ConstantLong *>(astConst)) {
         return ConstValue{.isLong = true, .value = longConst->getValue()};
     }
@@ -148,10 +149,11 @@ std::optional<ConstValue> foldBinary(const IR::BinaryOperator *op,
  * @return A `std::unique_ptr` to the cloned AST constant.
  */
 std::unique_ptr<AST::Constant> cloneASTConstant(const AST::Constant *constant) {
-    if (auto intConst = dynamic_cast<const AST::ConstantInt *>(constant)) {
+    if (const auto *intConst =
+            dynamic_cast<const AST::ConstantInt *>(constant)) {
         return std::make_unique<AST::ConstantInt>(intConst->getValue());
     }
-    else if (auto longConst =
+    else if (const auto *longConst =
                  dynamic_cast<const AST::ConstantLong *>(constant)) {
         return std::make_unique<AST::ConstantLong>(longConst->getValue());
     }
@@ -165,11 +167,12 @@ std::unique_ptr<AST::Constant> cloneASTConstant(const AST::Constant *constant) {
  * @return A `std::unique_ptr` to the cloned IR value.
  */
 std::unique_ptr<IR::Value> cloneValue(const IR::Value *value) {
-    if (auto constantValue = dynamic_cast<const IR::ConstantValue *>(value)) {
+    if (const auto *constantValue =
+            dynamic_cast<const IR::ConstantValue *>(value)) {
         return std::make_unique<IR::ConstantValue>(
             cloneASTConstant(constantValue->getASTConstant()));
     }
-    else if (auto variableValue =
+    else if (const auto *variableValue =
                  dynamic_cast<const IR::VariableValue *>(value)) {
         return std::make_unique<IR::VariableValue>(
             variableValue->getIdentifier());
@@ -250,28 +253,28 @@ cloneBinaryOperator(const IR::BinaryOperator *op) {
  */
 std::unique_ptr<IR::Instruction>
 cloneInstruction(const IR::Instruction *instruction) {
-    if (auto returnInstr =
+    if (const auto *returnInstr =
             dynamic_cast<const IR::ReturnInstruction *>(instruction)) {
         return std::make_unique<IR::ReturnInstruction>(
             cloneValue(returnInstr->getReturnValue()));
     }
-    else if (auto signExtend =
+    else if (const auto *signExtend =
                  dynamic_cast<const IR::SignExtendInstruction *>(instruction)) {
         return std::make_unique<IR::SignExtendInstruction>(
             cloneValue(signExtend->getSrc()), cloneValue(signExtend->getDst()));
     }
-    else if (auto truncate =
+    else if (const auto *truncate =
                  dynamic_cast<const IR::TruncateInstruction *>(instruction)) {
         return std::make_unique<IR::TruncateInstruction>(
             cloneValue(truncate->getSrc()), cloneValue(truncate->getDst()));
     }
-    else if (auto unaryInstr =
+    else if (const auto *unaryInstr =
                  dynamic_cast<const IR::UnaryInstruction *>(instruction)) {
         return std::make_unique<IR::UnaryInstruction>(
             cloneUnaryOperator(unaryInstr->getUnaryOperator()),
             cloneValue(unaryInstr->getSrc()), cloneValue(unaryInstr->getDst()));
     }
-    else if (auto binaryInstr =
+    else if (const auto *binaryInstr =
                  dynamic_cast<const IR::BinaryInstruction *>(instruction)) {
         return std::make_unique<IR::BinaryInstruction>(
             cloneBinaryOperator(binaryInstr->getBinaryOperator()),
@@ -279,33 +282,34 @@ cloneInstruction(const IR::Instruction *instruction) {
             cloneValue(binaryInstr->getSrc2()),
             cloneValue(binaryInstr->getDst()));
     }
-    else if (auto copyInstr =
+    else if (const auto *copyInstr =
                  dynamic_cast<const IR::CopyInstruction *>(instruction)) {
         return std::make_unique<IR::CopyInstruction>(
             cloneValue(copyInstr->getSrc()), cloneValue(copyInstr->getDst()));
     }
-    else if (auto jumpInstr =
+    else if (const auto *jumpInstr =
                  dynamic_cast<const IR::JumpInstruction *>(instruction)) {
         return std::make_unique<IR::JumpInstruction>(jumpInstr->getTarget());
     }
-    else if (auto jumpIfZero =
+    else if (const auto *jumpIfZero =
                  dynamic_cast<const IR::JumpIfZeroInstruction *>(instruction)) {
         return std::make_unique<IR::JumpIfZeroInstruction>(
             cloneValue(jumpIfZero->getCondition()), jumpIfZero->getTarget());
     }
-    else if (auto jumpIfNotZero =
+    else if (const auto *jumpIfNotZero =
                  dynamic_cast<const IR::JumpIfNotZeroInstruction *>(
                      instruction)) {
         return std::make_unique<IR::JumpIfNotZeroInstruction>(
             cloneValue(jumpIfNotZero->getCondition()),
             jumpIfNotZero->getTarget());
     }
-    else if (auto labelInstr =
+    else if (const auto *labelInstr =
                  dynamic_cast<const IR::LabelInstruction *>(instruction)) {
         return std::make_unique<IR::LabelInstruction>(labelInstr->getLabel());
     }
-    else if (auto callInstr = dynamic_cast<const IR::FunctionCallInstruction *>(
-                 instruction)) {
+    else if (const auto *callInstr =
+                 dynamic_cast<const IR::FunctionCallInstruction *>(
+                     instruction)) {
         auto args = std::make_unique<std::vector<std::unique_ptr<IR::Value>>>();
         for (const auto &arg : callInstr->getArgs()) {
             args->emplace_back(cloneValue(arg.get()));
@@ -371,7 +375,7 @@ ConstantFoldingPass::foldConstants(
     folded->reserve(functionBody.size());
     for (const auto &instruction : functionBody) {
         // Handle constant folding for unary instructions.
-        if (auto unaryInstr =
+        if (const auto *unaryInstr =
                 dynamic_cast<const IR::UnaryInstruction *>(instruction.get())) {
             auto srcConst = getConstValue(unaryInstr->getSrc());
             if (srcConst.has_value()) {
@@ -386,8 +390,9 @@ ConstantFoldingPass::foldConstants(
             }
         }
         // Handle constant folding for binary instructions.
-        if (auto binaryInstr = dynamic_cast<const IR::BinaryInstruction *>(
-                instruction.get())) {
+        if (const auto *binaryInstr =
+                dynamic_cast<const IR::BinaryInstruction *>(
+                    instruction.get())) {
             auto lhsConst = getConstValue(binaryInstr->getSrc1());
             auto rhsConst = getConstValue(binaryInstr->getSrc2());
             if (lhsConst.has_value() && rhsConst.has_value()) {
@@ -402,8 +407,9 @@ ConstantFoldingPass::foldConstants(
             }
         }
         // Handle constant folding for jump instructions.
-        if (auto jumpIfZero = dynamic_cast<const IR::JumpIfZeroInstruction *>(
-                instruction.get())) {
+        if (const auto *jumpIfZero =
+                dynamic_cast<const IR::JumpIfZeroInstruction *>(
+                    instruction.get())) {
             auto condConst = getConstValue(jumpIfZero->getCondition());
             if (condConst.has_value()) {
                 if (condConst->value == 0) {
@@ -414,7 +420,7 @@ ConstantFoldingPass::foldConstants(
             }
         }
         // Handle constant folding for jump-if-not-zero instructions.
-        if (auto jumpIfNotZero =
+        if (const auto *jumpIfNotZero =
                 dynamic_cast<const IR::JumpIfNotZeroInstruction *>(
                     instruction.get())) {
             auto condConst = getConstValue(jumpIfNotZero->getCondition());

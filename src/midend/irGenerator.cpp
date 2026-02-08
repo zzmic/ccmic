@@ -47,7 +47,7 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
     else if (dynamic_cast<const AST::ULongType *>(type)) {
         return std::make_unique<AST::ULongType>();
     }
-    else if (auto functionType =
+    else if (const auto *functionType =
                  dynamic_cast<const AST::FunctionType *>(type)) {
         auto parameterTypes =
             std::make_unique<std::vector<std::unique_ptr<AST::Type>>>();
@@ -107,19 +107,21 @@ bool isSigned(const AST::Type *type) {
  */
 std::unique_ptr<AST::StaticInit>
 cloneStaticInit(const AST::StaticInit *staticInit) {
-    if (auto intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
+    if (const auto *intInit = dynamic_cast<const AST::IntInit *>(staticInit)) {
         auto value = intInit->getValue();
         return std::make_unique<AST::IntInit>(std::get<int>(value));
     }
-    else if (auto longInit = dynamic_cast<const AST::LongInit *>(staticInit)) {
+    else if (const auto *longInit =
+                 dynamic_cast<const AST::LongInit *>(staticInit)) {
         auto value = longInit->getValue();
         return std::make_unique<AST::LongInit>(std::get<long>(value));
     }
-    else if (auto uintInit = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+    else if (const auto *uintInit =
+                 dynamic_cast<const AST::UIntInit *>(staticInit)) {
         auto value = uintInit->getValue();
         return std::make_unique<AST::UIntInit>(std::get<unsigned int>(value));
     }
-    else if (auto ulongInit =
+    else if (const auto *ulongInit =
                  dynamic_cast<const AST::ULongInit *>(staticInit)) {
         auto value = ulongInit->getValue();
         return std::make_unique<AST::ULongInit>(std::get<unsigned long>(value));
@@ -148,7 +150,7 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
                 dynamic_cast<AST::FunctionDeclaration *>(
                     astDeclaration.get())) {
             // Get the body of the function declaration.
-            auto optBody = functionDeclaration->getOptBody();
+            auto *optBody = functionDeclaration->getOptBody();
 
             // Skip generating IR instructions for forward declarations.
             if (!optBody) {
@@ -225,9 +227,9 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             // If the function needs an implicit return, add it.
             if (needsImplicitReturn) {
                 // Get the function's return type from the symbol table.
-                auto functionType =
+                auto *functionType =
                     (*frontendSymbolTable)[identifier].first.get();
-                auto functionTypePtr =
+                auto *functionTypePtr =
                     dynamic_cast<AST::FunctionType *>(functionType);
                 if (functionTypePtr) {
                     const auto &returnType = functionTypePtr->getReturnType();
@@ -344,7 +346,7 @@ void IRGenerator::generateIRFunctionDefinition(
     const AST::FunctionDeclaration *astFunctionDeclaration,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the body of the function.
-    auto optBody = astFunctionDeclaration->getOptBody();
+    auto *optBody = astFunctionDeclaration->getOptBody();
     if (optBody) {
         // Generate IR instructions for the body of the function.
         generateIRBlock(optBody, instructions);
@@ -357,7 +359,7 @@ void IRGenerator::generateIRVariableDefinition(
     const AST::VariableDeclaration *astVariableDeclaration,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     auto identifier = astVariableDeclaration->getIdentifier();
-    auto initializer = astVariableDeclaration->getOptInitializer();
+    auto *initializer = astVariableDeclaration->getOptInitializer();
     // If the declaration has an initializer, ...
     if (initializer) {
         // Generate IR instructions for the initializer.
@@ -378,40 +380,40 @@ void IRGenerator::generateIRVariableDefinition(
 void IRGenerator::generateIRStatement(
     const AST::Statement *astStatement,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
-    if (auto *returnStmt =
+    if (const auto *returnStmt =
             dynamic_cast<const AST::ReturnStatement *>(astStatement)) {
         generateIRReturnStatement(returnStmt, instructions);
     }
-    else if (auto *expressionStmt =
+    else if (const auto *expressionStmt =
                  dynamic_cast<const AST::ExpressionStatement *>(astStatement)) {
         generateIRExpressionStatement(expressionStmt, instructions);
     }
-    else if (auto *compoundStmt =
+    else if (const auto *compoundStmt =
                  dynamic_cast<const AST::CompoundStatement *>(astStatement)) {
         // If the statement is a compound statement, generate a block.
         generateIRBlock(compoundStmt->getBlock(), instructions);
     }
-    else if (auto *ifStmt =
+    else if (const auto *ifStmt =
                  dynamic_cast<const AST::IfStatement *>(astStatement)) {
         generateIRIfStatement(ifStmt, instructions);
     }
-    else if (auto *breakStmt =
+    else if (const auto *breakStmt =
                  dynamic_cast<const AST::BreakStatement *>(astStatement)) {
         generateIRBreakStatement(breakStmt, instructions);
     }
-    else if (auto *continueStmt =
+    else if (const auto *continueStmt =
                  dynamic_cast<const AST::ContinueStatement *>(astStatement)) {
         generateIRContinueStatement(continueStmt, instructions);
     }
-    else if (auto *whileStmt =
+    else if (const auto *whileStmt =
                  dynamic_cast<const AST::WhileStatement *>(astStatement)) {
         generateIRWhileStatement(whileStmt, instructions);
     }
-    else if (auto *doWhileStmt =
+    else if (const auto *doWhileStmt =
                  dynamic_cast<const AST::DoWhileStatement *>(astStatement)) {
         generateIRDoWhileStatement(doWhileStmt, instructions);
     }
-    else if (auto *forStmt =
+    else if (const auto *forStmt =
                  dynamic_cast<const AST::ForStatement *>(astStatement)) {
         generateIRForStatement(forStmt, instructions);
     }
@@ -429,7 +431,7 @@ void IRGenerator::generateIRReturnStatement(
     const AST::ReturnStatement *returnStmt,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the expression from the return statement.
-    auto exp = returnStmt->getExpression();
+    auto *exp = returnStmt->getExpression();
 
     // Process the expression and generate the corresponding IR
     // instructions.
@@ -444,7 +446,7 @@ void IRGenerator::generateIRExpressionStatement(
     const AST::ExpressionStatement *expressionStmt,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the expression from the expression statement.
-    auto exp = expressionStmt->getExpression();
+    auto *exp = expressionStmt->getExpression();
 
     // Process the expression and generate the corresponding IR
     // instructions.
@@ -456,7 +458,7 @@ void IRGenerator::generateIRIfStatement(
     const AST::IfStatement *ifStmt,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the condition from the if-statement.
-    auto condition = ifStmt->getCondition();
+    auto *condition = ifStmt->getCondition();
     // Process the condition and generate the corresponding IR instructions.
     auto conditionValue = generateIRInstruction(condition, instructions);
     // Generate a new end label.
@@ -470,7 +472,7 @@ void IRGenerator::generateIRIfStatement(
         instructions.emplace_back(std::make_unique<IR::JumpIfZeroInstruction>(
             std::move(conditionValue), elseLabel));
         // Get the then-statement from the if-statement.
-        auto thenStatement = ifStmt->getThenStatement();
+        auto *thenStatement = ifStmt->getThenStatement();
         // Process the then-statement and generate the corresponding IR
         // instructions.
         generateIRStatement(thenStatement, instructions);
@@ -479,7 +481,7 @@ void IRGenerator::generateIRIfStatement(
         // Generate a label instruction with the same (new) else label.
         generateIRLabelInstruction(elseLabel, instructions);
         // Get the (optional) else-statement from the if-statement.
-        auto elseOptStatement = ifStmt->getElseOptStatement();
+        auto *elseOptStatement = ifStmt->getElseOptStatement();
         // Process the else-statement and generate the corresponding IR
         // instructions.
         generateIRStatement(elseOptStatement, instructions);
@@ -490,7 +492,7 @@ void IRGenerator::generateIRIfStatement(
         instructions.emplace_back(std::make_unique<IR::JumpIfZeroInstruction>(
             std::move(conditionValue), endLabel));
         // Get the then-statement from the if-statement.
-        auto thenStatement = ifStmt->getThenStatement();
+        auto *thenStatement = ifStmt->getThenStatement();
         // Process the then-statement and generate the corresponding IR
         // instructions.
         generateIRStatement(thenStatement, instructions);
@@ -524,14 +526,14 @@ void IRGenerator::generateIRDoWhileStatement(
     // Generate a label instruction with the start label.
     generateIRLabelInstruction(startLabel, instructions);
     // Generate instructions for the body of the do-while-statement.
-    auto body = doWhileStmt->getBody();
+    auto *body = doWhileStmt->getBody();
     generateIRStatement(body, instructions);
     // Generate a new continue label (based on the label of the do-while).
     auto continueLabel = generateIRContinueLoopLabel(doWhileStmt->getLabel());
     // Generate a label instruction with the continue label.
     generateIRLabelInstruction(continueLabel, instructions);
     // Generate instructions for the condition of the do-while-statement.
-    auto condition = doWhileStmt->getCondition();
+    auto *condition = doWhileStmt->getCondition();
     auto conditionValue = generateIRInstruction(condition, instructions);
     // Generate a jump-if-not-zero instruction with the condition value and the
     // start label.
@@ -551,7 +553,7 @@ void IRGenerator::generateIRWhileStatement(
     // Generate a label instruction with the continue label.
     generateIRLabelInstruction(continueLabel, instructions);
     // Generate instructions for the condition of the while-statement.
-    auto condition = whileStmt->getCondition();
+    auto *condition = whileStmt->getCondition();
     auto conditionValue = generateIRInstruction(condition, instructions);
     // Generate a new break label (based on the label of the while).
     auto breakLabel = generateIRBreakLoopLabel(whileStmt->getLabel());
@@ -560,7 +562,7 @@ void IRGenerator::generateIRWhileStatement(
     generateIRJumpIfZeroInstruction(std::move(conditionValue), breakLabel,
                                     instructions);
     // Generate instructions for the body of the while-statement.
-    auto body = whileStmt->getBody();
+    auto *body = whileStmt->getBody();
     generateIRStatement(body, instructions);
     // Generate a jump instruction with the continue label.
     generateIRJumpInstruction(continueLabel, instructions);
@@ -572,13 +574,14 @@ void IRGenerator::generateIRForStatement(
     const AST::ForStatement *forStmt,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Generate instructions for the for-init of the for-statement.
-    auto forInit = forStmt->getForInit();
-    if (auto initExpr = dynamic_cast<const AST::InitExpr *>(forInit)) {
-        if (auto optExpr = initExpr->getExpression()) {
+    auto *forInit = forStmt->getForInit();
+    if (const auto *initExpr = dynamic_cast<const AST::InitExpr *>(forInit)) {
+        if (auto *optExpr = initExpr->getExpression()) {
             auto resolvedExpr = generateIRInstruction(optExpr, instructions);
         }
     }
-    else if (auto initDecl = dynamic_cast<const AST::InitDecl *>(forInit)) {
+    else if (const auto *initDecl =
+                 dynamic_cast<const AST::InitDecl *>(forInit)) {
         generateIRVariableDefinition(initDecl->getVariableDeclaration(),
                                      instructions);
     }
@@ -590,7 +593,7 @@ void IRGenerator::generateIRForStatement(
     auto breakLabel = generateIRBreakLoopLabel(forStmt->getLabel());
     // Optionally generate instructions for the (optional) condition of the
     // for-statement.
-    auto optCondition = forStmt->getOptCondition();
+    auto *optCondition = forStmt->getOptCondition();
     if (optCondition) {
         // Generate a jump-if-zero instruction with the condition value and the
         // break label.
@@ -599,7 +602,7 @@ void IRGenerator::generateIRForStatement(
                                         instructions);
     }
     // Generate instructions for the body of the for-statement.
-    auto body = forStmt->getBody();
+    auto *body = forStmt->getBody();
     generateIRStatement(body, instructions);
     // Generate a new continue label (based on the label of the for).
     auto continueLabel = generateIRContinueLoopLabel(forStmt->getLabel());
@@ -607,7 +610,7 @@ void IRGenerator::generateIRForStatement(
     generateIRLabelInstruction(continueLabel, instructions);
     // Optionally generate instructions for the (optional) post of the
     // for-statement.
-    auto optPost = forStmt->getOptPost();
+    auto *optPost = forStmt->getOptPost();
     if (optPost) {
         auto postValue = generateIRInstruction(optPost, instructions);
     }
@@ -620,7 +623,8 @@ void IRGenerator::generateIRForStatement(
 std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
     const AST::Expression *e,
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
-    if (auto constantExpr = dynamic_cast<const AST::ConstantExpression *>(e)) {
+    if (const auto *constantExpr =
+            dynamic_cast<const AST::ConstantExpression *>(e)) {
         auto variantValue = constantExpr->getConstantInVariant();
         if (std::holds_alternative<int>(variantValue)) {
             return std::make_unique<IR::ConstantValue>(
@@ -649,10 +653,12 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
                 std::string(typeid(variantValue).name()));
         }
     }
-    else if (auto unaryExpr = dynamic_cast<const AST::UnaryExpression *>(e)) {
+    else if (const auto *unaryExpr =
+                 dynamic_cast<const AST::UnaryExpression *>(e)) {
         return generateIRUnaryInstruction(unaryExpr, instructions);
     }
-    else if (auto binaryExpr = dynamic_cast<const AST::BinaryExpression *>(e)) {
+    else if (const auto *binaryExpr =
+                 dynamic_cast<const AST::BinaryExpression *>(e)) {
         // If the binary operator in the AST binary expression is a
         // logical-and operator, ...
         if (dynamic_cast<AST::AndOperator *>(binaryExpr->getOperator())) {
@@ -671,14 +677,14 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
             return generateIRBinaryInstruction(binaryExpr, instructions);
         }
     }
-    else if (auto variableExpr =
+    else if (const auto *variableExpr =
                  dynamic_cast<const AST::VariableExpression *>(e)) {
         return std::make_unique<IR::VariableValue>(
             variableExpr->getIdentifier());
     }
-    else if (auto assignmentExpr =
+    else if (const auto *assignmentExpr =
                  dynamic_cast<const AST::AssignmentExpression *>(e)) {
-        if (auto variableExpr1 = dynamic_cast<AST::VariableExpression *>(
+        if (auto *variableExpr1 = dynamic_cast<AST::VariableExpression *>(
                 assignmentExpr->getLeft())) {
             auto variableValue = std::make_unique<IR::VariableValue>(
                 variableExpr1->getIdentifier());
@@ -698,7 +704,7 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
                 std::string(typeid(r).name()));
         }
     }
-    else if (auto conditionalExpr =
+    else if (const auto *conditionalExpr =
                  dynamic_cast<const AST::ConditionalExpression *>(e)) {
         auto conditionValue = generateIRInstruction(
             conditionalExpr->getCondition(), instructions);
@@ -709,7 +715,7 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
             conditionalExpr->getThenExpression(), instructions);
         auto resultLabel = generateIRResultLabel();
 
-        auto resultType = conditionalExpr->getExpType();
+        auto *resultType = conditionalExpr->getExpType();
         if (!resultType) {
             throw std::logic_error(
                 "Missing result type for conditional expression in "
@@ -735,18 +741,19 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
         generateIRLabelInstruction(endLabel, instructions);
         return resultValue;
     }
-    else if (auto functionCallExpr =
+    else if (const auto *functionCallExpr =
                  dynamic_cast<const AST::FunctionCallExpression *>(e)) {
         auto functionIdentifier = functionCallExpr->getIdentifier();
         auto args = std::make_unique<std::vector<std::unique_ptr<IR::Value>>>();
-        for (auto &arg : functionCallExpr->getArguments()) {
+        for (const auto &arg : functionCallExpr->getArguments()) {
             args->emplace_back(generateIRInstruction(arg.get(), instructions));
         }
         auto resultValue = generateIRFunctionCallInstruction(
             functionIdentifier, std::move(args), instructions);
         return resultValue;
     }
-    else if (auto castExpr = dynamic_cast<const AST::CastExpression *>(e)) {
+    else if (const auto *castExpr =
+                 dynamic_cast<const AST::CastExpression *>(e)) {
         return generateIRCastInstruction(castExpr, instructions);
     }
     throw std::logic_error(
@@ -974,9 +981,9 @@ IRGenerator::generateIRFunctionCallInstruction(
     auto tmpName = generateIRTemporary();
 
     // Look up the function's return type in the frontend symbol table.
-    auto functionType =
+    auto *functionType =
         (*frontendSymbolTable)[std::string(functionIdentifier)].first.get();
-    auto functionTypePtr = dynamic_cast<AST::FunctionType *>(functionType);
+    auto *functionTypePtr = dynamic_cast<AST::FunctionType *>(functionType);
     if (!functionTypePtr) {
         throw std::logic_error(
             "Function type not found in symbol table in "
@@ -1007,8 +1014,8 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
     // Recursively generate the expression in the cast expression.
     auto result =
         generateIRInstruction(castExpr->getExpression(), instructions);
-    auto sourceType = castExpr->getExpression()->getExpType();
-    auto targetType = castExpr->getTargetType();
+    auto *sourceType = castExpr->getExpression()->getExpType();
+    auto *targetType = castExpr->getTargetType();
 
     // If the source and target types are the same, no cast is needed.
     if (*sourceType == *targetType) {
@@ -1123,11 +1130,11 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
         auto name = symbol.first;
         auto *type = symbol.second.first.get();
         auto *attribute = symbol.second.second.get();
-        if (auto staticAttribute =
+        if (auto *staticAttribute =
                 dynamic_cast<AST::StaticAttribute *>(attribute)) {
-            auto initialValue = staticAttribute->getInitialValue();
+            auto *initialValue = staticAttribute->getInitialValue();
             auto global = staticAttribute->isGlobal();
-            if (auto initial = dynamic_cast<AST::Initial *>(initialValue)) {
+            if (auto *initial = dynamic_cast<AST::Initial *>(initialValue)) {
                 irDefs->emplace_back(std::make_unique<StaticVariable>(
                     name, global, cloneType(type),
                     cloneStaticInit(initial->getStaticInit())));

@@ -46,14 +46,14 @@ cloneOperand(const Assembly::Operand *operand) {
     if (!operand) {
         throw std::logic_error("Cloning null Operand in cloneOperand");
     }
-    if (auto immOp =
+    if (const auto *immOp =
             dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         return std::make_unique<Assembly::ImmediateOperand>(
             immOp->getImmediate());
     }
-    else if (auto regOp =
+    else if (const auto *regOp =
                  dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
-        auto reg = regOp->getRegister();
+        auto *reg = regOp->getRegister();
         if (dynamic_cast<const Assembly::AX *>(reg)) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::AX>());
@@ -102,9 +102,9 @@ cloneOperand(const Assembly::Operand *operand) {
         throw std::logic_error("Unsupported register in cloneOperand: " +
                                std::string(typeid(r).name()));
     }
-    else if (auto stackOp =
+    else if (const auto *stackOp =
                  dynamic_cast<const Assembly::StackOperand *>(operand)) {
-        auto reservedReg = stackOp->getReservedRegister();
+        auto *reservedReg = stackOp->getReservedRegister();
         if (dynamic_cast<const Assembly::SP *>(reservedReg)) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::SP>());
@@ -118,11 +118,11 @@ cloneOperand(const Assembly::Operand *operand) {
             "Unsupported reserved register in cloneOperand: " +
             std::string(typeid(r).name()));
     }
-    else if (auto dataOp =
+    else if (const auto *dataOp =
                  dynamic_cast<const Assembly::DataOperand *>(operand)) {
         return std::make_unique<Assembly::DataOperand>(dataOp->getIdentifier());
     }
-    else if (auto pseudoOp =
+    else if (const auto *pseudoOp =
                  dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                      operand)) {
         return std::make_unique<Assembly::PseudoRegisterOperand>(
@@ -198,7 +198,7 @@ void FixupPass::rewriteFunctionDefinition(
     // Traverse the instructions (associated with (included in) the
     // function) and rewrite invalid instructions.
     for (auto it = instructions.begin(); it != instructions.end(); ++it) {
-        if (auto movInstr =
+        if (auto *movInstr =
                 dynamic_cast<Assembly::MovInstruction *>(it->get())) {
             // If the mov instruction is invalid, rewrite it.
             // Replace the invalid `mov` instruction with two valid ones using
@@ -219,13 +219,13 @@ void FixupPass::rewriteFunctionDefinition(
                                                         *movInstr);
             }
         }
-        else if (auto movsxInstr =
+        else if (auto *movsxInstr =
                      dynamic_cast<Assembly::MovsxInstruction *>(it->get())) {
             if (isInvalidMovsx(*movsxInstr)) {
                 it = rewriteInvalidMovsx(instructions, it, *movsxInstr);
             }
         }
-        else if (auto binInstr =
+        else if (auto *binInstr =
                      dynamic_cast<Assembly::BinaryInstruction *>(it->get())) {
             if (isInvalidLargeImmediateBinary(*binInstr)) {
                 it = rewriteInvalidLargeImmediateBinary(instructions, it,
@@ -235,24 +235,24 @@ void FixupPass::rewriteFunctionDefinition(
                 it = rewriteInvalidBinary(instructions, it, *binInstr);
             }
         }
-        else if (auto idivInstr =
+        else if (auto *idivInstr =
                      dynamic_cast<Assembly::IdivInstruction *>(it->get())) {
             if (isInvalidIdiv(*idivInstr)) {
                 it = rewriteInvalidIdiv(instructions, it, *idivInstr);
             }
         }
-        else if (auto divInstr =
+        else if (auto *divInstr =
                      dynamic_cast<Assembly::DivInstruction *>(it->get())) {
             if (isInvalidDiv(*divInstr)) {
                 it = rewriteInvalidDiv(instructions, it, *divInstr);
             }
         }
-        else if (auto movZeroExtendInstr =
+        else if (auto *movZeroExtendInstr =
                      dynamic_cast<Assembly::MovZeroExtendInstruction *>(
                          it->get())) {
             it = rewriteMovZeroExtend(instructions, it, *movZeroExtendInstr);
         }
-        else if (auto cmpInstr =
+        else if (auto *cmpInstr =
                      dynamic_cast<Assembly::CmpInstruction *>(it->get())) {
             if (isInvalidLargeImmediateCmp(*cmpInstr)) {
                 it = rewriteInvalidLargeImmediateCmp(instructions, it,
@@ -262,7 +262,7 @@ void FixupPass::rewriteFunctionDefinition(
                 it = rewriteInvalidCmp(instructions, it, *cmpInstr);
             }
         }
-        else if (auto pushInstr =
+        else if (auto *pushInstr =
                      dynamic_cast<Assembly::PushInstruction *>(it->get())) {
             if (isInvalidLargeImmediatePush(*pushInstr)) {
                 it = rewriteInvalidLargeImmediatePush(instructions, it,
@@ -275,8 +275,8 @@ void FixupPass::rewriteFunctionDefinition(
 bool FixupPass::isInvalidMov(const Assembly::MovInstruction &movInstr) {
     // Stack operands and data operands are memory addresses (memory-address
     // operands).
-    auto src = movInstr.getSrc();
-    auto dst = movInstr.getDst();
+    const auto *src = movInstr.getSrc();
+    const auto *dst = movInstr.getDst();
     return (dynamic_cast<const Assembly::StackOperand *>(src) != nullptr ||
             dynamic_cast<const Assembly::DataOperand *>(src) != nullptr) &&
            (dynamic_cast<const Assembly::StackOperand *>(dst) != nullptr ||
@@ -286,13 +286,13 @@ bool FixupPass::isInvalidMov(const Assembly::MovInstruction &movInstr) {
 bool FixupPass::isInvalidLargeImmediateMov(
     const Assembly::MovInstruction &movInstr) {
     // Check if it's a quadword mov with large immediate to memory.
-    auto quadwordType =
+    const auto *quadwordType =
         dynamic_cast<const Assembly::Quadword *>(movInstr.getType());
     if (!quadwordType) {
         return false;
     }
 
-    auto immediateSrc =
+    const auto *immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInstr.getSrc());
     if (!immediateSrc) {
         return false;
@@ -315,13 +315,13 @@ bool FixupPass::isInvalidLargeImmediateMov(
 bool FixupPass::isInvalidLongwordImmediateMov(
     const Assembly::MovInstruction &movInstr) {
     // Check if it's a longword mov with 8-byte immediate value.
-    auto longwordType =
+    const auto *longwordType =
         dynamic_cast<const Assembly::Longword *>(movInstr.getType());
     if (!longwordType) {
         return false;
     }
 
-    auto immediateSrc =
+    const auto *immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInstr.getSrc());
     if (!immediateSrc) {
         return false;
@@ -374,15 +374,15 @@ bool FixupPass::isInvalidLargeImmediateBinary(
     const Assembly::BinaryInstruction &binInstr) {
     // Check if it's a `Quadword` `Binary` instruction with a large immediate
     // value.
-    auto quadwordType =
+    const auto *quadwordType =
         dynamic_cast<const Assembly::Quadword *>(binInstr.getType());
     if (!quadwordType) {
         return false;
     }
 
-    auto immediateOp1 = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp1 = dynamic_cast<const Assembly::ImmediateOperand *>(
         binInstr.getOperand1());
-    auto immediateOp2 = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp2 = dynamic_cast<const Assembly::ImmediateOperand *>(
         binInstr.getOperand2());
 
     const Assembly::ImmediateOperand *immediateOp = nullptr;
@@ -436,15 +436,15 @@ bool FixupPass::isInvalidLargeImmediateCmp(
     const Assembly::CmpInstruction &cmpInstr) {
     // Check if it's a `Quadword` `Cmp` instruction with a large immediate
     // value.
-    auto quadwordType =
+    const auto *quadwordType =
         dynamic_cast<const Assembly::Quadword *>(cmpInstr.getType());
     if (!quadwordType) {
         return false;
     }
 
-    auto immediateOp1 = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp1 = dynamic_cast<const Assembly::ImmediateOperand *>(
         cmpInstr.getOperand1());
-    auto immediateOp2 = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp2 = dynamic_cast<const Assembly::ImmediateOperand *>(
         cmpInstr.getOperand2());
 
     const Assembly::ImmediateOperand *immediateOp = nullptr;
@@ -468,7 +468,7 @@ bool FixupPass::isInvalidLargeImmediateCmp(
 
 bool FixupPass::isInvalidLargeImmediatePush(
     const Assembly::PushInstruction &pushInstr) {
-    auto immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
         pushInstr.getOperand());
     if (!immediateOp) {
         return false;
@@ -506,8 +506,8 @@ FixupPass::rewriteInvalidMovsx(
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
     const Assembly::MovsxInstruction &movsxInst) {
-    auto src = movsxInst.getSrc();
-    auto dst = movsxInst.getDst();
+    const auto *src = movsxInst.getSrc();
+    const auto *dst = movsxInst.getDst();
 
     const bool invalidSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(src) != nullptr;
@@ -753,7 +753,7 @@ FixupPass::rewriteInvalidLongwordImmediateMov(
     [[maybe_unused]],
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
     const Assembly::MovInstruction &movInst) {
-    auto immediateSrc =
+    const auto *immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInst.getSrc());
     auto originalValue = immediateSrc->getImmediate();
 
@@ -778,9 +778,9 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
     const Assembly::BinaryInstruction &binInstr) {
     const Assembly::AssemblyType *binType = binInstr.getType();
     const Assembly::BinaryOperator *binOperator = binInstr.getBinaryOperator();
-    auto immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
         binInstr.getOperand1());
-    auto otherOp = binInstr.getOperand2();
+    const auto *otherOp = binInstr.getOperand2();
     bool isFirstOperand = true;
     if (!immediateOp) {
         immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
@@ -853,9 +853,9 @@ FixupPass::rewriteInvalidLargeImmediateCmp(
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
     const Assembly::CmpInstruction &cmpInstr) {
     const Assembly::AssemblyType *cmpType = cmpInstr.getType();
-    auto immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
+    const auto *immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
         cmpInstr.getOperand1());
-    auto otherOp = cmpInstr.getOperand2();
+    const auto *otherOp = cmpInstr.getOperand2();
     bool isFirstOperand = true;
     if (!immediateOp) {
         immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(

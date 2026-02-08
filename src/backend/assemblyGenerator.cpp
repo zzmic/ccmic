@@ -28,16 +28,18 @@ namespace {
  */
 bool isSignedType(const IR::Value *irValue,
                   const AST::FrontendSymbolTable &frontendSymbolTable) {
-    if (auto constantVal = dynamic_cast<const IR::ConstantValue *>(irValue)) {
+    if (const auto *constantVal =
+            dynamic_cast<const IR::ConstantValue *>(irValue)) {
         return dynamic_cast<const AST::ConstantInt *>(
                    constantVal->getASTConstant()) ||
                dynamic_cast<const AST::ConstantLong *>(
                    constantVal->getASTConstant());
     }
-    else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
+    else if (const auto *varVal =
+                 dynamic_cast<const IR::VariableValue *>(irValue)) {
         auto symbolIt = frontendSymbolTable.find(varVal->getIdentifier());
         if (symbolIt != frontendSymbolTable.end()) {
-            auto varType = symbolIt->second.first.get();
+            auto *varType = symbolIt->second.first.get();
             return dynamic_cast<const AST::IntType *>(varType) ||
                    dynamic_cast<const AST::LongType *>(varType);
         }
@@ -59,7 +61,7 @@ AssemblyGenerator::AssemblyGenerator(
 
 std::unique_ptr<Assembly::Program>
 AssemblyGenerator::generateAssembly(const IR::Program &irProgram) {
-    auto &irTopLevels = irProgram.getTopLevels();
+    const auto &irTopLevels = irProgram.getTopLevels();
     auto assyTopLevels =
         std::make_unique<std::vector<std::unique_ptr<TopLevel>>>();
 
@@ -99,11 +101,11 @@ AssemblyGenerator::convertIRFunctionDefinitionToAssy(
         instructions) {
     auto functionIdentifier = irFunctionDefinition.getFunctionIdentifier();
     auto functionGlobal = irFunctionDefinition.isGlobal();
-    auto &functionBody = irFunctionDefinition.getFunctionBody();
+    const auto &functionBody = irFunctionDefinition.getFunctionBody();
 
     // Generate instructions to move parameters from registers to the
     // stack.
-    auto &irParameters = irFunctionDefinition.getParameterIdentifiers();
+    const auto &irParameters = irFunctionDefinition.getParameterIdentifiers();
     if (!irParameters.empty()) {
         std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
                                                       "CX", "R8", "R9"};
@@ -172,28 +174,30 @@ AssemblyGenerator::convertIRStaticVariableToAssy(
     const IR::StaticVariable &irStaticVariable) {
     auto identifier = irStaticVariable.getIdentifier();
     auto global = irStaticVariable.isGlobal();
-    auto staticInit = irStaticVariable.getStaticInit();
+    const auto *staticInit = irStaticVariable.getStaticInit();
 
     // Convert the static initializer to an assembly static variable.
-    if (auto constInt = dynamic_cast<const AST::IntInit *>(staticInit)) {
+    if (const auto *constInt = dynamic_cast<const AST::IntInit *>(staticInit)) {
         auto assyInit =
             std::make_unique<AST::IntInit>(std::get<int>(constInt->getValue()));
         return std::make_unique<StaticVariable>(
             identifier, global, LONGWORD_SIZE, std::move(assyInit));
     }
-    else if (auto constLong = dynamic_cast<const AST::LongInit *>(staticInit)) {
+    else if (const auto *constLong =
+                 dynamic_cast<const AST::LongInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::LongInit>(
             std::get<long>(constLong->getValue()));
         return std::make_unique<StaticVariable>(
             identifier, global, QUADWORD_SIZE, std::move(assyInit));
     }
-    else if (auto constUInt = dynamic_cast<const AST::UIntInit *>(staticInit)) {
+    else if (const auto *constUInt =
+                 dynamic_cast<const AST::UIntInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::UIntInit>(
             std::get<unsigned int>(constUInt->getValue()));
         return std::make_unique<StaticVariable>(
             identifier, global, LONGWORD_SIZE, std::move(assyInit));
     }
-    else if (auto constULong =
+    else if (const auto *constULong =
                  dynamic_cast<const AST::ULongInit *>(staticInit)) {
         auto assyInit = std::make_unique<AST::ULongInit>(
             std::get<unsigned long>(constULong->getValue()));
@@ -210,57 +214,58 @@ AssemblyGenerator::convertIRStaticVariableToAssy(
 void AssemblyGenerator::convertIRInstructionToAssy(
     const IR::Instruction &irInstruction,
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
-    if (auto returnInstr =
+    if (const auto *returnInstr =
             dynamic_cast<const IR::ReturnInstruction *>(&irInstruction)) {
         convertIRReturnInstructionToAssy(*returnInstr, instructions);
     }
-    else if (auto unaryInstr =
+    else if (const auto *unaryInstr =
                  dynamic_cast<const IR::UnaryInstruction *>(&irInstruction)) {
         convertIRUnaryInstructionToAssy(*unaryInstr, instructions);
     }
-    else if (auto binaryInstr =
+    else if (const auto *binaryInstr =
                  dynamic_cast<const IR::BinaryInstruction *>(&irInstruction)) {
         convertIRBinaryInstructionToAssy(*binaryInstr, instructions);
     }
-    else if (auto copyInstr =
+    else if (const auto *copyInstr =
                  dynamic_cast<const IR::CopyInstruction *>(&irInstruction)) {
         convertIRCopyInstructionToAssy(*copyInstr, instructions);
     }
-    else if (auto jumpInstr =
+    else if (const auto *jumpInstr =
                  dynamic_cast<const IR::JumpInstruction *>(&irInstruction)) {
         convertIRJumpInstructionToAssy(*jumpInstr, instructions);
     }
-    else if (auto jumpIfZeroInstr =
+    else if (const auto *jumpIfZeroInstr =
                  dynamic_cast<const IR::JumpIfZeroInstruction *>(
                      &irInstruction)) {
         convertIRJumpIfZeroInstructionToAssy(*jumpIfZeroInstr, instructions);
     }
-    else if (auto jumpIfNotZeroInstr =
+    else if (const auto *jumpIfNotZeroInstr =
                  dynamic_cast<const IR::JumpIfNotZeroInstruction *>(
                      &irInstruction)) {
         convertIRJumpIfNotZeroInstructionToAssy(*jumpIfNotZeroInstr,
                                                 instructions);
     }
-    else if (auto labelInstr =
+    else if (const auto *labelInstr =
                  dynamic_cast<const IR::LabelInstruction *>(&irInstruction)) {
         convertIRLabelInstructionToAssy(*labelInstr, instructions);
     }
-    else if (auto functionCallInstr =
+    else if (const auto *functionCallInstr =
                  dynamic_cast<const IR::FunctionCallInstruction *>(
                      &irInstruction)) {
         convertIRFunctionCallInstructionToAssy(*functionCallInstr,
                                                instructions);
     }
-    else if (auto signExtendInstr =
+    else if (const auto *signExtendInstr =
                  dynamic_cast<const IR::SignExtendInstruction *>(
                      &irInstruction)) {
         convertIRSignExtendInstructionToAssy(*signExtendInstr, instructions);
     }
-    else if (auto truncateInstr = dynamic_cast<const IR::TruncateInstruction *>(
-                 &irInstruction)) {
+    else if (const auto *truncateInstr =
+                 dynamic_cast<const IR::TruncateInstruction *>(
+                     &irInstruction)) {
         convertIRTruncateInstructionToAssy(*truncateInstr, instructions);
     }
-    else if (auto zeroExtendInstr =
+    else if (const auto *zeroExtendInstr =
                  dynamic_cast<const IR::ZeroExtendInstruction *>(
                      &irInstruction)) {
         convertIRZeroExtendInstructionToAssy(*zeroExtendInstr, instructions);
@@ -296,7 +301,7 @@ void AssemblyGenerator::convertIRUnaryInstructionToAssy(
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
 
     // Get the unary operator from the IR unary instruction.
-    auto unaryIROperator = unaryInstr.getUnaryOperator();
+    auto *unaryIROperator = unaryInstr.getUnaryOperator();
 
     // Generate the assembly instructions based on the unary operator.
     if (dynamic_cast<const IR::NotOperator *>(unaryIROperator)) {
@@ -340,7 +345,7 @@ void AssemblyGenerator::convertIRUnaryInstructionToAssy(
 void AssemblyGenerator::convertIRBinaryInstructionToAssy(
     const IR::BinaryInstruction &binaryInstr,
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions) {
-    auto binaryIROperator = binaryInstr.getBinaryOperator();
+    auto *binaryIROperator = binaryInstr.getBinaryOperator();
     if (dynamic_cast<const IR::AddOperator *>(binaryIROperator)) {
         instructions.emplace_back(std::make_unique<Assembly::MovInstruction>(
             determineAssemblyType(binaryInstr.getSrc1()),
@@ -641,7 +646,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     std::vector<std::string> argRegistersInStr = {"DI", "SI", "DX",
                                                   "CX", "R8", "R9"};
 
-    auto &irArgs = functionCallInstr.getArgs();
+    const auto &irArgs = functionCallInstr.getArgs();
     std::vector<const IR::Value *> irRegisterArgs;
     std::vector<const IR::Value *> irStackArgs;
     if (irArgs.size() < NUM_ARGUMENT_REGISTERS) {
@@ -672,7 +677,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
 
     // Pass the arguments in registers.
     size_t registerIndex = 0;
-    for (auto irRegisterArg : irRegisterArgs) {
+    for (const auto *irRegisterArg : irRegisterArgs) {
         auto registerOperand = std::make_unique<Assembly::RegisterOperand>(
             argRegistersInStr[registerIndex]);
         auto assyRegisterArg = convertValue(irRegisterArg);
@@ -687,7 +692,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
     // Reverse the order of the stack arguments since
     // they should be pushed in the reverse order.
     std::ranges::reverse(irStackArgs);
-    for (auto irStackArg : irStackArgs) {
+    for (const auto *irStackArg : irStackArgs) {
         auto assyStackArg = convertValue(irStackArg);
         auto assemblyType = determineAssemblyType(irStackArg);
 
@@ -705,7 +710,7 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
             // values.
             const bool isQuadword =
                 dynamic_cast<Assembly::Quadword *>(assemblyType.get());
-            auto tempRegisterName = isQuadword ? "R10" : "AX";
+            const auto *tempRegisterName = isQuadword ? "R10" : "AX";
             instructions.emplace_back(
                 std::make_unique<Assembly::MovInstruction>(
                     std::move(assemblyType), std::move(assyStackArg),
@@ -723,8 +728,8 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
         functionCallInstr.getFunctionIdentifier()));
 
     // Adjust the stack pointer (after the function call).
-    auto bytesToPop =
-        QUADWORD_SIZE * irStackArgs.size() + static_cast<size_t>(stackPadding);
+    auto bytesToPop = (QUADWORD_SIZE * irStackArgs.size()) +
+                      static_cast<size_t>(stackPadding);
     if (bytesToPop != 0) {
         instructions.emplace_back(std::make_unique<Assembly::BinaryInstruction>(
             std::make_unique<Assembly::AddOperator>(),
@@ -745,24 +750,28 @@ void AssemblyGenerator::convertIRFunctionCallInstructionToAssy(
 
 std::unique_ptr<Assembly::Operand>
 AssemblyGenerator::convertValue(const IR::Value *irValue) {
-    if (auto constantVal = dynamic_cast<const IR::ConstantValue *>(irValue)) {
-        if (auto constInt = dynamic_cast<const AST::ConstantInt *>(
+    if (const auto *constantVal =
+            dynamic_cast<const IR::ConstantValue *>(irValue)) {
+        if (const auto *constInt = dynamic_cast<const AST::ConstantInt *>(
                 constantVal->getASTConstant())) {
             return std::make_unique<Assembly::ImmediateOperand>(
                 constInt->getValue());
         }
-        else if (auto constLong = dynamic_cast<const AST::ConstantLong *>(
-                     constantVal->getASTConstant())) {
+        else if (const auto *constLong =
+                     dynamic_cast<const AST::ConstantLong *>(
+                         constantVal->getASTConstant())) {
             return std::make_unique<Assembly::ImmediateOperand>(
                 constLong->getValue());
         }
-        else if (auto constUInt = dynamic_cast<const AST::ConstantUInt *>(
-                     constantVal->getASTConstant())) {
+        else if (const auto *constUInt =
+                     dynamic_cast<const AST::ConstantUInt *>(
+                         constantVal->getASTConstant())) {
             return std::make_unique<Assembly::ImmediateOperand>(
                 constUInt->getValue());
         }
-        else if (auto constULong = dynamic_cast<const AST::ConstantULong *>(
-                     constantVal->getASTConstant())) {
+        else if (const auto *constULong =
+                     dynamic_cast<const AST::ConstantULong *>(
+                         constantVal->getASTConstant())) {
             return std::make_unique<Assembly::ImmediateOperand>(
                 constULong->getValue());
         }
@@ -773,7 +782,8 @@ AssemblyGenerator::convertValue(const IR::Value *irValue) {
                                    std::string(typeid(r).name()));
         }
     }
-    else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
+    else if (const auto *varVal =
+                 dynamic_cast<const IR::VariableValue *>(irValue)) {
         return std::make_unique<Assembly::PseudoRegisterOperand>(
             varVal->getIdentifier());
     }
@@ -826,7 +836,8 @@ void AssemblyGenerator::convertIRZeroExtendInstructionToAssy(
 
 std::unique_ptr<Assembly::AssemblyType>
 AssemblyGenerator::determineAssemblyType(const IR::Value *irValue) {
-    if (auto constantVal = dynamic_cast<const IR::ConstantValue *>(irValue)) {
+    if (const auto *constantVal =
+            dynamic_cast<const IR::ConstantValue *>(irValue)) {
         // For constants, determine type based on the AST constant type.
         if (dynamic_cast<const AST::ConstantInt *>(
                 constantVal->getASTConstant()) ||
@@ -848,11 +859,12 @@ AssemblyGenerator::determineAssemblyType(const IR::Value *irValue) {
                 std::string(typeid(r).name()));
         }
     }
-    else if (auto varVal = dynamic_cast<const IR::VariableValue *>(irValue)) {
+    else if (const auto *varVal =
+                 dynamic_cast<const IR::VariableValue *>(irValue)) {
         // For variables, look up the type in the (frontend) symbol table.
         auto symbolIt = frontendSymbolTable->find(varVal->getIdentifier());
         if (symbolIt != frontendSymbolTable->end()) {
-            auto varType = symbolIt->second.first.get();
+            auto *varType = symbolIt->second.first.get();
             return AssemblyGenerator::convertASTTypeToAssemblyType(varType);
         }
         // If not found in (frontend) symbol table, throw an error.
@@ -914,8 +926,9 @@ std::unique_ptr<Assembly::AssemblyType> AssemblyGenerator::determineMovType(
     // the upper 4 bytes of memory destinations.
     if (dynamic_cast<Assembly::Quadword *>(baseType.get())) {
         if (dynamic_cast<const Assembly::RegisterOperand *>(operands.dst)) {
-            if (auto srcImm = dynamic_cast<const Assembly::ImmediateOperand *>(
-                    operands.src)) {
+            if (const auto *srcImm =
+                    dynamic_cast<const Assembly::ImmediateOperand *>(
+                        operands.src)) {
                 auto value = srcImm->getImmediate();
                 if (value <= std::numeric_limits<int>::max()) {
                     return std::make_unique<Assembly::Longword>();

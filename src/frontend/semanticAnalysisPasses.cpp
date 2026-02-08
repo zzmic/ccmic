@@ -49,7 +49,7 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
     else if (dynamic_cast<const AST::ULongType *>(type)) {
         return std::make_unique<AST::ULongType>();
     }
-    else if (auto functionType =
+    else if (const auto *functionType =
                  dynamic_cast<const AST::FunctionType *>(type)) {
         auto parameterTypes =
             std::make_unique<std::vector<std::unique_ptr<AST::Type>>>();
@@ -74,18 +74,19 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
  * @return The cloned constant.
  */
 std::unique_ptr<AST::Constant> cloneConstant(const AST::Constant *constant) {
-    if (auto intConst = dynamic_cast<const AST::ConstantInt *>(constant)) {
+    if (const auto *intConst =
+            dynamic_cast<const AST::ConstantInt *>(constant)) {
         return std::make_unique<AST::ConstantInt>(intConst->getValue());
     }
-    else if (auto longConst =
+    else if (const auto *longConst =
                  dynamic_cast<const AST::ConstantLong *>(constant)) {
         return std::make_unique<AST::ConstantLong>(longConst->getValue());
     }
-    else if (auto uintConst =
+    else if (const auto *uintConst =
                  dynamic_cast<const AST::ConstantUInt *>(constant)) {
         return std::make_unique<AST::ConstantUInt>(uintConst->getValue());
     }
-    else if (auto ulongConst =
+    else if (const auto *ulongConst =
                  dynamic_cast<const AST::ConstantULong *>(constant)) {
         return std::make_unique<AST::ConstantULong>(ulongConst->getValue());
     }
@@ -179,7 +180,7 @@ cloneExpression(const AST::Expression *expression) {
     if (!expression) {
         return nullptr;
     }
-    else if (auto assignmentExpression =
+    else if (const auto *assignmentExpression =
                  dynamic_cast<const AST::AssignmentExpression *>(expression)) {
         auto left = cloneExpression(assignmentExpression->getLeft());
         auto right = cloneExpression(assignmentExpression->getRight());
@@ -188,21 +189,21 @@ cloneExpression(const AST::Expression *expression) {
         cloned->setExpType(cloneType(assignmentExpression->getExpType()));
         return cloned;
     }
-    else if (auto variableExpression =
+    else if (const auto *variableExpression =
                  dynamic_cast<const AST::VariableExpression *>(expression)) {
         auto cloned = std::make_unique<AST::VariableExpression>(
             variableExpression->getIdentifier(),
             cloneType(variableExpression->getExpType()));
         return cloned;
     }
-    else if (auto constantExpression =
+    else if (const auto *constantExpression =
                  dynamic_cast<const AST::ConstantExpression *>(expression)) {
         auto cloned = std::make_unique<AST::ConstantExpression>(
             cloneConstant(constantExpression->getConstant()),
             cloneType(constantExpression->getExpType()));
         return cloned;
     }
-    else if (auto castExpression =
+    else if (const auto *castExpression =
                  dynamic_cast<const AST::CastExpression *>(expression)) {
         auto cloned = std::make_unique<AST::CastExpression>(
             cloneType(castExpression->getTargetType()),
@@ -210,7 +211,7 @@ cloneExpression(const AST::Expression *expression) {
             cloneType(castExpression->getExpType()));
         return cloned;
     }
-    else if (auto unaryExpression =
+    else if (const auto *unaryExpression =
                  dynamic_cast<const AST::UnaryExpression *>(expression)) {
         auto operand = cloneExpression(unaryExpression->getExpression());
         auto cloned = std::make_unique<AST::UnaryExpression>(
@@ -218,7 +219,7 @@ cloneExpression(const AST::Expression *expression) {
             std::move(operand), cloneType(unaryExpression->getExpType()));
         return cloned;
     }
-    else if (auto binaryExpression =
+    else if (const auto *binaryExpression =
                  dynamic_cast<const AST::BinaryExpression *>(expression)) {
         auto left = cloneExpression(binaryExpression->getLeft());
         auto right = cloneExpression(binaryExpression->getRight());
@@ -228,7 +229,7 @@ cloneExpression(const AST::Expression *expression) {
             std::move(right), cloneType(binaryExpression->getExpType()));
         return cloned;
     }
-    else if (auto conditionalExpression =
+    else if (const auto *conditionalExpression =
                  dynamic_cast<const AST::ConditionalExpression *>(expression)) {
         auto cloned = std::make_unique<AST::ConditionalExpression>(
             cloneExpression(conditionalExpression->getCondition()),
@@ -237,7 +238,7 @@ cloneExpression(const AST::Expression *expression) {
             cloneType(conditionalExpression->getExpType()));
         return cloned;
     }
-    else if (auto functionCallExpression =
+    else if (const auto *functionCallExpression =
                  dynamic_cast<const AST::FunctionCallExpression *>(
                      expression)) {
         auto arguments =
@@ -271,7 +272,8 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
     else if (dynamic_cast<const AST::Tentative *>(initialValue)) {
         return std::make_unique<AST::Tentative>();
     }
-    else if (auto initial = dynamic_cast<const AST::Initial *>(initialValue)) {
+    else if (const auto *initial =
+                 dynamic_cast<const AST::Initial *>(initialValue)) {
         auto value = initial->getStaticInit()->getValue();
         if (std::holds_alternative<int>(value)) {
             return std::make_unique<AST::Initial>(std::get<int>(value));
@@ -364,7 +366,7 @@ int IdentifierResolutionPass::resolveProgram(Program &program) {
 
     // At the top level, resolve the list of declarations in the
     // program.
-    for (auto &declaration : program.getDeclarations()) {
+    for (const auto &declaration : program.getDeclarations()) {
         if (auto *functionDeclaration =
                 dynamic_cast<FunctionDeclaration *>(declaration.get())) {
             resolveFunctionDeclaration(functionDeclaration, identifierMap);
@@ -440,7 +442,7 @@ void IdentifierResolutionPass::resolveLocalVariableDeclaration(
             generateUniqueVariableName(declarationIdentifier);
         identifierMap[declarationIdentifier] =
             MapEntry(uniqueVariableName, true, false);
-        auto optInitializer = declaration->getOptInitializer();
+        auto *optInitializer = declaration->getOptInitializer();
         if (optInitializer) {
             resolveExpression(optInitializer, identifierMap);
         }
@@ -452,38 +454,38 @@ void IdentifierResolutionPass::resolveLocalVariableDeclaration(
 void IdentifierResolutionPass::resolveStatement(
     Statement *statement,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (auto returnStatement = dynamic_cast<ReturnStatement *>(statement)) {
+    if (auto *returnStatement = dynamic_cast<ReturnStatement *>(statement)) {
         // If the statement is a return statement, resolve the expression in the
         // return statement.
         resolveExpression(returnStatement->getExpression(), identifierMap);
     }
-    else if (auto expressionStatement =
+    else if (auto *expressionStatement =
                  dynamic_cast<ExpressionStatement *>(statement)) {
         // If the statement is an expression statement, resolve the expression
         // in the expression statement.
         resolveExpression(expressionStatement->getExpression(), identifierMap);
     }
-    else if (auto compoundStatement =
+    else if (auto *compoundStatement =
                  dynamic_cast<CompoundStatement *>(statement)) {
         // Copy the identifier map (with modifications) and resolve the block in
         // the compound statement.
         auto copiedIdentifierMap = copyIdentifierMap(identifierMap);
         resolveBlock(compoundStatement->getBlock(), copiedIdentifierMap);
     }
-    else if (auto whileStatement = dynamic_cast<WhileStatement *>(statement)) {
+    else if (auto *whileStatement = dynamic_cast<WhileStatement *>(statement)) {
         // If the statement is a while-statement, resolve the condition
         // expression and the body statement in the while-statement.
         resolveExpression(whileStatement->getCondition(), identifierMap);
         resolveStatement(whileStatement->getBody(), identifierMap);
     }
-    else if (auto doWhileStatement =
+    else if (auto *doWhileStatement =
                  dynamic_cast<DoWhileStatement *>(statement)) {
         // If the statement is a do-while-statement, resolve the condition
         // expression and the body statement in the do-while-statement.
         resolveExpression(doWhileStatement->getCondition(), identifierMap);
         resolveStatement(doWhileStatement->getBody(), identifierMap);
     }
-    else if (auto forStatement = dynamic_cast<ForStatement *>(statement)) {
+    else if (auto *forStatement = dynamic_cast<ForStatement *>(statement)) {
         // Copy the identifier map (with modifications) and resolve the
         // for-init, (optional) condition, (optional) post, and body in the
         // for-statement.
@@ -498,7 +500,7 @@ void IdentifierResolutionPass::resolveStatement(
         }
         resolveStatement(forStatement->getBody(), copiedIdentifierMap);
     }
-    else if (auto ifStatement = dynamic_cast<IfStatement *>(statement)) {
+    else if (auto *ifStatement = dynamic_cast<IfStatement *>(statement)) {
         // If the statement is an if-statement, resolve the condition
         // expression, then-statement, and (optional) else-statement in the
         // if-statement.
@@ -524,7 +526,7 @@ void IdentifierResolutionPass::resolveStatement(
 void IdentifierResolutionPass::resolveExpression(
     Expression *expression,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
-    if (auto assignmentExpression =
+    if (auto *assignmentExpression =
             dynamic_cast<AssignmentExpression *>(expression)) {
         if (!(dynamic_cast<VariableExpression *>(
                 assignmentExpression->getLeft()))) {
@@ -537,7 +539,7 @@ void IdentifierResolutionPass::resolveExpression(
         resolveExpression(assignmentExpression->getLeft(), identifierMap);
         resolveExpression(assignmentExpression->getRight(), identifierMap);
     }
-    else if (auto variableExpression =
+    else if (auto *variableExpression =
                  dynamic_cast<VariableExpression *>(expression)) {
         // If the expression is a variable expression, check if the variable is
         // already in the identifier map. If it is not, throw an error.
@@ -552,20 +554,20 @@ void IdentifierResolutionPass::resolveExpression(
         variableExpression->setIdentifier(
             identifierMap[identifier].getNewName());
     }
-    else if (auto unaryExpression =
+    else if (auto *unaryExpression =
                  dynamic_cast<UnaryExpression *>(expression)) {
         // If the expression is a unary expression, resolve the expression in
         // the unary expression.
         resolveExpression(unaryExpression->getExpression(), identifierMap);
     }
-    else if (auto binaryExpression =
+    else if (auto *binaryExpression =
                  dynamic_cast<BinaryExpression *>(expression)) {
         // If the expression is a binary expression, resolve the left and right
         // expressions in the binary expression.
         resolveExpression(binaryExpression->getLeft(), identifierMap);
         resolveExpression(binaryExpression->getRight(), identifierMap);
     }
-    else if (auto conditionalExpression =
+    else if (auto *conditionalExpression =
                  dynamic_cast<ConditionalExpression *>(expression)) {
         // If the expression is a conditional expression, resolve the condition
         // expression, then-expression, and else-expression in the conditional
@@ -576,7 +578,7 @@ void IdentifierResolutionPass::resolveExpression(
         resolveExpression(conditionalExpression->getElseExpression(),
                           identifierMap);
     }
-    else if (auto functionCallExpression =
+    else if (auto *functionCallExpression =
                  dynamic_cast<FunctionCallExpression *>(expression)) {
         // If the expression is a function call expression, check if the
         // function is already in the identifier map. If it is not, throw an
@@ -592,11 +594,12 @@ void IdentifierResolutionPass::resolveExpression(
         auto resolvedFunctionName =
             identifierMap[functionCallExpression->getIdentifier()].getNewName();
         functionCallExpression->setIdentifier(resolvedFunctionName);
-        for (auto &argument : functionCallExpression->getArguments()) {
+        for (const auto &argument : functionCallExpression->getArguments()) {
             resolveExpression(argument.get(), identifierMap);
         }
     }
-    else if (auto castExpression = dynamic_cast<CastExpression *>(expression)) {
+    else if (auto *castExpression =
+                 dynamic_cast<CastExpression *>(expression)) {
         resolveExpression(castExpression->getExpression(), identifierMap);
     }
     else if (dynamic_cast<ConstantExpression *>(expression)) {
@@ -612,14 +615,14 @@ void IdentifierResolutionPass::resolveBlock(
     Block *block, std::unordered_map<std::string, MapEntry> &identifierMap) {
     // Get the block items from the block and resolve the variables in each
     // block item.
-    for (auto &blockItem : block->getBlockItems()) {
-        if (auto dBlockItem = dynamic_cast<DBlockItem *>(blockItem.get())) {
-            if (auto variableDeclaration = dynamic_cast<VariableDeclaration *>(
+    for (const auto &blockItem : block->getBlockItems()) {
+        if (auto *dBlockItem = dynamic_cast<DBlockItem *>(blockItem.get())) {
+            if (auto *variableDeclaration = dynamic_cast<VariableDeclaration *>(
                     dBlockItem->getDeclaration())) {
                 resolveLocalVariableDeclaration(variableDeclaration,
                                                 identifierMap);
             }
-            else if (auto functionDeclaration =
+            else if (auto *functionDeclaration =
                          dynamic_cast<FunctionDeclaration *>(
                              dBlockItem->getDeclaration())) {
                 resolveFunctionDeclaration(functionDeclaration, identifierMap);
@@ -632,7 +635,7 @@ void IdentifierResolutionPass::resolveBlock(
                     std::string(typeid(r).name()));
             }
         }
-        else if (auto sBlockItem =
+        else if (auto *sBlockItem =
                      dynamic_cast<SBlockItem *>(blockItem.get())) {
             resolveStatement(sBlockItem->getStatement(), identifierMap);
         }
@@ -650,12 +653,12 @@ void IdentifierResolutionPass::resolveForInit(
     ForInit *forInit,
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     // Resolve the for-init based on the type of the for init.
-    if (auto initExpr = dynamic_cast<InitExpr *>(forInit)) {
+    if (auto *initExpr = dynamic_cast<InitExpr *>(forInit)) {
         if (auto *expr = initExpr->getExpression()) {
             resolveExpression(expr, identifierMap);
         }
     }
-    else if (auto initDecl = dynamic_cast<InitDecl *>(forInit)) {
+    else if (auto *initDecl = dynamic_cast<InitDecl *>(forInit)) {
         resolveLocalVariableDeclaration(initDecl->getVariableDeclaration(),
                                         identifierMap);
     }
@@ -730,7 +733,7 @@ void TypeCheckingPass::typeCheckProgram(Program &program) {
     frontendSymbolTable->clear();
 
     // Type-check the program.
-    for (auto &declaration : program.getDeclarations()) {
+    for (const auto &declaration : program.getDeclarations()) {
         if (auto *functionDeclaration =
                 dynamic_cast<FunctionDeclaration *>(declaration.get())) {
             typeCheckFunctionDeclaration(functionDeclaration);
@@ -854,8 +857,8 @@ TypeCheckingPass::convertTo(const Expression *expression,
 
 void TypeCheckingPass::typeCheckFunctionDeclaration(
     FunctionDeclaration *declaration) {
-    auto funType = declaration->getFunType();
-    auto funTypePtr = dynamic_cast<FunctionType *>(funType);
+    auto *funType = declaration->getFunType();
+    auto *funTypePtr = dynamic_cast<FunctionType *>(funType);
     if (!funTypePtr) {
         throw std::logic_error(
             "Function type is not a FunctionType in "
@@ -872,7 +875,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     if (frontendSymbolTable->contains(declaration->getIdentifier())) {
         auto &oldDeclaration =
             (*frontendSymbolTable)[declaration->getIdentifier()];
-        auto oldType = oldDeclaration.first.get();
+        auto *oldType = oldDeclaration.first.get();
         if (*oldType != *funType) {
             const auto &r = *oldType;
             const auto &r2 = *funType;
@@ -909,7 +912,8 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
 
     if (hasBody) {
         const auto &funcParameterTypes = funTypePtr->getParameterTypes();
-        auto &parameterIdentifiers = declaration->getParameterIdentifiers();
+        const auto &parameterIdentifiers =
+            declaration->getParameterIdentifiers();
         // Set parameter types in the symbol table based on the function's
         // parameter types.
         for (size_t i = 0; i < parameterIdentifiers.size(); ++i) {
@@ -934,7 +938,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
 
 void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     VariableDeclaration *declaration) {
-    auto varType = declaration->getVarType();
+    auto *varType = declaration->getVarType();
     if (!isArithmeticType(varType)) {
         const auto &r = *varType;
         throw std::logic_error(
@@ -947,7 +951,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
 
     if (declaration->getOptInitializer() &&
         dynamic_cast<ConstantExpression *>(declaration->getOptInitializer())) {
-        auto constantExpression = dynamic_cast<ConstantExpression *>(
+        auto *constantExpression = dynamic_cast<ConstantExpression *>(
             declaration->getOptInitializer());
         auto variantValue = constantExpression->getConstantInVariant();
 
@@ -1025,7 +1029,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     if (frontendSymbolTable->contains(declaration->getIdentifier())) {
         auto &oldDeclaration =
             (*frontendSymbolTable)[declaration->getIdentifier()];
-        auto oldType = oldDeclaration.first.get();
+        auto *oldType = oldDeclaration.first.get();
         if (*oldType != *varType) {
             throw std::logic_error(
                 "Function redeclared as variable in "
@@ -1069,7 +1073,7 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
 
 void TypeCheckingPass::typeCheckLocalVariableDeclaration(
     VariableDeclaration *declaration) {
-    auto varType = declaration->getVarType();
+    auto *varType = declaration->getVarType();
     if (!isArithmeticType(varType)) {
         throw std::logic_error(
             "Unsupported variable type for local variables in "
@@ -1087,7 +1091,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         if (frontendSymbolTable->contains(declaration->getIdentifier())) {
             auto &oldDeclaration =
                 (*frontendSymbolTable)[declaration->getIdentifier()];
-            auto oldType = oldDeclaration.first.get();
+            auto *oldType = oldDeclaration.first.get();
             if (*oldType != *varType) {
                 throw std::logic_error(
                     "Function redeclared as variable in "
@@ -1108,7 +1112,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         if (declaration->getOptInitializer() &&
             dynamic_cast<ConstantExpression *>(
                 declaration->getOptInitializer())) {
-            auto constantExpression = dynamic_cast<ConstantExpression *>(
+            auto *constantExpression = dynamic_cast<ConstantExpression *>(
                 declaration->getOptInitializer());
             auto variantValue = constantExpression->getConstantInVariant();
 
@@ -1188,13 +1192,13 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
 
 void TypeCheckingPass::typeCheckBlock(
     Block *block, const std::string &enclosingFunctionIdentifier) {
-    for (auto &blockItem : block->getBlockItems()) {
-        if (auto dBlockItem = dynamic_cast<DBlockItem *>(blockItem.get())) {
-            if (auto variableDeclaration = dynamic_cast<VariableDeclaration *>(
+    for (const auto &blockItem : block->getBlockItems()) {
+        if (auto *dBlockItem = dynamic_cast<DBlockItem *>(blockItem.get())) {
+            if (auto *variableDeclaration = dynamic_cast<VariableDeclaration *>(
                     dBlockItem->getDeclaration())) {
                 typeCheckLocalVariableDeclaration(variableDeclaration);
             }
-            else if (auto functionDeclaration =
+            else if (auto *functionDeclaration =
                          dynamic_cast<FunctionDeclaration *>(
                              dBlockItem->getDeclaration())) {
                 if (functionDeclaration->getOptBody()) {
@@ -1219,7 +1223,7 @@ void TypeCheckingPass::typeCheckBlock(
                     std::string(typeid(r).name()));
             }
         }
-        else if (auto sBlockItem =
+        else if (auto *sBlockItem =
                      dynamic_cast<SBlockItem *>(blockItem.get())) {
             // Provide the enclosing function's name for the later type-checking
             // of the return statement.
@@ -1237,9 +1241,9 @@ void TypeCheckingPass::typeCheckBlock(
 }
 
 void TypeCheckingPass::typeCheckExpression(Expression *expression) {
-    if (auto functionCallExpression =
+    if (auto *functionCallExpression =
             dynamic_cast<FunctionCallExpression *>(expression)) {
-        auto fType =
+        auto *fType =
             (*frontendSymbolTable)[functionCallExpression->getIdentifier()]
                 .first.get();
         if (isArithmeticType(fType)) {
@@ -1248,9 +1252,9 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
                                    functionCallExpression->getIdentifier());
         }
         else {
-            auto functionType = dynamic_cast<FunctionType *>(fType);
+            auto *functionType = dynamic_cast<FunctionType *>(fType);
             const auto &parameterTypes = functionType->getParameterTypes();
-            auto &arguments = functionCallExpression->getArguments();
+            const auto &arguments = functionCallExpression->getArguments();
             if (parameterTypes.size() != arguments.size()) {
                 throw std::logic_error(
                     "Function called with a wrong number of arguments in "
@@ -1281,9 +1285,9 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
                 cloneType(&functionType->getReturnType()));
         }
     }
-    else if (auto constantExpression =
+    else if (auto *constantExpression =
                  dynamic_cast<ConstantExpression *>(expression)) {
-        auto constant = constantExpression->getConstant();
+        auto *constant = constantExpression->getConstant();
         if (dynamic_cast<ConstantInt *>(constant)) {
             constantExpression->setExpType(std::make_unique<IntType>());
         }
@@ -1303,9 +1307,9 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
                                    std::string(typeid(r).name()));
         }
     }
-    else if (auto variableExpression =
+    else if (auto *variableExpression =
                  dynamic_cast<VariableExpression *>(expression)) {
-        auto variableType =
+        auto *variableType =
             (*frontendSymbolTable)[variableExpression->getIdentifier()]
                 .first.get();
         // If the variable is not an arithmetic type, it is of type function.
@@ -1319,21 +1323,22 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
         // Otherwise, set the expression type to the variable type.
         variableExpression->setExpType(cloneType(variableType));
     }
-    else if (auto castExpression = dynamic_cast<CastExpression *>(expression)) {
+    else if (auto *castExpression =
+                 dynamic_cast<CastExpression *>(expression)) {
         typeCheckExpression(castExpression->getExpression());
         castExpression->setExpType(cloneType(castExpression->getTargetType()));
     }
-    else if (auto assignmentExpression =
+    else if (auto *assignmentExpression =
                  dynamic_cast<AssignmentExpression *>(expression)) {
-        auto left = assignmentExpression->getLeft();
-        auto right = assignmentExpression->getRight();
+        auto *left = assignmentExpression->getLeft();
+        auto *right = assignmentExpression->getRight();
         typeCheckExpression(left);
         typeCheckExpression(right);
-        auto leftType = left->getExpType();
+        auto *leftType = left->getExpType();
         assignmentExpression->setRight(convertTo(right, leftType));
         assignmentExpression->setExpType(cloneType(leftType));
     }
-    else if (auto unaryExpression =
+    else if (auto *unaryExpression =
                  dynamic_cast<UnaryExpression *>(expression)) {
         typeCheckExpression(unaryExpression->getExpression());
         if (dynamic_cast<NotOperator *>(unaryExpression->getOperator())) {
@@ -1344,19 +1349,19 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
                 cloneType(unaryExpression->getExpression()->getExpType()));
         }
     }
-    else if (auto binaryExpression =
+    else if (auto *binaryExpression =
                  dynamic_cast<BinaryExpression *>(expression)) {
         typeCheckExpression(binaryExpression->getLeft());
         typeCheckExpression(binaryExpression->getRight());
-        auto binaryOperator = binaryExpression->getOperator();
+        auto *binaryOperator = binaryExpression->getOperator();
         if (dynamic_cast<AndOperator *>(binaryOperator) ||
             dynamic_cast<OrOperator *>(binaryOperator)) {
             // Logical operators should always return type `int`.
             binaryExpression->setExpType(std::make_unique<IntType>());
             return;
         }
-        auto leftType = binaryExpression->getLeft()->getExpType();
-        auto rightType = binaryExpression->getRight()->getExpType();
+        auto *leftType = binaryExpression->getLeft()->getExpType();
+        auto *rightType = binaryExpression->getRight()->getExpType();
         auto commonType = getCommonType(leftType, rightType);
         binaryExpression->setLeft(
             convertTo(binaryExpression->getLeft(), commonType.get()));
@@ -1373,14 +1378,14 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
             binaryExpression->setExpType(std::make_unique<IntType>());
         }
     }
-    else if (auto conditionalExpression =
+    else if (auto *conditionalExpression =
                  dynamic_cast<ConditionalExpression *>(expression)) {
         typeCheckExpression(conditionalExpression->getCondition());
         typeCheckExpression(conditionalExpression->getThenExpression());
         typeCheckExpression(conditionalExpression->getElseExpression());
-        auto thenType =
+        auto *thenType =
             conditionalExpression->getThenExpression()->getExpType();
-        auto elseType =
+        auto *elseType =
             conditionalExpression->getElseExpression()->getExpType();
         // Get the common type of the then and else expressions/branches.
         auto commonType = getCommonType(thenType, elseType);
@@ -1396,12 +1401,12 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
 
 void TypeCheckingPass::typeCheckStatement(
     Statement *statement, const std::string &enclosingFunctionIdentifier) {
-    if (auto returnStatement = dynamic_cast<ReturnStatement *>(statement)) {
+    if (auto *returnStatement = dynamic_cast<ReturnStatement *>(statement)) {
         // Look up the enclosing function's return type and convert the return
         // value to that type.
         // Use the enclosing function's name to look up the enclosing function's
         // return type.
-        auto functionType =
+        auto *functionType =
             (*frontendSymbolTable)[enclosingFunctionIdentifier].first.get();
         if (!functionType) {
             throw std::logic_error("Function not found in symbol table in "
@@ -1413,7 +1418,7 @@ void TypeCheckingPass::typeCheckStatement(
                                    "typeCheckStatement in TypeCheckingPass: " +
                                    enclosingFunctionIdentifier);
         }
-        auto returnType = dynamic_cast<FunctionType *>(functionType);
+        auto *returnType = dynamic_cast<FunctionType *>(functionType);
         if (returnStatement->getExpression()) {
             typeCheckExpression(returnStatement->getExpression());
             returnStatement->setExpression(
@@ -1421,27 +1426,27 @@ void TypeCheckingPass::typeCheckStatement(
                           &returnType->getReturnType()));
         }
     }
-    else if (auto expressionStatement =
+    else if (auto *expressionStatement =
                  dynamic_cast<ExpressionStatement *>(statement)) {
         typeCheckExpression(expressionStatement->getExpression());
     }
-    else if (auto compoundStatement =
+    else if (auto *compoundStatement =
                  dynamic_cast<CompoundStatement *>(statement)) {
         typeCheckBlock(compoundStatement->getBlock(),
                        enclosingFunctionIdentifier);
     }
-    else if (auto whileStatement = dynamic_cast<WhileStatement *>(statement)) {
+    else if (auto *whileStatement = dynamic_cast<WhileStatement *>(statement)) {
         typeCheckExpression(whileStatement->getCondition());
         typeCheckStatement(whileStatement->getBody(),
                            enclosingFunctionIdentifier);
     }
-    else if (auto doWhileStatement =
+    else if (auto *doWhileStatement =
                  dynamic_cast<DoWhileStatement *>(statement)) {
         typeCheckExpression(doWhileStatement->getCondition());
         typeCheckStatement(doWhileStatement->getBody(),
                            enclosingFunctionIdentifier);
     }
-    else if (auto forStatement = dynamic_cast<ForStatement *>(statement)) {
+    else if (auto *forStatement = dynamic_cast<ForStatement *>(statement)) {
         if (forStatement->getForInit()) {
             typeCheckForInit(forStatement->getForInit());
         }
@@ -1454,7 +1459,7 @@ void TypeCheckingPass::typeCheckStatement(
         typeCheckStatement(forStatement->getBody(),
                            enclosingFunctionIdentifier);
     }
-    else if (auto ifStatement = dynamic_cast<IfStatement *>(statement)) {
+    else if (auto *ifStatement = dynamic_cast<IfStatement *>(statement)) {
         typeCheckExpression(ifStatement->getCondition());
         typeCheckStatement(ifStatement->getThenStatement(),
                            enclosingFunctionIdentifier);
@@ -1466,12 +1471,12 @@ void TypeCheckingPass::typeCheckStatement(
 }
 
 void TypeCheckingPass::typeCheckForInit(ForInit *forInit) {
-    if (auto initExpr = dynamic_cast<InitExpr *>(forInit)) {
+    if (auto *initExpr = dynamic_cast<InitExpr *>(forInit)) {
         if (initExpr->getExpression()) {
             typeCheckExpression(initExpr->getExpression());
         }
     }
-    else if (auto initDecl = dynamic_cast<InitDecl *>(forInit)) {
+    else if (auto *initDecl = dynamic_cast<InitDecl *>(forInit)) {
         if (initDecl->getVariableDeclaration()->getOptStorageClass()) {
             throw std::logic_error("Storage class in for-init declaration in "
                                    "typeCheckForInit in TypeCheckingPass");
@@ -1491,7 +1496,7 @@ void TypeCheckingPass::typeCheckForInit(ForInit *forInit) {
  * Start: Functions for the loop-labeling pass.
  */
 void LoopLabelingPass::labelLoops(Program &program) {
-    for (auto &declaration : program.getDeclarations()) {
+    for (const auto &declaration : program.getDeclarations()) {
         if (auto *functionDeclaration =
                 dynamic_cast<FunctionDeclaration *>(declaration.get())) {
             if (functionDeclaration->getOptBody()) {
@@ -1508,35 +1513,35 @@ std::string LoopLabelingPass::generateLoopLabel() {
 
 void LoopLabelingPass::annotateStatement(Statement *statement,
                                          std::string_view label) {
-    if (auto breakStatement = dynamic_cast<BreakStatement *>(statement)) {
+    if (auto *breakStatement = dynamic_cast<BreakStatement *>(statement)) {
         breakStatement->setLabel(label);
     }
-    else if (auto continueStatement =
+    else if (auto *continueStatement =
                  dynamic_cast<ContinueStatement *>(statement)) {
         continueStatement->setLabel(label);
     }
-    else if (auto whileStatement = dynamic_cast<WhileStatement *>(statement)) {
+    else if (auto *whileStatement = dynamic_cast<WhileStatement *>(statement)) {
         whileStatement->setLabel(label);
     }
-    else if (auto doWhileStatement =
+    else if (auto *doWhileStatement =
                  dynamic_cast<DoWhileStatement *>(statement)) {
         doWhileStatement->setLabel(label);
     }
-    else if (auto forStatement = dynamic_cast<ForStatement *>(statement)) {
+    else if (auto *forStatement = dynamic_cast<ForStatement *>(statement)) {
         forStatement->setLabel(label);
     }
 }
 
 void LoopLabelingPass::labelStatement(Statement *statement,
                                       std::string_view label) {
-    if (auto breakStatement = dynamic_cast<BreakStatement *>(statement)) {
+    if (auto *breakStatement = dynamic_cast<BreakStatement *>(statement)) {
         if (label.empty()) {
             throw std::logic_error("Break statement outside of loop in "
                                    "labelStatement in LoopLabelingPass");
         }
         annotateStatement(breakStatement, label);
     }
-    else if (auto continueStatement =
+    else if (auto *continueStatement =
                  dynamic_cast<ContinueStatement *>(statement)) {
         if (label.empty()) {
             throw std::logic_error("Continue statement outside of loop in "
@@ -1544,40 +1549,40 @@ void LoopLabelingPass::labelStatement(Statement *statement,
         }
         annotateStatement(continueStatement, label);
     }
-    else if (auto whileStatement = dynamic_cast<WhileStatement *>(statement)) {
+    else if (auto *whileStatement = dynamic_cast<WhileStatement *>(statement)) {
         auto newLabel = generateLoopLabel();
         labelStatement(whileStatement->getBody(), newLabel);
         annotateStatement(whileStatement, newLabel);
     }
-    else if (auto doWhileStatement =
+    else if (auto *doWhileStatement =
                  dynamic_cast<DoWhileStatement *>(statement)) {
         auto newLabel = generateLoopLabel();
         labelStatement(doWhileStatement->getBody(), newLabel);
         annotateStatement(doWhileStatement, newLabel);
     }
-    else if (auto forStatement = dynamic_cast<ForStatement *>(statement)) {
+    else if (auto *forStatement = dynamic_cast<ForStatement *>(statement)) {
         auto newLabel = generateLoopLabel();
         labelStatement(forStatement->getBody(), newLabel);
         annotateStatement(forStatement, newLabel);
     }
-    else if (auto ifStatement = dynamic_cast<IfStatement *>(statement)) {
+    else if (auto *ifStatement = dynamic_cast<IfStatement *>(statement)) {
         labelStatement(ifStatement->getThenStatement(), label);
         if (ifStatement->getElseOptStatement()) {
             labelStatement(ifStatement->getElseOptStatement(), label);
         }
     }
-    else if (auto compoundStatement =
+    else if (auto *compoundStatement =
                  dynamic_cast<CompoundStatement *>(statement)) {
         labelBlock(compoundStatement->getBlock(), label);
     }
 }
 
 void LoopLabelingPass::labelBlock(Block *block, std::string_view label) {
-    for (auto &blockItem : block->getBlockItems()) {
+    for (const auto &blockItem : block->getBlockItems()) {
         if (dynamic_cast<DBlockItem *>(blockItem.get())) {
             continue;
         }
-        if (auto sBlockItem = dynamic_cast<SBlockItem *>(blockItem.get())) {
+        if (auto *sBlockItem = dynamic_cast<SBlockItem *>(blockItem.get())) {
             labelStatement(sBlockItem->getStatement(), label);
             continue;
         }

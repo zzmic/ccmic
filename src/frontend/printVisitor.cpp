@@ -22,9 +22,9 @@ namespace AST {
 void PrintVisitor::visit(Program &program) {
     std::cout << "Program(\n";
 
-    auto &declarations = program.getDeclarations();
+    const auto &declarations = program.getDeclarations();
     for (auto it = declarations.begin(); it != declarations.end(); ++it) {
-        auto &functionDeclaration = *it;
+        const auto &functionDeclaration = *it;
         functionDeclaration->accept(*this);
         const bool isLast = (std::next(it) == declarations.end());
         if (!isLast) {
@@ -52,10 +52,10 @@ void PrintVisitor::visit(Function &function) {
     std::cout << "\",\n";
     std::cout << "body = ";
 
-    auto functionBody = function.getBody();
+    auto *functionBody = function.getBody();
     if (functionBody) {
-        auto &blockItems = functionBody->getBlockItems();
-        for (auto &blockItem : blockItems) {
+        const auto &blockItems = functionBody->getBlockItems();
+        for (const auto &blockItem : blockItems) {
             blockItem->accept(*this);
         }
     }
@@ -69,7 +69,7 @@ void PrintVisitor::visit(Function &function) {
 void PrintVisitor::visit(Block &block) {
     std::cout << "Block(";
 
-    for (auto &blockItem : block.getBlockItems()) {
+    for (const auto &blockItem : block.getBlockItems()) {
         blockItem->accept(*this);
     }
 
@@ -153,9 +153,9 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << "\nparameters = (";
 
-    auto &parameters = functionDeclaration.getParameterIdentifiers();
+    const auto &parameters = functionDeclaration.getParameterIdentifiers();
     for (auto it = parameters.begin(); it != parameters.end(); ++it) {
-        auto &parameter = *it;
+        const auto &parameter = *it;
         std::cout << parameter;
         if (std::next(it) != parameters.end()) {
             std::cout << ", ";
@@ -211,9 +211,9 @@ void PrintVisitor::visit(FunctionType &functionType) {
 
     std::cout << "parameters = (";
 
-    auto &parameters = functionType.getParameterTypes();
+    const auto &parameters = functionType.getParameterTypes();
     for (auto it = parameters.begin(); it != parameters.end(); ++it) {
-        auto &parameter = *it;
+        const auto &parameter = *it;
         parameter->accept(*this);
         if (std::next(it) != parameters.end()) {
             std::cout << ", ";
@@ -438,7 +438,7 @@ void PrintVisitor::visit(NullStatement &nullStatement) {
 void PrintVisitor::visit(ConstantExpression &constantExpression) {
     std::cout << "ConstantExpression(";
 
-    auto constant = constantExpression.getConstant();
+    auto *constant = constantExpression.getConstant();
     if (auto *intConst = dynamic_cast<ConstantInt *>(constant)) {
         std::cout << intConst->getValue();
     }
@@ -632,9 +632,9 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
 
     std::cout << "\nargs = ";
 
-    auto &args = functionCallExpression.getArguments();
+    const auto &args = functionCallExpression.getArguments();
     for (auto it = args.begin(); it != args.end(); ++it) {
-        auto &arg = *it;
+        const auto &arg = *it;
         arg->accept(*this);
         const bool isLast = (std::next(it) == args.end());
         if (!isLast) {

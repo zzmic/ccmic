@@ -148,7 +148,7 @@ std::string StackOperand::getReservedRegisterInStr() const {
         return "%rbp";
     }
     else {
-        auto reg = reservedReg.get();
+        auto *reg = reservedReg.get();
         const auto &r = *reg;
         throw std::logic_error("Unsupported reserved register in "
                                "getReservedRegisterInStr in StackOperand: " +

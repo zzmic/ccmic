@@ -52,7 +52,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             "Setting null operand in replaceOperand in PseudoToStackPass");
     }
 
-    if (auto pseudoReg =
+    if (const auto *pseudoReg =
             dynamic_cast<const Assembly::PseudoRegisterOperand *>(operand)) {
         const std::string &pseudoRegister = pseudoReg->getPseudoRegister();
         if (!this->pseudoToStackMap.contains(pseudoRegister)) {
@@ -61,10 +61,10 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             auto backendSymbolTableItForAlloc =
                 backendSymbolTable.find(pseudoRegister);
             if (backendSymbolTableItForAlloc != backendSymbolTable.end()) {
-                auto &backendEntry = backendSymbolTableItForAlloc->second;
+                const auto &backendEntry = backendSymbolTableItForAlloc->second;
                 // If it has a static storage duration, map it to a data operand
                 // by the same name.
-                if (auto objEntry =
+                if (auto *objEntry =
                         dynamic_cast<ObjEntry *>(backendEntry.get())) {
                     if (objEntry->isStaticStorage()) {
                         return std::make_unique<Assembly::DataOperand>(
@@ -79,10 +79,10 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
                 QUADWORD_SIZE; // Default to 8 bytes for temporary variables
             auto backendSymbolTableIt = backendSymbolTable.find(pseudoRegister);
             if (backendSymbolTableIt != backendSymbolTable.end()) {
-                auto &backendEntry = backendSymbolTableIt->second;
-                if (auto objEntry =
+                const auto &backendEntry = backendSymbolTableIt->second;
+                if (auto *objEntry =
                         dynamic_cast<ObjEntry *>(backendEntry.get())) {
-                    auto assemblyType = objEntry->getAssemblyType();
+                    const auto *assemblyType = objEntry->getAssemblyType();
                     if (dynamic_cast<const Quadword *>(assemblyType)) {
                         allocationSize =
                             QUADWORD_SIZE; // 8 bytes for `Quadword`.
@@ -122,13 +122,15 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             std::make_unique<Assembly::BP>());
     }
 
-    if (auto imm = dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
+    if (const auto *imm =
+            dynamic_cast<const Assembly::ImmediateOperand *>(operand)) {
         return std::make_unique<Assembly::ImmediateOperand>(
             imm->getImmediate());
     }
 
-    if (auto regOp = dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
-        auto reg = regOp->getRegister();
+    if (const auto *regOp =
+            dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
+        auto *reg = regOp->getRegister();
         if (dynamic_cast<const Assembly::AX *>(reg)) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::AX>());
@@ -179,8 +181,9 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
                                std::string(typeid(r).name()));
     }
 
-    if (auto stackOp = dynamic_cast<const Assembly::StackOperand *>(operand)) {
-        auto reservedReg = stackOp->getReservedRegister();
+    if (const auto *stackOp =
+            dynamic_cast<const Assembly::StackOperand *>(operand)) {
+        auto *reservedReg = stackOp->getReservedRegister();
         if (dynamic_cast<const Assembly::SP *>(reservedReg)) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::SP>());
@@ -196,7 +199,8 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
             std::string(typeid(r).name()));
     }
 
-    if (auto dataOp = dynamic_cast<const Assembly::DataOperand *>(operand)) {
+    if (const auto *dataOp =
+            dynamic_cast<const Assembly::DataOperand *>(operand)) {
         return std::make_unique<Assembly::DataOperand>(dataOp->getIdentifier());
     }
 
@@ -209,7 +213,7 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
 void PseudoToStackPass::replacePseudoWithStack(
     std::unique_ptr<Assembly::Instruction> &instruction,
     const BackendSymbolTable &backendSymbolTable) {
-    if (auto movInstruction =
+    if (auto *movInstruction =
             dynamic_cast<Assembly::MovInstruction *>(instruction.get())) {
         auto newSrc =
             replaceOperand(movInstruction->getSrc(), backendSymbolTable);
@@ -218,8 +222,9 @@ void PseudoToStackPass::replacePseudoWithStack(
         movInstruction->setSrc(std::move(newSrc));
         movInstruction->setDst(std::move(newDst));
     }
-    else if (auto movsxInstruction = dynamic_cast<Assembly::MovsxInstruction *>(
-                 instruction.get())) {
+    else if (auto *movsxInstruction =
+                 dynamic_cast<Assembly::MovsxInstruction *>(
+                     instruction.get())) {
         auto newSrc =
             replaceOperand(movsxInstruction->getSrc(), backendSymbolTable);
         auto newDst =
@@ -227,7 +232,7 @@ void PseudoToStackPass::replacePseudoWithStack(
         movsxInstruction->setSrc(std::move(newSrc));
         movsxInstruction->setDst(std::move(newDst));
     }
-    else if (auto movZeroExtendInstruction =
+    else if (auto *movZeroExtendInstruction =
                  dynamic_cast<Assembly::MovZeroExtendInstruction *>(
                      instruction.get())) {
         auto newSrc = replaceOperand(movZeroExtendInstruction->getSrc(),
@@ -237,13 +242,14 @@ void PseudoToStackPass::replacePseudoWithStack(
         movZeroExtendInstruction->setSrc(std::move(newSrc));
         movZeroExtendInstruction->setDst(std::move(newDst));
     }
-    else if (auto unaryInstruction = dynamic_cast<Assembly::UnaryInstruction *>(
-                 instruction.get())) {
+    else if (auto *unaryInstruction =
+                 dynamic_cast<Assembly::UnaryInstruction *>(
+                     instruction.get())) {
         auto newOperand =
             replaceOperand(unaryInstruction->getOperand(), backendSymbolTable);
         unaryInstruction->setOperand(std::move(newOperand));
     }
-    else if (auto binaryInstruction =
+    else if (auto *binaryInstruction =
                  dynamic_cast<Assembly::BinaryInstruction *>(
                      instruction.get())) {
         auto newOperand1 = replaceOperand(binaryInstruction->getOperand1(),
@@ -253,7 +259,7 @@ void PseudoToStackPass::replacePseudoWithStack(
         binaryInstruction->setOperand1(std::move(newOperand1));
         binaryInstruction->setOperand2(std::move(newOperand2));
     }
-    else if (auto cmpInstruction =
+    else if (auto *cmpInstruction =
                  dynamic_cast<Assembly::CmpInstruction *>(instruction.get())) {
         auto newOperand1 =
             replaceOperand(cmpInstruction->getOperand1(), backendSymbolTable);
@@ -262,52 +268,55 @@ void PseudoToStackPass::replacePseudoWithStack(
         cmpInstruction->setOperand1(std::move(newOperand1));
         cmpInstruction->setOperand2(std::move(newOperand2));
     }
-    else if (auto idivInstruction =
+    else if (auto *idivInstruction =
                  dynamic_cast<Assembly::IdivInstruction *>(instruction.get())) {
         auto newOperand =
             replaceOperand(idivInstruction->getOperand(), backendSymbolTable);
         idivInstruction->setOperand(std::move(newOperand));
     }
-    else if (auto divInstruction =
+    else if (auto *divInstruction =
                  dynamic_cast<Assembly::DivInstruction *>(instruction.get())) {
         auto newOperand =
             replaceOperand(divInstruction->getOperand(), backendSymbolTable);
         divInstruction->setOperand(std::move(newOperand));
     }
-    else if (auto setCCInstruction = dynamic_cast<Assembly::SetCCInstruction *>(
-                 instruction.get())) {
+    else if (auto *setCCInstruction =
+                 dynamic_cast<Assembly::SetCCInstruction *>(
+                     instruction.get())) {
         auto newOperand =
             replaceOperand(setCCInstruction->getOperand(), backendSymbolTable);
         setCCInstruction->setOperand(std::move(newOperand));
     }
-    else if (auto pushInstruction =
+    else if (auto *pushInstruction =
                  dynamic_cast<Assembly::PushInstruction *>(instruction.get())) {
         auto newOperand =
             replaceOperand(pushInstruction->getOperand(), backendSymbolTable);
         pushInstruction->setOperand(std::move(newOperand));
     }
-    else if (auto retInstruction =
+    else if (auto *retInstruction =
                  dynamic_cast<Assembly::RetInstruction *>(instruction.get())) {
         (void)retInstruction;
     }
-    else if (auto callInstruction =
+    else if (auto *callInstruction =
                  dynamic_cast<Assembly::CallInstruction *>(instruction.get())) {
         (void)callInstruction;
     }
-    else if (auto cdqInstruction =
+    else if (auto *cdqInstruction =
                  dynamic_cast<Assembly::CdqInstruction *>(instruction.get())) {
         (void)cdqInstruction;
     }
-    else if (auto jmpInstruction =
+    else if (auto *jmpInstruction =
                  dynamic_cast<Assembly::JmpInstruction *>(instruction.get())) {
         (void)jmpInstruction;
     }
-    else if (auto jmpCCInstruction = dynamic_cast<Assembly::JmpCCInstruction *>(
-                 instruction.get())) {
+    else if (auto *jmpCCInstruction =
+                 dynamic_cast<Assembly::JmpCCInstruction *>(
+                     instruction.get())) {
         (void)jmpCCInstruction;
     }
-    else if (auto labelInstruction = dynamic_cast<Assembly::LabelInstruction *>(
-                 instruction.get())) {
+    else if (auto *labelInstruction =
+                 dynamic_cast<Assembly::LabelInstruction *>(
+                     instruction.get())) {
         (void)labelInstruction;
     }
     else {
@@ -322,7 +331,7 @@ void PseudoToStackPass::replacePseudoWithStack(
 void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
     const Assembly::FunctionDefinition &functionDefinition) {
     for (const auto &instruction : functionDefinition.getFunctionBody()) {
-        if (auto movInstruction =
+        if (auto *movInstruction =
                 dynamic_cast<MovInstruction *>(instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 movInstruction->getSrc()));
@@ -330,7 +339,7 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movInstruction->getDst()));
             (void)movInstruction;
         }
-        else if (auto movsxInstruction =
+        else if (auto *movsxInstruction =
                      dynamic_cast<Assembly::MovsxInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
@@ -339,7 +348,7 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movsxInstruction->getDst()));
             (void)movsxInstruction;
         }
-        else if (auto movZeroExtendInstruction =
+        else if (auto *movZeroExtendInstruction =
                      dynamic_cast<Assembly::MovZeroExtendInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
@@ -348,14 +357,14 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 movZeroExtendInstruction->getDst()));
             (void)movZeroExtendInstruction;
         }
-        else if (auto unaryInstruction =
+        else if (auto *unaryInstruction =
                      dynamic_cast<Assembly::UnaryInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 unaryInstruction->getOperand()));
             (void)unaryInstruction;
         }
-        else if (auto binaryInstruction =
+        else if (auto *binaryInstruction =
                      dynamic_cast<Assembly::BinaryInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
@@ -364,64 +373,69 @@ void PseudoToStackPass::checkPseudoRegistersInFunctionDefinitionReplaced(
                 binaryInstruction->getOperand2()));
             (void)binaryInstruction;
         }
-        else if (auto cmpInstruction = dynamic_cast<Assembly::CmpInstruction *>(
-                     instruction.get())) {
+        else if (auto *cmpInstruction =
+                     dynamic_cast<Assembly::CmpInstruction *>(
+                         instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 cmpInstruction->getOperand1()));
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 cmpInstruction->getOperand2()));
             (void)cmpInstruction;
         }
-        else if (auto idivInstruction =
+        else if (auto *idivInstruction =
                      dynamic_cast<Assembly::IdivInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 idivInstruction->getOperand()));
             (void)idivInstruction;
         }
-        else if (auto divInstruction = dynamic_cast<Assembly::DivInstruction *>(
-                     instruction.get())) {
+        else if (auto *divInstruction =
+                     dynamic_cast<Assembly::DivInstruction *>(
+                         instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 divInstruction->getOperand()));
             (void)divInstruction;
         }
-        else if (auto setCCInstruction =
+        else if (auto *setCCInstruction =
                      dynamic_cast<Assembly::SetCCInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 setCCInstruction->getOperand()));
             (void)setCCInstruction;
         }
-        else if (auto pushInstruction =
+        else if (auto *pushInstruction =
                      dynamic_cast<Assembly::PushInstruction *>(
                          instruction.get())) {
             assert(!dynamic_cast<const Assembly::PseudoRegisterOperand *>(
                 pushInstruction->getOperand()));
             (void)pushInstruction;
         }
-        else if (auto retInstruction = dynamic_cast<Assembly::RetInstruction *>(
-                     instruction.get())) {
+        else if (auto *retInstruction =
+                     dynamic_cast<Assembly::RetInstruction *>(
+                         instruction.get())) {
             (void)retInstruction;
         }
-        else if (auto callInstruction =
+        else if (auto *callInstruction =
                      dynamic_cast<Assembly::CallInstruction *>(
                          instruction.get())) {
             (void)callInstruction;
         }
-        else if (auto cdqInstruction = dynamic_cast<Assembly::CdqInstruction *>(
-                     instruction.get())) {
+        else if (auto *cdqInstruction =
+                     dynamic_cast<Assembly::CdqInstruction *>(
+                         instruction.get())) {
             (void)cdqInstruction;
         }
-        else if (auto jmpInstruction = dynamic_cast<Assembly::JmpInstruction *>(
-                     instruction.get())) {
+        else if (auto *jmpInstruction =
+                     dynamic_cast<Assembly::JmpInstruction *>(
+                         instruction.get())) {
             (void)jmpInstruction;
         }
-        else if (auto jmpCCInstruction =
+        else if (auto *jmpCCInstruction =
                      dynamic_cast<Assembly::JmpCCInstruction *>(
                          instruction.get())) {
             (void)jmpCCInstruction;
         }
-        else if (auto labelInstruction =
+        else if (auto *labelInstruction =
                      dynamic_cast<Assembly::LabelInstruction *>(
                          instruction.get())) {
             (void)labelInstruction;

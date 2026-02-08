@@ -14,10 +14,10 @@ void convertFrontendToBackendSymbolTable(
     // Convert each entry from a frontend symbol table to a backend symbol
     // table.
     for (const auto &[identifier, entry] : frontendSymbolTable) {
-        auto astType = entry.first.get();
-        auto identifierAttribute = entry.second.get();
+        auto *astType = entry.first.get();
+        auto *identifierAttribute = entry.second.get();
 
-        if (auto functionAttribute =
+        if (auto *functionAttribute =
                 dynamic_cast<AST::FunctionAttribute *>(identifierAttribute)) {
             auto funEntry =
                 std::make_unique<FunEntry>(functionAttribute->isDefined());
