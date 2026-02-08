@@ -36,10 +36,7 @@ std::unique_ptr<Program> Parser::parse() {
 bool Parser::matchToken(TokenType type) {
     // If the current index is less than the number of tokens and the current
     // token is of the expected type, return true. Otherwise, return false.
-    if (current < tokens->size() && (*tokens)[current].type == type) {
-        return true;
-    }
-    return false;
+    return current < tokens->size() && (*tokens)[current].type == type;
 }
 
 Token Parser::consumeToken(TokenType type) {

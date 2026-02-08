@@ -204,9 +204,8 @@ std::unique_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
         pseudoToStackPass.replacePseudoWithStackAndAssociateStackSize(
             topLevels, backendSymbolTable);
 
-        const Assembly::FixupPass fixupPass;
         // Fix up the assembly program.
-        fixupPass.fixup(topLevels);
+        Assembly::FixupPass::fixup(topLevels);
     } catch (const std::runtime_error &e) {
         std::stringstream msg;
         msg << "Code generation error in codegenExecutor in "

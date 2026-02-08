@@ -56,6 +56,11 @@ Checks: >
   readability-redundant-string-cstr,
   readability-redundant-string-init,
   readability-redundant-typename,
+  readability-reference-to-constructed-temporary,
+  readability-simplify-boolean-expr,
+  readability-simplify-subscript-expr,
+  readability-static-accessed-through-instance,
+  readability-static-definition-in-anonymous-namespace,
 WarningsAsErrors: true
 HeaderFilterRegex: ""
 ExcludeHeaderFilterRegex: ""
