@@ -53,7 +53,7 @@ void PrintVisitor::visit(Function &function) {
     std::cout << "body = ";
 
     auto *functionBody = function.getBody();
-    if (functionBody) {
+    if (functionBody != nullptr) {
         const auto &blockItems = functionBody->getBlockItems();
         for (const auto &blockItem : blockItems) {
             blockItem->accept(*this);
@@ -79,7 +79,7 @@ void PrintVisitor::visit(Block &block) {
 void PrintVisitor::visit(SBlockItem &sBlockItem) {
     std::cout << "\nSBlockItem(\n";
 
-    if (sBlockItem.getStatement()) {
+    if (sBlockItem.getStatement() != nullptr) {
         sBlockItem.getStatement()->accept(*this);
     }
     else {
@@ -93,7 +93,7 @@ void PrintVisitor::visit(SBlockItem &sBlockItem) {
 void PrintVisitor::visit(DBlockItem &dBlockItem) {
     std::cout << "\nDBlockItem(\n";
 
-    if (dBlockItem.getDeclaration()) {
+    if (dBlockItem.getDeclaration() != nullptr) {
         dBlockItem.getDeclaration()->accept(*this);
     }
     else {
@@ -117,12 +117,12 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
             "Null identifier in declaration in PrintVisitor");
     }
 
-    if (declaration.getOptInitializer()) {
+    if (declaration.getOptInitializer() != nullptr) {
         std::cout << "\ninitializer = ";
         declaration.getOptInitializer()->accept(*this);
     }
 
-    if (declaration.getVarType()) {
+    if (declaration.getVarType() != nullptr) {
         std::cout << "\ntype = ";
         declaration.getVarType()->accept(*this);
     }
@@ -130,7 +130,7 @@ void PrintVisitor::visit(VariableDeclaration &declaration) {
         throw std::logic_error("Null type in declaration in PrintVisitor");
     }
 
-    if (declaration.getOptStorageClass()) {
+    if (declaration.getOptStorageClass() != nullptr) {
         std::cout << "\nstorageClass = ";
         declaration.getOptStorageClass()->accept(*this);
     }
@@ -164,13 +164,13 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
 
     std::cout << ")";
 
-    if (functionDeclaration.getOptBody()) {
+    if (functionDeclaration.getOptBody() != nullptr) {
         std::cout << "\nbody = ";
         functionDeclaration.getOptBody()->accept(*this);
     }
 
     std::cout << "\nfuntionType = ";
-    if (functionDeclaration.getFunType()) {
+    if (functionDeclaration.getFunType() != nullptr) {
         functionDeclaration.getFunType()->accept(*this);
     }
     else {
@@ -178,7 +178,7 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
             "Null function type in function declaration in PrintVisitor");
     }
 
-    if (functionDeclaration.getOptStorageClass()) {
+    if (functionDeclaration.getOptStorageClass() != nullptr) {
         std::cout << "\nstorageClass = ";
         functionDeclaration.getOptStorageClass()->accept(*this);
     }
@@ -241,7 +241,7 @@ void PrintVisitor::visit(ExternStorageClass &externStorageClass) {
 void PrintVisitor::visit(InitDecl &initDecl) {
     std::cout << "InitDecl(\n";
 
-    if (initDecl.getVariableDeclaration()) {
+    if (initDecl.getVariableDeclaration() != nullptr) {
         initDecl.getVariableDeclaration()->accept(*this);
     }
     else {
@@ -255,7 +255,7 @@ void PrintVisitor::visit(InitDecl &initDecl) {
 void PrintVisitor::visit(InitExpr &initExpr) {
     std::cout << "InitExpr(\n";
 
-    if (initExpr.getExpression()) {
+    if (initExpr.getExpression() != nullptr) {
         initExpr.getExpression()->accept(*this);
     }
 
@@ -265,7 +265,7 @@ void PrintVisitor::visit(InitExpr &initExpr) {
 void PrintVisitor::visit(ReturnStatement &returnStatement) {
     std::cout << "Return(";
 
-    if (returnStatement.getExpression()) {
+    if (returnStatement.getExpression() != nullptr) {
         returnStatement.getExpression()->accept(*this);
     }
     else {
@@ -279,7 +279,7 @@ void PrintVisitor::visit(ReturnStatement &returnStatement) {
 void PrintVisitor::visit(ExpressionStatement &expressionStatement) {
     std::cout << "ExpressionStatement(\n";
 
-    if (expressionStatement.getExpression()) {
+    if (expressionStatement.getExpression() != nullptr) {
         expressionStatement.getExpression()->accept(*this);
     }
     else {
@@ -295,7 +295,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
 
     std::cout << "condition = ";
 
-    if (ifStatement.getCondition()) {
+    if (ifStatement.getCondition() != nullptr) {
         ifStatement.getCondition()->accept(*this);
     }
     else {
@@ -305,7 +305,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
 
     std::cout << "\nthen = ";
 
-    if (ifStatement.getThenStatement()) {
+    if (ifStatement.getThenStatement() != nullptr) {
         ifStatement.getThenStatement()->accept(*this);
     }
     else {
@@ -313,7 +313,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
             "Null then-statement in if-statement in PrintVisitor");
     }
 
-    if (ifStatement.getElseOptStatement()) {
+    if (ifStatement.getElseOptStatement() != nullptr) {
         std::cout << "\nelse = ";
         ifStatement.getElseOptStatement()->accept(*this);
     }
@@ -324,7 +324,7 @@ void PrintVisitor::visit(IfStatement &ifStatement) {
 void PrintVisitor::visit(CompoundStatement &compoundStatement) {
     std::cout << "CompoundStatement(\n";
 
-    if (compoundStatement.getBlock()) {
+    if (compoundStatement.getBlock() != nullptr) {
         compoundStatement.getBlock()->accept(*this);
     }
     else {
@@ -349,7 +349,7 @@ void PrintVisitor::visit(WhileStatement &whileStatement) {
 
     std::cout << "condition = ";
 
-    if (whileStatement.getCondition()) {
+    if (whileStatement.getCondition() != nullptr) {
         whileStatement.getCondition()->accept(*this);
     }
     else {
@@ -359,7 +359,7 @@ void PrintVisitor::visit(WhileStatement &whileStatement) {
 
     std::cout << "\nbody = ";
 
-    if (whileStatement.getBody()) {
+    if (whileStatement.getBody() != nullptr) {
         whileStatement.getBody()->accept(*this);
     }
     else {
@@ -375,7 +375,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
 
     std::cout << "condition = ";
 
-    if (doWhileStatement.getCondition()) {
+    if (doWhileStatement.getCondition() != nullptr) {
         doWhileStatement.getCondition()->accept(*this);
     }
     else {
@@ -385,7 +385,7 @@ void PrintVisitor::visit(DoWhileStatement &doWhileStatement) {
 
     std::cout << "\nbody = ";
 
-    if (doWhileStatement.getBody()) {
+    if (doWhileStatement.getBody() != nullptr) {
         doWhileStatement.getBody()->accept(*this);
     }
     else {
@@ -401,26 +401,26 @@ void PrintVisitor::visit(ForStatement &forStatement) {
 
     std::cout << "init = ";
 
-    if (forStatement.getForInit()) {
+    if (forStatement.getForInit() != nullptr) {
         forStatement.getForInit()->accept(*this);
     }
     else {
         throw std::logic_error("Null init in for-statement in PrintVisitor");
     }
 
-    if (forStatement.getOptCondition()) {
+    if (forStatement.getOptCondition() != nullptr) {
         std::cout << "\ncondition = ";
         forStatement.getOptCondition()->accept(*this);
     }
 
-    if (forStatement.getOptPost()) {
+    if (forStatement.getOptPost() != nullptr) {
         std::cout << "\npost = ";
         forStatement.getOptPost()->accept(*this);
     }
 
     std::cout << "\nbody = ";
 
-    if (forStatement.getBody()) {
+    if (forStatement.getBody() != nullptr) {
         forStatement.getBody()->accept(*this);
     }
     else {
@@ -478,7 +478,7 @@ void PrintVisitor::visit(CastExpression &castExpression) {
 
     std::cout << "targetType = ";
 
-    if (castExpression.getTargetType()) {
+    if (castExpression.getTargetType() != nullptr) {
         castExpression.getTargetType()->accept(*this);
     }
     else {
@@ -488,7 +488,7 @@ void PrintVisitor::visit(CastExpression &castExpression) {
 
     std::cout << "\nexpression = ";
 
-    if (castExpression.getExpression()) {
+    if (castExpression.getExpression() != nullptr) {
         castExpression.getExpression()->accept(*this);
     }
     else {
@@ -502,7 +502,7 @@ void PrintVisitor::visit(CastExpression &castExpression) {
 void PrintVisitor::visit(UnaryExpression &unaryExpression) {
     std::cout << "UnaryExpression(\n";
 
-    if (unaryExpression.getOperator()) {
+    if (unaryExpression.getOperator() != nullptr) {
         unaryExpression.getOperator()->accept(*this);
     }
     else {
@@ -512,7 +512,7 @@ void PrintVisitor::visit(UnaryExpression &unaryExpression) {
 
     std::cout << "\n";
 
-    if (unaryExpression.getExpression()) {
+    if (unaryExpression.getExpression() != nullptr) {
         unaryExpression.getExpression()->accept(*this);
     }
     else {
@@ -526,7 +526,7 @@ void PrintVisitor::visit(UnaryExpression &unaryExpression) {
 void PrintVisitor::visit(BinaryExpression &binaryExpression) {
     std::cout << "BinaryExpression(\n";
 
-    if (binaryExpression.getLeft()) {
+    if (binaryExpression.getLeft() != nullptr) {
         binaryExpression.getLeft()->accept(*this);
     }
     else {
@@ -536,7 +536,7 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
 
     std::cout << "\n";
 
-    if (binaryExpression.getOperator()) {
+    if (binaryExpression.getOperator() != nullptr) {
         binaryExpression.getOperator()->accept(*this);
     }
     else {
@@ -546,7 +546,7 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
 
     std::cout << "\n";
 
-    if (binaryExpression.getRight()) {
+    if (binaryExpression.getRight() != nullptr) {
         binaryExpression.getRight()->accept(*this);
     }
     else {
@@ -560,7 +560,7 @@ void PrintVisitor::visit(BinaryExpression &binaryExpression) {
 void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
     std::cout << "AssignmentExpression(\n";
 
-    if (assignmentExpression.getLeft()) {
+    if (assignmentExpression.getLeft() != nullptr) {
         assignmentExpression.getLeft()->accept(*this);
     }
     else {
@@ -570,7 +570,7 @@ void PrintVisitor::visit(AssignmentExpression &assignmentExpression) {
 
     std::cout << "\n";
 
-    if (assignmentExpression.getRight()) {
+    if (assignmentExpression.getRight() != nullptr) {
         assignmentExpression.getRight()->accept(*this);
     }
     else {
@@ -586,7 +586,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
 
     std::cout << "condition = ";
 
-    if (conditionalExpression.getCondition()) {
+    if (conditionalExpression.getCondition() != nullptr) {
         conditionalExpression.getCondition()->accept(*this);
     }
     else {
@@ -596,7 +596,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
 
     std::cout << "\ntrue = ";
 
-    if (conditionalExpression.getThenExpression()) {
+    if (conditionalExpression.getThenExpression() != nullptr) {
         conditionalExpression.getThenExpression()->accept(*this);
     }
     else {
@@ -606,7 +606,7 @@ void PrintVisitor::visit(ConditionalExpression &conditionalExpression) {
 
     std::cout << "\nfalse = ";
 
-    if (conditionalExpression.getElseExpression()) {
+    if (conditionalExpression.getElseExpression() != nullptr) {
         conditionalExpression.getElseExpression()->accept(*this);
     }
     else {

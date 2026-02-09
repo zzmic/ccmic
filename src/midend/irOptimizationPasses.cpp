@@ -28,7 +28,7 @@ struct ConstValue {
  */
 std::optional<ConstValue> getConstValue(const IR::Value *value) {
     const auto *constantValue = dynamic_cast<const IR::ConstantValue *>(value);
-    if (!constantValue) {
+    if (constantValue == nullptr) {
         return std::nullopt;
     }
     const auto *astConst = constantValue->getASTConstant();
@@ -69,13 +69,13 @@ std::unique_ptr<IR::Value> makeConstValue(const ConstValue &value) {
  */
 std::optional<ConstValue> foldUnary(const IR::UnaryOperator *op,
                                     const ConstValue &src) {
-    if (dynamic_cast<const IR::NegateOperator *>(op)) {
+    if (dynamic_cast<const IR::NegateOperator *>(op) != nullptr) {
         return ConstValue{.isLong = src.isLong, .value = -src.value};
     }
-    else if (dynamic_cast<const IR::ComplementOperator *>(op)) {
+    else if (dynamic_cast<const IR::ComplementOperator *>(op) != nullptr) {
         return ConstValue{.isLong = src.isLong, .value = ~src.value};
     }
-    else if (dynamic_cast<const IR::NotOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotOperator *>(op) != nullptr) {
         return ConstValue{.isLong = false, .value = src.value == 0 ? 1 : 0};
     }
     return std::nullopt;
@@ -94,48 +94,49 @@ std::optional<ConstValue> foldBinary(const IR::BinaryOperator *op,
                                      const ConstValue &lhs,
                                      const ConstValue &rhs) {
     const bool isLong = lhs.isLong || rhs.isLong;
-    if (dynamic_cast<const IR::AddOperator *>(op)) {
+    if (dynamic_cast<const IR::AddOperator *>(op) != nullptr) {
         return ConstValue{.isLong = isLong, .value = lhs.value + rhs.value};
     }
-    else if (dynamic_cast<const IR::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const IR::SubtractOperator *>(op) != nullptr) {
         return ConstValue{.isLong = isLong, .value = lhs.value - rhs.value};
     }
-    else if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const IR::MultiplyOperator *>(op) != nullptr) {
         return ConstValue{.isLong = isLong, .value = lhs.value * rhs.value};
     }
-    else if (dynamic_cast<const IR::DivideOperator *>(op)) {
+    else if (dynamic_cast<const IR::DivideOperator *>(op) != nullptr) {
         if (rhs.value == 0) {
             return std::nullopt;
         }
         return ConstValue{.isLong = isLong, .value = lhs.value / rhs.value};
     }
-    else if (dynamic_cast<const IR::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const IR::RemainderOperator *>(op) != nullptr) {
         if (rhs.value == 0) {
             return std::nullopt;
         }
         return ConstValue{.isLong = isLong, .value = lhs.value % rhs.value};
     }
-    else if (dynamic_cast<const IR::EqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::EqualOperator *>(op) != nullptr) {
         return ConstValue{.isLong = false,
                           .value = lhs.value == rhs.value ? 1 : 0};
     }
-    else if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotEqualOperator *>(op) != nullptr) {
         return ConstValue{.isLong = false,
                           .value = lhs.value != rhs.value ? 1 : 0};
     }
-    else if (dynamic_cast<const IR::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOperator *>(op) != nullptr) {
         return ConstValue{.isLong = false,
                           .value = lhs.value < rhs.value ? 1 : 0};
     }
-    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op) != nullptr) {
         return ConstValue{.isLong = false,
                           .value = lhs.value <= rhs.value ? 1 : 0};
     }
-    else if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOperator *>(op) != nullptr) {
         return ConstValue{.isLong = false,
                           .value = lhs.value > rhs.value ? 1 : 0};
     }
-    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op) !=
+             nullptr) {
         return ConstValue{.isLong = false,
                           .value = lhs.value >= rhs.value ? 1 : 0};
     }
@@ -188,13 +189,13 @@ std::unique_ptr<IR::Value> cloneValue(const IR::Value *value) {
  */
 std::unique_ptr<IR::UnaryOperator>
 cloneUnaryOperator(const IR::UnaryOperator *op) {
-    if (dynamic_cast<const IR::NegateOperator *>(op)) {
+    if (dynamic_cast<const IR::NegateOperator *>(op) != nullptr) {
         return std::make_unique<IR::NegateOperator>();
     }
-    else if (dynamic_cast<const IR::ComplementOperator *>(op)) {
+    else if (dynamic_cast<const IR::ComplementOperator *>(op) != nullptr) {
         return std::make_unique<IR::ComplementOperator>();
     }
-    else if (dynamic_cast<const IR::NotOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotOperator *>(op) != nullptr) {
         return std::make_unique<IR::NotOperator>();
     }
     throw std::logic_error("Unsupported unary operator in cloneUnaryOperator");
@@ -208,37 +209,38 @@ cloneUnaryOperator(const IR::UnaryOperator *op) {
  */
 std::unique_ptr<IR::BinaryOperator>
 cloneBinaryOperator(const IR::BinaryOperator *op) {
-    if (dynamic_cast<const IR::AddOperator *>(op)) {
+    if (dynamic_cast<const IR::AddOperator *>(op) != nullptr) {
         return std::make_unique<IR::AddOperator>();
     }
-    else if (dynamic_cast<const IR::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const IR::SubtractOperator *>(op) != nullptr) {
         return std::make_unique<IR::SubtractOperator>();
     }
-    else if (dynamic_cast<const IR::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const IR::MultiplyOperator *>(op) != nullptr) {
         return std::make_unique<IR::MultiplyOperator>();
     }
-    else if (dynamic_cast<const IR::DivideOperator *>(op)) {
+    else if (dynamic_cast<const IR::DivideOperator *>(op) != nullptr) {
         return std::make_unique<IR::DivideOperator>();
     }
-    else if (dynamic_cast<const IR::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const IR::RemainderOperator *>(op) != nullptr) {
         return std::make_unique<IR::RemainderOperator>();
     }
-    else if (dynamic_cast<const IR::EqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::EqualOperator *>(op) != nullptr) {
         return std::make_unique<IR::EqualOperator>();
     }
-    else if (dynamic_cast<const IR::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::NotEqualOperator *>(op) != nullptr) {
         return std::make_unique<IR::NotEqualOperator>();
     }
-    else if (dynamic_cast<const IR::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOperator *>(op) != nullptr) {
         return std::make_unique<IR::LessThanOperator>();
     }
-    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op) != nullptr) {
         return std::make_unique<IR::LessThanOrEqualOperator>();
     }
-    else if (dynamic_cast<const IR::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOperator *>(op) != nullptr) {
         return std::make_unique<IR::GreaterThanOperator>();
     }
-    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op) !=
+             nullptr) {
         return std::make_unique<IR::GreaterThanOrEqualOperator>();
     }
     throw std::logic_error(

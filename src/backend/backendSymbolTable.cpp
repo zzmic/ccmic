@@ -23,14 +23,16 @@ void convertFrontendToBackendSymbolTable(
                 std::make_unique<FunEntry>(functionAttribute->isDefined());
             backendSymbolTable[identifier] = std::move(funEntry);
         }
-        else if (dynamic_cast<AST::StaticAttribute *>(identifierAttribute)) {
+        else if (dynamic_cast<AST::StaticAttribute *>(identifierAttribute) !=
+                 nullptr) {
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
             auto objEntry = std::make_unique<ObjEntry>(
                 std::move(assemblyType), true); // true for static storage.
             backendSymbolTable[identifier] = std::move(objEntry);
         }
-        else if (dynamic_cast<AST::LocalAttribute *>(identifierAttribute)) {
+        else if (dynamic_cast<AST::LocalAttribute *>(identifierAttribute) !=
+                 nullptr) {
             auto assemblyType =
                 AssemblyGenerator::convertASTTypeToAssemblyType(astType);
             auto objEntry = std::make_unique<ObjEntry>(

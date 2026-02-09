@@ -8,7 +8,7 @@ The compiler transforms C source code into X86-64 assembly through a multi-stage
 
 - **Lexing (Lexical Analysis)**: Regex-based tokenization of C source.
 - **Parsing (Syntactic Analysis)**: Recursive descent parsing with precedence climbing for abstract syntax tree (AST) construction.
-  - Leverages the [Visitor design pattern](https://en.wikipedia.org/wiki/Visitor_pattern) for AST traversal.
+  - Leverages [the Visitor design pattern](https://en.wikipedia.org/wiki/Visitor_pattern) for AST traversal(s), where `AST` nodes accept a `Visitor` interface (defined in [`src/frontend/visitor.h`](https://github.com/zzmic/ccmic/blob/main/src/frontend/visitor.h)), in which the design separates algorithms (e.g., pretty-printing, semantic analysis, IR generation) from the object structure, enabling the addition of new operations without modifying the AST classes.
 - **Semantic Analysis**: Type checking, symbol resolution, and loop labeling for AST validation.
 - **IR Generation**: AST lowering to a custom intermediate representation (IR).
 - **Code Generation (Assembly Generation)**: IR-to-assembly translation, stack allocation, and fixup passes for X86-64.

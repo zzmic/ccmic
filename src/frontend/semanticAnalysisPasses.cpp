@@ -34,19 +34,19 @@ namespace {
  * @return The cloned type.
  */
 std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
-    if (!type) {
+    if (type == nullptr) {
         return nullptr;
     }
-    else if (dynamic_cast<const AST::IntType *>(type)) {
+    else if (dynamic_cast<const AST::IntType *>(type) != nullptr) {
         return std::make_unique<AST::IntType>();
     }
-    else if (dynamic_cast<const AST::LongType *>(type)) {
+    else if (dynamic_cast<const AST::LongType *>(type) != nullptr) {
         return std::make_unique<AST::LongType>();
     }
-    else if (dynamic_cast<const AST::UIntType *>(type)) {
+    else if (dynamic_cast<const AST::UIntType *>(type) != nullptr) {
         return std::make_unique<AST::UIntType>();
     }
-    else if (dynamic_cast<const AST::ULongType *>(type)) {
+    else if (dynamic_cast<const AST::ULongType *>(type) != nullptr) {
         return std::make_unique<AST::ULongType>();
     }
     else if (const auto *functionType =
@@ -102,13 +102,13 @@ std::unique_ptr<AST::Constant> cloneConstant(const AST::Constant *constant) {
  */
 std::unique_ptr<AST::UnaryOperator>
 cloneUnaryOperator(const AST::UnaryOperator *op) {
-    if (dynamic_cast<const AST::ComplementOperator *>(op)) {
+    if (dynamic_cast<const AST::ComplementOperator *>(op) != nullptr) {
         return std::make_unique<AST::ComplementOperator>();
     }
-    else if (dynamic_cast<const AST::NegateOperator *>(op)) {
+    else if (dynamic_cast<const AST::NegateOperator *>(op) != nullptr) {
         return std::make_unique<AST::NegateOperator>();
     }
-    else if (dynamic_cast<const AST::NotOperator *>(op)) {
+    else if (dynamic_cast<const AST::NotOperator *>(op) != nullptr) {
         return std::make_unique<AST::NotOperator>();
     }
     throw std::logic_error("Unsupported unary operator in cloneUnaryOperator "
@@ -123,46 +123,48 @@ cloneUnaryOperator(const AST::UnaryOperator *op) {
  */
 std::unique_ptr<AST::BinaryOperator>
 cloneBinaryOperator(const AST::BinaryOperator *op) {
-    if (dynamic_cast<const AST::AddOperator *>(op)) {
+    if (dynamic_cast<const AST::AddOperator *>(op) != nullptr) {
         return std::make_unique<AST::AddOperator>();
     }
-    else if (dynamic_cast<const AST::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const AST::SubtractOperator *>(op) != nullptr) {
         return std::make_unique<AST::SubtractOperator>();
     }
-    else if (dynamic_cast<const AST::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const AST::MultiplyOperator *>(op) != nullptr) {
         return std::make_unique<AST::MultiplyOperator>();
     }
-    else if (dynamic_cast<const AST::DivideOperator *>(op)) {
+    else if (dynamic_cast<const AST::DivideOperator *>(op) != nullptr) {
         return std::make_unique<AST::DivideOperator>();
     }
-    else if (dynamic_cast<const AST::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const AST::RemainderOperator *>(op) != nullptr) {
         return std::make_unique<AST::RemainderOperator>();
     }
-    else if (dynamic_cast<const AST::AndOperator *>(op)) {
+    else if (dynamic_cast<const AST::AndOperator *>(op) != nullptr) {
         return std::make_unique<AST::AndOperator>();
     }
-    else if (dynamic_cast<const AST::OrOperator *>(op)) {
+    else if (dynamic_cast<const AST::OrOperator *>(op) != nullptr) {
         return std::make_unique<AST::OrOperator>();
     }
-    else if (dynamic_cast<const AST::EqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::EqualOperator *>(op) != nullptr) {
         return std::make_unique<AST::EqualOperator>();
     }
-    else if (dynamic_cast<const AST::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::NotEqualOperator *>(op) != nullptr) {
         return std::make_unique<AST::NotEqualOperator>();
     }
-    else if (dynamic_cast<const AST::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const AST::LessThanOperator *>(op) != nullptr) {
         return std::make_unique<AST::LessThanOperator>();
     }
-    else if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op) !=
+             nullptr) {
         return std::make_unique<AST::LessThanOrEqualOperator>();
     }
-    else if (dynamic_cast<const AST::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const AST::GreaterThanOperator *>(op) != nullptr) {
         return std::make_unique<AST::GreaterThanOperator>();
     }
-    else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op) !=
+             nullptr) {
         return std::make_unique<AST::GreaterThanOrEqualOperator>();
     }
-    else if (dynamic_cast<const AST::AssignmentOperator *>(op)) {
+    else if (dynamic_cast<const AST::AssignmentOperator *>(op) != nullptr) {
         return std::make_unique<AST::AssignmentOperator>();
     }
     throw std::logic_error("Unsupported binary operator in cloneBinaryOperator "
@@ -177,7 +179,7 @@ cloneBinaryOperator(const AST::BinaryOperator *op) {
  */
 std::unique_ptr<AST::Expression>
 cloneExpression(const AST::Expression *expression) {
-    if (!expression) {
+    if (expression == nullptr) {
         return nullptr;
     }
     else if (const auto *assignmentExpression =
@@ -266,10 +268,10 @@ cloneExpression(const AST::Expression *expression) {
  */
 std::unique_ptr<AST::InitialValue>
 cloneInitialValue(const AST::InitialValue *initialValue) {
-    if (dynamic_cast<const AST::NoInitializer *>(initialValue)) {
+    if (dynamic_cast<const AST::NoInitializer *>(initialValue) != nullptr) {
         return std::make_unique<AST::NoInitializer>();
     }
-    else if (dynamic_cast<const AST::Tentative *>(initialValue)) {
+    else if (dynamic_cast<const AST::Tentative *>(initialValue) != nullptr) {
         return std::make_unique<AST::Tentative>();
     }
     else if (const auto *initial =
@@ -312,12 +314,12 @@ cloneInitialValue(const AST::InitialValue *initialValue) {
  * @return The size of the type in bytes.
  */
 int getTypeSize(const AST::Type *type) {
-    if (dynamic_cast<const AST::IntType *>(type) ||
-        dynamic_cast<const AST::UIntType *>(type)) {
+    if ((dynamic_cast<const AST::IntType *>(type) != nullptr) ||
+        (dynamic_cast<const AST::UIntType *>(type) != nullptr)) {
         return LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const AST::LongType *>(type) ||
-             dynamic_cast<const AST::ULongType *>(type)) {
+    else if ((dynamic_cast<const AST::LongType *>(type) != nullptr) ||
+             (dynamic_cast<const AST::ULongType *>(type) != nullptr)) {
         return QUADWORD_SIZE;
     }
     const auto &r = *type;
@@ -333,8 +335,8 @@ int getTypeSize(const AST::Type *type) {
  * @return True if the type is a signed type (`int` or `long`), false otherwise.
  */
 bool isSigned(const AST::Type *type) {
-    return dynamic_cast<const AST::IntType *>(type) ||
-           dynamic_cast<const AST::LongType *>(type);
+    return (dynamic_cast<const AST::IntType *>(type) != nullptr) ||
+           (dynamic_cast<const AST::LongType *>(type) != nullptr);
 }
 
 /**
@@ -346,10 +348,10 @@ bool isSigned(const AST::Type *type) {
  * int`, or `unsigned long`), false otherwise.
  */
 bool isArithmeticType(const AST::Type *type) {
-    return dynamic_cast<const AST::IntType *>(type) ||
-           dynamic_cast<const AST::LongType *>(type) ||
-           dynamic_cast<const AST::UIntType *>(type) ||
-           dynamic_cast<const AST::ULongType *>(type);
+    return (dynamic_cast<const AST::IntType *>(type) != nullptr) ||
+           (dynamic_cast<const AST::LongType *>(type) != nullptr) ||
+           (dynamic_cast<const AST::UIntType *>(type) != nullptr) ||
+           (dynamic_cast<const AST::ULongType *>(type) != nullptr);
 }
 } // namespace
 
@@ -420,10 +422,10 @@ void IdentifierResolutionPass::resolveLocalVariableDeclaration(
     if (identifierMap.contains(declaration->getIdentifier())) {
         auto previousEntry = identifierMap[declaration->getIdentifier()];
         if (previousEntry.fromCurrentScopeOrNot()) {
-            if (!(previousEntry.hasLinkageOrNot() &&
-                  declaration->getOptStorageClass() &&
-                  dynamic_cast<ExternStorageClass *>(
-                      declaration->getOptStorageClass()))) {
+            if (!previousEntry.hasLinkageOrNot() ||
+                (declaration->getOptStorageClass() == nullptr) ||
+                (dynamic_cast<ExternStorageClass *>(
+                     declaration->getOptStorageClass()) == nullptr)) {
                 std::stringstream msg;
                 msg << "Conflicting local variable declaration: "
                     << declaration->getIdentifier();
@@ -431,8 +433,9 @@ void IdentifierResolutionPass::resolveLocalVariableDeclaration(
             }
         }
     }
-    if (declaration->getOptStorageClass() &&
-        dynamic_cast<ExternStorageClass *>(declaration->getOptStorageClass())) {
+    if ((declaration->getOptStorageClass() != nullptr) &&
+        (dynamic_cast<ExternStorageClass *>(
+             declaration->getOptStorageClass()) != nullptr)) {
         identifierMap[declaration->getIdentifier()] =
             MapEntry(declaration->getIdentifier(), true, true);
     }
@@ -443,7 +446,7 @@ void IdentifierResolutionPass::resolveLocalVariableDeclaration(
         identifierMap[declarationIdentifier] =
             MapEntry(uniqueVariableName, true, false);
         auto *optInitializer = declaration->getOptInitializer();
-        if (optInitializer) {
+        if (optInitializer != nullptr) {
             resolveExpression(optInitializer, identifierMap);
         }
         declaration->setIdentifier(
@@ -491,11 +494,11 @@ void IdentifierResolutionPass::resolveStatement(
         // for-statement.
         auto copiedIdentifierMap = copyIdentifierMap(identifierMap);
         resolveForInit(forStatement->getForInit(), copiedIdentifierMap);
-        if (forStatement->getOptCondition()) {
+        if (forStatement->getOptCondition() != nullptr) {
             resolveExpression(forStatement->getOptCondition(),
                               copiedIdentifierMap);
         }
-        if (forStatement->getOptPost()) {
+        if (forStatement->getOptPost() != nullptr) {
             resolveExpression(forStatement->getOptPost(), copiedIdentifierMap);
         }
         resolveStatement(forStatement->getBody(), copiedIdentifierMap);
@@ -506,13 +509,13 @@ void IdentifierResolutionPass::resolveStatement(
         // if-statement.
         resolveExpression(ifStatement->getCondition(), identifierMap);
         resolveStatement(ifStatement->getThenStatement(), identifierMap);
-        if (ifStatement->getElseOptStatement()) {
+        if (ifStatement->getElseOptStatement() != nullptr) {
             resolveStatement(ifStatement->getElseOptStatement(), identifierMap);
         }
     }
-    else if ((dynamic_cast<BreakStatement *>(statement)) ||
-             (dynamic_cast<ContinueStatement *>(statement)) ||
-             (dynamic_cast<NullStatement *>(statement))) {
+    else if (((dynamic_cast<BreakStatement *>(statement)) != nullptr) ||
+             ((dynamic_cast<ContinueStatement *>(statement)) != nullptr) ||
+             ((dynamic_cast<NullStatement *>(statement)) != nullptr)) {
         // If the statement is a break statement, continue statement, or null
         // statement, do nothing.
     }
@@ -528,8 +531,8 @@ void IdentifierResolutionPass::resolveExpression(
     std::unordered_map<std::string, MapEntry> &identifierMap) {
     if (auto *assignmentExpression =
             dynamic_cast<AssignmentExpression *>(expression)) {
-        if (!(dynamic_cast<VariableExpression *>(
-                assignmentExpression->getLeft()))) {
+        if ((dynamic_cast<VariableExpression *>(
+                assignmentExpression->getLeft())) == nullptr) {
             const auto &r = *assignmentExpression->getLeft();
             throw std::logic_error(
                 "Invalid lvalue in assignment expression in resolveExpression "
@@ -602,7 +605,7 @@ void IdentifierResolutionPass::resolveExpression(
                  dynamic_cast<CastExpression *>(expression)) {
         resolveExpression(castExpression->getExpression(), identifierMap);
     }
-    else if (dynamic_cast<ConstantExpression *>(expression)) {
+    else if (dynamic_cast<ConstantExpression *>(expression) != nullptr) {
     }
     else {
         throw std::logic_error(
@@ -696,7 +699,7 @@ void IdentifierResolutionPass::resolveFunctionDeclaration(
             resolveParameter(parameter, innerIdentifierMap));
     }
     declaration->setParameters(std::move(resolvedParameters));
-    if (declaration->getOptBody()) {
+    if (declaration->getOptBody() != nullptr) {
         resolveBlock(declaration->getOptBody(), innerIdentifierMap);
     }
 }
@@ -804,12 +807,12 @@ std::unique_ptr<StaticInit> TypeCheckingPass::convertStaticConstantToStaticInit(
 std::unique_ptr<Type> TypeCheckingPass::getCommonType(const Type *type1,
                                                       const Type *type2) {
     // If `type1` is `nullptr`, throw an error.
-    if (!type1) {
+    if (type1 == nullptr) {
         throw std::logic_error(
             "Null type1 in getCommonType in semanticAnalysisPasses");
     }
     // If `type2` is `nullptr`, return `type1`.
-    if (!type2) {
+    if (type2 == nullptr) {
         return cloneType(type1);
     }
     // Rule 1: If both types are the same, return `type1` (or `type2`).
@@ -835,17 +838,18 @@ std::unique_ptr<Type> TypeCheckingPass::getCommonType(const Type *type1,
 std::unique_ptr<Expression>
 TypeCheckingPass::convertTo(const Expression *expression,
                             const Type *targetType) {
-    if (!expression) {
+    if (expression == nullptr) {
         throw std::logic_error(
             "Null expression in convertTo in semanticAnalysisPasses");
     }
-    if (!targetType) {
+    if (targetType == nullptr) {
         throw std::logic_error(
             "Null target type in convertTo in semanticAnalysisPasses");
     }
     // Otherwise, wrap the expression in a cast expression and annotate the
     // result with the correct type.
-    if (expression->getExpType() && *expression->getExpType() == *targetType) {
+    if ((expression->getExpType() != nullptr) &&
+        *expression->getExpType() == *targetType) {
         return cloneExpression(expression);
     }
     auto castExpression = std::make_unique<CastExpression>(
@@ -858,7 +862,7 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     FunctionDeclaration *declaration) {
     auto *funType = declaration->getFunType();
     auto *funTypePtr = dynamic_cast<FunctionType *>(funType);
-    if (!funTypePtr) {
+    if (funTypePtr == nullptr) {
         throw std::logic_error(
             "Function type is not a FunctionType in "
             "typeCheckFunctionDeclaration in TypeCheckingPass");
@@ -867,8 +871,9 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
     auto alreadyDefined = false;
     auto global = true;
 
-    if (declaration->getOptStorageClass() &&
-        dynamic_cast<StaticStorageClass *>(declaration->getOptStorageClass())) {
+    if ((declaration->getOptStorageClass() != nullptr) &&
+        (dynamic_cast<StaticStorageClass *>(
+             declaration->getOptStorageClass()) != nullptr)) {
         global = false;
     }
     if (frontendSymbolTable->contains(declaration->getIdentifier())) {
@@ -894,9 +899,9 @@ void TypeCheckingPass::typeCheckFunctionDeclaration(
                 declaration->getIdentifier());
         }
         if (oldFunctionAttribute->isGlobal() &&
-            declaration->getOptStorageClass() &&
-            dynamic_cast<StaticStorageClass *>(
-                declaration->getOptStorageClass())) {
+            (declaration->getOptStorageClass() != nullptr) &&
+            (dynamic_cast<StaticStorageClass *>(
+                 declaration->getOptStorageClass()) != nullptr)) {
             throw std::logic_error(
                 "Static function declaration follows non-static in "
                 "typeCheckFunctionDeclaration in TypeCheckingPass");
@@ -948,8 +953,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
 
     auto initialValue = std::make_unique<InitialValue>();
 
-    if (declaration->getOptInitializer() &&
-        dynamic_cast<ConstantExpression *>(declaration->getOptInitializer())) {
+    if ((declaration->getOptInitializer() != nullptr) &&
+        (dynamic_cast<ConstantExpression *>(declaration->getOptInitializer()) !=
+         nullptr)) {
         auto *constantExpression = dynamic_cast<ConstantExpression *>(
             declaration->getOptInitializer());
         auto variantValue = constantExpression->getConstantInVariant();
@@ -979,19 +985,19 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         }
 
         // Create the initial value with the appropriate target type.
-        if (dynamic_cast<IntType *>(varType)) {
+        if (dynamic_cast<IntType *>(varType) != nullptr) {
             initialValue =
                 std::make_unique<Initial>(static_cast<int>(numericValue));
         }
-        else if (dynamic_cast<LongType *>(varType)) {
+        else if (dynamic_cast<LongType *>(varType) != nullptr) {
             initialValue =
                 std::make_unique<Initial>(static_cast<long>(numericValue));
         }
-        else if (dynamic_cast<UIntType *>(varType)) {
+        else if (dynamic_cast<UIntType *>(varType) != nullptr) {
             initialValue = std::make_unique<Initial>(
                 static_cast<unsigned int>(numericValue));
         }
-        else if (dynamic_cast<ULongType *>(varType)) {
+        else if (dynamic_cast<ULongType *>(varType) != nullptr) {
             initialValue = std::make_unique<Initial>(numericValue);
         }
         else {
@@ -1002,10 +1008,10 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                 std::string(typeid(r).name()));
         }
     }
-    else if (!declaration->getOptInitializer()) {
-        if (declaration->getOptStorageClass() &&
-            dynamic_cast<ExternStorageClass *>(
-                declaration->getOptStorageClass())) {
+    else if (declaration->getOptInitializer() == nullptr) {
+        if ((declaration->getOptStorageClass() != nullptr) &&
+            (dynamic_cast<ExternStorageClass *>(
+                 declaration->getOptStorageClass()) != nullptr)) {
             initialValue = std::make_unique<NoInitializer>();
         }
         else {
@@ -1019,10 +1025,10 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
     }
 
     // Determine the linkage of the variable.
-    auto global = (!declaration->getOptStorageClass()) ||
-                  (declaration->getOptStorageClass() &&
-                   !(dynamic_cast<StaticStorageClass *>(
-                       declaration->getOptStorageClass())));
+    auto global = (declaration->getOptStorageClass() == nullptr) ||
+                  ((declaration->getOptStorageClass() != nullptr) &&
+                   ((dynamic_cast<StaticStorageClass *>(
+                        declaration->getOptStorageClass())) == nullptr));
 
     if (frontendSymbolTable->contains(declaration->getIdentifier())) {
         auto &oldDeclaration =
@@ -1035,9 +1041,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
         }
         auto *oldStaticAttribute =
             dynamic_cast<StaticAttribute *>(oldDeclaration.second.get());
-        if (declaration->getOptStorageClass() &&
-            dynamic_cast<ExternStorageClass *>(
-                declaration->getOptStorageClass())) {
+        if ((declaration->getOptStorageClass() != nullptr) &&
+            (dynamic_cast<ExternStorageClass *>(
+                 declaration->getOptStorageClass()) != nullptr)) {
             global = oldStaticAttribute->isGlobal();
         }
         else if (oldStaticAttribute->isGlobal() != global) {
@@ -1045,8 +1051,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
                 "Conflicting variable linkage in "
                 "typeCheckFileScopeVariableDeclaration in TypeCheckingPass");
         }
-        if (dynamic_cast<Initial *>(oldStaticAttribute->getInitialValue())) {
-            if (dynamic_cast<Initial *>(initialValue.get())) {
+        if (dynamic_cast<Initial *>(oldStaticAttribute->getInitialValue()) !=
+            nullptr) {
+            if (dynamic_cast<Initial *>(initialValue.get()) != nullptr) {
                 throw std::logic_error(
                     "Conflicting file-scope variable definitions in "
                     "typeCheckFileScopeVariableDeclaration in "
@@ -1055,9 +1062,9 @@ void TypeCheckingPass::typeCheckFileScopeVariableDeclaration(
             initialValue =
                 cloneInitialValue(oldStaticAttribute->getInitialValue());
         }
-        else if (!dynamic_cast<Initial *>(initialValue.get()) &&
-                 dynamic_cast<Tentative *>(
-                     oldStaticAttribute->getInitialValue())) {
+        else if ((dynamic_cast<Initial *>(initialValue.get()) == nullptr) &&
+                 (dynamic_cast<Tentative *>(
+                      oldStaticAttribute->getInitialValue()) != nullptr)) {
             initialValue = std::make_unique<Tentative>();
         }
     }
@@ -1079,9 +1086,10 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             std::string(typeid(varType).name()));
     }
 
-    if (declaration->getOptStorageClass() &&
-        dynamic_cast<ExternStorageClass *>(declaration->getOptStorageClass())) {
-        if (declaration->getOptInitializer()) {
+    if ((declaration->getOptStorageClass() != nullptr) &&
+        (dynamic_cast<ExternStorageClass *>(
+             declaration->getOptStorageClass()) != nullptr)) {
+        if (declaration->getOptInitializer() != nullptr) {
             throw std::logic_error(
                 "Initializer on local extern variable declaration in "
                 "typeCheckLocalVariableDeclaration in TypeCheckingPass");
@@ -1103,13 +1111,13 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                 std::make_pair(cloneType(varType), std::move(staticAttribute));
         }
     }
-    else if (declaration->getOptStorageClass() &&
-             dynamic_cast<StaticStorageClass *>(
-                 declaration->getOptStorageClass())) {
+    else if ((declaration->getOptStorageClass() != nullptr) &&
+             (dynamic_cast<StaticStorageClass *>(
+                  declaration->getOptStorageClass()) != nullptr)) {
         auto initialValue = std::make_unique<InitialValue>();
-        if (declaration->getOptInitializer() &&
-            dynamic_cast<ConstantExpression *>(
-                declaration->getOptInitializer())) {
+        if ((declaration->getOptInitializer() != nullptr) &&
+            (dynamic_cast<ConstantExpression *>(
+                 declaration->getOptInitializer()) != nullptr)) {
             auto *constantExpression = dynamic_cast<ConstantExpression *>(
                 declaration->getOptInitializer());
             auto variantValue = constantExpression->getConstantInVariant();
@@ -1139,19 +1147,19 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
             }
 
             // Create the initial value with the appropriate target type.
-            if (dynamic_cast<IntType *>(varType)) {
+            if (dynamic_cast<IntType *>(varType) != nullptr) {
                 initialValue =
                     std::make_unique<Initial>(static_cast<int>(numericValue));
             }
-            else if (dynamic_cast<LongType *>(varType)) {
+            else if (dynamic_cast<LongType *>(varType) != nullptr) {
                 initialValue =
                     std::make_unique<Initial>(static_cast<long>(numericValue));
             }
-            else if (dynamic_cast<UIntType *>(varType)) {
+            else if (dynamic_cast<UIntType *>(varType) != nullptr) {
                 initialValue = std::make_unique<Initial>(
                     static_cast<unsigned int>(numericValue));
             }
-            else if (dynamic_cast<ULongType *>(varType)) {
+            else if (dynamic_cast<ULongType *>(varType) != nullptr) {
                 initialValue = std::make_unique<Initial>(numericValue);
             }
             else {
@@ -1162,7 +1170,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
                     std::string(typeid(r).name()));
             }
         }
-        else if (!declaration->getOptInitializer()) {
+        else if (declaration->getOptInitializer() == nullptr) {
             initialValue = std::make_unique<Initial>(0);
         }
         else {
@@ -1179,7 +1187,7 @@ void TypeCheckingPass::typeCheckLocalVariableDeclaration(
         auto localAttribute = std::make_unique<LocalAttribute>();
         (*frontendSymbolTable)[declaration->getIdentifier()] =
             std::make_pair(cloneType(varType), std::move(localAttribute));
-        if (declaration->getOptInitializer()) {
+        if (declaration->getOptInitializer() != nullptr) {
             auto *initializer = declaration->getOptInitializer();
             typeCheckExpression(initializer);
             declaration->setOptInitializer(convertTo(initializer, varType));
@@ -1198,14 +1206,15 @@ void TypeCheckingPass::typeCheckBlock(
             else if (auto *functionDeclaration =
                          dynamic_cast<FunctionDeclaration *>(
                              dBlockItem->getDeclaration())) {
-                if (functionDeclaration->getOptBody()) {
+                if (functionDeclaration->getOptBody() != nullptr) {
                     throw std::logic_error(
                         "Nested function definitions are not permitted in "
                         "typeCheckBlock in TypeCheckingPass");
                 }
-                if (functionDeclaration->getOptStorageClass() &&
-                    dynamic_cast<StaticStorageClass *>(
-                        functionDeclaration->getOptStorageClass())) {
+                if ((functionDeclaration->getOptStorageClass() != nullptr) &&
+                    (dynamic_cast<StaticStorageClass *>(
+                         functionDeclaration->getOptStorageClass()) !=
+                     nullptr)) {
                     throw std::logic_error(
                         "Static storage class on block-scope function "
                         "declaration in typeCheckBlock in TypeCheckingPass");
@@ -1285,16 +1294,16 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
     else if (auto *constantExpression =
                  dynamic_cast<ConstantExpression *>(expression)) {
         auto *constant = constantExpression->getConstant();
-        if (dynamic_cast<ConstantInt *>(constant)) {
+        if (dynamic_cast<ConstantInt *>(constant) != nullptr) {
             constantExpression->setExpType(std::make_unique<IntType>());
         }
-        else if (dynamic_cast<ConstantLong *>(constant)) {
+        else if (dynamic_cast<ConstantLong *>(constant) != nullptr) {
             constantExpression->setExpType(std::make_unique<LongType>());
         }
-        else if (dynamic_cast<ConstantUInt *>(constant)) {
+        else if (dynamic_cast<ConstantUInt *>(constant) != nullptr) {
             constantExpression->setExpType(std::make_unique<UIntType>());
         }
-        else if (dynamic_cast<ConstantULong *>(constant)) {
+        else if (dynamic_cast<ConstantULong *>(constant) != nullptr) {
             constantExpression->setExpType(std::make_unique<ULongType>());
         }
         else {
@@ -1338,7 +1347,8 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
     else if (auto *unaryExpression =
                  dynamic_cast<UnaryExpression *>(expression)) {
         typeCheckExpression(unaryExpression->getExpression());
-        if (dynamic_cast<NotOperator *>(unaryExpression->getOperator())) {
+        if (dynamic_cast<NotOperator *>(unaryExpression->getOperator()) !=
+            nullptr) {
             unaryExpression->setExpType(std::make_unique<IntType>());
         }
         else {
@@ -1351,8 +1361,8 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
         typeCheckExpression(binaryExpression->getLeft());
         typeCheckExpression(binaryExpression->getRight());
         auto *binaryOperator = binaryExpression->getOperator();
-        if (dynamic_cast<AndOperator *>(binaryOperator) ||
-            dynamic_cast<OrOperator *>(binaryOperator)) {
+        if ((dynamic_cast<AndOperator *>(binaryOperator) != nullptr) ||
+            (dynamic_cast<OrOperator *>(binaryOperator) != nullptr)) {
             // Logical operators should always return type `int`.
             binaryExpression->setExpType(std::make_unique<IntType>());
             return;
@@ -1364,11 +1374,11 @@ void TypeCheckingPass::typeCheckExpression(Expression *expression) {
             convertTo(binaryExpression->getLeft(), commonType.get()));
         binaryExpression->setRight(
             convertTo(binaryExpression->getRight(), commonType.get()));
-        if (dynamic_cast<AddOperator *>(binaryOperator) ||
-            dynamic_cast<SubtractOperator *>(binaryOperator) ||
-            dynamic_cast<MultiplyOperator *>(binaryOperator) ||
-            dynamic_cast<DivideOperator *>(binaryOperator) ||
-            dynamic_cast<RemainderOperator *>(binaryOperator)) {
+        if ((dynamic_cast<AddOperator *>(binaryOperator) != nullptr) ||
+            (dynamic_cast<SubtractOperator *>(binaryOperator) != nullptr) ||
+            (dynamic_cast<MultiplyOperator *>(binaryOperator) != nullptr) ||
+            (dynamic_cast<DivideOperator *>(binaryOperator) != nullptr) ||
+            (dynamic_cast<RemainderOperator *>(binaryOperator) != nullptr)) {
             binaryExpression->setExpType(std::move(commonType));
         }
         else {
@@ -1405,7 +1415,7 @@ void TypeCheckingPass::typeCheckStatement(
         // return type.
         auto *functionType =
             (*frontendSymbolTable)[enclosingFunctionIdentifier].first.get();
-        if (!functionType) {
+        if (functionType == nullptr) {
             throw std::logic_error("Function not found in symbol table in "
                                    "typeCheckStatement in TypeCheckingPass: " +
                                    enclosingFunctionIdentifier);
@@ -1416,7 +1426,7 @@ void TypeCheckingPass::typeCheckStatement(
                                    enclosingFunctionIdentifier);
         }
         auto *returnType = dynamic_cast<FunctionType *>(functionType);
-        if (returnStatement->getExpression()) {
+        if (returnStatement->getExpression() != nullptr) {
             typeCheckExpression(returnStatement->getExpression());
             returnStatement->setExpression(
                 convertTo(returnStatement->getExpression(),
@@ -1444,13 +1454,13 @@ void TypeCheckingPass::typeCheckStatement(
                            enclosingFunctionIdentifier);
     }
     else if (auto *forStatement = dynamic_cast<ForStatement *>(statement)) {
-        if (forStatement->getForInit()) {
+        if (forStatement->getForInit() != nullptr) {
             typeCheckForInit(forStatement->getForInit());
         }
-        if (forStatement->getOptCondition()) {
+        if (forStatement->getOptCondition() != nullptr) {
             typeCheckExpression(forStatement->getOptCondition());
         }
-        if (forStatement->getOptPost()) {
+        if (forStatement->getOptPost() != nullptr) {
             typeCheckExpression(forStatement->getOptPost());
         }
         typeCheckStatement(forStatement->getBody(),
@@ -1460,7 +1470,7 @@ void TypeCheckingPass::typeCheckStatement(
         typeCheckExpression(ifStatement->getCondition());
         typeCheckStatement(ifStatement->getThenStatement(),
                            enclosingFunctionIdentifier);
-        if (ifStatement->getElseOptStatement()) {
+        if (ifStatement->getElseOptStatement() != nullptr) {
             typeCheckStatement(ifStatement->getElseOptStatement(),
                                enclosingFunctionIdentifier);
         }
@@ -1469,12 +1479,13 @@ void TypeCheckingPass::typeCheckStatement(
 
 void TypeCheckingPass::typeCheckForInit(ForInit *forInit) {
     if (auto *initExpr = dynamic_cast<InitExpr *>(forInit)) {
-        if (initExpr->getExpression()) {
+        if (initExpr->getExpression() != nullptr) {
             typeCheckExpression(initExpr->getExpression());
         }
     }
     else if (auto *initDecl = dynamic_cast<InitDecl *>(forInit)) {
-        if (initDecl->getVariableDeclaration()->getOptStorageClass()) {
+        if (initDecl->getVariableDeclaration()->getOptStorageClass() !=
+            nullptr) {
             throw std::logic_error("Storage class in for-init declaration in "
                                    "typeCheckForInit in TypeCheckingPass");
         }
@@ -1496,7 +1507,7 @@ void LoopLabelingPass::labelLoops(Program &program) {
     for (const auto &declaration : program.getDeclarations()) {
         if (auto *functionDeclaration =
                 dynamic_cast<FunctionDeclaration *>(declaration.get())) {
-            if (functionDeclaration->getOptBody()) {
+            if (functionDeclaration->getOptBody() != nullptr) {
                 labelBlock(functionDeclaration->getOptBody(), "");
             }
         }
@@ -1564,7 +1575,7 @@ void LoopLabelingPass::labelStatement(Statement *statement,
     }
     else if (auto *ifStatement = dynamic_cast<IfStatement *>(statement)) {
         labelStatement(ifStatement->getThenStatement(), label);
-        if (ifStatement->getElseOptStatement()) {
+        if (ifStatement->getElseOptStatement() != nullptr) {
             labelStatement(ifStatement->getElseOptStatement(), label);
         }
     }
@@ -1576,7 +1587,7 @@ void LoopLabelingPass::labelStatement(Statement *statement,
 
 void LoopLabelingPass::labelBlock(Block *block, std::string_view label) {
     for (const auto &blockItem : block->getBlockItems()) {
-        if (dynamic_cast<DBlockItem *>(blockItem.get())) {
+        if (dynamic_cast<DBlockItem *>(blockItem.get()) != nullptr) {
             continue;
         }
         if (auto *sBlockItem = dynamic_cast<SBlockItem *>(blockItem.get())) {

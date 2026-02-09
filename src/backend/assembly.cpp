@@ -141,10 +141,10 @@ ReservedRegister *StackOperand::getReservedRegister() const {
 }
 
 std::string StackOperand::getReservedRegisterInStr() const {
-    if (dynamic_cast<SP *>(reservedReg.get())) {
+    if (dynamic_cast<SP *>(reservedReg.get()) != nullptr) {
         return "%rsp";
     }
-    else if (dynamic_cast<BP *>(reservedReg.get())) {
+    else if (dynamic_cast<BP *>(reservedReg.get()) != nullptr) {
         return "%rbp";
     }
     else {

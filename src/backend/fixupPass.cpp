@@ -20,14 +20,14 @@ namespace {
  */
 std::unique_ptr<Assembly::AssemblyType>
 cloneAssemblyType(const Assembly::AssemblyType *type) {
-    if (!type) {
+    if (type == nullptr) {
         throw std::logic_error(
             "Cloning null AssemblyType in cloneAssemblyType");
     }
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         return std::make_unique<Assembly::Longword>();
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         return std::make_unique<Assembly::Quadword>();
     }
     const auto &r = *type;
@@ -43,7 +43,7 @@ cloneAssemblyType(const Assembly::AssemblyType *type) {
  */
 std::unique_ptr<Assembly::Operand>
 cloneOperand(const Assembly::Operand *operand) {
-    if (!operand) {
+    if (operand == nullptr) {
         throw std::logic_error("Cloning null Operand in cloneOperand");
     }
     if (const auto *immOp =
@@ -54,47 +54,47 @@ cloneOperand(const Assembly::Operand *operand) {
     else if (const auto *regOp =
                  dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         auto *reg = regOp->getRegister();
-        if (dynamic_cast<const Assembly::AX *>(reg)) {
+        if (dynamic_cast<const Assembly::AX *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::AX>());
         }
-        if (dynamic_cast<const Assembly::CX *>(reg)) {
+        if (dynamic_cast<const Assembly::CX *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::CX>());
         }
-        if (dynamic_cast<const Assembly::DX *>(reg)) {
+        if (dynamic_cast<const Assembly::DX *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::DX>());
         }
-        if (dynamic_cast<const Assembly::DI *>(reg)) {
+        if (dynamic_cast<const Assembly::DI *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::DI>());
         }
-        if (dynamic_cast<const Assembly::SI *>(reg)) {
+        if (dynamic_cast<const Assembly::SI *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::SI>());
         }
-        if (dynamic_cast<const Assembly::R8 *>(reg)) {
+        if (dynamic_cast<const Assembly::R8 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R8>());
         }
-        if (dynamic_cast<const Assembly::R9 *>(reg)) {
+        if (dynamic_cast<const Assembly::R9 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R9>());
         }
-        if (dynamic_cast<const Assembly::R10 *>(reg)) {
+        if (dynamic_cast<const Assembly::R10 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R10>());
         }
-        if (dynamic_cast<const Assembly::R11 *>(reg)) {
+        if (dynamic_cast<const Assembly::R11 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R11>());
         }
-        if (dynamic_cast<const Assembly::SP *>(reg)) {
+        if (dynamic_cast<const Assembly::SP *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::SP>());
         }
-        if (dynamic_cast<const Assembly::BP *>(reg)) {
+        if (dynamic_cast<const Assembly::BP *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::BP>());
         }
@@ -105,11 +105,11 @@ cloneOperand(const Assembly::Operand *operand) {
     else if (const auto *stackOp =
                  dynamic_cast<const Assembly::StackOperand *>(operand)) {
         auto *reservedReg = stackOp->getReservedRegister();
-        if (dynamic_cast<const Assembly::SP *>(reservedReg)) {
+        if (dynamic_cast<const Assembly::SP *>(reservedReg) != nullptr) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::SP>());
         }
-        if (dynamic_cast<const Assembly::BP *>(reservedReg)) {
+        if (dynamic_cast<const Assembly::BP *>(reservedReg) != nullptr) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::BP>());
         }
@@ -141,17 +141,20 @@ cloneOperand(const Assembly::Operand *operand) {
  */
 std::unique_ptr<Assembly::BinaryOperator>
 cloneBinaryOperator(const Assembly::BinaryOperator *binaryOperator) {
-    if (!binaryOperator) {
+    if (binaryOperator == nullptr) {
         throw std::logic_error(
             "Cloning null BinaryOperator in cloneBinaryOperator");
     }
-    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator)) {
+    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator) !=
+        nullptr) {
         return std::make_unique<Assembly::AddOperator>();
     }
-    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator) !=
+             nullptr) {
         return std::make_unique<Assembly::SubtractOperator>();
     }
-    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator) !=
+             nullptr) {
         return std::make_unique<Assembly::MultiplyOperator>();
     }
     const auto &r = *binaryOperator;
@@ -288,19 +291,21 @@ bool FixupPass::isInvalidLargeImmediateMov(
     // Check if it's a quadword mov with large immediate to memory.
     const auto *quadwordType =
         dynamic_cast<const Assembly::Quadword *>(movInstr.getType());
-    if (!quadwordType) {
+    if (quadwordType == nullptr) {
         return false;
     }
 
     const auto *immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInstr.getSrc());
-    if (!immediateSrc) {
+    if (immediateSrc == nullptr) {
         return false;
     }
 
     auto memoryDst =
-        dynamic_cast<const Assembly::StackOperand *>(movInstr.getDst()) ||
-        dynamic_cast<const Assembly::DataOperand *>(movInstr.getDst());
+        (dynamic_cast<const Assembly::StackOperand *>(movInstr.getDst()) !=
+         nullptr) ||
+        (dynamic_cast<const Assembly::DataOperand *>(movInstr.getDst()) !=
+         nullptr);
     if (!memoryDst) {
         return false;
     }
@@ -317,13 +322,13 @@ bool FixupPass::isInvalidLongwordImmediateMov(
     // Check if it's a longword mov with 8-byte immediate value.
     const auto *longwordType =
         dynamic_cast<const Assembly::Longword *>(movInstr.getType());
-    if (!longwordType) {
+    if (longwordType == nullptr) {
         return false;
     }
 
     const auto *immediateSrc =
         dynamic_cast<const Assembly::ImmediateOperand *>(movInstr.getSrc());
-    if (!immediateSrc) {
+    if (immediateSrc == nullptr) {
         return false;
     }
 
@@ -347,10 +352,10 @@ bool FixupPass::isInvalidMovsx(const Assembly::MovsxInstruction &movsxInstr) {
 }
 
 bool FixupPass::isInvalidBinary(const Assembly::BinaryInstruction &binInstr) {
-    if (dynamic_cast<const Assembly::AddOperator *>(
-            binInstr.getBinaryOperator()) ||
-        dynamic_cast<const Assembly::SubtractOperator *>(
-            binInstr.getBinaryOperator())) {
+    if ((dynamic_cast<const Assembly::AddOperator *>(
+             binInstr.getBinaryOperator()) != nullptr) ||
+        (dynamic_cast<const Assembly::SubtractOperator *>(
+             binInstr.getBinaryOperator()) != nullptr)) {
         return (dynamic_cast<const Assembly::StackOperand *>(
                     binInstr.getOperand1()) != nullptr ||
                 dynamic_cast<const Assembly::DataOperand *>(
@@ -361,7 +366,7 @@ bool FixupPass::isInvalidBinary(const Assembly::BinaryInstruction &binInstr) {
                     binInstr.getOperand2()) != nullptr);
     }
     else if (dynamic_cast<const Assembly::MultiplyOperator *>(
-                 binInstr.getBinaryOperator())) {
+                 binInstr.getBinaryOperator()) != nullptr) {
         return dynamic_cast<const Assembly::StackOperand *>(
                    binInstr.getOperand2()) != nullptr ||
                dynamic_cast<const Assembly::DataOperand *>(
@@ -376,7 +381,7 @@ bool FixupPass::isInvalidLargeImmediateBinary(
     // value.
     const auto *quadwordType =
         dynamic_cast<const Assembly::Quadword *>(binInstr.getType());
-    if (!quadwordType) {
+    if (quadwordType == nullptr) {
         return false;
     }
 
@@ -386,14 +391,14 @@ bool FixupPass::isInvalidLargeImmediateBinary(
         binInstr.getOperand2());
 
     const Assembly::ImmediateOperand *immediateOp = nullptr;
-    if (immediateOp1) {
+    if (immediateOp1 != nullptr) {
         immediateOp = immediateOp1;
     }
-    else if (immediateOp2) {
+    else if (immediateOp2 != nullptr) {
         immediateOp = immediateOp2;
     }
 
-    if (!immediateOp) {
+    if (immediateOp == nullptr) {
         return false;
     }
 
@@ -417,16 +422,16 @@ bool FixupPass::isInvalidDiv(const Assembly::DivInstruction &divInstr) {
 bool FixupPass::isInvalidCmp(const Assembly::CmpInstruction &cmpInstr) {
     // If either both operands are memory-address operands or the second operand
     // is an immediate value, the `cmp` instruction is invalid.
-    return ((dynamic_cast<const Assembly::StackOperand *>(
-                 cmpInstr.getOperand1()) ||
-             dynamic_cast<const Assembly::DataOperand *>(
-                 cmpInstr.getOperand1())) &&
-            (dynamic_cast<const Assembly::StackOperand *>(
-                 cmpInstr.getOperand2()) ||
-             dynamic_cast<const Assembly::DataOperand *>(
-                 cmpInstr.getOperand2()))) ||
-           (dynamic_cast<const Assembly::ImmediateOperand *>(
-               cmpInstr.getOperand2()));
+    return (((dynamic_cast<const Assembly::StackOperand *>(
+                  cmpInstr.getOperand1()) != nullptr) ||
+             (dynamic_cast<const Assembly::DataOperand *>(
+                  cmpInstr.getOperand1()) != nullptr)) &&
+            ((dynamic_cast<const Assembly::StackOperand *>(
+                  cmpInstr.getOperand2()) != nullptr) ||
+             (dynamic_cast<const Assembly::DataOperand *>(
+                  cmpInstr.getOperand2()) != nullptr))) ||
+           ((dynamic_cast<const Assembly::ImmediateOperand *>(
+                cmpInstr.getOperand2())) != nullptr);
 }
 
 bool FixupPass::isInvalidLargeImmediateCmp(
@@ -435,7 +440,7 @@ bool FixupPass::isInvalidLargeImmediateCmp(
     // value.
     const auto *quadwordType =
         dynamic_cast<const Assembly::Quadword *>(cmpInstr.getType());
-    if (!quadwordType) {
+    if (quadwordType == nullptr) {
         return false;
     }
 
@@ -445,14 +450,14 @@ bool FixupPass::isInvalidLargeImmediateCmp(
         cmpInstr.getOperand2());
 
     const Assembly::ImmediateOperand *immediateOp = nullptr;
-    if (immediateOp1) {
+    if (immediateOp1 != nullptr) {
         immediateOp = immediateOp1;
     }
-    else if (immediateOp2) {
+    else if (immediateOp2 != nullptr) {
         immediateOp = immediateOp2;
     }
 
-    if (!immediateOp) {
+    if (immediateOp == nullptr) {
         return false;
     }
 
@@ -467,7 +472,7 @@ bool FixupPass::isInvalidLargeImmediatePush(
     const Assembly::PushInstruction &pushInstr) {
     const auto *immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
         pushInstr.getOperand());
-    if (!immediateOp) {
+    if (immediateOp == nullptr) {
         return false;
     }
 
@@ -567,10 +572,10 @@ FixupPass::rewriteInvalidBinary(
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
     const Assembly::BinaryInstruction &binInstr) {
-    if (dynamic_cast<const Assembly::AddOperator *>(
-            binInstr.getBinaryOperator()) ||
-        dynamic_cast<const Assembly::SubtractOperator *>(
-            binInstr.getBinaryOperator())) {
+    if ((dynamic_cast<const Assembly::AddOperator *>(
+             binInstr.getBinaryOperator()) != nullptr) ||
+        (dynamic_cast<const Assembly::SubtractOperator *>(
+             binInstr.getBinaryOperator()) != nullptr)) {
         auto newMov = std::make_unique<Assembly::MovInstruction>(
             cloneAssemblyType(binInstr.getType()),
             cloneOperand(binInstr.getOperand1()),
@@ -586,7 +591,7 @@ FixupPass::rewriteInvalidBinary(
         it = instructions.insert(it + 1, std::move(newBin));
     }
     else if (dynamic_cast<const Assembly::MultiplyOperator *>(
-                 binInstr.getBinaryOperator())) {
+                 binInstr.getBinaryOperator()) != nullptr) {
         auto newMov1 = std::make_unique<Assembly::MovInstruction>(
             cloneAssemblyType(binInstr.getType()),
             cloneOperand(binInstr.getOperand2()),
@@ -657,7 +662,7 @@ FixupPass::rewriteMovZeroExtend(
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
     const Assembly::MovZeroExtendInstruction &movZeroExtendInstr) {
     if (dynamic_cast<const Assembly::RegisterOperand *>(
-            movZeroExtendInstr.getDst())) {
+            movZeroExtendInstr.getDst()) != nullptr) {
         auto newMov = std::make_unique<Assembly::MovInstruction>(
             std::make_unique<Assembly::Longword>(),
             cloneOperand(movZeroExtendInstr.getSrc()),
@@ -688,10 +693,14 @@ FixupPass::rewriteInvalidCmp(
     std::vector<std::unique_ptr<Assembly::Instruction>> &instructions,
     std::vector<std::unique_ptr<Assembly::Instruction>>::iterator it,
     const Assembly::CmpInstruction &cmpInstr) {
-    if ((dynamic_cast<const Assembly::StackOperand *>(cmpInstr.getOperand1()) ||
-         dynamic_cast<const Assembly::DataOperand *>(cmpInstr.getOperand1())) &&
-        (dynamic_cast<const Assembly::StackOperand *>(cmpInstr.getOperand2()) ||
-         dynamic_cast<const Assembly::DataOperand *>(cmpInstr.getOperand2()))) {
+    if (((dynamic_cast<const Assembly::StackOperand *>(
+              cmpInstr.getOperand1()) != nullptr) ||
+         (dynamic_cast<const Assembly::DataOperand *>(cmpInstr.getOperand1()) !=
+          nullptr)) &&
+        ((dynamic_cast<const Assembly::StackOperand *>(
+              cmpInstr.getOperand2()) != nullptr) ||
+         (dynamic_cast<const Assembly::DataOperand *>(cmpInstr.getOperand2()) !=
+          nullptr))) {
         auto newMov = std::make_unique<Assembly::MovInstruction>(
             cloneAssemblyType(cmpInstr.getType()),
             cloneOperand(cmpInstr.getOperand1()),
@@ -706,7 +715,7 @@ FixupPass::rewriteInvalidCmp(
         it = instructions.insert(it + 1, std::move(newCmp));
     }
     else if (dynamic_cast<const Assembly::ImmediateOperand *>(
-                 cmpInstr.getOperand2())) {
+                 cmpInstr.getOperand2()) != nullptr) {
         auto newMov = std::make_unique<Assembly::MovInstruction>(
             cloneAssemblyType(cmpInstr.getType()),
             cloneOperand(cmpInstr.getOperand2()),
@@ -779,7 +788,7 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
         binInstr.getOperand1());
     const auto *otherOp = binInstr.getOperand2();
     bool isFirstOperand = true;
-    if (!immediateOp) {
+    if (immediateOp == nullptr) {
         immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
             binInstr.getOperand2());
         otherOp = binInstr.getOperand1();
@@ -787,8 +796,8 @@ FixupPass::rewriteInvalidLargeImmediateBinary(
     }
 
     const bool otherIsMemory =
-        dynamic_cast<const Assembly::StackOperand *>(otherOp) ||
-        dynamic_cast<const Assembly::DataOperand *>(otherOp);
+        (dynamic_cast<const Assembly::StackOperand *>(otherOp) != nullptr) ||
+        (dynamic_cast<const Assembly::DataOperand *>(otherOp) != nullptr);
     auto otherOpCloneForLoad = otherIsMemory ? cloneOperand(otherOp) : nullptr;
     auto otherOpCloneForBin = cloneOperand(otherOp);
     auto otherOpCloneForStore = otherIsMemory ? cloneOperand(otherOp) : nullptr;
@@ -854,7 +863,7 @@ FixupPass::rewriteInvalidLargeImmediateCmp(
         cmpInstr.getOperand1());
     const auto *otherOp = cmpInstr.getOperand2();
     bool isFirstOperand = true;
-    if (!immediateOp) {
+    if (immediateOp == nullptr) {
         immediateOp = dynamic_cast<const Assembly::ImmediateOperand *>(
             cmpInstr.getOperand2());
         otherOp = cmpInstr.getOperand1();

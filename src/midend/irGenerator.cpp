@@ -32,19 +32,19 @@ namespace {
  * @return The cloned type.
  */
 std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
-    if (!type) {
+    if (type == nullptr) {
         return nullptr;
     }
-    if (dynamic_cast<const AST::IntType *>(type)) {
+    if (dynamic_cast<const AST::IntType *>(type) != nullptr) {
         return std::make_unique<AST::IntType>();
     }
-    else if (dynamic_cast<const AST::LongType *>(type)) {
+    else if (dynamic_cast<const AST::LongType *>(type) != nullptr) {
         return std::make_unique<AST::LongType>();
     }
-    else if (dynamic_cast<const AST::UIntType *>(type)) {
+    else if (dynamic_cast<const AST::UIntType *>(type) != nullptr) {
         return std::make_unique<AST::UIntType>();
     }
-    else if (dynamic_cast<const AST::ULongType *>(type)) {
+    else if (dynamic_cast<const AST::ULongType *>(type) != nullptr) {
         return std::make_unique<AST::ULongType>();
     }
     else if (const auto *functionType =
@@ -75,12 +75,12 @@ std::unique_ptr<AST::Type> cloneType(const AST::Type *type) {
  * @return The size of the type in bytes.
  */
 int getTypeSize(const AST::Type *type) {
-    if (dynamic_cast<const AST::IntType *>(type) ||
-        dynamic_cast<const AST::UIntType *>(type)) {
+    if ((dynamic_cast<const AST::IntType *>(type) != nullptr) ||
+        (dynamic_cast<const AST::UIntType *>(type) != nullptr)) {
         return LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const AST::LongType *>(type) ||
-             dynamic_cast<const AST::ULongType *>(type)) {
+    else if ((dynamic_cast<const AST::LongType *>(type) != nullptr) ||
+             (dynamic_cast<const AST::ULongType *>(type) != nullptr)) {
         return QUADWORD_SIZE;
     }
     const auto &r = *type;
@@ -95,8 +95,8 @@ int getTypeSize(const AST::Type *type) {
  * @return True if the type is a signed type, false otherwise.
  */
 bool isSigned(const AST::Type *type) {
-    return dynamic_cast<const AST::IntType *>(type) ||
-           dynamic_cast<const AST::LongType *>(type);
+    return (dynamic_cast<const AST::IntType *>(type) != nullptr) ||
+           (dynamic_cast<const AST::LongType *>(type) != nullptr);
 }
 
 /**
@@ -153,7 +153,7 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             auto *optBody = functionDeclaration->getOptBody();
 
             // Skip generating IR instructions for forward declarations.
-            if (!optBody) {
+            if (optBody == nullptr) {
                 continue;
             }
 
@@ -201,7 +201,8 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             // Check if the function has any return statements.
             bool hasReturnStatement = false;
             for (const auto &instruction : *instructions) {
-                if (dynamic_cast<IR::ReturnInstruction *>(instruction.get())) {
+                if (dynamic_cast<IR::ReturnInstruction *>(instruction.get()) !=
+                    nullptr) {
                     hasReturnStatement = true;
                     break;
                 }
@@ -214,8 +215,8 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             if (hasReturnStatement) {
                 // Check if the last instruction is a return statement.
                 if (instructions->empty() ||
-                    !dynamic_cast<IR::ReturnInstruction *>(
-                        instructions->back().get())) {
+                    (dynamic_cast<IR::ReturnInstruction *>(
+                         instructions->back().get()) == nullptr)) {
                     needsImplicitReturn = true;
                 }
             }
@@ -231,12 +232,13 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
                     (*frontendSymbolTable)[identifier].first.get();
                 auto *functionTypePtr =
                     dynamic_cast<AST::FunctionType *>(functionType);
-                if (functionTypePtr) {
+                if (functionTypePtr != nullptr) {
                     const auto &returnType = functionTypePtr->getReturnType();
 
                     // Create a constant value based on the return type.
                     std::unique_ptr<IR::Value> returnValue;
-                    if (dynamic_cast<const AST::LongType *>(&returnType)) {
+                    if (dynamic_cast<const AST::LongType *>(&returnType) !=
+                        nullptr) {
                         returnValue = std::make_unique<IR::ConstantValue>(
                             std::make_unique<AST::ConstantLong>(0L));
                     }
@@ -273,11 +275,13 @@ IRGenerator::generateIR(const AST::Program &astProgram) {
             // Continue: Do not generate IR instructions for file-scope variable
             // declarations or for local variable declarations with `static` or
             // `extern` storage-class specifiers (for now).
-            if (variableDeclaration->getOptStorageClass()) {
-                if (dynamic_cast<AST::StaticStorageClass *>(
-                        variableDeclaration->getOptStorageClass()) ||
-                    dynamic_cast<AST::ExternStorageClass *>(
-                        variableDeclaration->getOptStorageClass())) {
+            if (variableDeclaration->getOptStorageClass() != nullptr) {
+                if ((dynamic_cast<AST::StaticStorageClass *>(
+                         variableDeclaration->getOptStorageClass()) !=
+                     nullptr) ||
+                    (dynamic_cast<AST::ExternStorageClass *>(
+                         variableDeclaration->getOptStorageClass()) !=
+                     nullptr)) {
                     continue;
                 }
             }
@@ -310,11 +314,13 @@ void IRGenerator::generateIRBlock(
                 // Continue: Do not generate IR instructions for file-scope
                 // variable declarations or for local variable declarations with
                 // `static` or `extern` storage-class specifiers (for now).
-                if (variableDeclaration->getOptStorageClass()) {
-                    if (dynamic_cast<AST::StaticStorageClass *>(
-                            variableDeclaration->getOptStorageClass()) ||
-                        dynamic_cast<AST::ExternStorageClass *>(
-                            variableDeclaration->getOptStorageClass())) {
+                if (variableDeclaration->getOptStorageClass() != nullptr) {
+                    if ((dynamic_cast<AST::StaticStorageClass *>(
+                             variableDeclaration->getOptStorageClass()) !=
+                         nullptr) ||
+                        (dynamic_cast<AST::ExternStorageClass *>(
+                             variableDeclaration->getOptStorageClass()) !=
+                         nullptr)) {
                         continue;
                     }
                 }
@@ -347,7 +353,7 @@ void IRGenerator::generateIRFunctionDefinition(
     std::vector<std::unique_ptr<IR::Instruction>> &instructions) {
     // Get the body of the function.
     auto *optBody = astFunctionDeclaration->getOptBody();
-    if (optBody) {
+    if (optBody != nullptr) {
         // Generate IR instructions for the body of the function.
         generateIRBlock(optBody, instructions);
     }
@@ -361,7 +367,7 @@ void IRGenerator::generateIRVariableDefinition(
     auto identifier = astVariableDeclaration->getIdentifier();
     auto *initializer = astVariableDeclaration->getOptInitializer();
     // If the declaration has an initializer, ...
-    if (initializer) {
+    if (initializer != nullptr) {
         // Generate IR instructions for the initializer.
         auto result = generateIRInstruction(initializer, instructions);
 
@@ -417,7 +423,8 @@ void IRGenerator::generateIRStatement(
                  dynamic_cast<const AST::ForStatement *>(astStatement)) {
         generateIRForStatement(forStmt, instructions);
     }
-    else if (dynamic_cast<const AST::NullStatement *>(astStatement)) {
+    else if (dynamic_cast<const AST::NullStatement *>(astStatement) !=
+             nullptr) {
         // If the statement is a null statement, do nothing.
     }
     else {
@@ -466,7 +473,7 @@ void IRGenerator::generateIRIfStatement(
     // Generate a new else label.
     auto elseLabel = generateIRElseLabel();
 
-    if (ifStmt->getElseOptStatement()) {
+    if (ifStmt->getElseOptStatement() != nullptr) {
         // Generate a jump-if-zero instruction with the condition value and the
         // else label.
         instructions.emplace_back(std::make_unique<IR::JumpIfZeroInstruction>(
@@ -594,7 +601,7 @@ void IRGenerator::generateIRForStatement(
     // Optionally generate instructions for the (optional) condition of the
     // for-statement.
     auto *optCondition = forStmt->getOptCondition();
-    if (optCondition) {
+    if (optCondition != nullptr) {
         // Generate a jump-if-zero instruction with the condition value and the
         // break label.
         auto conditionValue = generateIRInstruction(optCondition, instructions);
@@ -611,7 +618,7 @@ void IRGenerator::generateIRForStatement(
     // Optionally generate instructions for the (optional) post of the
     // for-statement.
     auto *optPost = forStmt->getOptPost();
-    if (optPost) {
+    if (optPost != nullptr) {
         auto postValue = generateIRInstruction(optPost, instructions);
     }
     // Generate a jump instruction with the start label.
@@ -661,13 +668,15 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
                  dynamic_cast<const AST::BinaryExpression *>(e)) {
         // If the binary operator in the AST binary expression is a
         // logical-and operator, ...
-        if (dynamic_cast<AST::AndOperator *>(binaryExpr->getOperator())) {
+        if (dynamic_cast<AST::AndOperator *>(binaryExpr->getOperator()) !=
+            nullptr) {
             return generateIRInstructionWithLogicalAnd(binaryExpr,
                                                        instructions);
         }
         // If the binary operator in the AST binary expression is a
         // logical-or operator, ...
-        else if (dynamic_cast<AST::OrOperator *>(binaryExpr->getOperator())) {
+        else if (dynamic_cast<AST::OrOperator *>(binaryExpr->getOperator()) !=
+                 nullptr) {
             return generateIRInstructionWithLogicalOr(binaryExpr, instructions);
         }
         // Otherwise (i.e., if the binary operator in the AST binary
@@ -716,7 +725,7 @@ std::unique_ptr<IR::Value> IRGenerator::generateIRInstruction(
         auto resultLabel = generateIRResultLabel();
 
         auto *resultType = conditionalExpr->getExpType();
-        if (!resultType) {
+        if (resultType == nullptr) {
             throw std::logic_error(
                 "Missing result type for conditional expression in "
                 "generateIRConditionalExpression in IRGenerator");
@@ -984,7 +993,7 @@ IRGenerator::generateIRFunctionCallInstruction(
     auto *functionType =
         (*frontendSymbolTable)[std::string(functionIdentifier)].first.get();
     auto *functionTypePtr = dynamic_cast<AST::FunctionType *>(functionType);
-    if (!functionTypePtr) {
+    if (functionTypePtr == nullptr) {
         throw std::logic_error(
             "Function type not found in symbol table in "
             "generateIRFunctionCallInstruction in IRGenerator: " +
@@ -1023,7 +1032,7 @@ std::unique_ptr<IR::VariableValue> IRGenerator::generateIRCastInstruction(
         // If it's a constant, we need to copy it to a variable, which we handle
         // later as a fallback.
         auto *varValue = dynamic_cast<IR::VariableValue *>(result.get());
-        if (varValue) {
+        if (varValue != nullptr) {
             return std::make_unique<IR::VariableValue>(
                 varValue->getIdentifier());
         }
@@ -1140,26 +1149,26 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
                     cloneStaticInit(initial->getStaticInit())));
                 continue;
             }
-            if (dynamic_cast<AST::NoInitializer *>(initialValue)) {
+            if (dynamic_cast<AST::NoInitializer *>(initialValue) != nullptr) {
                 continue;
             }
-            if (dynamic_cast<AST::Tentative *>(initialValue)) {
-                if (dynamic_cast<AST::IntType *>(type)) {
+            if (dynamic_cast<AST::Tentative *>(initialValue) != nullptr) {
+                if (dynamic_cast<AST::IntType *>(type) != nullptr) {
                     irDefs->emplace_back(std::make_unique<StaticVariable>(
                         name, global, cloneType(type),
                         std::make_unique<AST::IntInit>(0)));
                 }
-                else if (dynamic_cast<AST::LongType *>(type)) {
+                else if (dynamic_cast<AST::LongType *>(type) != nullptr) {
                     irDefs->emplace_back(std::make_unique<StaticVariable>(
                         name, global, cloneType(type),
                         std::make_unique<AST::LongInit>(0L)));
                 }
-                else if (dynamic_cast<AST::UIntType *>(type)) {
+                else if (dynamic_cast<AST::UIntType *>(type) != nullptr) {
                     irDefs->emplace_back(std::make_unique<StaticVariable>(
                         name, global, cloneType(type),
                         std::make_unique<AST::UIntInit>(0U)));
                 }
-                else if (dynamic_cast<AST::ULongType *>(type)) {
+                else if (dynamic_cast<AST::ULongType *>(type) != nullptr) {
                     irDefs->emplace_back(std::make_unique<StaticVariable>(
                         name, global, cloneType(type),
                         std::make_unique<AST::ULongInit>(0UL)));
@@ -1190,13 +1199,13 @@ IRGenerator::convertFrontendSymbolTableToIRStaticVariables() {
 
 std::unique_ptr<IR::UnaryOperator>
 IRGenerator::convertUnop(const AST::UnaryOperator *op) {
-    if (dynamic_cast<const AST::NegateOperator *>(op)) {
+    if (dynamic_cast<const AST::NegateOperator *>(op) != nullptr) {
         return std::make_unique<IR::NegateOperator>();
     }
-    else if (dynamic_cast<const AST::ComplementOperator *>(op)) {
+    else if (dynamic_cast<const AST::ComplementOperator *>(op) != nullptr) {
         return std::make_unique<IR::ComplementOperator>();
     }
-    else if (dynamic_cast<const AST::NotOperator *>(op)) {
+    else if (dynamic_cast<const AST::NotOperator *>(op) != nullptr) {
         return std::make_unique<IR::NotOperator>();
     }
     const auto &r = *op;
@@ -1211,37 +1220,39 @@ IRGenerator::convertUnop(const AST::UnaryOperator *op) {
 // the IR).
 std::unique_ptr<IR::BinaryOperator>
 IRGenerator::convertBinop(const AST::BinaryOperator *op) {
-    if (dynamic_cast<const AST::AddOperator *>(op)) {
+    if (dynamic_cast<const AST::AddOperator *>(op) != nullptr) {
         return std::make_unique<IR::AddOperator>();
     }
-    else if (dynamic_cast<const AST::SubtractOperator *>(op)) {
+    else if (dynamic_cast<const AST::SubtractOperator *>(op) != nullptr) {
         return std::make_unique<IR::SubtractOperator>();
     }
-    else if (dynamic_cast<const AST::MultiplyOperator *>(op)) {
+    else if (dynamic_cast<const AST::MultiplyOperator *>(op) != nullptr) {
         return std::make_unique<IR::MultiplyOperator>();
     }
-    else if (dynamic_cast<const AST::DivideOperator *>(op)) {
+    else if (dynamic_cast<const AST::DivideOperator *>(op) != nullptr) {
         return std::make_unique<IR::DivideOperator>();
     }
-    else if (dynamic_cast<const AST::RemainderOperator *>(op)) {
+    else if (dynamic_cast<const AST::RemainderOperator *>(op) != nullptr) {
         return std::make_unique<IR::RemainderOperator>();
     }
-    else if (dynamic_cast<const AST::EqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::EqualOperator *>(op) != nullptr) {
         return std::make_unique<IR::EqualOperator>();
     }
-    else if (dynamic_cast<const AST::NotEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::NotEqualOperator *>(op) != nullptr) {
         return std::make_unique<IR::NotEqualOperator>();
     }
-    else if (dynamic_cast<const AST::LessThanOperator *>(op)) {
+    else if (dynamic_cast<const AST::LessThanOperator *>(op) != nullptr) {
         return std::make_unique<IR::LessThanOperator>();
     }
-    else if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::LessThanOrEqualOperator *>(op) !=
+             nullptr) {
         return std::make_unique<IR::LessThanOrEqualOperator>();
     }
-    else if (dynamic_cast<const AST::GreaterThanOperator *>(op)) {
+    else if (dynamic_cast<const AST::GreaterThanOperator *>(op) != nullptr) {
         return std::make_unique<IR::GreaterThanOperator>();
     }
-    else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op)) {
+    else if (dynamic_cast<const AST::GreaterThanOrEqualOperator *>(op) !=
+             nullptr) {
         return std::make_unique<IR::GreaterThanOrEqualOperator>();
     }
     const auto &r = *op;

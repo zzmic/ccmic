@@ -47,7 +47,7 @@ void PseudoToStackPass::replacePseudoWithStackAndAssociateStackSize(
 std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
     const Assembly::Operand *operand,
     const BackendSymbolTable &backendSymbolTable) {
-    if (!operand) {
+    if (operand == nullptr) {
         throw std::logic_error(
             "Setting null operand in replaceOperand in PseudoToStackPass");
     }
@@ -83,7 +83,8 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
                 if (auto *objEntry =
                         dynamic_cast<ObjEntry *>(backendEntry.get())) {
                     const auto *assemblyType = objEntry->getAssemblyType();
-                    if (dynamic_cast<const Quadword *>(assemblyType)) {
+                    if (dynamic_cast<const Quadword *>(assemblyType) !=
+                        nullptr) {
                         allocationSize =
                             QUADWORD_SIZE; // 8 bytes for `Quadword`.
                     }
@@ -131,47 +132,47 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
     if (const auto *regOp =
             dynamic_cast<const Assembly::RegisterOperand *>(operand)) {
         auto *reg = regOp->getRegister();
-        if (dynamic_cast<const Assembly::AX *>(reg)) {
+        if (dynamic_cast<const Assembly::AX *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::AX>());
         }
-        if (dynamic_cast<const Assembly::CX *>(reg)) {
+        if (dynamic_cast<const Assembly::CX *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::CX>());
         }
-        if (dynamic_cast<const Assembly::DX *>(reg)) {
+        if (dynamic_cast<const Assembly::DX *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::DX>());
         }
-        if (dynamic_cast<const Assembly::DI *>(reg)) {
+        if (dynamic_cast<const Assembly::DI *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::DI>());
         }
-        if (dynamic_cast<const Assembly::SI *>(reg)) {
+        if (dynamic_cast<const Assembly::SI *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::SI>());
         }
-        if (dynamic_cast<const Assembly::R8 *>(reg)) {
+        if (dynamic_cast<const Assembly::R8 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R8>());
         }
-        if (dynamic_cast<const Assembly::R9 *>(reg)) {
+        if (dynamic_cast<const Assembly::R9 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R9>());
         }
-        if (dynamic_cast<const Assembly::R10 *>(reg)) {
+        if (dynamic_cast<const Assembly::R10 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R10>());
         }
-        if (dynamic_cast<const Assembly::R11 *>(reg)) {
+        if (dynamic_cast<const Assembly::R11 *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::R11>());
         }
-        if (dynamic_cast<const Assembly::SP *>(reg)) {
+        if (dynamic_cast<const Assembly::SP *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::SP>());
         }
-        if (dynamic_cast<const Assembly::BP *>(reg)) {
+        if (dynamic_cast<const Assembly::BP *>(reg) != nullptr) {
             return std::make_unique<Assembly::RegisterOperand>(
                 std::make_unique<Assembly::BP>());
         }
@@ -184,11 +185,11 @@ std::unique_ptr<Assembly::Operand> PseudoToStackPass::replaceOperand(
     if (const auto *stackOp =
             dynamic_cast<const Assembly::StackOperand *>(operand)) {
         auto *reservedReg = stackOp->getReservedRegister();
-        if (dynamic_cast<const Assembly::SP *>(reservedReg)) {
+        if (dynamic_cast<const Assembly::SP *>(reservedReg) != nullptr) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::SP>());
         }
-        if (dynamic_cast<const Assembly::BP *>(reservedReg)) {
+        if (dynamic_cast<const Assembly::BP *>(reservedReg) != nullptr) {
             return std::make_unique<Assembly::StackOperand>(
                 stackOp->getOffset(), std::make_unique<Assembly::BP>());
         }

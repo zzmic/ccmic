@@ -402,15 +402,15 @@ void PrettyPrinters::printIRUnaryInstruction(
     }
 
     if (dynamic_cast<const IR::ComplementOperator *>(
-            unaryInstruction.getUnaryOperator())) {
+            unaryInstruction.getUnaryOperator()) != nullptr) {
         std::cout << " = ~";
     }
     else if (dynamic_cast<const IR::NegateOperator *>(
-                 unaryInstruction.getUnaryOperator())) {
+                 unaryInstruction.getUnaryOperator()) != nullptr) {
         std::cout << " = -";
     }
     else if (dynamic_cast<const IR::NotOperator *>(
-                 unaryInstruction.getUnaryOperator())) {
+                 unaryInstruction.getUnaryOperator()) != nullptr) {
         std::cout << " = !";
     }
     else {
@@ -520,47 +520,47 @@ void PrettyPrinters::printIRBinaryInstruction(
     }
 
     if (dynamic_cast<const IR::AddOperator *>(
-            binaryInstruction.getBinaryOperator())) {
+            binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " + ";
     }
     else if (dynamic_cast<const IR::SubtractOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " - ";
     }
     else if (dynamic_cast<const IR::MultiplyOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " * ";
     }
     else if (dynamic_cast<const IR::DivideOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " / ";
     }
     else if (dynamic_cast<const IR::RemainderOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " % ";
     }
     else if (dynamic_cast<const IR::EqualOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " == ";
     }
     else if (dynamic_cast<const IR::NotEqualOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " != ";
     }
     else if (dynamic_cast<const IR::LessThanOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " < ";
     }
     else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " <= ";
     }
     else if (dynamic_cast<const IR::GreaterThanOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " > ";
     }
     else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(
-                 binaryInstruction.getBinaryOperator())) {
+                 binaryInstruction.getBinaryOperator()) != nullptr) {
         std::cout << " >= ";
     }
     else {
@@ -634,7 +634,7 @@ void PrettyPrinters::printIRCopyInstruction(
     std::cout << " = ";
 
     auto *src = copyInstruction.getSrc();
-    if (!src) {
+    if (src == nullptr) {
         const auto &r = *src;
         throw std::logic_error("Source value is null while printing IR copy "
                                "instruction in printIRCopyInstruction: " +
@@ -883,9 +883,9 @@ void PrettyPrinters::printAssyFunctionDefinition(
     const Assembly::FunctionDefinition &functionDefinition) {
     std::string functionName = functionDefinition.getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
-    auto global = functionDefinition.isGlobal();
+    auto isGlobal = functionDefinition.isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
-    if (!global) {
+    if (!isGlobal) {
         globalDirective = "";
     }
 
@@ -915,9 +915,9 @@ void PrettyPrinters::printAssyStaticVariable(
     auto variableIdentifier = staticVariable.getIdentifier();
     prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
 
-    auto global = staticVariable.isGlobal();
+    auto isGlobal = staticVariable.isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
-    if (!global) {
+    if (!isGlobal) {
         globalDirective = "";
     }
 
@@ -978,12 +978,13 @@ void PrettyPrinters::printAssyStaticVariable(
         std::cout << "    .bss\n";
         std::cout << "    " << alignDirective << "\n";
         std::cout << variableIdentifier << ":\n";
-        if (dynamic_cast<const AST::IntInit *>(staticInit) ||
-            dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        if ((dynamic_cast<const AST::IntInit *>(staticInit) != nullptr) ||
+            (dynamic_cast<const AST::UIntInit *>(staticInit) != nullptr)) {
             std::cout << "    .zero 4\n";
         }
-        else if (dynamic_cast<const AST::LongInit *>(staticInit) ||
-                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        else if ((dynamic_cast<const AST::LongInit *>(staticInit) != nullptr) ||
+                 (dynamic_cast<const AST::ULongInit *>(staticInit) !=
+                  nullptr)) {
             std::cout << "    .zero 8\n";
         }
     }
@@ -1075,11 +1076,11 @@ void PrettyPrinters::printAssyMovInstruction(
 
     std::string instructionName;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         instructionName = "movl";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         instructionName = "movq";
         registerSize = QUADWORD_SIZE;
     }
@@ -1264,12 +1265,14 @@ void PrettyPrinters::printAssyUnaryInstruction(
     const auto *type = unaryInstruction.getType();
 
     std::string instructionName;
-    if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator)) {
+    if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator) !=
+        nullptr) {
         instructionName = "neg";
     }
-    else if (dynamic_cast<const Assembly::ComplementOperator *>(
-                 unaryOperator) ||
-             dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) {
+    else if ((dynamic_cast<const Assembly::ComplementOperator *>(
+                  unaryOperator) != nullptr) ||
+             (dynamic_cast<const Assembly::NotOperator *>(unaryOperator) !=
+              nullptr)) {
         instructionName = "not";
     }
     else {
@@ -1280,11 +1283,11 @@ void PrettyPrinters::printAssyUnaryInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -1327,13 +1330,16 @@ void PrettyPrinters::printAssyBinaryInstruction(
     const auto *type = binaryInstruction.getType();
 
     std::string instructionName;
-    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator)) {
+    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator) !=
+        nullptr) {
         instructionName = "add";
     }
-    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator) !=
+             nullptr) {
         instructionName = "sub";
     }
-    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator) !=
+             nullptr) {
         instructionName = "imul";
     }
     else {
@@ -1344,11 +1350,11 @@ void PrettyPrinters::printAssyBinaryInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -1415,11 +1421,11 @@ void PrettyPrinters::printAssyCmpInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -1478,11 +1484,11 @@ void PrettyPrinters::printAssyIdivInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -1525,11 +1531,11 @@ void PrettyPrinters::printAssyDivInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -1570,10 +1576,10 @@ void PrettyPrinters::printAssyCdqInstruction(
     const Assembly::CdqInstruction &cdqInstruction) {
     const auto *type = cdqInstruction.getType();
 
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         std::cout << "    cdq\n";
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         std::cout << "    cqo\n";
     }
     else {
@@ -1591,34 +1597,34 @@ void PrettyPrinters::printAssyJmpInstruction(
 void PrettyPrinters::printAssyJmpCCInstruction(
     const Assembly::JmpCCInstruction &jmpCCInstruction) {
     const auto *condCode = jmpCCInstruction.getCondCode();
-    if (dynamic_cast<const Assembly::E *>(condCode)) {
+    if (dynamic_cast<const Assembly::E *>(condCode) != nullptr) {
         std::cout << "    je";
     }
-    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode) != nullptr) {
         std::cout << "    jne";
     }
-    else if (dynamic_cast<const Assembly::G *>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode) != nullptr) {
         std::cout << "    jg";
     }
-    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode) != nullptr) {
         std::cout << "    jge";
     }
-    else if (dynamic_cast<const Assembly::L *>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode) != nullptr) {
         std::cout << "    jl";
     }
-    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode) != nullptr) {
         std::cout << "    jle";
     }
-    else if (dynamic_cast<const Assembly::A *>(condCode)) {
+    else if (dynamic_cast<const Assembly::A *>(condCode) != nullptr) {
         std::cout << "    ja";
     }
-    else if (dynamic_cast<const Assembly::AE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::AE *>(condCode) != nullptr) {
         std::cout << "    jae";
     }
-    else if (dynamic_cast<const Assembly::B *>(condCode)) {
+    else if (dynamic_cast<const Assembly::B *>(condCode) != nullptr) {
         std::cout << "    jb";
     }
-    else if (dynamic_cast<const Assembly::BE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::BE *>(condCode) != nullptr) {
         std::cout << "    jbe";
     }
     else {
@@ -1634,34 +1640,34 @@ void PrettyPrinters::printAssyJmpCCInstruction(
 void PrettyPrinters::printAssySetCCInstruction(
     const Assembly::SetCCInstruction &setCCInstruction) {
     const auto *condCode = setCCInstruction.getCondCode();
-    if (dynamic_cast<const Assembly::E *>(condCode)) {
+    if (dynamic_cast<const Assembly::E *>(condCode) != nullptr) {
         std::cout << "    sete";
     }
-    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode) != nullptr) {
         std::cout << "    setne";
     }
-    else if (dynamic_cast<const Assembly::G *>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode) != nullptr) {
         std::cout << "    setg";
     }
-    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode) != nullptr) {
         std::cout << "    setge";
     }
-    else if (dynamic_cast<const Assembly::L *>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode) != nullptr) {
         std::cout << "    setl";
     }
-    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode) != nullptr) {
         std::cout << "    setle";
     }
-    else if (dynamic_cast<const Assembly::A *>(condCode)) {
+    else if (dynamic_cast<const Assembly::A *>(condCode) != nullptr) {
         std::cout << "    seta";
     }
-    else if (dynamic_cast<const Assembly::AE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::AE *>(condCode) != nullptr) {
         std::cout << "    setae";
     }
-    else if (dynamic_cast<const Assembly::B *>(condCode)) {
+    else if (dynamic_cast<const Assembly::B *>(condCode) != nullptr) {
         std::cout << "    setb";
     }
-    else if (dynamic_cast<const Assembly::BE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::BE *>(condCode) != nullptr) {
         std::cout << "    setbe";
     }
     else {

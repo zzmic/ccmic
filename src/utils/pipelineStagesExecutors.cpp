@@ -256,9 +256,9 @@ void PipelineStagesExecutors::emitAssyFunctionDefinition(
     std::ofstream &assemblyFileStream) {
     auto functionName = functionDefinition.getFunctionIdentifier();
     prependUnderscoreToIdentifierIfMacOS(functionName);
-    auto global = functionDefinition.isGlobal();
+    auto isGlobal = functionDefinition.isGlobal();
     auto globalDirective = "    .globl " + functionName + "\n";
-    if (!global) {
+    if (!isGlobal) {
         globalDirective = "";
     }
 
@@ -289,9 +289,9 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
     auto variableIdentifier = staticVariable.getIdentifier();
     prependUnderscoreToIdentifierIfMacOS(variableIdentifier);
 
-    auto global = staticVariable.isGlobal();
+    auto isGlobal = staticVariable.isGlobal();
     auto globalDirective = ".globl " + variableIdentifier + "\n";
-    if (!global) {
+    if (!isGlobal) {
         globalDirective = "";
     }
 
@@ -355,12 +355,13 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         assemblyFileStream << "    .bss\n";
         assemblyFileStream << "    " << alignDirective << "\n";
         assemblyFileStream << variableIdentifier << ":\n";
-        if (dynamic_cast<const AST::IntInit *>(staticInit) ||
-            dynamic_cast<const AST::UIntInit *>(staticInit)) {
+        if ((dynamic_cast<const AST::IntInit *>(staticInit) != nullptr) ||
+            (dynamic_cast<const AST::UIntInit *>(staticInit) != nullptr)) {
             assemblyFileStream << "    .zero 4\n";
         }
-        else if (dynamic_cast<const AST::LongInit *>(staticInit) ||
-                 dynamic_cast<const AST::ULongInit *>(staticInit)) {
+        else if ((dynamic_cast<const AST::LongInit *>(staticInit) != nullptr) ||
+                 (dynamic_cast<const AST::ULongInit *>(staticInit) !=
+                  nullptr)) {
             assemblyFileStream << "    .zero 8\n";
         }
     }
@@ -373,7 +374,8 @@ void PipelineStagesExecutors::emitAssyInstruction(
             dynamic_cast<const Assembly::MovInstruction *>(&instruction)) {
         emitAssyMovInstruction(*movInstruction, assemblyFileStream);
     }
-    else if (dynamic_cast<const Assembly::RetInstruction *>(&instruction)) {
+    else if (dynamic_cast<const Assembly::RetInstruction *>(&instruction) !=
+             nullptr) {
         emitAssyRetInstruction(assemblyFileStream);
     }
     else if (const auto *pushInstruction =
@@ -453,11 +455,11 @@ void PipelineStagesExecutors::emitAssyMovInstruction(
 
     std::string instructionName;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         instructionName = "movl";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         instructionName = "movq";
         registerSize = QUADWORD_SIZE;
     }
@@ -650,12 +652,14 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
     const auto *type = unaryInstruction.getType();
 
     std::string instructionName;
-    if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator)) {
+    if (dynamic_cast<const Assembly::NegateOperator *>(unaryOperator) !=
+        nullptr) {
         instructionName = "neg";
     }
-    else if ((dynamic_cast<const Assembly::ComplementOperator *>(
-                 unaryOperator)) ||
-             (dynamic_cast<const Assembly::NotOperator *>(unaryOperator))) {
+    else if (((dynamic_cast<const Assembly::ComplementOperator *>(
+                  unaryOperator)) != nullptr) ||
+             ((dynamic_cast<const Assembly::NotOperator *>(unaryOperator)) !=
+              nullptr)) {
         instructionName = "not";
     }
     else {
@@ -667,11 +671,11 @@ void PipelineStagesExecutors::emitAssyUnaryInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -718,13 +722,16 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
     const auto *type = binaryInstruction.getType();
 
     std::string instructionName;
-    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator)) {
+    if (dynamic_cast<const Assembly::AddOperator *>(binaryOperator) !=
+        nullptr) {
         instructionName = "add";
     }
-    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::SubtractOperator *>(binaryOperator) !=
+             nullptr) {
         instructionName = "sub";
     }
-    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator)) {
+    else if (dynamic_cast<const Assembly::MultiplyOperator *>(binaryOperator) !=
+             nullptr) {
         instructionName = "imul";
     }
     else {
@@ -734,11 +741,11 @@ void PipelineStagesExecutors::emitAssyBinaryInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -811,11 +818,11 @@ void PipelineStagesExecutors::emitAssyCmpInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -888,11 +895,11 @@ void PipelineStagesExecutors::emitAssyIdivInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -938,11 +945,11 @@ void PipelineStagesExecutors::emitAssyDivInstruction(
 
     std::string typeSuffix;
     int registerSize = 0;
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         typeSuffix = "l";
         registerSize = LONGWORD_SIZE;
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         typeSuffix = "q";
         registerSize = QUADWORD_SIZE;
     }
@@ -986,10 +993,10 @@ void PipelineStagesExecutors::emitAssyCdqInstruction(
     std::ofstream &assemblyFileStream) {
     const auto *type = cdqInstruction.getType();
 
-    if (dynamic_cast<const Assembly::Longword *>(type)) {
+    if (dynamic_cast<const Assembly::Longword *>(type) != nullptr) {
         assemblyFileStream << "    cdq\n";
     }
-    else if (dynamic_cast<const Assembly::Quadword *>(type)) {
+    else if (dynamic_cast<const Assembly::Quadword *>(type) != nullptr) {
         assemblyFileStream << "    cqo\n";
     }
     else {
@@ -1010,34 +1017,34 @@ void PipelineStagesExecutors::emitAssyJmpCCInstruction(
     const Assembly::JmpCCInstruction &jmpCCInstruction,
     std::ofstream &assemblyFileStream) {
     const auto *condCode = jmpCCInstruction.getCondCode();
-    if (dynamic_cast<const Assembly::E *>(condCode)) {
+    if (dynamic_cast<const Assembly::E *>(condCode) != nullptr) {
         assemblyFileStream << "    je";
     }
-    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode) != nullptr) {
         assemblyFileStream << "    jne";
     }
-    else if (dynamic_cast<const Assembly::G *>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode) != nullptr) {
         assemblyFileStream << "    jg";
     }
-    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode) != nullptr) {
         assemblyFileStream << "    jge";
     }
-    else if (dynamic_cast<const Assembly::L *>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode) != nullptr) {
         assemblyFileStream << "    jl";
     }
-    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode) != nullptr) {
         assemblyFileStream << "    jle";
     }
-    else if (dynamic_cast<const Assembly::A *>(condCode)) {
+    else if (dynamic_cast<const Assembly::A *>(condCode) != nullptr) {
         assemblyFileStream << "    ja";
     }
-    else if (dynamic_cast<const Assembly::AE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::AE *>(condCode) != nullptr) {
         assemblyFileStream << "    jae";
     }
-    else if (dynamic_cast<const Assembly::B *>(condCode)) {
+    else if (dynamic_cast<const Assembly::B *>(condCode) != nullptr) {
         assemblyFileStream << "    jb";
     }
-    else if (dynamic_cast<const Assembly::BE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::BE *>(condCode) != nullptr) {
         assemblyFileStream << "    jbe";
     }
     else {
@@ -1055,34 +1062,34 @@ void PipelineStagesExecutors::emitAssySetCCInstruction(
     const Assembly::SetCCInstruction &setCCInstruction,
     std::ofstream &assemblyFileStream) {
     const auto *condCode = setCCInstruction.getCondCode();
-    if (dynamic_cast<const Assembly::E *>(condCode)) {
+    if (dynamic_cast<const Assembly::E *>(condCode) != nullptr) {
         assemblyFileStream << "    sete";
     }
-    else if (dynamic_cast<const Assembly::NE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::NE *>(condCode) != nullptr) {
         assemblyFileStream << "    setne";
     }
-    else if (dynamic_cast<const Assembly::G *>(condCode)) {
+    else if (dynamic_cast<const Assembly::G *>(condCode) != nullptr) {
         assemblyFileStream << "    setg";
     }
-    else if (dynamic_cast<const Assembly::GE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::GE *>(condCode) != nullptr) {
         assemblyFileStream << "    setge";
     }
-    else if (dynamic_cast<const Assembly::L *>(condCode)) {
+    else if (dynamic_cast<const Assembly::L *>(condCode) != nullptr) {
         assemblyFileStream << "    setl";
     }
-    else if (dynamic_cast<const Assembly::LE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::LE *>(condCode) != nullptr) {
         assemblyFileStream << "    setle";
     }
-    else if (dynamic_cast<const Assembly::A *>(condCode)) {
+    else if (dynamic_cast<const Assembly::A *>(condCode) != nullptr) {
         assemblyFileStream << "    seta";
     }
-    else if (dynamic_cast<const Assembly::AE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::AE *>(condCode) != nullptr) {
         assemblyFileStream << "    setae";
     }
-    else if (dynamic_cast<const Assembly::B *>(condCode)) {
+    else if (dynamic_cast<const Assembly::B *>(condCode) != nullptr) {
         assemblyFileStream << "    setb";
     }
-    else if (dynamic_cast<const Assembly::BE *>(condCode)) {
+    else if (dynamic_cast<const Assembly::BE *>(condCode) != nullptr) {
         assemblyFileStream << "    setbe";
     }
     else {

@@ -87,7 +87,7 @@ all: $(BIN_DIR) $(EXECUTABLE)
 $(BIN_DIR):
 	mkdir -p $(BIN_DIR)
 
-# Compile the source files to object files.
+# Compile each source file into an object file in the binary directory, preserving the directory structure.
 # The `|` symbol indicates that the `$(BIN_DIR)` directory must exist before the target can be built,
 # but changes to this directory won't trigger a rebuild of the object files.
 # Reference: <https://www.gnu.org/software/make/manual/html_node/Prerequisite-Types.html>.
@@ -137,12 +137,12 @@ compiledb:
 	@which compiledb >/dev/null || (echo "Error: `compiledb` not found. Please install it to generate `compile_commands.json`." >&2; exit 1)
 	compiledb make
 
-# Run `clang-tidy` checks on the source files.
+# Run `clang-tidy` checks on the header and source files, obeying the configuration specified in `.clang-tidy`.
 tidy:
 	@which clang-tidy >/dev/null || (echo "Error: `clang-tidy` not found. Please install it to run tidy checks." >&2; exit 1)
 	run-clang-tidy -p .
 
-# Run `clang-tidy` checks and apply automatic fixes (if available) to the source files.
+# Run `clang-tidy` checks and apply automatic fixes (if available) to the header and source files, obeying the configuration specified in `.clang-tidy`.
 tidy-and-fix:
 	@which clang-tidy >/dev/null || (echo "Error: `clang-tidy` not found. Please install it to run tidy checks." >&2; exit 1)
 	run-clang-tidy -fix -p .
@@ -156,9 +156,9 @@ help:
 	@printf '  %-15s %s\n' 'release' 'Build with optimizations, hardening flags, and minimal debug info for profiling/stack traces for release.'
 	@printf '  %-15s %s\n' 'check-frontend' 'Compile frontend sources only (no linking).'
 	@printf '  %-15s %s\n' 'check-midend' 'Compile frontend + midend sources (no linking).'
-	@printf '  %-15s %s\n' 'format' 'Format C++ source and header files using `clang-format`.'
+	@printf '  %-15s %s\n' 'format' 'Format C++ header and source files using `clang-format`.'
 	@printf '  %-15s %s\n' 'clean' 'Remove build artifacts.'
 	@printf '  %-15s %s\n' 'compiledb' 'Generate `compile_commands.json` for tooling support.'
-	@printf '  %-15s %s\n' 'tidy' 'Run `clang-tidy` checks on the source files.'
-	@printf '  %-15s %s\n' 'tidy-and-fix' 'Run `clang-tidy` checks and apply automatic fixes (if available) to the source files.'
+	@printf '  %-15s %s\n' 'tidy' 'Run `clang-tidy` checks on the header and source files.'
+	@printf '  %-15s %s\n' 'tidy-and-fix' 'Run `clang-tidy` checks and apply automatic fixes (if available) to the header and source files.'
 	@printf '  %-15s %s\n' 'help' 'Show this help message.'

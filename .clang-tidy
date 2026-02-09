@@ -17,7 +17,6 @@ Checks: >
   readability-*,
   -readability-else-after-return,
   -readability-function-cognitive-complexity,
-  -readability-implicit-bool-conversion,
   -readability-identifier-length
 WarningsAsErrors: true
 HeaderFilterRegex: ""

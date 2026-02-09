@@ -284,7 +284,7 @@ std::unique_ptr<ForInit> Parser::parseForInit() {
         matchToken(TokenType::staticKeyword) ||
         matchToken(TokenType::externKeyword)) {
         auto declaration = parseDeclaration();
-        if (dynamic_cast<VariableDeclaration *>(declaration.get())) {
+        if (dynamic_cast<VariableDeclaration *>(declaration.get()) != nullptr) {
             // Release as Declaration and re-wrap as VariableDeclaration.
             auto *varDecl =
                 dynamic_cast<VariableDeclaration *>(declaration.release());

@@ -58,7 +58,7 @@ void FunctionType::accept(Visitor &visitor) { visitor.visit(*this); }
 
 bool FunctionType::isEqual(const Type &other) const {
     const auto *otherFn = dynamic_cast<const FunctionType *>(&other);
-    if (!otherFn) {
+    if (otherFn == nullptr) {
         return false;
     }
     const auto &params1 = *parameterTypes;
