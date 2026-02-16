@@ -88,6 +88,74 @@ The implementation is organized into several key directories and file(s):
 - **[src/utils/](https://github.com/zzmic/ccmic/tree/main/src/utils)**: Pipeline orchestration, including assembly emission, and pretty-printers for debugging.
 - **[src/main.cpp](https://github.com/zzmic/ccmic/blob/main/src/main.cpp)**: Entry point of the compiler, orchestrating the compilation pipeline based on command-line arguments.
 
+```bash
+➜  ccmic git:(main) tree src
+src
+├── backend
+│   ├── assembly.cpp
+│   ├── assembly.h
+│   ├── assemblyGenerator.cpp
+│   ├── assemblyGenerator.h
+│   ├── backendSymbolTable.cpp
+│   ├── backendSymbolTable.h
+│   ├── fixupPass.cpp
+│   ├── fixupPass.h
+│   ├── pseudoToStackPass.cpp
+│   └── pseudoToStackPass.h
+├── frontend
+│   ├── ast.h
+│   ├── block.cpp
+│   ├── block.h
+│   ├── blockItem.cpp
+│   ├── blockItem.h
+│   ├── constant.cpp
+│   ├── constant.h
+│   ├── declaration.cpp
+│   ├── declaration.h
+│   ├── expression.cpp
+│   ├── expression.h
+│   ├── forInit.cpp
+│   ├── forInit.h
+│   ├── frontendSymbolTable.h
+│   ├── function.cpp
+│   ├── function.h
+│   ├── lexer.cpp
+│   ├── lexer.h
+│   ├── operator.cpp
+│   ├── operator.h
+│   ├── parser.cpp
+│   ├── parser.h
+│   ├── printVisitor.cpp
+│   ├── printVisitor.h
+│   ├── program.cpp
+│   ├── program.h
+│   ├── semanticAnalysisPasses.cpp
+│   ├── semanticAnalysisPasses.h
+│   ├── statement.cpp
+│   ├── statement.h
+│   ├── storageClass.cpp
+│   ├── storageClass.h
+│   ├── type.cpp
+│   ├── type.h
+│   └── visitor.h
+├── main.cpp
+├── midend
+│   ├── ir.cpp
+│   ├── ir.h
+│   ├── irGenerator.cpp
+│   ├── irGenerator.h
+│   ├── irOptimizationPasses.cpp
+│   └── irOptimizationPasses.h
+└── utils
+    ├── compilerDriver.cpp
+    ├── compilerDriver.h
+    ├── constants.h
+    ├── pipelineStagesExecutors.cpp
+    ├── pipelineStagesExecutors.h
+    ├── prettyPrinters.cpp
+    └── prettyPrinters.h
+```
+
 ## Building and Usage
 
 ### Cloning the Repository

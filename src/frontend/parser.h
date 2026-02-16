@@ -54,6 +54,7 @@ class Parser {
      */
     std::unordered_map<TokenType, int> precedenceMap = {
         // NOLINTBEGIN(cppcoreguidelines-avoid-magic-numbers)
+        // NOLINTBEGIN(readability-magic-numbers)
         {TokenType::Assign, 1},       {TokenType::QuestionMark, 3},
         {TokenType::LogicalOr, 5},    {TokenType::LogicalAnd, 10},
         {TokenType::Equal, 30},       {TokenType::NotEqual, 30},
@@ -62,6 +63,7 @@ class Parser {
         {TokenType::Plus, 45},        {TokenType::Minus, 45},
         {TokenType::Multiply, 50},    {TokenType::Divide, 50},
         {TokenType::Modulo, 50},
+        // NOLINTEND(readability-magic-numbers)
         // NOLINTEND(cppcoreguidelines-avoid-magic-numbers)
     };
 
@@ -161,11 +163,11 @@ class Parser {
     std::unique_ptr<Expression> parseConditionalMiddle();
 
     /**
-     * Parse a type and storage class from a list of specifiers.
+     * Parse a pair of type and storage classes from a list of specifiers.
      *
      * @param specifierList A vector of specifier strings.
      * @return A pair consisting of (a unique pointer to) the type and a (unique
-     * pointer) to the storage class.
+     * pointer) to the storage classes.
      */
     static std::pair<std::unique_ptr<Type>, std::unique_ptr<StorageClass>>
     parseTypeAndStorageClass(const std::vector<std::string> &specifierList);
