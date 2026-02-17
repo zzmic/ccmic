@@ -27,7 +27,7 @@ class ComplementOperator : public UnaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "~"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "~"; }
 };
 
 /**
@@ -37,7 +37,7 @@ class NegateOperator : public UnaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "-"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "-"; }
 };
 
 /**
@@ -47,7 +47,7 @@ class NotOperator : public UnaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "!"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "!"; }
 };
 
 /**
@@ -64,7 +64,7 @@ class AddOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "+"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "+"; }
 };
 
 /**
@@ -74,7 +74,7 @@ class SubtractOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "-"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "-"; }
 };
 
 /**
@@ -84,7 +84,7 @@ class MultiplyOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "*"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "*"; }
 };
 
 /**
@@ -94,7 +94,7 @@ class DivideOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "/"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "/"; }
 };
 
 /**
@@ -104,7 +104,7 @@ class RemainderOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "%"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "%"; }
 };
 
 /**
@@ -114,7 +114,9 @@ class AndOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "&&"; }
+    [[nodiscard]] static constexpr std::string_view opInString() {
+        return "&&";
+    }
 };
 
 /**
@@ -124,7 +126,9 @@ class OrOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "||"; }
+    [[nodiscard]] static constexpr std::string_view opInString() {
+        return "||";
+    }
 };
 
 /**
@@ -134,7 +138,9 @@ class EqualOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "=="; }
+    [[nodiscard]] static constexpr std::string_view opInString() {
+        return "==";
+    }
 };
 
 /**
@@ -144,7 +150,9 @@ class NotEqualOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "!="; }
+    [[nodiscard]] static constexpr std::string_view opInString() {
+        return "!=";
+    }
 };
 
 /**
@@ -154,7 +162,7 @@ class LessThanOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "<"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "<"; }
 };
 
 /**
@@ -164,7 +172,9 @@ class LessThanOrEqualOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "<="; }
+    [[nodiscard]] static constexpr std::string_view opInString() {
+        return "<=";
+    }
 };
 
 /**
@@ -174,7 +184,7 @@ class GreaterThanOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return ">"; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return ">"; }
 };
 
 /**
@@ -184,7 +194,9 @@ class GreaterThanOrEqualOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return ">="; }
+    [[nodiscard]] static constexpr std::string_view opInString() {
+        return ">=";
+    }
 };
 
 /**
@@ -194,7 +206,7 @@ class AssignmentOperator : public BinaryOperator {
   public:
     void accept(Visitor &visitor) override;
 
-    constexpr std::string_view opInString() const { return "="; }
+    [[nodiscard]] static constexpr std::string_view opInString() { return "="; }
 };
 } // Namespace AST
 

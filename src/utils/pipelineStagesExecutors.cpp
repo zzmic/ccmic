@@ -139,8 +139,6 @@ std::pair<std::unique_ptr<IR::Program>,
 PipelineStagesExecutors::irGeneratorExecutor(
     const AST::Program &astProgram, int variableResolutionCounter,
     AST::FrontendSymbolTable &frontendSymbolTable) {
-    (void)variableResolutionCounter;
-    (void)frontendSymbolTable;
     std::cout << "\n";
     std::pair<std::unique_ptr<IR::Program>,
               std::unique_ptr<std::vector<std::unique_ptr<IR::StaticVariable>>>>
@@ -183,7 +181,6 @@ std::unique_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
     const IR::Program &irProgram,
     const std::vector<std::unique_ptr<IR::StaticVariable>> &irStaticVariables,
     const AST::FrontendSymbolTable &frontendSymbolTable) {
-    (void)irStaticVariables;
     std::unique_ptr<Assembly::Program> assemblyProgram;
     try {
         // Convert the frontend symbol table to backend symbol table before

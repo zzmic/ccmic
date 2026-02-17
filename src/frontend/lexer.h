@@ -1,6 +1,7 @@
 #ifndef FRONTEND_LEXER_H
 #define FRONTEND_LEXER_H
 
+#include <cstdint>
 #include <regex>
 #include <string>
 #include <string_view>
@@ -75,7 +76,7 @@ const std::regex preprocessorDirective_regex(R"(^#\w+)");
  * Reference:
  * https://stackoverflow.com/questions/18335861/why-is-enum-class-considered-safer-to-use-than-plain-enum.
  */
-enum class TokenType {
+enum class TokenType : std::uint8_t {
     Identifier,
     LongConstant,
     IntConstant,

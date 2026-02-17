@@ -76,11 +76,13 @@ class MapEntry {
         : newName(std::move(newName)), fromCurrentScope(fromCurrentScope),
           hasLinkage(hasLinkage) {}
 
-    std::string getNewName() { return newName; }
+    [[nodiscard]] std::string getNewName() const { return newName; }
 
-    constexpr bool fromCurrentScopeOrNot() { return fromCurrentScope; }
+    [[nodiscard]] constexpr bool fromCurrentScopeOrNot() const {
+        return fromCurrentScope;
+    }
 
-    constexpr bool hasLinkageOrNot() { return hasLinkage; }
+    [[nodiscard]] constexpr bool hasLinkageOrNot() const { return hasLinkage; }
 
   private:
     /**
@@ -504,9 +506,9 @@ class FunctionAttribute : public IdentifierAttribute {
     constexpr FunctionAttribute(bool defined, bool global)
         : defined(defined), global(global) {}
 
-    constexpr bool isDefined() { return defined; }
+    [[nodiscard]] constexpr bool isDefined() const { return defined; }
 
-    constexpr bool isGlobal() { return global; }
+    [[nodiscard]] constexpr bool isGlobal() const { return global; }
 
   private:
     /**
@@ -542,7 +544,7 @@ class StaticAttribute : public IdentifierAttribute {
 
     InitialValue *getInitialValue() { return initialValue.get(); }
 
-    constexpr bool isGlobal() { return global; }
+    [[nodiscard]] constexpr bool isGlobal() const { return global; }
 
   private:
     /**

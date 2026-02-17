@@ -186,23 +186,13 @@ void PrintVisitor::visit(FunctionDeclaration &functionDeclaration) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(IntType &intType) {
-    (void)intType;
-    std::cout << "IntType()";
-}
+void PrintVisitor::visit(IntType & /*intType*/) { std::cout << "IntType()"; }
 
-void PrintVisitor::visit(LongType &longType) {
-    (void)longType;
-    std::cout << "LongType()";
-}
+void PrintVisitor::visit(LongType & /*longType*/) { std::cout << "LongType()"; }
 
-void PrintVisitor::visit(UIntType &uintType) {
-    (void)uintType;
-    std::cout << "UIntType()";
-}
+void PrintVisitor::visit(UIntType & /*uintType*/) { std::cout << "UIntType()"; }
 
-void PrintVisitor::visit(ULongType &ulongType) {
-    (void)ulongType;
+void PrintVisitor::visit(ULongType & /*ulongType*/) {
     std::cout << "ULongType()";
 }
 
@@ -228,13 +218,11 @@ void PrintVisitor::visit(FunctionType &functionType) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(StaticStorageClass &staticStorageClass) {
-    (void)staticStorageClass;
+void PrintVisitor::visit(StaticStorageClass & /*staticStorageClass*/) {
     std::cout << "StaticStorageClass()";
 }
 
-void PrintVisitor::visit(ExternStorageClass &externStorageClass) {
-    (void)externStorageClass;
+void PrintVisitor::visit(ExternStorageClass & /*externStorageClass*/) {
     std::cout << "ExternStorageClass()";
 }
 
@@ -340,7 +328,6 @@ void PrintVisitor::visit(BreakStatement &breakStatement) {
 }
 
 void PrintVisitor::visit(ContinueStatement &continueStatement) {
-    (void)continueStatement;
     std::cout << "ContinueStatement()" << "_" << continueStatement.getLabel();
 }
 
@@ -430,8 +417,7 @@ void PrintVisitor::visit(ForStatement &forStatement) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(NullStatement &nullStatement) {
-    (void)nullStatement;
+void PrintVisitor::visit(NullStatement & /*nullStatement*/) {
     std::cout << "NullStatement()";
 }
 
@@ -645,77 +631,78 @@ void PrintVisitor::visit(FunctionCallExpression &functionCallExpression) {
     std::cout << "\n)";
 }
 
-void PrintVisitor::visit(ComplementOperator &complementOperator) {
-    std::cout << "ComplementOperator(" << complementOperator.opInString()
+void PrintVisitor::visit(ComplementOperator & /*complementOperator*/) {
+    std::cout << "ComplementOperator(" << ComplementOperator::opInString()
               << ")";
 }
 
-void PrintVisitor::visit(NegateOperator &negateOperator) {
-    std::cout << "NegateOperator(" << negateOperator.opInString() << ")";
+void PrintVisitor::visit(NegateOperator & /*negateOperator*/) {
+    std::cout << "NegateOperator(" << NegateOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(NotOperator &notOperator) {
-    std::cout << "NotOperator(" << notOperator.opInString() << ")";
+void PrintVisitor::visit(NotOperator & /*notOperator*/) {
+    std::cout << "NotOperator(" << NotOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(AddOperator &addOperator) {
-    std::cout << "AddOperator(" << addOperator.opInString() << ")";
+void PrintVisitor::visit(AddOperator & /*addOperator*/) {
+    std::cout << "AddOperator(" << AddOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(SubtractOperator &subtractOperator) {
-    std::cout << "SubtractOperator(" << subtractOperator.opInString() << ")";
+void PrintVisitor::visit(SubtractOperator & /*subtractOperator*/) {
+    std::cout << "SubtractOperator(" << SubtractOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(MultiplyOperator &multiplyOperator) {
-    std::cout << "MultiplyOperator(" << multiplyOperator.opInString() << ")";
+void PrintVisitor::visit(MultiplyOperator & /*multiplyOperator*/) {
+    std::cout << "MultiplyOperator(" << MultiplyOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(DivideOperator &divideOperator) {
-    std::cout << "DivideOperator(" << divideOperator.opInString() << ")";
+void PrintVisitor::visit(DivideOperator & /*divideOperator*/) {
+    std::cout << "DivideOperator(" << DivideOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(RemainderOperator &remainderOperator) {
-    std::cout << "RemainderOperator(" << remainderOperator.opInString() << ")";
+void PrintVisitor::visit(RemainderOperator & /*remainderOperator*/) {
+    std::cout << "RemainderOperator(" << RemainderOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(AndOperator &andOperator) {
-    std::cout << "AndOperator(" << andOperator.opInString() << ")";
+void PrintVisitor::visit(AndOperator & /*andOperator*/) {
+    std::cout << "AndOperator(" << AndOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(OrOperator &orOperator) {
-    std::cout << "OrOperator(" << orOperator.opInString() << ")";
+void PrintVisitor::visit(OrOperator & /*orOperator*/) {
+    std::cout << "OrOperator(" << OrOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(EqualOperator &equalOperator) {
-    std::cout << "EqualOperator(" << equalOperator.opInString() << ")";
+void PrintVisitor::visit(EqualOperator & /*equalOperator*/) {
+    std::cout << "EqualOperator(" << EqualOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(NotEqualOperator &notEqualOperator) {
-    std::cout << "NotEqualOperator(" << notEqualOperator.opInString() << ")";
+void PrintVisitor::visit(NotEqualOperator & /*notEqualOperator*/) {
+    std::cout << "NotEqualOperator(" << NotEqualOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(LessThanOperator &lessThanOperator) {
-    std::cout << "LessThanOperator(" << lessThanOperator.opInString() << ")";
+void PrintVisitor::visit(LessThanOperator & /*lessThanOperator*/) {
+    std::cout << "LessThanOperator(" << LessThanOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(LessThanOrEqualOperator &lessThanOrEqualOperator) {
+void PrintVisitor::visit(
+    LessThanOrEqualOperator & /*lessThanOrEqualOperator*/) {
     std::cout << "LessThanOrEqualOperator("
-              << lessThanOrEqualOperator.opInString() << ")";
+              << LessThanOrEqualOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(GreaterThanOperator &greaterThanOperator) {
-    std::cout << "GreaterThanOperator(" << greaterThanOperator.opInString()
+void PrintVisitor::visit(GreaterThanOperator & /*greaterThanOperator*/) {
+    std::cout << "GreaterThanOperator(" << GreaterThanOperator::opInString()
               << ")";
 }
 
 void PrintVisitor::visit(
-    GreaterThanOrEqualOperator &greaterThanOrEqualOperator) {
+    GreaterThanOrEqualOperator & /*greaterThanOrEqualOperator*/) {
     std::cout << "GreaterThanOrEqualOperator("
-              << greaterThanOrEqualOperator.opInString() << ")";
+              << GreaterThanOrEqualOperator::opInString() << ")";
 }
 
-void PrintVisitor::visit(AssignmentOperator &assignmentOperator) {
-    std::cout << "AssignmentOperator(" << assignmentOperator.opInString()
+void PrintVisitor::visit(AssignmentOperator & /*assignmentOperator*/) {
+    std::cout << "AssignmentOperator(" << AssignmentOperator::opInString()
               << ")";
 }
 

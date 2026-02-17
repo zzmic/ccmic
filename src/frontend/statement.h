@@ -176,11 +176,6 @@ class CompoundStatement : public Statement {
  */
 class BreakStatement : public Statement {
   public:
-    /**
-     * Constructor for the break-statement class.
-     */
-    constexpr BreakStatement() : label("") {}
-
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] const std::string &getLabel() const;
@@ -199,11 +194,6 @@ class BreakStatement : public Statement {
  */
 class ContinueStatement : public Statement {
   public:
-    /**
-     * Constructor for the continue-statement class.
-     */
-    explicit ContinueStatement() : label("") {}
-
     void accept(Visitor &visitor) override;
 
     [[nodiscard]] const std::string &getLabel() const;
