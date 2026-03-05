@@ -8,9 +8,9 @@
 /**
  * Run a command and check if it was successful.
  *
- * @param command The command to run.
+ * @param args The (vector of) command and its arguments.
  */
-void runCommand(std::string_view command);
+void runCommand(const std::vector<std::string> &args);
 
 /**
  * Preprocess the input file and write the result to the preprocessed file.

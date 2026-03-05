@@ -310,12 +310,10 @@ void PipelineStagesExecutors::emitAssyStaticVariable(
         isZeroInit = (std::get<unsigned long>(ulongInit->getValue()) == 0UL);
     }
     else {
-        const auto &r = *staticInit;
         throw std::logic_error(
             "Unsupported static init type while printing "
             "assembly static variable in emitAssyStaticVariable "
-            "in PipelineStagesExecutors: " +
-            std::string(typeid(r).name()));
+            "in PipelineStagesExecutors");
     }
 
     assemblyFileStream << "\n";

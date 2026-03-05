@@ -8,6 +8,7 @@ Checks: >
   clang-analyzer-*,
   bugprone-*,
   cppcoreguidelines-*,
+  -cppcoreguidelines-pro-bounds-avoid-unchecked-container-access,
   performance-*,
   portability-*,
   misc-*,
