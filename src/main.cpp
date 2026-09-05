@@ -141,25 +141,23 @@ int main(int argc, char *argv[]) {
         // Extract the program (base/actual) name of the source file (without
         // the extension).
         const size_t dotIndex = sourceFile.rfind('.');
-        if (std::cmp_equal(dotIndex, -1)) {
+        if (dotIndex == std::string::npos) {
             std::stringstream msg;
             msg << "Source file must have an extension.";
             throw std::invalid_argument(msg.str());
         }
-        if (dotIndex == 0 ||
-            dotIndex == static_cast<size_t>(sourceFile.size() - 1)) {
+        if (dotIndex == 0 || dotIndex == sourceFile.size() - 1) {
             std::stringstream msg;
             msg << "Source file must have a name before and after the "
                    "extension.";
             throw std::invalid_argument(msg.str());
         }
-        if (sourceFile[dotIndex + 1] != 'c') {
+        if (sourceFile.substr(dotIndex) != ".c") {
             std::stringstream msg;
             msg << "Source file must have a '.c' extension.";
             throw std::invalid_argument(msg.str());
         }
-        const std::string programName =
-            sourceFile.substr(0, sourceFile.rfind('.'));
+        const std::string programName = sourceFile.substr(0, dotIndex);
         // Construct the preprocessed file name by appending the ".i" extension.
         const std::string preprocessedFileName = programName + ".i";
         // Construct the assembly file name by appending the ".s" extension.
