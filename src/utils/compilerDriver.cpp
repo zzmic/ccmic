@@ -1,4 +1,5 @@
 #include "compilerDriver.h"
+#include <array>
 #include <cstdio>
 #include <cstdlib>
 #include <iostream>
@@ -8,6 +9,7 @@
 #include <sys/_types/_pid_t.h>
 #include <sys/wait.h>
 #include <unistd.h>
+#include <utility>
 #include <vector>
 
 void runCommand(const std::vector<std::string> &args) {
@@ -63,30 +65,74 @@ void runCommand(const std::vector<std::string> &args) {
     }
 }
 
+namespace {
+/**
+ * The compiler emits x86-64 assembly, so the host toolchain must be explicitly
+ * configured to target x86-64. Otherwise, the driver would, for instance, pass
+ * x86-64 assembly to an arm64 assembler on Apple Silicon hosts, which would
+ * reject `%rbp`, `$16`, `je`, etc. The target has to be selected per
+ * invocation, via `-arch` (or `-target`): no property of the driver process
+ * itself, such as running it under `arch -x86_64`, has any bearing on the
+ * architecture that `gcc` targets.
+ * That is, `arch -x86_64` is not a substitute for the flag, for two independent
+ * reasons: (1) `arch` sets a binary preference on the one process it spawns,
+ * which does not propagate to the grandchildren that `runCommand` forks
+ * (`arch -x86_64 zsh -c 'gcc -v'` still reports `Target: arm64-apple-darwin`);
+ * (2) even applied to `gcc` directly it changes nothing, since `/usr/bin/gcc`
+ * is a shim that executes an arm64-only Clang.
+ */
+constexpr std::array<const char *, 3> driverCommand = {
+    "gcc",
+    "-arch",
+    "x86_64",
+};
+
+/**
+ * Build an argument vector consisting of the driver command followed by `args`.
+ */
+std::vector<std::string> withDriverCommand(std::vector<std::string> args) {
+    // `driverCommand` holds `const char *`s rather than `std::string_view`s
+    // because the conversion from `std::string_view` to `std::string` is
+    // explicit, which would render the range insert below ill-formed.
+    args.insert(args.begin(), driverCommand.begin(), driverCommand.end());
+    return args;
+}
+} // namespace
+
 void preprocess(std::string_view inputFileName,
                 std::string_view preprocessedFileName) {
-    runCommand({"gcc", "-E", "-P", std::string{inputFileName}, "-o",
-                std::string{preprocessedFileName}});
+    runCommand(withDriverCommand({
+        "-E",
+        "-P",
+        std::string{inputFileName},
+        "-o",
+        std::string{preprocessedFileName},
+    }));
 }
 
 void compileToAssembly(std::string_view preprocessedFileName,
                        std::string_view assemblyFileName) {
-    runCommand({"gcc", "-S", std::string{preprocessedFileName}, "-o",
-                std::string{assemblyFileName}});
+    runCommand(withDriverCommand({
+        "-S",
+        std::string{preprocessedFileName},
+        "-o",
+        std::string{assemblyFileName},
+    }));
 }
 
 void assembleToObject(std::string_view assemblyFileName,
                       std::string_view objectFileName) {
-    runCommand({"gcc", "-c", std::string{assemblyFileName}, "-o",
-                std::string{objectFileName}});
+    runCommand(withDriverCommand({
+        "-c",
+        std::string{assemblyFileName},
+        "-o",
+        std::string{objectFileName},
+    }));
 }
 
 void linkToExecutable(const std::vector<std::string> &objectFileNames,
                       std::string_view executableFileName) {
-    std::vector<std::string> args = {"gcc"};
-    for (const auto &obj : objectFileNames) {
-        args.push_back(obj);
-    }
+    std::vector<std::string> args = objectFileNames;
     args.insert(args.end(), {"-o", std::string{executableFileName}, "-lc"});
-    runCommand(args);
+    runCommand(withDriverCommand(std::move(args)));
 }
