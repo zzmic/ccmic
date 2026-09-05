@@ -34,8 +34,10 @@ std::optional<ConstValue> getConstValue(const IR::Value *value) {
     const auto *astConst = constantValue->getASTConstant();
     if (const auto *intConst =
             dynamic_cast<const AST::ConstantInt *>(astConst)) {
-        return ConstValue{.isLong = false,
-                          .value = static_cast<long>(intConst->getValue())};
+        return ConstValue{
+            .isLong = false,
+            .value = static_cast<long>(intConst->getValue()),
+        };
     }
     else if (const auto *longConst =
                  dynamic_cast<const AST::ConstantLong *>(astConst)) {
@@ -60,6 +62,57 @@ std::unique_ptr<IR::Value> makeConstValue(const ConstValue &value) {
 }
 
 /**
+ * Perform wrapping (two's-complement) addition on two `long`s.
+ *
+ * The arithmetic is carried out in `unsigned long` (which is defined to wrap
+ * modulo 2^64) and converted back to `long` (which, since C++20, is likewise
+ * defined to wrap) to avoid signed-integer-overflow undefined behavior while
+ * still matching the target's two's-complement semantics.
+ *
+ * @param lhs The left-hand side operand.
+ * @param rhs The right-hand side operand.
+ * @return The wrapped sum.
+ */
+long wrappingAdd(long lhs, long rhs) {
+    return static_cast<long>(static_cast<unsigned long>(lhs) +
+                             static_cast<unsigned long>(rhs));
+}
+
+/**
+ * Perform wrapping (two's-complement) subtraction on two `long`s.
+ *
+ * @param lhs The left-hand side operand.
+ * @param rhs The right-hand side operand.
+ * @return The wrapped difference.
+ */
+long wrappingSubtract(long lhs, long rhs) {
+    return static_cast<long>(static_cast<unsigned long>(lhs) -
+                             static_cast<unsigned long>(rhs));
+}
+
+/**
+ * Perform wrapping (two's-complement) multiplication on two `long`s.
+ *
+ * @param lhs The left-hand side operand.
+ * @param rhs The right-hand side operand.
+ * @return The wrapped product.
+ */
+long wrappingMultiply(long lhs, long rhs) {
+    return static_cast<long>(static_cast<unsigned long>(lhs) *
+                             static_cast<unsigned long>(rhs));
+}
+
+/**
+ * Perform wrapping (two's-complement) negation on a `long`.
+ *
+ * @param value The operand to negate.
+ * @return The wrapped negation (`LONG_MIN` maps to itself).
+ */
+long wrappingNegate(long value) {
+    return static_cast<long>(-static_cast<unsigned long>(value));
+}
+
+/**
  * Attempt to fold a unary operation on a constant value.
  *
  * @param op The unary operator.
@@ -70,7 +123,10 @@ std::unique_ptr<IR::Value> makeConstValue(const ConstValue &value) {
 std::optional<ConstValue> foldUnary(const IR::UnaryOperator *op,
                                     const ConstValue &src) {
     if (dynamic_cast<const IR::NegateOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = src.isLong, .value = -src.value};
+        return ConstValue{
+            .isLong = src.isLong,
+            .value = wrappingNegate(src.value),
+        };
     }
     else if (dynamic_cast<const IR::ComplementOperator *>(op) != nullptr) {
         return ConstValue{.isLong = src.isLong, .value = ~src.value};
@@ -95,17 +151,34 @@ std::optional<ConstValue> foldBinary(const IR::BinaryOperator *op,
                                      const ConstValue &rhs) {
     const bool isLong = lhs.isLong || rhs.isLong;
     if (dynamic_cast<const IR::AddOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = isLong, .value = lhs.value + rhs.value};
+        return ConstValue{
+            .isLong = isLong,
+            .value = wrappingAdd(lhs.value, rhs.value),
+        };
     }
     else if (dynamic_cast<const IR::SubtractOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = isLong, .value = lhs.value - rhs.value};
+        return ConstValue{
+            .isLong = isLong,
+            .value = wrappingSubtract(lhs.value, rhs.value),
+        };
     }
     else if (dynamic_cast<const IR::MultiplyOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = isLong, .value = lhs.value * rhs.value};
+        return ConstValue{
+            .isLong = isLong,
+            .value = wrappingMultiply(lhs.value, rhs.value),
+        };
     }
     else if (dynamic_cast<const IR::DivideOperator *>(op) != nullptr) {
         if (rhs.value == 0) {
             return std::nullopt;
+        }
+        // `LONG_MIN / -1` overflows (and traps on x86-64); the two's-complement
+        // result of `x / -1` is the wrapping negation of `x`.
+        if (rhs.value == -1) {
+            return ConstValue{
+                .isLong = isLong,
+                .value = wrappingNegate(lhs.value),
+            };
         }
         return ConstValue{.isLong = isLong, .value = lhs.value / rhs.value};
     }
@@ -113,32 +186,49 @@ std::optional<ConstValue> foldBinary(const IR::BinaryOperator *op,
         if (rhs.value == 0) {
             return std::nullopt;
         }
+        // `LONG_MIN % -1` overflows (and traps on x86-64) even though the
+        // mathematical result is zero.
+        if (rhs.value == -1) {
+            return ConstValue{.isLong = isLong, .value = 0};
+        }
         return ConstValue{.isLong = isLong, .value = lhs.value % rhs.value};
     }
     else if (dynamic_cast<const IR::EqualOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = false,
-                          .value = lhs.value == rhs.value ? 1 : 0};
+        return ConstValue{
+            .isLong = false,
+            .value = lhs.value == rhs.value ? 1 : 0,
+        };
     }
     else if (dynamic_cast<const IR::NotEqualOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = false,
-                          .value = lhs.value != rhs.value ? 1 : 0};
+        return ConstValue{
+            .isLong = false,
+            .value = lhs.value != rhs.value ? 1 : 0,
+        };
     }
     else if (dynamic_cast<const IR::LessThanOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = false,
-                          .value = lhs.value < rhs.value ? 1 : 0};
+        return ConstValue{
+            .isLong = false,
+            .value = lhs.value < rhs.value ? 1 : 0,
+        };
     }
     else if (dynamic_cast<const IR::LessThanOrEqualOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = false,
-                          .value = lhs.value <= rhs.value ? 1 : 0};
+        return ConstValue{
+            .isLong = false,
+            .value = lhs.value <= rhs.value ? 1 : 0,
+        };
     }
     else if (dynamic_cast<const IR::GreaterThanOperator *>(op) != nullptr) {
-        return ConstValue{.isLong = false,
-                          .value = lhs.value > rhs.value ? 1 : 0};
+        return ConstValue{
+            .isLong = false,
+            .value = lhs.value > rhs.value ? 1 : 0,
+        };
     }
     else if (dynamic_cast<const IR::GreaterThanOrEqualOperator *>(op) !=
              nullptr) {
-        return ConstValue{.isLong = false,
-                          .value = lhs.value >= rhs.value ? 1 : 0};
+        return ConstValue{
+            .isLong = false,
+            .value = lhs.value >= rhs.value ? 1 : 0,
+        };
     }
     return std::nullopt;
 }
