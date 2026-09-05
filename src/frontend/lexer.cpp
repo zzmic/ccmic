@@ -24,21 +24,27 @@ Token matchToken(std::string_view input) {
     // `multiply_regex`).
     if (std::regex_search(inputStr, tokenMatches,
                           preprocessorDirective_regex)) {
-        return {.type = TokenType::PreprocessorDirective,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::PreprocessorDirective,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches, stringLiteral_regex)) {
         return {.type = TokenType::StringLiteral, .value = tokenMatches.str(0)};
     }
     else if (std::regex_search(inputStr, tokenMatches,
                                singleLineComment_regex)) {
-        return {.type = TokenType::SingleLineComment,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::SingleLineComment,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches,
                                multiLineComment_regex)) {
-        return {.type = TokenType::MultiLineComment,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::MultiLineComment,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches, LongConstant_regex)) {
         return {.type = TokenType::LongConstant, .value = tokenMatches.str(0)};
@@ -56,8 +62,10 @@ Token matchToken(std::string_view input) {
         return {.type = TokenType::signedKeyword, .value = tokenMatches.str(0)};
     }
     else if (std::regex_search(inputStr, tokenMatches, unsignedKeyword_regex)) {
-        return {.type = TokenType::unsignedKeyword,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::unsignedKeyword,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches, voidKeyword_regex)) {
         return {.type = TokenType::voidKeyword, .value = tokenMatches.str(0)};
@@ -84,8 +92,10 @@ Token matchToken(std::string_view input) {
         return {.type = TokenType::breakKeyword, .value = tokenMatches.str(0)};
     }
     else if (std::regex_search(inputStr, tokenMatches, continueKeyword_regex)) {
-        return {.type = TokenType::continueKeyword,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::continueKeyword,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches, staticKeyword_regex)) {
         return {.type = TokenType::staticKeyword, .value = tokenMatches.str(0)};
@@ -109,13 +119,17 @@ Token matchToken(std::string_view input) {
         return {.type = TokenType::Colon, .value = tokenMatches.str(0)};
     }
     else if (std::regex_search(inputStr, tokenMatches, openParenthesis_regex)) {
-        return {.type = TokenType::OpenParenthesis,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::OpenParenthesis,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches,
                                closeParenthesis_regex)) {
-        return {.type = TokenType::CloseParenthesis,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::CloseParenthesis,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches, openBrace_regex)) {
         return {.type = TokenType::OpenBrace, .value = tokenMatches.str(0)};
@@ -157,13 +171,17 @@ Token matchToken(std::string_view input) {
         return {.type = TokenType::NotEqual, .value = tokenMatches.str(0)};
     }
     else if (std::regex_search(inputStr, tokenMatches, lessThanOrEqual_regex)) {
-        return {.type = TokenType::LessThanOrEqual,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::LessThanOrEqual,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches,
                                greaterThanOrEqual_regex)) {
-        return {.type = TokenType::GreaterThanOrEqual,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::GreaterThanOrEqual,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches, lessThan_regex)) {
         return {.type = TokenType::LessThan, .value = tokenMatches.str(0)};
@@ -187,13 +205,17 @@ Token matchToken(std::string_view input) {
     }
     else if (std::regex_search(inputStr, tokenMatches,
                                unsignedLongIntegerConstant_regex)) {
-        return {.type = TokenType::UnsignedLongIntegerConstant,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::UnsignedLongIntegerConstant,
+            .value = tokenMatches.str(0),
+        };
     }
     else if (std::regex_search(inputStr, tokenMatches,
                                unsignedIntegerConstant_regex)) {
-        return {.type = TokenType::UnsignedIntegerConstant,
-                .value = tokenMatches.str(0)};
+        return {
+            .type = TokenType::UnsignedIntegerConstant,
+            .value = tokenMatches.str(0),
+        };
     }
     else {
         std::stringstream msg;

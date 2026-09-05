@@ -14,6 +14,7 @@
 #include "../midend/irGenerator.h"
 #include "../midend/irOptimizationPasses.h"
 #include "../utils/constants.h"
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <iterator>
@@ -49,7 +50,7 @@ PipelineStagesExecutors::lexerExecutor(std::string_view sourceFileName) {
     try {
         tokens = lexer(input);
         printTokens(tokens);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Lexical error in lexerExecutor in PipelineStagesExecutors: "
             << e.what();
@@ -70,7 +71,7 @@ PipelineStagesExecutors::parserExecutor(const std::vector<Token> &tokens) {
         std::cout << "\n";
         // Visit and print the AST program after parsing.
         program->accept(printVisitor);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Parsing error in parserExecutor in PipelineStagesExecutors: "
             << e.what();
@@ -91,7 +92,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         // Perform the identifier-resolution pass.
         variableResolutionCounter =
             IdentifierResolutionPass.resolveProgram(astProgram);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Identifier resolution error in semanticAnalysisExecutor in "
                "PipelineStagesExecutors: "
@@ -101,7 +102,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     try {
         // Perform the type-checking pass.
         typeCheckingPass.typeCheckProgram(astProgram);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Type-checking error in semanticAnalysisExecutor in "
                "PipelineStagesExecutors: "
@@ -111,7 +112,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
     try {
         // Perform the loop-labeling pass.
         loopLabelingPass.labelLoops(astProgram);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Loop-labeling error in semanticAnalysisExecutor in "
                "PipelineStagesExecutors: "
@@ -123,7 +124,7 @@ int PipelineStagesExecutors::semanticAnalysisExecutor(
         AST::PrintVisitor printVisitor;
         std::cout << "\n";
         astProgram.accept(printVisitor);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Printing AST error (in semantic analysis) in "
                "semanticAnalysisExecutor in PipelineStagesExecutors: "
@@ -148,7 +149,7 @@ PipelineStagesExecutors::irGeneratorExecutor(
                                     frontendSymbolTable);
         // Generate the IR program from the AST program.
         irProgramAndIRStaticVariables = irGenerator.generateIR(astProgram);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "IR generation error in irGeneratorExecutor in "
                "PipelineStagesExecutors: "
@@ -203,7 +204,7 @@ std::unique_ptr<Assembly::Program> PipelineStagesExecutors::codegenExecutor(
 
         // Fix up the assembly program.
         Assembly::FixupPass::fixup(topLevels);
-    } catch (const std::runtime_error &e) {
+    } catch (const std::exception &e) {
         std::stringstream msg;
         msg << "Code generation error in codegenExecutor in "
                "PipelineStagesExecutors: "
