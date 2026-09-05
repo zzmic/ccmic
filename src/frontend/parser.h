@@ -91,6 +91,17 @@ class Parser {
     void expectToken(TokenType type);
 
     /**
+     * Describe the current token for diagnostics.
+     *
+     * Unlike direct indexing into `tokens`, this is safe at the end of the
+     * token stream, where `current` equals the number of tokens.
+     *
+     * @return A description of the current token, or "<end of input>" if all
+     * tokens have been consumed.
+     */
+    [[nodiscard]] std::string describeCurrentToken() const;
+
+    /**
      * Parse a declaration.
      *
      * @return The declaration node.

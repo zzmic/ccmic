@@ -48,9 +48,7 @@ Token Parser::consumeToken(TokenType type) {
     }
     std::stringstream msg;
     msg << "Expect token of type " << tokenTypeToString(type) << " but found "
-        << (*tokens)[current].value;
-    msg << " of type " << tokenTypeToString((*tokens)[current].type)
-        << " in consumeToken in Parser";
+        << describeCurrentToken() << " in consumeToken in Parser";
     throw std::invalid_argument(msg.str());
 }
 
@@ -60,12 +58,19 @@ void Parser::expectToken(TokenType type) {
     if (!matchToken(type)) {
         std::stringstream msg;
         msg << "Expect token of type " << tokenTypeToString(type)
-            << " but found " << (*tokens)[current].value;
-        msg << " of type " << tokenTypeToString((*tokens)[current].type)
+            << " but found " << describeCurrentToken()
             << " in expectToken in Parser";
         throw std::invalid_argument(msg.str());
     }
     consumeToken(type);
+}
+
+std::string Parser::describeCurrentToken() const {
+    if (current >= tokens->size()) {
+        return "<end of input>";
+    }
+    const auto &token = (*tokens)[current];
+    return token.value + " of type " + tokenTypeToString(token.type);
 }
 
 std::unique_ptr<BlockItem> Parser::parseBlockItem() {
@@ -411,12 +416,6 @@ std::unique_ptr<Statement> Parser::parseStatement() {
         expectToken(TokenType::Semicolon);
         return std::make_unique<ExpressionStatement>(std::move(expr));
     }
-    std::stringstream msg;
-    msg << "Malformed statement: unexpected token: "
-        << (*tokens)[current].value;
-    msg << " of type " << tokenTypeToString((*tokens)[current].type)
-        << " in parseStatement in Parser";
-    throw std::invalid_argument(msg.str());
 }
 
 std::unique_ptr<Expression> Parser::parseFactor() {
@@ -516,10 +515,8 @@ std::unique_ptr<Expression> Parser::parseFactor() {
     }
     else {
         std::stringstream msg;
-        msg << "Malformed factor: unexpected token: "
-            << (*tokens)[current].value;
-        msg << " of type " << tokenTypeToString((*tokens)[current].type);
-        msg << " in parseFactor in Parser";
+        msg << "Malformed factor: unexpected token: " << describeCurrentToken()
+            << " in parseFactor in Parser";
         throw std::invalid_argument(msg.str());
     }
 }
