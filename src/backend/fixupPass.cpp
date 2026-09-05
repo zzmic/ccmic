@@ -195,9 +195,11 @@ void FixupPass::rewriteFunctionDefinition(
     auto alignedStackSize =
         ((preAlignedStackSize - 1) | STACK_ALIGNMENT_MASK) + 1;
     // Insert an allocate-stack instruction at the beginning of each
-    // function.
-    insertAllocateStackInstruction(instructions,
-                                   static_cast<int>(alignedStackSize));
+    // function if the stack size is greater than 0.
+    if (alignedStackSize > 0) {
+        insertAllocateStackInstruction(instructions,
+                                       static_cast<int>(alignedStackSize));
+    }
     // Traverse the instructions (associated with (included in) the
     // function) and rewrite invalid instructions.
     for (auto it = instructions.begin(); it != instructions.end(); ++it) {
