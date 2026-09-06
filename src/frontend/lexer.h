@@ -2,71 +2,9 @@
 #define FRONTEND_LEXER_H
 
 #include <cstdint>
-#include <regex>
 #include <string>
 #include <string_view>
 #include <vector>
-
-/**
- * Unnamed namespace for regular expressions for different token types.
- *
- * The caret symbol (`^`) matches the start of a line or a string.
- * It asserts that the current position in the string is at the beginning of a
- * line or the string.
- */
-namespace {
-const std::regex identifier_regex(R"(^[a-zA-Z_]\w*\b)");
-const std::regex LongConstant_regex(R"(^[0-9]+[lL]\b)");
-const std::regex intConstant_regex(R"(^[0-9]+\b)");
-const std::regex intKeyword_regex(R"(^int\b)");
-const std::regex longKeyword_regex(R"(^long\b)");
-const std::regex signedKeyword_regex(R"(^signed\b)");
-const std::regex unsignedKeyword_regex(R"(^unsigned\b)");
-const std::regex voidKeyword_regex(R"(^void\b)");
-const std::regex returnKeyword_regex(R"(^return\b)");
-const std::regex ifKeyword_regex(R"(^if\b)");
-const std::regex elseKeyword_regex(R"(^else\b)");
-const std::regex doKeyword_regex(R"(^do\b)");
-const std::regex whileKeyword_regex(R"(^while\b)");
-const std::regex forKeyword_regex(R"(^for\b)");
-const std::regex breakKeyword_regex(R"(^break\b)");
-const std::regex continueKeyword_regex(R"(^continue\b)");
-const std::regex staticKeyword_regex(R"(^static\b)");
-const std::regex externKeyword_regex(R"(^extern\b)");
-const std::regex comma_regex(R"(^\,)");
-const std::regex questionMark_regex(R"(^\?)");
-const std::regex colon_regex(R"(^\:)");
-const std::regex assign_regex(R"(^=)");
-const std::regex openParenthesis_regex(R"(^\()");
-const std::regex closeParenthesis_regex(R"(^\))");
-const std::regex openBrace_regex(R"(^\{)");
-const std::regex closeBrace_regex(R"(^\})");
-const std::regex semicolon_regex(R"(^;)");
-const std::regex tilde_regex(R"(^~)");
-const std::regex twoHyphen_regex(R"(^--)");
-const std::regex plus_regex(R"(^\+)");
-const std::regex
-    minus_regex(R"(^-)"); // This is also referred to as a hyphen regex.
-const std::regex multiply_regex(R"(^\*)");
-const std::regex divide_regex(R"(^\/)");
-const std::regex modulo_regex(R"(^%)");
-const std::regex logicalNot_regex(R"(^!)");
-const std::regex logicalAnd_regex(R"(^&&)");
-const std::regex logicalOr_regex(R"(^\|\|)");
-const std::regex equal_regex(R"(^==)");
-const std::regex notEqual_regex(R"(^!=)");
-const std::regex lessThanOrEqual_regex(R"(^<=)");
-const std::regex greaterThanOrEqual_regex(R"(^>=)");
-const std::regex lessThan_regex(R"(^<)");
-const std::regex greaterThan_regex(R"(^>)");
-const std::regex unsignedIntegerConstant_regex(R"(^[0-9]+[uU]\b)");
-const std::regex
-    unsignedLongIntegerConstant_regex(R"(^[0-9]+([lL][uU]|[uU][lL])\b)");
-const std::regex singleLineComment_regex(R"(^\/\/[^\n]*\n?)");
-const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
-const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
-const std::regex preprocessorDirective_regex(R"(^#\w+)");
-} // namespace
 
 /**
  * Enumeration representing different types of tokens.
@@ -126,7 +64,7 @@ enum class TokenType : std::uint8_t {
     MultiLineComment,
     StringLiteral,
     PreprocessorDirective,
-    Invalid
+    Invalid,
 };
 
 /**

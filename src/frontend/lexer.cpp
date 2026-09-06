@@ -8,6 +8,68 @@
 #include <vector>
 
 Token matchToken(std::string_view input) {
+    // Regular expressions for the different token types.
+    //
+    // The caret symbol (`^`) matches the start of a line or a string.
+    // It asserts that the current position in the string is at the
+    // beginning of a line or the string.
+    //
+    // They are function-local statics so that they are constructed once,
+    // lazily, on the first call to this function, when a throwing constructor
+    // is still catchable, rather than at static initialization time before
+    // `main` begins executing.
+    static const std::regex identifier_regex(R"(^[a-zA-Z_]\w*\b)");
+    static const std::regex LongConstant_regex(R"(^[0-9]+[lL]\b)");
+    static const std::regex intConstant_regex(R"(^[0-9]+\b)");
+    static const std::regex intKeyword_regex(R"(^int\b)");
+    static const std::regex longKeyword_regex(R"(^long\b)");
+    static const std::regex signedKeyword_regex(R"(^signed\b)");
+    static const std::regex unsignedKeyword_regex(R"(^unsigned\b)");
+    static const std::regex voidKeyword_regex(R"(^void\b)");
+    static const std::regex returnKeyword_regex(R"(^return\b)");
+    static const std::regex ifKeyword_regex(R"(^if\b)");
+    static const std::regex elseKeyword_regex(R"(^else\b)");
+    static const std::regex doKeyword_regex(R"(^do\b)");
+    static const std::regex whileKeyword_regex(R"(^while\b)");
+    static const std::regex forKeyword_regex(R"(^for\b)");
+    static const std::regex breakKeyword_regex(R"(^break\b)");
+    static const std::regex continueKeyword_regex(R"(^continue\b)");
+    static const std::regex staticKeyword_regex(R"(^static\b)");
+    static const std::regex externKeyword_regex(R"(^extern\b)");
+    static const std::regex comma_regex(R"(^\,)");
+    static const std::regex questionMark_regex(R"(^\?)");
+    static const std::regex colon_regex(R"(^\:)");
+    static const std::regex assign_regex(R"(^=)");
+    static const std::regex openParenthesis_regex(R"(^\()");
+    static const std::regex closeParenthesis_regex(R"(^\))");
+    static const std::regex openBrace_regex(R"(^\{)");
+    static const std::regex closeBrace_regex(R"(^\})");
+    static const std::regex semicolon_regex(R"(^;)");
+    static const std::regex tilde_regex(R"(^~)");
+    static const std::regex twoHyphen_regex(R"(^--)");
+    static const std::regex plus_regex(R"(^\+)");
+    static const std::regex minus_regex(
+        R"(^-)"); // This is also referred to as a hyphen regex.
+    static const std::regex multiply_regex(R"(^\*)");
+    static const std::regex divide_regex(R"(^\/)");
+    static const std::regex modulo_regex(R"(^%)");
+    static const std::regex logicalNot_regex(R"(^!)");
+    static const std::regex logicalAnd_regex(R"(^&&)");
+    static const std::regex logicalOr_regex(R"(^\|\|)");
+    static const std::regex equal_regex(R"(^==)");
+    static const std::regex notEqual_regex(R"(^!=)");
+    static const std::regex lessThanOrEqual_regex(R"(^<=)");
+    static const std::regex greaterThanOrEqual_regex(R"(^>=)");
+    static const std::regex lessThan_regex(R"(^<)");
+    static const std::regex greaterThan_regex(R"(^>)");
+    static const std::regex unsignedIntegerConstant_regex(R"(^[0-9]+[uU]\b)");
+    static const std::regex unsignedLongIntegerConstant_regex(
+        R"(^[0-9]+([lL][uU]|[uU][lL])\b)");
+    static const std::regex singleLineComment_regex(R"(^\/\/[^\n]*\n?)");
+    static const std::regex multiLineComment_regex(R"(^\/\*[\s\S]*?\*\/)");
+    static const std::regex stringLiteral_regex(R"(^\".*?\"|^\'.*?\')");
+    static const std::regex preprocessorDirective_regex(R"(^#\w+)");
+
     // Convert string_view to string for regex operations
     const std::string inputStr(input);
 
