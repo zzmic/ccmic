@@ -542,21 +542,24 @@ CFG::cfgToInstructions(
     return cloneFunctionBody(cfg);
 }
 
+// TODO(zzmic): Not implemented yet; returns the function body unchanged.
 std::unique_ptr<std::vector<std::unique_ptr<IR::Instruction>>>
 UnreachableCodeEliminationPass::eliminateUnreachableCode(
-    const std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
-    return cloneFunctionBody(cfg);
+    const std::vector<std::unique_ptr<IR::Instruction>> &functionBody) {
+    return cloneFunctionBody(functionBody);
 }
 
+// TODO(zzmic): Not implemented yet; returns the function body unchanged.
 std::unique_ptr<std::vector<std::unique_ptr<IR::Instruction>>>
 CopyPropagationPass::propagateCopies(
-    const std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
-    return cloneFunctionBody(cfg);
+    const std::vector<std::unique_ptr<IR::Instruction>> &functionBody) {
+    return cloneFunctionBody(functionBody);
 }
 
+// TODO(zzmic): Not implemented yet; returns the function body unchanged.
 std::unique_ptr<std::vector<std::unique_ptr<IR::Instruction>>>
 DeadStoreEliminationPass::eliminateDeadStores(
-    const std::vector<std::unique_ptr<IR::Instruction>> &cfg) {
-    return cloneFunctionBody(cfg);
+    const std::vector<std::unique_ptr<IR::Instruction>> &functionBody) {
+    return cloneFunctionBody(functionBody);
 }
 } // namespace IR

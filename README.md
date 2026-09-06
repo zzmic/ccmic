@@ -190,7 +190,8 @@ bin/main [--lex] [--parse] [--validate] [--tacky] [--codegen] [-S] [-s] [-c] [-o
 
 - **Pipeline control**: `--lex` (lexical analysis), `--parse` (syntactic analysis), `--validate` (semantic analysis), `--tacky` (IR generation), and `--codegen` (code generation).
 - **Output options**: `-S` or `-s` (assembly emission), `-c` (object file emission), and `-o <outputFile>` (specify output file, default to the program name (i.e., the base name of the source file)).
-- **Optimizations** (_to be implemented_): `--fold-constants` (constant folding), `--eliminate-unreachable-code` (dead code elimination), `--propagate-copies` (copy propagation), `--eliminate-dead-stores` (dead store elimination), and `--optimize` (enable all optimizations).
+- **Optimizations**: `--fold-constants` (constant folding).
+- **Optimizations** (_to be implemented_): `--eliminate-unreachable-code` (unreachable code elimination), `--propagate-copies` (copy propagation), and `--eliminate-dead-stores` (dead store elimination). These flags are accepted but ignored. Passing any of them prints a warning to `stderr`. `--optimize` enables all of the above, but it currently performs only constant folding.
 
 ## Generating JSON Compilation Database Files
 

@@ -128,14 +128,16 @@ class UnreachableCodeEliminationPass : public OptimizationPass {
     /**
      * Eliminate unreachable code from the given IR function body.
      *
-     * @param cfg The control flow graph (CFG) representation of the function
-     * body.
+     * @param functionBody The IR function body to optimize.
      * @return The optimized IR function body with unreachable code removed.
+     *
+     * TODO(zzmic): Not implemented yet; currently returns the function body
+     * unchanged. It will operate on a CFG once `CFG` is a real type.
      */
     [[nodiscard]] static std::unique_ptr<
         std::vector<std::unique_ptr<IR::Instruction>>>
     eliminateUnreachableCode(
-        const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
+        const std::vector<std::unique_ptr<IR::Instruction>> &functionBody);
 };
 
 /**
@@ -146,13 +148,16 @@ class CopyPropagationPass : public OptimizationPass {
     /**
      * Perform copy propagation on the given IR function body.
      *
-     * @param cfg The control flow graph (CFG) representation of the function
-     * body.
+     * @param functionBody The IR function body to optimize.
      * @return The optimized IR function body with copies propagated.
+     *
+     * TODO(zzmic): Not implemented yet; currently returns the function body
+     * unchanged. It will operate on a CFG once `CFG` is a real type.
      */
     [[nodiscard]] static std::unique_ptr<
         std::vector<std::unique_ptr<IR::Instruction>>>
-    propagateCopies(const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
+    propagateCopies(
+        const std::vector<std::unique_ptr<IR::Instruction>> &functionBody);
 };
 
 /**
@@ -164,14 +169,16 @@ class DeadStoreEliminationPass : public OptimizationPass {
     /**
      * Eliminate dead stores from the given IR function body.
      *
-     * @param cfg The control flow graph (CFG) representation of the function
-     * body.
+     * @param functionBody The IR function body to optimize.
      * @return The optimized IR function body with dead stores removed.
+     *
+     * TODO(zzmic): Not implemented yet; currently returns the function body
+     * unchanged. It will operate on a CFG once `CFG` is a real type.
      */
     [[nodiscard]] static std::unique_ptr<
         std::vector<std::unique_ptr<IR::Instruction>>>
     eliminateDeadStores(
-        const std::vector<std::unique_ptr<IR::Instruction>> &cfg);
+        const std::vector<std::unique_ptr<IR::Instruction>> &functionBody);
 };
 } // namespace IR
 

@@ -114,16 +114,27 @@ int main(int argc, char *argv[]) {
                 foldConstantsPass = true;
             }
             // Direct the compiler to propagate copies.
+            // TODO(zzmic): The copy-propagation pass is not implemented yet.
             else if (flag == "--propagate-copies") {
                 propagateCopiesPass = true;
+                std::cerr << "warning: --propagate-copies is not implemented "
+                             "yet; ignoring it\n";
             }
             // Direct the compiler to eliminate unreachable code.
+            // TODO(zzmic): The unreachable-code-elimination pass is not
+            // implemented yet.
             else if (flag == "--eliminate-unreachable-code") {
                 eliminateUnreachableCodePass = true;
+                std::cerr << "warning: --eliminate-unreachable-code is not "
+                             "implemented yet; ignoring it\n";
             }
             // Direct the compiler to eliminate dead stores.
+            // TODO(zzmic): The dead-store-elimination pass is not implemented
+            // yet.
             else if (flag == "--eliminate-dead-stores") {
                 eliminateDeadStoresPass = true;
+                std::cerr << "warning: --eliminate-dead-stores is not "
+                             "implemented yet; ignoring it\n";
             }
             // Direct the compiler to perform all the optimization passes.
             else if (flag == "--optimize") {
@@ -131,6 +142,11 @@ int main(int argc, char *argv[]) {
                 propagateCopiesPass = true;
                 eliminateUnreachableCodePass = true;
                 eliminateDeadStoresPass = true;
+                std::cerr << "warning: --optimize currently enables constant "
+                             "folding only; --propagate-copies, "
+                             "--eliminate-unreachable-code, and "
+                             "--eliminate-dead-stores are not implemented yet "
+                             "and are ignored\n";
             }
             else {
                 std::cerr << "Unsupported command-line flag: " << flag << "\n";
@@ -226,8 +242,10 @@ int main(int argc, char *argv[]) {
         auto irStaticVariables =
             std::move(irProgramAndIRStaticVariables.second);
 
-        if (foldConstantsPass || propagateCopiesPass ||
-            eliminateUnreachableCodePass || eliminateDeadStoresPass) {
+        // Only the constant-folding pass is implemented, so only it can change
+        // the IR program. Gating the before/after dump on it avoids printing a
+        // pair of IR programs that is guaranteed to be identical.
+        if (foldConstantsPass) {
             // Print the IR program to stdout.
             std::cout << "<<< Before optimization passes: >>>\n";
             PrettyPrinters::printIRProgram(*irProgram, *irStaticVariables);
@@ -249,9 +267,13 @@ int main(int argc, char *argv[]) {
         }
 
         if (tillIR) {
-            std::cout
-                << "IR generation (and potential executions of optimization "
-                   "passes) completed.\n";
+            if (foldConstantsPass) {
+                std::cout << "IR generation (and executions of optimization "
+                             "passes) completed.\n";
+            }
+            else {
+                std::cout << "IR generation completed.\n";
+            }
             return EXIT_SUCCESS;
         }
 
